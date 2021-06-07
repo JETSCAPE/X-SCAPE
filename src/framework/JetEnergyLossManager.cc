@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -27,9 +27,10 @@ using namespace std;
 
 namespace Jetscape {
 
-JetEnergyLossManager::JetEnergyLossManager() {
+JetEnergyLossManager::JetEnergyLossManager() : JetScapeModuleBase() {
   SetId("JLossManager");
   GetHardPartonListConnected = false;
+  copiesMade = false;
   VERBOSE(8);
 }
 
@@ -54,6 +55,8 @@ void JetEnergyLossManager::Clear() {
   // Clean Up not really working with iterators (see also above!!!) Some logic not clear for me.
   JetScapeSignalManager::Instance()->CleanUp();
   JetScapeTask::ClearTasks();
+
+  copiesMade = false;
 
   VERBOSE(8) << hp.size();
 }
@@ -88,38 +91,61 @@ void JetEnergyLossManager::WriteTask(weak_ptr<JetScapeWriter> w) {
   JetScapeTask::WriteTasks(w);
 }
 
-void JetEnergyLossManager::Exec() {
-  VERBOSE(1) << "Run JetEnergyLoss Manager ...";
-  JSDEBUG << "Task Id = " << this_thread::get_id();
-
-  if (GetNumberOfTasks() < 1) {
-    JSWARN << " : No valid Energy Loss Manager modules found ...";
-    exit(-1);
-  }
-
-  // ----------------------------------
+void JetEnergyLossManager::MakeCopies()
+{
+   // ----------------------------------
   // Create needed copies and connect signal/slots accordingly ...
-
+  if (!copiesMade) {
   if (GetGetHardPartonListConnected()) {
-    GetHardPartonList(hp);
-    VERBOSE(3) << " Number of Hard Partons = " << hp.size();
-    for (int i = 1; i < hp.size(); i++) {
-      JSDEBUG << "Create the " << i
-              << " th copy because number of intital hard partons = "
-              << hp.size();
-      // Add(make_shared<JetEnergyLoss>(*dynamic_pointer_cast<JetEnergyLoss>(GetTaskAt(0))));
-      auto jloss_org = dynamic_pointer_cast<JetEnergyLoss>(GetTaskAt(0));
-      auto jloss_copy = make_shared<JetEnergyLoss>(*jloss_org);
 
-      // if there is a liquefier attached to the jloss module
-      // also attach the liquefier to the copied jloss modules
-      // to collect hydrodynamic source terms
-      if (!weak_ptr_is_uninitialized(jloss_org->get_liquefier())) {
-        jloss_copy->add_a_liquefier(jloss_org->get_liquefier().lock());
+    GetHardPartonList(hp);
+    GetPartonShowerList(ps);
+
+    JSINFO<<" Number of Hard Partons = "<<hp.size();
+    if (ps.size()>0)
+      JSINFO<<" Number of Parton Showers = "<<ps.size();
+
+    // make more compact ...
+
+    if (!useShower) {
+      VERBOSE(3) << " Number of Hard Partons = " << hp.size();
+      for (int i = 1; i < hp.size(); i++) {
+        JSDEBUG << "Create the " << i
+        << " th copy because number of intital hard partons = "
+        << hp.size();
+        // Add(make_shared<JetEnergyLoss>(*dynamic_pointer_cast<JetEnergyLoss>(GetTaskAt(0))));
+        auto jloss_org = dynamic_pointer_cast<JetEnergyLoss>(GetTaskAt(0));
+        auto jloss_copy = make_shared<JetEnergyLoss>(*jloss_org);
+
+        // if there is a liquefier attached to the jloss module
+        // also attach the liquefier to the copied jloss modules
+        // to collect hydrodynamic source terms
+        if (!weak_ptr_is_uninitialized(jloss_org->get_liquefier())) {
+          jloss_copy->add_a_liquefier(jloss_org->get_liquefier().lock());
+        }
+        Add(jloss_copy);
       }
-      Add(jloss_copy);
+    }
+    else {
+      VERBOSE(3) << " Number of of Parton Showers = " << ps.size();
+      for (int i = 1; i < ps.size(); i++) {
+        JSDEBUG << "Create the " << i
+        << " th copy because number of intital Parton Showers = "
+        << ps.size();
+        // Add(make_shared<JetEnergyLoss>(*dynamic_pointer_cast<JetEnergyLoss>(GetTaskAt(0))));
+        auto jloss_org = dynamic_pointer_cast<JetEnergyLoss>(GetTaskAt(0));
+        auto jloss_copy = make_shared<JetEnergyLoss>(*jloss_org);
+
+        // if there is a liquefier attached to the jloss module
+        // also attach the liquefier to the copied jloss modules
+        // to collect hydrodynamic source terms
+        if (!weak_ptr_is_uninitialized(jloss_org->get_liquefier())) {
+          jloss_copy->add_a_liquefier(jloss_org->get_liquefier().lock());
+        }
+        Add(jloss_copy);
     }
   }
+ }
 
   VERBOSE(3) << " Found " << GetNumberOfTasks()
              << " Eloss Manager Tasks/Modules Execute them ... ";
@@ -129,18 +155,46 @@ void JetEnergyLossManager::Exec() {
   CreateSignalSlots();
 
   // ----------------------------------
-  // Copy Shower initiating partons to JetEnergyLoss tasks ...
+  // Copy Shower initiating partons/showers  to JetEnergyLoss tasks ...
 
-  if (GetGetHardPartonListConnected() && hp.size() > 0) {
-    int n = 0;
-    for (auto it : GetTaskList()) {
-      dynamic_pointer_cast<JetEnergyLoss>(it)->AddShowerInitiatingParton(
-          hp.at(n));
-      n++;
+  if (!useShower) {
+    if (GetGetHardPartonListConnected() && hp.size() > 0) {
+      int n = 0;
+      for (auto it : GetTaskList()) {
+          dynamic_pointer_cast<JetEnergyLoss>(it)->AddShowerInitiatingParton(hp.at(n));
+          n++;
+        }
+      }
     }
+  else {
+    if (GetGetHardPartonListConnected() && ps.size() > 0) {
+      int n = 0;
+      for (auto it : GetTaskList()) {
+          dynamic_pointer_cast<JetEnergyLoss>(it)->AddInitalPartonShower(ps.at(n));
+          n++;
+        }
+      }
+    }
+
+  copiesMade = true;
+ }
+ else {JSWARN<<"JetEnergloss Module copies already made!";exit(-1);}
+}
+
+void JetEnergyLossManager::Exec() {
+  VERBOSE(1) << "Run JetEnergyLoss Manager ...";
+  JSDEBUG << "Task Id = " << this_thread::get_id();
+
+  if (GetNumberOfTasks() < 1) {
+    JSWARN << " : No valid Energy Loss Manager modules found ...";
+    exit(-1);
   }
 
+  if (!copiesMade)
+    MakeCopies();
+
   // ----------------------------------
+  /*
   // quick and dirty here, only include after further testing (flag in init xml files ...)
   bool multiTask = false;
 
@@ -192,12 +246,51 @@ void JetEnergyLossManager::Exec() {
   }
   // ----------------------------------
   else
-    // Standard "serial" execution for the JetEnerguLoss (+submodules) task ...
-    JetScapeTask::ExecuteTasks();
+  */
+
+  // Standard "serial" execution for the JetEnerguLoss (+submodules) task ...
+  JetScapeTask::ExecuteTasks();
 
   //Add acheck if the parton shower was actually created for the Modules ....
   VERBOSE(3) << " " << GetNumberOfTasks()
              << " Eloss Manager Tasks/Modules finished.";
+}
+
+void JetEnergyLossManager::CalculateTime()
+{
+  VERBOSE(3) << "Calculate JetEnergyLoss Manager per timestep ... Current Time = "<<GetModuleCurrentTime();
+  VERBOSE(3) << "Task Id = " << this_thread::get_id();
+
+  JetScapeModuleBase::CalculateTimeTasks();
+}
+
+void JetEnergyLossManager::ExecTime()
+{
+  VERBOSE(3) << "Execute JetEnergyLoss Manager per timestep ... Current Time = "<<GetModuleCurrentTime()<<" Thread Id = "<<this_thread::get_id();
+  VERBOSE(3) << "Task Id = " << this_thread::get_id();
+
+  JetScapeModuleBase::ExecTimeTasks();
+}
+
+void JetEnergyLossManager::InitPerEvent()
+{
+  VERBOSE(3) << "InitPerEvent JetEnergyLoss Manager when used per timestep ...";
+  VERBOSE(3) << "Task Id = " << this_thread::get_id();
+
+  MakeCopies();
+
+  JetScapeModuleBase::InitPerEventTasks();
+}
+
+void JetEnergyLossManager::FinishPerEvent()
+{
+  VERBOSE(3) << "FinishPerEvent JetEnergyLoss Manager when used per timestep ...";
+  VERBOSE(3) << "Task Id = " << this_thread::get_id();
+
+  JetScapeModuleBase::FinishPerEventTasks();
+
+  //JP: Quick fix, to be discussed, similar to writer, clear is only called for active tasks, so call here directly ...
+  Clear();
 }
 
 void JetEnergyLossManager::CreateSignalSlots() {
