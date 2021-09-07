@@ -194,7 +194,6 @@ void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
             h->SetGetHydroHyperSurfaceConnected(true);
         }
     }
->>>>>>> 8cf05585211d6b2b6d3b158a3e5b6e657375a4cc
 }
 
 void JetScapeSignalManager::CleanUp() {
