@@ -49,6 +49,7 @@ JetEnergyLoss::JetEnergyLoss() {
   jetSignalConnected = false;
   edensitySignalConnected = false;
   GetHydroCellSignalConnected = false;
+  GetHydroTau0SignalConnected = false;
   SentInPartonsConnected = false;
 
   deltaT = 0;
@@ -75,6 +76,7 @@ JetEnergyLoss::JetEnergyLoss(const JetEnergyLoss &j) {
   SetJetSignalConnected(false);
   SetEdensitySignalConnected(false);
   SetGetHydroCellSignalConnected(false);
+  SetGetHydroTau0SignalConnected(false);
   SetSentInPartonsConnected(false);
   AddModuleClock(j.GetModuleClock()); //JP: Check if memory leak ... should not due to shared_ptr usage, but confirm ...
 
