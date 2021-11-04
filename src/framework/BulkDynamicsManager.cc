@@ -117,5 +117,50 @@ void BulkDynamicsManager::FinishPerEvent()
   //JP: Quick fix, to be discussed, similar to writer, clear is only called for active tasks, so call here directly ...
   Clear();
 }
+  
+void BulkDynamicsManager::UpdateEnergyDepositFromModules(int t, double edop){
+  
+  if (GetNumberOfTasks() < 1) {
+    JSWARN << " : No valid bulk manager modules found ...";
+    exit(-1);
+  }
+  for (auto it : GetTaskList()) {
+    if(dynamic_pointer_cast<FluidDynamics>(it))dynamic_pointer_cast<FluidDynamics>(it)->UpdateEnergyDeposit(t,edop);
+  }
+}
 
+void BulkDynamicsManager::GetEnergyDensityFromModules(int t, double &edensity){
+  if (GetNumberOfTasks() < 1) {
+    JSWARN << " : No valid bulk manager modules found ...";
+    exit(-1);
+  }
+  for (auto it : GetTaskList()) {
+    if(dynamic_pointer_cast<FluidDynamics>(it))dynamic_pointer_cast<FluidDynamics>(it)->GetEnergyDensity(t,edensity);
+  }
+} 
+  
+void BulkDynamicsManager::GetHydroInfoFromModules(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
+						    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr){
+  if (GetNumberOfTasks() < 1) {
+    JSWARN << " : No valid bulk manager modules found ...";
+    exit(-1);
+  }
+  //Would below require priority ordering of attached media modules? Yes... 
+  //Need to impliment a better method
+  for (auto it : GetTaskList()) {
+    if(dynamic_pointer_cast<FluidDynamics>(it)){
+      dynamic_pointer_cast<FluidDynamics>(it)->GetHydroInfo(t,x,y,z,fluid_cell_info_ptr);
+    }
+  }
+}
+  
+void BulkDynamicsManager::GetHydroStartTimeFromModules(double &tau0){
+  if (GetNumberOfTasks() < 1) {
+    JSWARN << " : No valid bulk manager modules found ...";
+    exit(-1);
+  }
+  for (auto it : GetTaskList()) {
+    if(dynamic_pointer_cast<FluidDynamics>(it))dynamic_pointer_cast<FluidDynamics>(it)->GetHydroStartTime(tau0);
+  }
+}  
 } // end namespace Jetscape

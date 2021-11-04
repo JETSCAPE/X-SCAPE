@@ -805,6 +805,7 @@ void JetScape::SetPointers() {
          << "SignalManager to create Signal/Slots";
 
   bool hydro_pointer_is_set = false;
+  bool bulk_pointer_is_set = false;
   for (auto it : GetTaskList()) {
     if (dynamic_pointer_cast<InitialState>(it)) {
       JetScapeSignalManager::Instance()->SetInitialStatePointer(
@@ -817,6 +818,11 @@ void JetScape::SetPointers() {
       JetScapeSignalManager::Instance()->SetHydroPointer(
           dynamic_pointer_cast<FluidDynamics>(it));
       hydro_pointer_is_set = true;
+    } else if (dynamic_pointer_cast<BulkDynamicsManager>(it) &&
+               !bulk_pointer_is_set) {
+      JetScapeSignalManager::Instance()->SetBulkDynamicsManagerPointer(
+          dynamic_pointer_cast<BulkDynamicsManager>(it));
+      bulk_pointer_is_set = true;
     } else if (dynamic_pointer_cast<JetEnergyLossManager>(it)) {
       JetScapeSignalManager::Instance()->SetJetEnergyLossManagerPointer(
           dynamic_pointer_cast<JetEnergyLossManager>(it));

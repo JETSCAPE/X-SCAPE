@@ -81,25 +81,44 @@ void JetScapeSignalManager::ConnectGetFinalPartonListSignal(
 
 void JetScapeSignalManager::ConnectJetSignal(shared_ptr<JetEnergyLoss> j) {
   if (!j->GetJetSignalConnected()) {
-    auto hp = GetHydroPointer().lock();
-    if (hp) {
-      j->jetSignal.connect(hp.get(), &FluidDynamics::UpdateEnergyDeposit);
-      j->SetJetSignalConnected(true);
-      jet_signal_map.emplace(num_jet_signals, (weak_ptr<JetEnergyLoss>)j);
-      num_jet_signals++;
+    auto hp1 = GetBulkPointer().lock();
+    if (hp1) {
+        j->jetSignal.connect(hp1.get(), &BulkDynamicsManager::UpdateEnergyDeposit);
+        j->SetJetSignalConnected(true);
+        jet_signal_map.emplace(num_jet_signals, (weak_ptr<JetEnergyLoss>)j);
+        num_jet_signals++;
+    }
+    else{
+      auto hp = GetHydroPointer().lock();
+      if (hp) {
+	j->jetSignal.connect(hp.get(), &FluidDynamics::UpdateEnergyDeposit);
+	j->SetJetSignalConnected(true);
+	jet_signal_map.emplace(num_jet_signals, (weak_ptr<JetEnergyLoss>)j);
+	num_jet_signals++;
+      }
     }
   }
 }
 
 void JetScapeSignalManager::ConnectEdensitySignal(shared_ptr<JetEnergyLoss> j) {
   if (!j->GetEdensitySignalConnected()) {
-    auto hp = GetHydroPointer().lock();
-    if (hp) {
-      j->edensitySignal.connect(hp.get(), &FluidDynamics::GetEnergyDensity);
+    auto hp1 = GetBulkPointer().lock();
+    if (hp1) {
+      j->edensitySignal.connect(hp1.get(), &BulkDynamicsManager::GetEnergyDensity);
       j->SetEdensitySignalConnected(true);
       edensity_signal_map.emplace(num_edensity_signals,
-                                  (weak_ptr<JetEnergyLoss>)j);
+				  (weak_ptr<JetEnergyLoss>)j);
       num_edensity_signals++;
+    }
+    else{
+      auto hp = GetHydroPointer().lock();
+      if (hp) {
+	j->edensitySignal.connect(hp.get(), &FluidDynamics::GetEnergyDensity);
+	j->SetEdensitySignalConnected(true);
+	edensity_signal_map.emplace(num_edensity_signals,
+				    (weak_ptr<JetEnergyLoss>)j);
+	num_edensity_signals++;
+      }
     }
   }
 }
@@ -107,10 +126,17 @@ void JetScapeSignalManager::ConnectEdensitySignal(shared_ptr<JetEnergyLoss> j) {
 void JetScapeSignalManager::ConnectGetHydroTau0Signal(
     shared_ptr<JetEnergyLoss> j) {
   if (!j->GetGetHydroTau0SignalConnected()) {
-    auto hp = GetHydroPointer().lock();
-    if (hp) {
-      j->GetHydroTau0Signal.connect(hp.get(), &FluidDynamics::GetHydroStartTime);
+    auto hp1 = GetBulkPointer().lock();
+    if (hp1) {
+      j->GetHydroTau0Signal.connect(hp1.get(), &BulkDynamicsManager::GetHydroStartTime);
       j->SetGetHydroTau0SignalConnected(true);
+    }
+    else{
+      auto hp = GetHydroPointer().lock();
+      if (hp) {
+	j->GetHydroTau0Signal.connect(hp.get(), &FluidDynamics::GetHydroStartTime);
+	j->SetGetHydroTau0SignalConnected(true);
+      }
     }
   }
 }
@@ -118,13 +144,23 @@ void JetScapeSignalManager::ConnectGetHydroTau0Signal(
 void JetScapeSignalManager::ConnectGetHydroCellSignal(
     shared_ptr<JetEnergyLoss> j) {
   if (!j->GetGetHydroCellSignalConnected()) {
-    auto hp = GetHydroPointer().lock();
-    if (hp) {
-      j->GetHydroCellSignal.connect(hp.get(), &FluidDynamics::GetHydroCell);
+    auto hp1 = GetBulkPointer().lock();
+    if (hp1) {
+      j->GetHydroCellSignal.connect(hp1.get(), &BulkDynamicsManager::GetHydroCell);
       j->SetGetHydroCellSignalConnected(true);
       GetHydroCellSignal_map.emplace(num_GetHydroCellSignals,
-                                     (weak_ptr<JetEnergyLoss>)j);
+				     (weak_ptr<JetEnergyLoss>)j);
       num_GetHydroCellSignals++;
+    }
+    else{
+      auto hp = GetHydroPointer().lock();
+      if (hp) {
+	j->GetHydroCellSignal.connect(hp.get(), &FluidDynamics::GetHydroCell);
+	j->SetGetHydroCellSignalConnected(true);
+	GetHydroCellSignal_map.emplace(num_GetHydroCellSignals,
+				       (weak_ptr<JetEnergyLoss>)j);
+	num_GetHydroCellSignals++;
+      }
     }
   }
 }

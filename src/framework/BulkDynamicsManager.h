@@ -19,6 +19,8 @@
 //#include "JetScapeTask.h"
 #include "JetScapeModuleBase.h"
 #include "JetClass.h"
+#include "FluidCellInfo.h"
+
 #include "sigslot.h"
 
 #include <vector>
@@ -59,6 +61,26 @@ public:
 
   virtual void FinishPerEvent();
 
+  void UpdateEnergyDeposit(int t, double edop){ UpdateEnergyDepositFromModules(t, edop); }
+
+  void GetEnergyDensity(int t, double &edensity){ GetEnergyDensityFromModules(t, edensity); }
+  
+  void GetHydroCell(double t, double x, double y, double z,
+                            std::unique_ptr<FluidCellInfo> &fCell) { GetHydroInfoFromModules(t, x, y, z, fCell); }
+
+  void GetHydroStartTime(double &tau0){GetHydroStartTimeFromModules(tau0); }
+
+  void UpdateEnergyDepositFromModules(int t, double edop);
+
+  void GetEnergyDensityFromModules(int t, double &edensity);
+  
+  void GetHydroInfoFromModules(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
+			    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
+
+  void GetHydroStartTimeFromModules(double &tau0);
+ 
+  virtual bool IsValidHydro(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z){ return false;}
+  
 private:
 
   
