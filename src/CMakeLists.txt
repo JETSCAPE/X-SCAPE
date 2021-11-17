@@ -28,6 +28,11 @@ if(NOT "${USE_IPGlasma}")
   list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/IPGlasmaWrapper.cc)
 endif()
 
+if(NOT "${USE_3DGlauber}")
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/MCGlauberWrapper.cc)
+endif()
+
+
 #trento needs data tables
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/data_table)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/initialstate/data_table/
@@ -102,6 +107,10 @@ endif()
 
 if ( USE_IPGlasma)
   target_link_libraries (JetScape ipglasma_lib)
+endif()
+
+if ( USE_3DGlauber)
+  target_link_libraries (JetScape 3dMCGlb)
 endif()
 
 if ( USE_MUSIC )

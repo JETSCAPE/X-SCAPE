@@ -1,3 +1,13 @@
+## 3DGlauber support 
+```bash
+    cd PATH/TO/3dMCGlauber
+    ./get_LHAPDF.sh
+    mkdir build
+    cd build
+    cmake -DUSE_3DGlauber=ON ..
+    make
+```
+
 ## MUSIC support
 
 MUSIC is a (3+1)D viscous hydrodynamical code developed at McGill university.
