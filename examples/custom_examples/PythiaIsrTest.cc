@@ -47,6 +47,7 @@
 #include "CascadeTest.h"
 #include "IsrManager.h"
 #include "DummySplit.h"
+#include "iMATTER.h"
 #include "PartonShowerGeneratorDefault.h"
 #include "IsrJet.h"
 #include "IsrShowerPSG.h"
@@ -78,7 +79,7 @@ int main(int argc, char** argv)
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
   JetScapeLogger::Instance()->SetInfo(true);
-  JetScapeLogger::Instance()->SetDebug(true);
+    JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
@@ -111,6 +112,7 @@ int main(int argc, char** argv)
   // Initial conditions and hydro
   //auto trento = make_shared<TrentoInitial>();
   auto trento = make_shared<InitialState>();
+    //auto MCG = make_shared<MCGlauberWrapper>();
   auto pythiaGun= make_shared<PythiaGun> ();
   //auto isr = make_shared<InitialStateRadiationTest> ();
   auto hydro = make_shared<Brick> ();
@@ -120,13 +122,16 @@ int main(int argc, char** argv)
   //hydroTest->SetActive(false);
 
   jetscape->Add(trento);
+    
+    //jetscape->Add(MCG);
 
   auto isrManager = make_shared<IsrManager>();
   //auto isrJloss = make_shared<JetEnergyLoss> (); //to be followed up ... make isr module ... !!!!
   auto isrJloss = make_shared<IsrJet>();
   auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
-  auto iDummy = make_shared<DummySplit> ();
+//  auto iDummy = make_shared<DummySplit> ();
 
+    auto iMatter = make_shared<iMATTER> ();
   isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-3.); //will be moved to XML and proper Init() in IsrJet later ...
 
   //REMARK: Think a bit harder about directed graph creation and time direction !!!!! Graph inversion !???
@@ -134,8 +139,9 @@ int main(int argc, char** argv)
   //isrJloss->SetDeltaT(0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(3);
 
   isrJloss->AddPartonShowerGenerator(oldPSG);
-  isrJloss->Add(iDummy);
-
+//  isrJloss->Add(iDummy);
+    isrJloss->Add(iMatter);
+    
   isrManager->Add(isrJloss);
 
   pythiaGun->Add(isrManager);

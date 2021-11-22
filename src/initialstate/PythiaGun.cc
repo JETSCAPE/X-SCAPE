@@ -56,8 +56,8 @@ void PythiaGun::InitTask() {
   //readString("HardQCD:qqbar2ccbar = on");
   readString("HadronLevel:Decay = off");
   readString("HadronLevel:all = off");
-  readString("PartonLevel:ISR = on");
-  readString("PartonLevel:MPI = on");
+  readString("PartonLevel:ISR = off");
+  readString("PartonLevel:MPI = off");
   //readString("PartonLevel:FSR = on");
   readString("PromptPhoton:all=on");
   readString("WeakSingleBoson:all=off");
@@ -174,19 +174,22 @@ void PythiaGun::Exec() {
       Pythia8::Particle &particle = event[parid];
 
       if (!FSR_on) {
+
+          if ( (particle.status() > -21)||(particle.status()<-23) ) continue ;
+          
         // only accept particles after MPI
-        if (particle.status() != 62)
-          continue;
+        //if (particle.status() != 62)
+          //continue;
         // only accept gluons and quarks
         // Also accept Gammas to put into the hadron's list
-        if (fabs(particle.id()) > 5 &&
-            (particle.id() != 21 && particle.id() != 22))
-          continue;
+        //if (fabs(particle.id()) > 5 &&
+          //  (particle.id() != 21 && particle.id() != 22))
+          //continue;
 
         // reject rare cases of very soft particles that don't have enough e to get
         // reasonable virtuality
-        if (particle.pT() < 1.0 / sqrt(vir_factor))
-          continue;
+        //if (particle.pT() < 1.0 / sqrt(vir_factor))
+          //continue;
 
         //if(particle.id()==22) cout<<"########this is a photon!######" <<endl;
         // accept
@@ -199,7 +202,12 @@ void PythiaGun::Exec() {
             (particle.id() != 21 && particle.id() != 22))
           continue;
       }
-      p62.push_back(particle);
+      
+        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " pt = " << particle.pT() << " status = " << particle.status() ;
+        double blurb;
+        
+        std::cin >> blurb ;
+        p62.push_back(particle);
     }
 
     // if you want at least 2
