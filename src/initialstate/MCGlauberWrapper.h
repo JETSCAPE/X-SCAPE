@@ -60,7 +60,7 @@ public:
   */
   double GetNcoll() { return(static_cast<double>(ncoll_)); };
 
-
+  void SampleABinaryCollisionPoint(double &x, double &y);
 private:
  // std::vector<CollisionEvent> collision_information_;
   std::unique_ptr<MCGlb::Glauber> MCGlauber_ptr_;
@@ -70,7 +70,7 @@ private:
   
   MCGlb::Parameters parameter_list_;                  
   std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
-
+  std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
   int nev_=1;
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.

@@ -48,25 +48,34 @@ void MCGlauberWrapper::InitTask() {
         mc_gen_=std::unique_ptr<MCGlb::EventGenerator>(new MCGlb::EventGenerator("mcgluaber.input", ran_seed));
         MCGlauber_ptr_ = std::unique_ptr<MCGlb::Glauber>(new MCGlb::Glauber(parameter_list_, ran_gen_ptr_));
 }
+
+void MCGlauberWrapper::Clear() {
+    Jetscape::JSINFO << "clear initial condition vectors";
+    binary_collision_x_.clear();
+    binary_collision_y_.clear();
+}
+
+
 void MCGlauberWrapper::Exec() {
     Clear();
     Jetscape::JSINFO << "Run MCGlauber to generate initial hard positions ...";
     try {
-        int ievent=0;
+        int iparticle=0;
         mc_gen_->generate_pre_events(nev_);
         
         std::vector<MCGlb::CollisionEvent> collisionEvents = mc_gen_->get_CollisionEventvector();
         ncoll_ = collisionEvents.size();
-        
-        while(ievent<ncoll_){
+        rand_int_ptr_ = (
+               std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
+        while(iparticle<ncoll_){
              // xvec[0],xvec[1],xvec[2] and xvec[3] are: t, x, y, z
              auto xvec = 
-                    collisionEvents[ievent].get_collision_position();
+                    collisionEvents[iparticle].get_collision_position();
              binary_collision_x_.push_back(xvec[1]);
              binary_collision_y_.push_back(xvec[2]);
-             //std::cout<<"binary_collision_x_========= "<<binary_collision_x_[ievent]<<std::endl;
-             //std::cout<<"binary_collision_y_========= "<<binary_collision_y_[ievent]<<std::endl;
-             ievent++;
+             //std::cout<<"binary_collision_x_========= "<<binary_collision_x_[iparticle]<<std::endl;
+             //std::cout<<"binary_collision_y_========= "<<binary_collision_y_[iparticle]<<std::endl;
+             iparticle++;
         }
         event_id_++;
     } catch (std::exception &err) {
@@ -77,8 +86,13 @@ void MCGlauberWrapper::Exec() {
 }
 
 
-void MCGlauberWrapper::Clear() {
-    Jetscape::JSINFO << "clear initial condition vectors";
+
+void MCGlauberWrapper::SampleABinaryCollisionPoint(double &x, double &y) {
+    int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
+    x = binary_collision_x_[rand_idx];
+    y = binary_collision_y_[rand_idx];
 }
+
+
 
 void MCGlauberWrapper::Write(weak_ptr<JetScapeWriter> w) {}
