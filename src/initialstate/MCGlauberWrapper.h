@@ -60,19 +60,21 @@ public:
   */
   double GetNcoll() { return(static_cast<double>(ncoll_)); };
 
-  void SampleABinaryCollisionPoint(double &x, double &y);
+  void SampleABinaryCollisionPoint(double &t, double &x, 
+                                   double &y, double &z);
 private:
  // std::vector<CollisionEvent> collision_information_;
   std::unique_ptr<MCGlb::Glauber> MCGlauber_ptr_;
   std::unique_ptr<MCGlb::EventGenerator> mc_gen_;
+  std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
+  std::vector<double> binary_collision_z_;
   
   MCGlb::Parameters parameter_list_;                  
   std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
-  int nev_=1;
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberWrapper> reg;
 };

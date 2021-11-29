@@ -39,7 +39,8 @@ MCGlauberWrapper::~MCGlauberWrapper() {}
                                 
 void MCGlauberWrapper::InitTask() {
         parameter_list_.read_in_parameters_from_file("mcgluaber.input");
-        int ran_seed = parameter_list_.get_seed();
+        //int ran_seed = parameter_list_.get_seed();
+        auto ran_seed = (*GetMt19937Generator())();
         auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
         
         ran_gen_ptr_ = std::shared_ptr<RandomUtil::Random>(new RandomUtil::Random(ran_seed, 0.0, 1.0, gamma_beta));
@@ -50,8 +51,10 @@ void MCGlauberWrapper::InitTask() {
 
 void MCGlauberWrapper::Clear() {
     Jetscape::JSINFO << "clear initial condition vectors";
+    binary_collision_t_.clear();
     binary_collision_x_.clear();
     binary_collision_y_.clear();
+    binary_collision_z_.clear();
 }
 
 
@@ -69,9 +72,11 @@ void MCGlauberWrapper::Exec() {
         while(iparticle<ncoll_){
              // xvec[0],xvec[1],xvec[2] and xvec[3] are: t, x, y, z
              auto xvec = 
-                    collisionEvents[iparticle].get_collision_position();
+                       collisionEvents[iparticle].get_collision_position();
+             binary_collision_t_.push_back(xvec[0]);
              binary_collision_x_.push_back(xvec[1]);
              binary_collision_y_.push_back(xvec[2]);
+             binary_collision_z_.push_back(xvec[3]);
              iparticle++;
         }
         event_id_++;
@@ -84,10 +89,12 @@ void MCGlauberWrapper::Exec() {
 
 
 
-void MCGlauberWrapper::SampleABinaryCollisionPoint(double &x, double &y) {
+void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x, double &y, double &z) {
     int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
+    t = binary_collision_t_[rand_idx];
     x = binary_collision_x_[rand_idx];
     y = binary_collision_y_[rand_idx];
+    z = binary_collision_z_[rand_idx];
 }
 
 
