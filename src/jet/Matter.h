@@ -34,7 +34,7 @@ public:
   void DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton> &pIn,
                     vector<Parton> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
-  void Dump_pIn_info(int i, vector<Parton> &pIn);
+  static void Dump_pIn_info(int i, vector<Parton> &pIn)  ;
 
   double generate_L(double form_time);
   double sudakov_Pgg(double g0, double g1, double loc_c, double E);

@@ -10,6 +10,7 @@
 
 #include "JetEnergyLossModule.h"
 #include "Pythia8/Pythia.h"
+#include "Matter.h"
 
 using namespace Jetscape;
 

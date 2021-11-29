@@ -20,15 +20,17 @@
   <!-- Inital State Module  -->
   <IS>
     <!--Trento> </Trento-->
-    <MCGlauber> </MCGlauber>
+    <MCGlauber>
+        <nEvents_MCGla> 1 </nEvents_MCGla>
+    </MCGlauber>
   </IS>
 
   <!-- Hard Process -->
   <Hard>
     <PythiaGun>
-      <pTHatMin>20</pTHatMin>
-      <pTHatMax>30</pTHatMax>
-      <eCM>200</eCM>
+      <pTHatMin>100</pTHatMin>
+      <pTHatMax>120</pTHatMax>
+      <eCM>5040</eCM>
     </PythiaGun>
   </Hard>
 

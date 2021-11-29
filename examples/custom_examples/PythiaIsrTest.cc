@@ -51,6 +51,7 @@
 #include "PartonShowerGeneratorDefault.h"
 #include "IsrJet.h"
 #include "IsrShowerPSG.h"
+#include "MCGlauberWrapper.h"
 
 #include "MainClock.h"
 #include "ModuleClock.h"
@@ -111,8 +112,8 @@ int main(int argc, char** argv)
 
   // Initial conditions and hydro
   //auto trento = make_shared<TrentoInitial>();
-  auto trento = make_shared<InitialState>();
-    //auto MCG = make_shared<MCGlauberWrapper>();
+  //auto trento = make_shared<InitialState>();
+  auto MCG = make_shared<MCGlauberWrapper>();
   auto pythiaGun= make_shared<PythiaGun> ();
   //auto isr = make_shared<InitialStateRadiationTest> ();
   auto hydro = make_shared<Brick> ();
@@ -121,9 +122,9 @@ int main(int argc, char** argv)
   //hydroTest->SetMultiThread(true);
   //hydroTest->SetActive(false);
 
-  jetscape->Add(trento);
+  //jetscape->Add(trento);
     
-    //jetscape->Add(MCG);
+  jetscape->Add(MCG);
 
   auto isrManager = make_shared<IsrManager>();
   //auto isrJloss = make_shared<JetEnergyLoss> (); //to be followed up ... make isr module ... !!!!

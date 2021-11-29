@@ -8,6 +8,7 @@
 #include "iMATTER.h"
 #include "JetScapeLogger.h"
 #include "JetScapeXML.h"
+#include "Matter.h"
 #include <string>
 #include <thread>
 #include <cmath>
@@ -44,6 +45,16 @@ void iMATTER::Init()
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
 
+    
+    if (std::isnan(pIn[0].e()) || std::isnan(pIn[0].px()) ||
+        std::isnan(pIn[0].py()) || std::isnan(pIn[0].pz()) ||
+        std::isnan(pIn[0].t()) || std::isnan(pIn[0].form_time())) {
+      JSINFO << BOLDYELLOW << "Parton on entry busted on time step " << time;
+      Matter::Dump_pIn_info(0, pIn);
+        double blurb;
+        std::cin >> blurb;
+    }
+    
     double blurb;
     
     Pythia8::Info info;
@@ -65,7 +76,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
   if (rNum<0.05 && std::abs(time)<3)
     {
       //DEBUG:
-        JSDEBUG<<"iMATTER module ..."<<time<<" "<<deltaT;
+        JSINFO << MAGENTA <<"iMATTER module ..."<<time<<" "<<deltaT;
         
         //<<endl;
       //DEBUG<<"pIn : "<<pIn.front();//<<endl;
@@ -81,7 +92,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
       //double m=sqrt(p.e()*z*z*p.e()-p.pt()*z*p.pt()*z*cosh(p.eta())*cosh(p.eta()));
       //double pp=sqrt(p.e()*z*z*p.e()-p.m()*p.m());
 
-      JSINFO << BOLDYELLOW <<pp.plabel() << " pid = " << pp.pid() << " px = " << pp.px() << " py = "<<pp.py()<<" pz = "<<pp.pz()  ;
+      JSINFO << BOLDYELLOW << pp.plabel() << " pid = " << pp.pid() << " px = " << pp.px() << " py = " << pp.py() << " pz = " << pp.pz()  ;
       //cout<<p.m()<<" "<<m<<endl;
 
         double blurb;
