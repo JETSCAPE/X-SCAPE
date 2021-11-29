@@ -38,7 +38,6 @@ MCGlauberWrapper::~MCGlauberWrapper() {}
 
                                 
 void MCGlauberWrapper::InitTask() {
-        nev_ = GetXMLElementDouble({"IS", "MCGlauber","nEvents_MCGla"});
         parameter_list_.read_in_parameters_from_file("mcgluaber.input");
         int ran_seed = parameter_list_.get_seed();
         auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
@@ -61,7 +60,7 @@ void MCGlauberWrapper::Exec() {
     Jetscape::JSINFO << "Run MCGlauber to generate initial hard positions ...";
     try {
         int iparticle=0;
-        mc_gen_->generate_pre_events(nev_);
+        mc_gen_->generate_pre_events();
         
         std::vector<MCGlb::CollisionEvent> collisionEvents = mc_gen_->get_CollisionEventvector();
         ncoll_ = collisionEvents.size();
@@ -73,8 +72,6 @@ void MCGlauberWrapper::Exec() {
                     collisionEvents[iparticle].get_collision_position();
              binary_collision_x_.push_back(xvec[1]);
              binary_collision_y_.push_back(xvec[2]);
-             //std::cout<<"binary_collision_x_========= "<<binary_collision_x_[iparticle]<<std::endl;
-             //std::cout<<"binary_collision_y_========= "<<binary_collision_y_[iparticle]<<std::endl;
              iparticle++;
         }
         event_id_++;
