@@ -101,15 +101,19 @@ void PGun::Exec() {
     VERBOSE(1)
         << "No initial state module, setting the starting location to 0. ";
   } else {
-    double x, y;
-    ini->SampleABinaryCollisionPoint(x, y);
+    double t, x, y, z;
+    ini->SampleABinaryCollisionPoint(t, x, y, z);
+    xLoc[0] = t;
     xLoc[1] = x;
     xLoc[2] = y;
+    xLoc[3] = z;
   }
 
+  xLoc[0] = 0.0;
   xLoc[1] = 0.0;
   xLoc[2] = 0.0;
-
+  xLoc[3] = 0.0;
+  
   if (flag_useHybridHad != 1) {
     AddParton(make_shared<Parton>(0, parID, 0, pT, rapidity, phi, p[0], xLoc));
   } else {
