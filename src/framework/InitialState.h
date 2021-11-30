@@ -124,8 +124,10 @@ public:
       @return Grid point (x,y,z or eta). 
       @param idx is an integer which maps to an unique unit cell in the coordinate space (x,y,z or eta). 
    */
+   /** get the collision information of t,x,y,z from 3DMCGlauber */
   std::tuple<double, double, double> CoordFromIdx(int idx);
-  virtual void SampleABinaryCollisionPoint(double &x, double &y);
+  virtual void SampleABinaryCollisionPoint(double &t, double &x,
+                                           double &y, double &z);
 
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
    */
