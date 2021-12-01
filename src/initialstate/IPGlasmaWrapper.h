@@ -60,7 +60,8 @@ public:
   //! Load saved number of binary collisions
   void ReadNbcList(std::string filename);
 
-  void SampleABinaryCollisionPoint(double &x, double &y);
+  void SampleABinaryCollisionPoint(double &t, double &x, 
+                                   double &y, double &z);
 
 private:
   std::unique_ptr<IPGlasma> IPGlasma_ptr_;
