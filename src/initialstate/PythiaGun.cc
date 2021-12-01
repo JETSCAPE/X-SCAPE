@@ -203,7 +203,7 @@ void PythiaGun::Exec() {
           continue;
       }
       
-        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " pt = " << particle.pT() << " status = " << particle.status() ;
+        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " status = " << particle.status() ;
         double blurb;
         
         std::cin >> blurb ;
@@ -254,8 +254,12 @@ void PythiaGun::Exec() {
 
   // Accept them all
 
+    double initial_state_label = -1 ;
+    double final_state_label = 1 ;
+    
   int hCounter = 0;
-  for (int np = 0; np < p62.size(); ++np) {
+  for (int np = 0; np < p62.size(); ++np)
+  {
     Pythia8::Particle &particle = p62.at(np);
 
     VERBOSE(7) << "Adding particle with pid = " << particle.id()
@@ -265,17 +269,29 @@ void PythiaGun::Exec() {
                << ", pT = " << particle.pT() << ", y = " << particle.y()
                << ", phi = " << particle.phi() << ", e = " << particle.e();
 
-    VERBOSE(7) << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
+    JSINFO<< MAGENTA << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3] << ", t = " << xLoc[0];
 
-    // if(particle.id() !=22)
-    // {
+      double label = 0;
+      
+      if (particle.status()==-21)
+      {
+          label = initial_state_label;
+          initial_state_label--;
+      }
+      if (particle.status()==-23)
+      {
+          label = final_state_label;
+          final_state_label++;
+      }
+
+      
     if (flag_useHybridHad != 1) {
-      AddParton(make_shared<Parton>(0, particle.id(), 0, particle.pT(),
+        AddParton(make_shared<Parton>(label, particle.id(), 0, particle.pT(),
                                     particle.y(), particle.phi(), particle.e(),
                                     xLoc));
     } else {
       auto ptn =
-          make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.y(),
+          make_shared<Parton>(label, particle.id(), 0, particle.pT(), particle.y(),
                               particle.phi(), particle.e(), xLoc);
       ptn->set_color(particle.col());
       ptn->set_anti_color(particle.acol());

@@ -45,6 +45,11 @@ void iMATTER::Init()
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
 
+
+    if ( pIn[0].plabel()>0 ) return ;
+    // i-MATTER only deals with initial state (note the i)
+    
+    JSINFO << " test on pIn[1].plabel = " << pIn[1].plabel() << " pIn.pstat = " << pIn[1].pstat() << " pIn[1].px = " << pIn[1].px() << " pIn[1].py = " << pIn[1].py() << " pIn[1].pz() = " << pIn[1].pz() << " pIn[1].e = " << pIn[1].e() ;
     
     if (std::isnan(pIn[0].e()) || std::isnan(pIn[0].px()) ||
         std::isnan(pIn[0].py()) || std::isnan(pIn[0].pz()) ||
@@ -65,7 +70,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     
     //std::cin >> blurb;
     
-  VERBOSE(3)<<"iMATTER::DoEnergyLoss at time = "<<time;
+  JSINFO << BOLDYELLOW <<"iMATTER::DoEnergyLoss at time = "<<time;
   VERBOSESHOWER(8)<< MAGENTA << "SentInPartons Signal received : "<<deltaT<<" "<<Q2<<" "<<&pIn;
  
   double rNum = ZeroOneDistribution(*GetMt19937Generator());
@@ -83,7 +88,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
       //pOut.push_back(pIn.front());
 
-      Parton pp=pIn.front();
+      Parton pp=pIn[0];
 
       double x[4]={time,0,0,0};
       //Parton pNew(p.plabel(),p.pid(),p.pstat(),p.pt(),p.eta(),p.phi(),p.e(),x);
@@ -94,6 +99,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
       JSINFO << BOLDYELLOW << pp.plabel() << " pid = " << pp.pid() << " px = " << pp.px() << " py = " << pp.py() << " pz = " << pp.pz()  ;
       //cout<<p.m()<<" "<<m<<endl;
+        
+        JSINFO << BOLDRED << " x = " << pp.x_in().x() << " y = " << pp.x_in().y() << " z = " << pp.x_in().z() << " t = " << pp.x_in().t() ;
 
         double blurb;
         
