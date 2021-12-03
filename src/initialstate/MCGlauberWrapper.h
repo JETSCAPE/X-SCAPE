@@ -49,7 +49,7 @@ public:
    */
   void Clear();
 
-   void InitTask();
+void InitTask();
 
   /** Default Write() function. It can be overridden by other tasks.
       @param w A pointer to the JetScapeWriter class.
@@ -62,6 +62,8 @@ public:
 
   void SampleABinaryCollisionPoint(double &t, double &x, 
                                    double &y, double &z);
+  double Get_nuleon_density(double t, double x, 
+                            double y, double z);
 private:
  // std::vector<CollisionEvent> collision_information_;
   std::unique_ptr<MCGlb::Glauber> MCGlauber_ptr_;

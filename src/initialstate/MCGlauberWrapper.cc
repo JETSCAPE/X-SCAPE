@@ -60,11 +60,10 @@ void MCGlauberWrapper::Clear() {
 
 void MCGlauberWrapper::Exec() {
     Clear();
-    Jetscape::JSINFO << "Run MCGlauber to generate initial hard positions ...";
+    Jetscape::JSINFO << "Run 3DMCGlauber to generate initial hard positions ...";
     try {
         int iparticle=0;
-        mc_gen_->generate_pre_events();
-        
+        mc_gen_->generate_pre_events(); // generate one 3DGlauber event
         std::vector<MCGlb::CollisionEvent> collisionEvents = mc_gen_->get_CollisionEventvector();
         ncoll_ = collisionEvents.size();
         rand_int_ptr_ = (
@@ -87,8 +86,6 @@ void MCGlauberWrapper::Exec() {
 
 }
 
-
-
 void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x, double &y, double &z) {
     int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
     t = binary_collision_t_[rand_idx];
@@ -97,6 +94,9 @@ void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x, double 
     z = binary_collision_z_[rand_idx];
 }
 
-
+double MCGlauberWrapper::Get_nuleon_density(double t, double x, double y, double z) {
+    double nucleon_density = mc_gen_->MCGlb_nucleon_density(t, x, y, z); // get the nucleon density
+    return (nucleon_density); 
+}
 
 void MCGlauberWrapper::Write(weak_ptr<JetScapeWriter> w) {}

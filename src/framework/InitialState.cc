@@ -96,4 +96,10 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
   }
 }
 
+
+double InitialState::Get_nuleon_density(double t, double x,
+                                        double y, double z) {
+    return 0.0;
+}
+                                    
 } // end namespace Jetscape

@@ -128,7 +128,10 @@ public:
   std::tuple<double, double, double> CoordFromIdx(int idx);
   virtual void SampleABinaryCollisionPoint(double &t, double &x,
                                            double &y, double &z);
-
+                                           
+  virtual double Get_nuleon_density(double t, double x,
+                                    double y, double z);
+                                           
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
    */
   inline double GetXMax() { return grid_max_x_; }
