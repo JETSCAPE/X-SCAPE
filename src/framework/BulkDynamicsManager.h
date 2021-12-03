@@ -20,7 +20,7 @@
 #include "JetScapeModuleBase.h"
 #include "JetClass.h"
 #include "FluidCellInfo.h"
-
+#include "BulkMediaInfo.h"
 #include "sigslot.h"
 
 #include <vector>
@@ -78,9 +78,12 @@ public:
 			    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
 
   void GetHydroStartTimeFromModules(double &tau0);
- 
-  virtual bool IsValidHydro(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z){ return false;}
-  
+
+  void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
+                            std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
+
+  void InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);  
+    
 private:
 
   

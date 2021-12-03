@@ -145,15 +145,19 @@ void BulkDynamicsManager::GetHydroInfoFromModules(Jetscape::real t, Jetscape::re
     JSWARN << " : No valid bulk manager modules found ...";
     exit(-1);
   }
-  //Would below require priority ordering of attached media modules? Yes... 
-  //Need to impliment a better method
-  for (auto it : GetTaskList()) {
-    if(dynamic_pointer_cast<FluidDynamics>(it)){
-      dynamic_pointer_cast<FluidDynamics>(it)->GetHydroInfo(t,x,y,z,fluid_cell_info_ptr);
-    }
+  //If and only if there is one media module and it is hydro do this like JETSCAPE
+  if(GetNumberOfTasks() == 1){
+      for (auto it : GetTaskList()) {
+	if(dynamic_pointer_cast<FluidDynamics>(it))
+	  dynamic_pointer_cast<FluidDynamics>(it)->GetHydroInfo(t,x,y,z,fluid_cell_info_ptr);
+      	else
+	  GetBulkInfo(t,x,y,z,fluid_cell_info_ptr);
+      }
   }
+  else
+    GetBulkInfo(t,x,y,z,fluid_cell_info_ptr);
+    
 }
-  
 void BulkDynamicsManager::GetHydroStartTimeFromModules(double &tau0){
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk manager modules found ...";
@@ -162,5 +166,55 @@ void BulkDynamicsManager::GetHydroStartTimeFromModules(double &tau0){
   for (auto it : GetTaskList()) {
     if(dynamic_pointer_cast<FluidDynamics>(it))dynamic_pointer_cast<FluidDynamics>(it)->GetHydroStartTime(tau0);
   }
-}  
+}
+void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
+                                                    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr){
+
+  //Critical temperature to switch from hydro to something else
+  float Tc = GetXMLElementDouble({"BDM", "Tc"});
+  bool validHydro = false;
+
+  //Need a cleaner way of getting media info
+  //Would be great place to implement std::variant
+  variant<std::unique_ptr<FluidCellInfo>,std::unique_ptr<BulkMediaInfo>> info;
+  
+  for (auto it : GetTaskList()) {
+    if(dynamic_pointer_cast<FluidDynamics>(it)){
+      dynamic_pointer_cast<FluidDynamics>(it)->GetHydroInfo(t,x,y,z,fluid_cell_info_ptr);
+      if(fluid_cell_info_ptr->temperature > Tc) validHydro = true;
+    }
+  }
+  //if validHydro = true, we are done; if not get info from other modules
+  if(validHydro == false){
+    std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
+    for (auto it : GetTaskList()) {
+      if(dynamic_pointer_cast<Afterburner>(it)){
+	dynamic_pointer_cast<Afterburner>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
+      }
+    }
+    InfoWrapper(fluid_cell_info_ptr,bulk_info_ptr);
+  }
+}
+void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){
+  fluid_cell_info_ptr = make_unique<FluidCellInfo>();
+  fluid_cell_info_ptr->temperature = bulk_info_ptr->temperature;
+  fluid_cell_info_ptr->pressure = bulk_info_ptr->pressure;
+  fluid_cell_info_ptr->entropy_density = bulk_info_ptr->entropy_density;
+  fluid_cell_info_ptr->energy_density = bulk_info_ptr->energy_density;
+  fluid_cell_info_ptr->qgp_fraction = bulk_info_ptr->qgp_fraction;
+  fluid_cell_info_ptr->mu_B = bulk_info_ptr->mu_B;
+  fluid_cell_info_ptr->mu_C = bulk_info_ptr->mu_C;
+  fluid_cell_info_ptr->mu_S = bulk_info_ptr->mu_S;
+  fluid_cell_info_ptr->vx = bulk_info_ptr->vx;
+  fluid_cell_info_ptr->vy = bulk_info_ptr->vy;
+  fluid_cell_info_ptr->vz = bulk_info_ptr->vz;
+  fluid_cell_info_ptr->bulk_Pi = bulk_info_ptr->bulk_Pi;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      fluid_cell_info_ptr->pi[i][j] = bulk_info_ptr->pi[i][j];
+    }
+  }
+
+}
+  
 } // end namespace Jetscape

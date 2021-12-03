@@ -140,8 +140,8 @@ int main(int argc, char** argv)
   auto bulkmanager = make_shared<BulkDynamicsManager> ();
   bulkmanager->SetActive(true);//Time-step evolution
   bulkmanager->SetTimeRange(-20.0,20.0);
-  //bulkmanager->Add(cascadeTest);
   bulkmanager->Add(hydro);
+  bulkmanager->Add(cascadeTest);
   jetscape->Add(bulkmanager);
   // Output
   auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");

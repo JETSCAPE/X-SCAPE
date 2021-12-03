@@ -31,6 +31,7 @@
 #include "PreequilibriumDynamics.h"
 #include "RealType.h"
 #include "FluidCellInfo.h"
+#include "BulkMediaInfo.h"
 #include "FluidEvolutionHistory.h"
 #include "LiquefierBase.h"
 #include "SurfaceCellInfo.h"
@@ -194,7 +195,9 @@ public:
       //return bulk_info.get(t, x, y, z);
     }
   }
-
+  virtual void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,Jetscape::real z,
+                           std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){}
+  
   // this function print out the information of the fluid cell to the screen
   /** It prints out the information of the fluid cell.
 	@param fluid_cell_info_ptr A pointer to FluidCellInfor class.
