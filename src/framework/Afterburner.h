@@ -19,6 +19,8 @@
 
 #include "JetScapeModuleBase.h"
 #include "SoftParticlization.h"
+#include "RealType.h"
+#include "BulkMediaInfo.h"
 #include "sigslot.h"
 
 namespace Jetscape {
@@ -39,7 +41,8 @@ public:
   virtual void Init();
   virtual void Exec();
   virtual void CalculateTime();
-
+  virtual void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,Jetscape::real z,
+			   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){}
 protected:
   /// Pointer to particlization sampler, which provides initial hadrons
   std::shared_ptr<SoftParticlization> soft_particlization_sampler_;

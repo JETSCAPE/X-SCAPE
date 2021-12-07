@@ -44,4 +44,5 @@ void Afterburner::CalculateTime() {
   VERBOSE(2) << "Afterburner running for time: " << GetId() << " ...";
   CalculateTimeTask();
 }
+
 } // end namespace Jetscape
