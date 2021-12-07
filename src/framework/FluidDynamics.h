@@ -31,6 +31,7 @@
 #include "PreequilibriumDynamics.h"
 #include "RealType.h"
 #include "FluidCellInfo.h"
+#include "BulkMediaInfo.h"
 #include "FluidEvolutionHistory.h"
 #include "LiquefierBase.h"
 #include "SurfaceCellInfo.h"
@@ -62,6 +63,7 @@ protected:
   std::shared_ptr<PreequilibriumDynamics> pre_eq_ptr;
 
   double eta;
+  bool boost_invariant_;
   Parameter parameter_list;
 
   // How to store this data? In memory or hard disk?
@@ -154,7 +156,7 @@ public:
 
   /** @return Start time (or tau) for hydrodynamic evolution.
      */
-  Jetscape::real GetHydroStartTime() const { return (hydro_tau_0); }
+  void GetHydroStartTime(double &tau0) { tau0 = hydro_tau_0; }
 
   /** @return End time (or tau) for hydrodynamic evolution.
      */
@@ -193,7 +195,9 @@ public:
       //return bulk_info.get(t, x, y, z);
     }
   }
-
+  virtual void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,Jetscape::real z,
+                           std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){}
+  
   // this function print out the information of the fluid cell to the screen
   /** It prints out the information of the fluid cell.
 	@param fluid_cell_info_ptr A pointer to FluidCellInfor class.
@@ -204,8 +208,8 @@ public:
   // the detailed implementation is left to the hydro developper
   /** @return Default function to get the hypersurface for Cooper-Frye or recombination model. It can overridden by different modules.
      */
-  std::vector<SurfaceCellInfo>
-  FindAConstantTemperatureSurface(Jetscape::real T_sw);
+  void FindAConstantTemperatureSurface(
+          Jetscape::real T_sw, std::vector<SurfaceCellInfo> &surface_cells);
 
   // all the following functions will call function GetHydroInfo()
   // to get thermaldynamic and dynamical information at a space-time point

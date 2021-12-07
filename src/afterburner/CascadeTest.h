@@ -2,7 +2,8 @@
 #define CascadeTest_H
 
 #include "Afterburner.h"
-
+#include "FluidCellInfo.h"
+#include "BulkMediaInfo.h"
 using namespace Jetscape;
 
 class CascadeTest : public Afterburner {
@@ -25,6 +26,10 @@ public:
 
   virtual any GetHistory(); 
 
+  void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,
+                    Jetscape::real z,
+                    std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
+  
 };
 
 #endif // CascadeTest_H

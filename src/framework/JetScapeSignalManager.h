@@ -26,6 +26,7 @@
 #include "HadronizationManager.h"
 #include "Hadronization.h"
 #include "FluidDynamics.h"
+#include "BulkDynamicsManager.h"
 #include "HardProcess.h"
 #include "JetScapeWriter.h"
 #include "PreequilibriumDynamics.h"
@@ -63,6 +64,9 @@ public:
   void SetHydroPointer(shared_ptr<FluidDynamics> m_hydro) { hydro = m_hydro; }
   weak_ptr<FluidDynamics> GetHydroPointer() { return hydro; }
 
+  void SetBulkDynamicsManagerPointer(shared_ptr<BulkDynamicsManager> m_bulk) { bulk = m_bulk; }
+  weak_ptr<BulkDynamicsManager> GetBulkPointer() { return bulk; }
+  
   void SetSoftParticlizationPointer(shared_ptr<SoftParticlization> m_soft) {
     softparticlization = m_soft;
   }
@@ -115,8 +119,10 @@ public:
 
   void ConnectJetSignal(shared_ptr<JetEnergyLoss> j);
   void ConnectEdensitySignal(shared_ptr<JetEnergyLoss> j);
+  void ConnectGetHydroTau0Signal(shared_ptr<JetEnergyLoss> j);
   void ConnectGetHydroCellSignal(shared_ptr<JetEnergyLoss> j);
   void ConnectGetHydroCellSignal(shared_ptr<LiquefierBase> l);
+  void ConnectGetHydroCellSignal(shared_ptr<Hadronization> h);
   void ConnectGetHardPartonListSignal(shared_ptr<JetEnergyLossManager> jm);
   void ConnectGetHardPartonListSignal(shared_ptr<IsrManager> jm);
   void ConnectSentInPartonsSignal(shared_ptr<JetEnergyLoss> j,
@@ -125,6 +131,8 @@ public:
   void ConnectTransformPartonsSignal(shared_ptr<Hadronization> h,
                                      shared_ptr<Hadronization> h2);
 	void ConnectGetFinalHadronListSignal(shared_ptr<HadronPrinter> h);
+
+  void ConnectGetHydroHyperSurfaceSignal(shared_ptr<Hadronization> h);
 
   void
   DisconnectSignal(){}; // to be implememted if needed maybe for Eloss ...!???
@@ -149,6 +157,7 @@ private:
   weak_ptr<InitialState> initial_state;
   weak_ptr<PreequilibriumDynamics> pre_equilibrium;
   weak_ptr<FluidDynamics> hydro;
+  weak_ptr<BulkDynamicsManager> bulk;
   weak_ptr<JetEnergyLossManager> jloss;
   weak_ptr<HardProcess> hardp;
   weak_ptr<JetScapeWriter> writer;

@@ -19,6 +19,8 @@
 //#include "JetScapeTask.h"
 #include "JetScapeModuleBase.h"
 #include "JetClass.h"
+#include "FluidCellInfo.h"
+#include "BulkMediaInfo.h"
 #include "sigslot.h"
 
 #include <vector>
@@ -31,7 +33,7 @@ class BulkDynamicsManager
       public std::enable_shared_from_this<BulkDynamicsManager> {
 
 public:
-  /** Default constructor to create a bulk dynamics manager. Sets task ID as "BulkDynamicsManager". 
+  /** Default constructor to create a bulk dynamics manager. Sets task ID as "BulkDynamicsManager".
    */
   BulkDynamicsManager();
 
@@ -39,11 +41,11 @@ public:
    */
   virtual ~BulkDynamicsManager();
 
-  /** It initializes the tasks attached to the bulk dynamics manager. 
+  /** It initializes the tasks attached to the bulk dynamics manager.
    */
   virtual void Init();
 
-  /** 
+  /**
   */
   virtual void Exec();
 
@@ -59,9 +61,32 @@ public:
 
   virtual void FinishPerEvent();
 
+  void UpdateEnergyDeposit(int t, double edop){ UpdateEnergyDepositFromModules(t, edop); }
+
+  void GetEnergyDensity(int t, double &edensity){ GetEnergyDensityFromModules(t, edensity); }
+
+  void GetHydroCell(double t, double x, double y, double z,
+                            std::unique_ptr<FluidCellInfo> &fCell) { GetHydroInfoFromModules(t, x, y, z, fCell); }
+
+  void GetHydroStartTime(double &tau0){GetHydroStartTimeFromModules(tau0); }
+
+  void UpdateEnergyDepositFromModules(int t, double edop);
+
+  void GetEnergyDensityFromModules(int t, double &edensity);
+
+  void GetHydroInfoFromModules(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
+			    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
+
+  void GetHydroStartTimeFromModules(double &tau0);
+
+  void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
+                            std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
+
+  void InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
+
 private:
 
-  
+
 
 };
 

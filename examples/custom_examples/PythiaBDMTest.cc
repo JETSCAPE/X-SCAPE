@@ -77,10 +77,10 @@ int main(int argc, char** argv)
   // can be also set also via XML file (at least partially)
   JetScapeLogger::Instance()->SetInfo(true);
   JetScapeLogger::Instance()->SetDebug(true);
-  JetScapeLogger::Instance()->SetRemark(false);
+  JetScapeLogger::Instance()->SetRemark(true);
   //SetVerboseLevel (9 a lot of additional debug output ...)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
-  JetScapeLogger::Instance()->SetVerboseLevel(0);
+  JetScapeLogger::Instance()->SetVerboseLevel(9);
 
   Show();
 
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 
 
   jetscape->Add(pythiaGun);
-  jetscape->Add(hydro);
+  //jetscape->Add(hydro);
 
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
@@ -127,7 +127,7 @@ int main(int argc, char** argv)
   jlossmanager->SetTimeRange(-20.0,20.0);
   jloss->SetTimeRange(-20.0,20.0);
   matter->SetTimeRange(-20.0,20.0);
-  
+
   // Note: if you use Matter, it MUST come first (to set virtuality)
   jloss->Add(matter);
   jlossmanager->Add(jloss);
@@ -136,10 +136,11 @@ int main(int argc, char** argv)
   auto cascadeTest = make_shared<CascadeTest> ();
   cascadeTest->SetMultiThread(true);
   cascadeTest->SetActive(false);
-  
+
   auto bulkmanager = make_shared<BulkDynamicsManager> ();
-  bulkmanager->SetActive(false);//Time-step evolution
+  bulkmanager->SetActive(true);//Time-step evolution
   bulkmanager->SetTimeRange(-20.0,20.0);
+  bulkmanager->Add(hydro);
   bulkmanager->Add(cascadeTest);
   jetscape->Add(bulkmanager);
   // Output
