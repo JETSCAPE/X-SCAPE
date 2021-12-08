@@ -100,14 +100,13 @@ int main(int argc, char** argv)
   auto trento = make_shared<InitialState>();
   auto pythiaGun= make_shared<PythiaGun> ();
   auto hydro = make_shared<Brick> ();
-
   jetscape->Add(trento);
 
   auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
 
 
   jetscape->Add(pythiaGun);
-  //jetscape->Add(hydro);
+  jetscape->Add(hydro);
 
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
@@ -140,9 +139,9 @@ int main(int argc, char** argv)
   auto bulkmanager = make_shared<BulkDynamicsManager> ();
   bulkmanager->SetActive(true);//Time-step evolution
   bulkmanager->SetTimeRange(-20.0,20.0);
-  bulkmanager->Add(hydro);
+  //bulkmanager->Add(hydro);
   //bulkmanager->Add(cascadeTest);
-  jetscape->Add(bulkmanager);
+  //jetscape->Add(bulkmanager);
   // Output
   auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
   writer->SetId("AsciiWriter"); //for task search test ...
