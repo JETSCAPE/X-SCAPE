@@ -86,8 +86,8 @@ public:
 
 private:
 
-
-
+  float Tc;
+  
 };
 
 } // end namespace Jetscape

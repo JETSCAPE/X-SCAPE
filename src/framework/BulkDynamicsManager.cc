@@ -64,6 +64,10 @@ void BulkDynamicsManager::Init() {
 
   JSINFO << "Found " << GetNumberOfTasks()
          << " Bulk Dynamics Manager Tasks/Modules Initialize them ... ";
+
+  //Critical temperature to switch from hydro to something else
+  Tc = GetXMLElementDouble({"BDM", "Tc"});
+
   BulkDynamicsManager::InitTasks();
 
 }
@@ -170,8 +174,6 @@ void BulkDynamicsManager::GetHydroStartTimeFromModules(double &tau0){
 void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
                                                     std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr){
 
-  //Critical temperature to switch from hydro to something else
-  float Tc = GetXMLElementDouble({"BDM", "Tc"});
   bool validHydro = false;
 
   //Need a cleaner way of getting media info
