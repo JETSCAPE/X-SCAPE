@@ -62,8 +62,8 @@ void InitTask();
 
   void SampleABinaryCollisionPoint(double &t, double &x, 
                                    double &y, double &z);
-  double Get_nuleon_density(double t, double x, 
-                            double y, double z);
+  double Get_total_nucleon_density_lab(double t, double x, 
+                                       double y, double z);
 private:
  // std::vector<CollisionEvent> collision_information_;
   std::unique_ptr<MCGlb::Glauber> MCGlauber_ptr_;

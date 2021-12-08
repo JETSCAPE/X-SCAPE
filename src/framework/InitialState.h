@@ -129,8 +129,8 @@ public:
   virtual void SampleABinaryCollisionPoint(double &t, double &x,
                                            double &y, double &z);
                                            
-  virtual double Get_nuleon_density(double t, double x,
-                                    double y, double z);
+  virtual double Get_total_nucleon_density_lab(double t, double x,
+                                               double y, double z);
                                            
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
    */
