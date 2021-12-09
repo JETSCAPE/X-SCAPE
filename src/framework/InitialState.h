@@ -132,6 +132,9 @@ public:
   virtual double Get_total_nucleon_density_lab(double t, double x,
                                                double y, double z);
                                            
+  virtual double Get_target_nucleon_density_lab(double t, double x,
+                                                double y, double z);
+                                               
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
    */
   inline double GetXMax() { return grid_max_x_; }

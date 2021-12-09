@@ -101,5 +101,10 @@ double InitialState::Get_total_nucleon_density_lab(double t, double x,
                                                    double y, double z) {
     return 0.0;
 }
+
+double InitialState::Get_target_nucleon_density_lab(double t, double x,
+                                                    double y, double z) {
+    return 0.0;
+}
                                     
 } // end namespace Jetscape
