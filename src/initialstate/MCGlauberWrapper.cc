@@ -108,4 +108,11 @@ double MCGlauberWrapper::Get_target_nucleon_density_lab(double t, double x, doub
     return (nucleon_density); 
 }
 
+double MCGlauberWrapper::Get_projectile_nucleon_density_lab(double t, double x, double y, double z) {
+    // get the projectile nucleon density at the Lab frame, projectile: moves to the +z direction
+    // the unit is 1/fm^3 
+    double nucleon_density = mc_gen_->MCGlb_projectile_nucleon_density(t, x, y, z); 
+    return (nucleon_density); 
+}
+
 void MCGlauberWrapper::Write(weak_ptr<JetScapeWriter> w) {}

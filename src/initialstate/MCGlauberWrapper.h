@@ -66,6 +66,8 @@ void InitTask();
                                        double y, double z);
   double Get_target_nucleon_density_lab(double t, double x, 
                                         double y, double z);
+  double Get_projectile_nucleon_density_lab(double t, double x, 
+                                            double y, double z);
 private:
  // std::vector<CollisionEvent> collision_information_;
   std::unique_ptr<MCGlb::Glauber> MCGlauber_ptr_;
