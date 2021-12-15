@@ -178,7 +178,7 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
 
   //Need a cleaner way of getting media info
   //Would be great place to implement std::variant
-  variant<std::unique_ptr<FluidCellInfo>,std::unique_ptr<BulkMediaInfo>> info;
+  //variant<std::unique_ptr<FluidCellInfo>,std::unique_ptr<BulkMediaInfo>> info;
 
   for (auto it : GetTaskList()) {
     if(dynamic_pointer_cast<FluidDynamics>(it)){
@@ -190,8 +190,8 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
   if(validHydro == false){
     std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
     for (auto it : GetTaskList()) {
-      if(dynamic_pointer_cast<Afterburner>(it)){
-	dynamic_pointer_cast<Afterburner>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
+      if(dynamic_pointer_cast<BulkMediaBase>(it)){
+	dynamic_pointer_cast<BulkMediaBase>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
       }
     }
     InfoWrapper(fluid_cell_info_ptr,bulk_info_ptr);
@@ -216,7 +216,6 @@ void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell
       fluid_cell_info_ptr->pi[i][j] = bulk_info_ptr->pi[i][j];
     }
   }
-
 }
 
 } // end namespace Jetscape

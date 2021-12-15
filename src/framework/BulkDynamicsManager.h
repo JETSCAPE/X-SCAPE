@@ -18,6 +18,7 @@
 
 //#include "JetScapeTask.h"
 #include "JetScapeModuleBase.h"
+#include "BulkMediaBase.h"
 #include "JetClass.h"
 #include "FluidCellInfo.h"
 #include "BulkMediaInfo.h"

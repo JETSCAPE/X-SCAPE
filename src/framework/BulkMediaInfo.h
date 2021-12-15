@@ -37,6 +37,7 @@ public:
   Jetscape::real pi[4][4];   //!< Shear stress tensor [GeV/fm^3].
   Jetscape::real bulk_Pi;    //!< Bulk viscous pressure [GeV/fm^3].
 
+  std::string origin_id; //!< string containing ID of originating bulk media.  
   /** Default constructor.*/
   BulkMediaInfo();
 

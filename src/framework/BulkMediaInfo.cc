@@ -37,6 +37,7 @@ BulkMediaInfo::BulkMediaInfo() {
     }
   }
   bulk_Pi = 0.0;
+  origin_id = "BulkMedia";
 }
 
 } // namespace Jetscape
