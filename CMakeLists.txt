@@ -435,6 +435,15 @@ target_link_libraries(PythiaBrickTest JetScape )
 add_executable(PythiaIsrTest ./examples/custom_examples/PythiaIsrTest.cc)
 target_link_libraries(PythiaIsrTest JetScape )
 
+add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
+target_link_libraries(PythiaBDMTest JetScape )
+
+add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
+target_link_libraries(PythiaNoBDMTest JetScape )
+
+add_executable(PythiaBDMTest_Hydro_Cascade ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
+target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
+
 # executables with additional dependencies
 if ( USE_IPGlasma )
     target_link_libraries(runJetscape ${GSL_LIBRARIES})

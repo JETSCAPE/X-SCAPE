@@ -12,36 +12,29 @@
  * Distributed under the GNU General Public License 3.0 (GPLv3 or later).
  * See COPYING for details.
  ******************************************************************************/
-// This is a general basic class for hadronic afterburner
+// This is a general basic class for bulk media
 
-#include "./Afterburner.h"
+#include "./BulkMediaBase.h"
 #include "./JetScapeSignalManager.h"
 
 using namespace std;
 
-namespace Jetscape {
-void Afterburner::Init() {
+namespace Jetscape {  
+void BulkMediaBase::Init() {
   // Makes sure that XML file with options and parameters is loaded
   JetScapeModuleBase::Init();
-  JSINFO << "Initializing Afterburner : " << GetId() << " ...";
+  JSINFO << "Initializing BulkMediaBase : " << GetId() << " ...";
 
-  // Get the pointer to sampler
-  soft_particlization_sampler_ =
-      JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
-  if (!soft_particlization_sampler_) {
-    JSWARN << "No soft particlization module found. It is necessary to provide"
-           << " hadrons to afterburner.";
-  }
   InitTask();
 }
 
-void Afterburner::Exec() {
-  VERBOSE(2) << "Afterburner running: " << GetId() << " ...";
+void BulkMediaBase::Exec() {
+  VERBOSE(2) << "BulkMediaBase running: " << GetId() << " ...";
   ExecuteTask();
 }
 
-void Afterburner::CalculateTime() {
-  VERBOSE(2) << "Afterburner running for time: " << GetId() << " ...";
+void BulkMediaBase::CalculateTime() {
+  VERBOSE(2) << "BulkMediaBase running for time: " << GetId() << " ...";
   CalculateTimeTask();
 }
 

@@ -14,8 +14,8 @@
  ******************************************************************************/
 // This is a general basic class for hadronic afterburner
 
-#ifndef AFTERBURNER_H
-#define AFTERBURNER_H
+#ifndef BULKMEDIABASE_H
+#define BULKMEDIABASE_H
 
 #include "JetScapeModuleBase.h"
 #include "SoftParticlization.h"
@@ -26,14 +26,14 @@
 namespace Jetscape {
 
 /// Interface to hadronic afterburner
-class Afterburner : public JetScapeModuleBase {
+class BulkMediaBase : public JetScapeModuleBase {
 public:
-  Afterburner() {
+  BulkMediaBase() {
     VERBOSE(8);
-    SetId("Afterburner");
+    SetId("BulkMediaBase");
   }
 
-  ~Afterburner() {
+  ~BulkMediaBase() {
     VERBOSE(8);
     disconnect_all();
   }
@@ -44,10 +44,9 @@ public:
   virtual void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,Jetscape::real z,
 			   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){}
 protected:
-  /// Pointer to particlization sampler, which provides initial hadrons
-  std::shared_ptr<SoftParticlization> soft_particlization_sampler_;
+
 };
 
 } // end namespace Jetscape
 
-#endif // AFTERBURNER_H
+#endif // BULKMEDIABASE_H
