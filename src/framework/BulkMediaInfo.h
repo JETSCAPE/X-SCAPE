@@ -18,6 +18,7 @@
 #define BULKMEDIAINFO_H
 
 #include "RealType.h"
+#include <string>
 
 namespace Jetscape {
 
