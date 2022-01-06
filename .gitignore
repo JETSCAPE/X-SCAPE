@@ -13,6 +13,7 @@ build*/*
 external_packages/LBT*
 external_packages/iSS*
 external_packages/music*
+external_packages/3DGlauber
 examples/test_hydro_files/
 external_packages/freestream-milne/
 external_packages/smash/smash_code/
