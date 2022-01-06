@@ -69,8 +69,6 @@ public:
   double Get_projectile_nucleon_density_lab(double t, double x,
                                             double y, double z);
 private:
- // std::vector<CollisionEvent> collision_information_;
-  std::unique_ptr<MCGlb::Glauber> MCGlauber_ptr_;
   std::unique_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;

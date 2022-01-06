@@ -40,13 +40,8 @@ void MCGlauberWrapper::InitTask() {
         auto ran_seed = (*GetMt19937Generator())();
         auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
 
-        ran_gen_ptr_ = std::shared_ptr<RandomUtil::Random>(
-                new RandomUtil::Random(ran_seed, 0.0, 1.0, gamma_beta));
-
         mc_gen_=std::unique_ptr<MCGlb::EventGenerator>(
                 new MCGlb::EventGenerator("mcgluaber.input", ran_seed));
-        MCGlauber_ptr_ = std::unique_ptr<MCGlb::Glauber>(
-                new MCGlb::Glauber(parameter_list_, ran_gen_ptr_));
 }
 
 void MCGlauberWrapper::Clear() {
@@ -70,7 +65,7 @@ void MCGlauberWrapper::Exec() {
         ncoll_ = collisionEvents.size();
         rand_int_ptr_ = (
             std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
-        while(iparticle<ncoll_){
+        while (iparticle < ncoll_) {
              auto xvec = (
                 collisionEvents[iparticle].get_collision_position());
              binary_collision_t_.push_back(xvec[0]);
