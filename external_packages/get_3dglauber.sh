@@ -13,8 +13,9 @@
 # See COPYING for details.
 ##############################################################################
 
+folderName="3dMCGlauber"
 # download the code package
-git clone --depth=1 https://github.com/chunshen1987/3dMCGlauber.git --branch wenbin1501110084-patch-1 3dMCGlauber
-cd 3dMCGlauber 
+rm -fr $folderName
+git clone --depth=1 https://github.com/chunshen1987/3dMCGlauber.git --branch JETSCAPE $folderName
+cd $folderName
 ./get_LHAPDF.sh
-
