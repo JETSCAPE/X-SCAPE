@@ -34,19 +34,19 @@ MCGlauberWrapper::MCGlauberWrapper() {
 }
 
 
-MCGlauberWrapper::~MCGlauberWrapper() {}
-
-                                
 void MCGlauberWrapper::InitTask() {
         parameter_list_.read_in_parameters_from_file("mcgluaber.input");
         //int ran_seed = parameter_list_.get_seed();
         auto ran_seed = (*GetMt19937Generator())();
         auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
-        
-        ran_gen_ptr_ = std::shared_ptr<RandomUtil::Random>(new RandomUtil::Random(ran_seed, 0.0, 1.0, gamma_beta));
-                    
-        mc_gen_=std::unique_ptr<MCGlb::EventGenerator>(new MCGlb::EventGenerator("mcgluaber.input", ran_seed));
-        MCGlauber_ptr_ = std::unique_ptr<MCGlb::Glauber>(new MCGlb::Glauber(parameter_list_, ran_gen_ptr_));
+
+        ran_gen_ptr_ = std::shared_ptr<RandomUtil::Random>(
+                new RandomUtil::Random(ran_seed, 0.0, 1.0, gamma_beta));
+
+        mc_gen_=std::unique_ptr<MCGlb::EventGenerator>(
+                new MCGlb::EventGenerator("mcgluaber.input", ran_seed));
+        MCGlauber_ptr_ = std::unique_ptr<MCGlb::Glauber>(
+                new MCGlb::Glauber(parameter_list_, ran_gen_ptr_));
 }
 
 void MCGlauberWrapper::Clear() {
@@ -60,18 +60,19 @@ void MCGlauberWrapper::Clear() {
 
 void MCGlauberWrapper::Exec() {
     Clear();
-    Jetscape::JSINFO << "Run 3DMCGlauber to generate initial hard positions ...";
+    Jetscape::JSINFO << "Run 3DMCGlauber to generate initial hard positions "
+                     << "...";
     try {
         int iparticle=0;
         mc_gen_->generate_pre_events(); // generate one 3DGlauber event
-        std::vector<MCGlb::CollisionEvent> collisionEvents = mc_gen_->get_CollisionEventvector();
+        std::vector<MCGlb::CollisionEvent> collisionEvents = (
+            mc_gen_->get_CollisionEventvector());
         ncoll_ = collisionEvents.size();
         rand_int_ptr_ = (
-               std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
+            std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
         while(iparticle<ncoll_){
-             // xvec[0],xvec[1],xvec[2] and xvec[3] are: t, x, y, z
-             auto xvec = 
-                       collisionEvents[iparticle].get_collision_position();
+             auto xvec = (
+                collisionEvents[iparticle].get_collision_position());
              binary_collision_t_.push_back(xvec[0]);
              binary_collision_x_.push_back(xvec[1]);
              binary_collision_y_.push_back(xvec[2]);
@@ -86,7 +87,9 @@ void MCGlauberWrapper::Exec() {
 
 }
 
-void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x, double &y, double &z) {
+
+void MCGlauberWrapper::SampleABinaryCollisionPoint(
+        double &t, double &x, double &y, double &z) {
     int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
     t = binary_collision_t_[rand_idx];
     x = binary_collision_x_[rand_idx];
@@ -94,25 +97,27 @@ void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x, double 
     z = binary_collision_z_[rand_idx];
 }
 
-double MCGlauberWrapper::Get_total_nucleon_density_lab(double t, double x, double y, double z) {
-    // get the summation of nucleon density over projectile and target at the Lab frame.
-    // the unit is 1/fm^3 
-    double nucleon_density = mc_gen_->MCGlb_nucleon_density(t, x, y, z); 
-    return (nucleon_density); 
+
+double MCGlauberWrapper::Get_total_nucleon_density_lab(
+        double t, double x, double y, double z) {
+    // get the summation of nucleon density over projectile and target
+    // at the Lab frame. the unit is 1/fm^3
+    double nucleon_density = mc_gen_->MCGlb_nucleon_density(t, x, y, z);
+    return (nucleon_density);
 }
 
-double MCGlauberWrapper::Get_target_nucleon_density_lab(double t, double x, double y, double z) {
-    // get the target nucleon density at the Lab frame, target: moves to the -z direction
-    // the unit is 1/fm^3 
-    double nucleon_density = mc_gen_->MCGlb_target_nucleon_density(t, x, y, z); 
-    return (nucleon_density); 
+
+double MCGlauberWrapper::Get_target_nucleon_density_lab(
+        double t, double x, double y, double z) {
+    // get the target nucleon density at the Lab frame, target:
+    // moves to the -z direction. the unit is 1/fm^3
+    return(mc_gen_->MCGlb_target_nucleon_density(t, x, y, z));
 }
 
-double MCGlauberWrapper::Get_projectile_nucleon_density_lab(double t, double x, double y, double z) {
-    // get the projectile nucleon density at the Lab frame, projectile: moves to the +z direction
-    // the unit is 1/fm^3 
-    double nucleon_density = mc_gen_->MCGlb_projectile_nucleon_density(t, x, y, z); 
-    return (nucleon_density); 
-}
 
-void MCGlauberWrapper::Write(weak_ptr<JetScapeWriter> w) {}
+double MCGlauberWrapper::Get_projectile_nucleon_density_lab(
+        double t, double x, double y, double z) {
+    // get the projectile nucleon density at the Lab frame, projectile:
+    // moves to the +z direction. the unit is 1/fm^3
+    return(mc_gen_->MCGlb_projectile_nucleon_density(t, x, y, z));
+}
