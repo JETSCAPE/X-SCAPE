@@ -118,18 +118,32 @@ double MCGlauberWrapper::Get_projectile_nucleon_density_lab(
 
 void MCGlauberWrapper::OutputHardPartonPosAndMomentum(double t, double x, double y, 
                  double z, double E, double px, double py, double pz, int direction) {
-    parton_inf.t = t;
-    parton_inf.x = x;
-    parton_inf.y = y;
-    parton_inf.z = z;
-    parton_inf.E = E;
-    parton_inf.px = px;
-    parton_inf.py = py;
-    parton_inf.pz = pz;
-    parton_inf.direction = direction;
+    if (direction == 1) {
+        hardparton_inf_proj.t = t;
+        hardparton_inf_proj.x = x;
+        hardparton_inf_proj.y = y;
+        hardparton_inf_proj.z = z;
+        hardparton_inf_proj.E = E;
+        hardparton_inf_proj.px = px;
+        hardparton_inf_proj.py = py;
+        hardparton_inf_proj.pz = pz;
+    } else {
+        hardparton_inf_targ.t = t;
+        hardparton_inf_targ.x = x;
+        hardparton_inf_targ.y = y;
+        hardparton_inf_targ.z = z;
+        hardparton_inf_targ.E = E;
+        hardparton_inf_targ.px = px;
+        hardparton_inf_targ.py = py;
+        hardparton_inf_targ.pz = pz;
+    }
 }
 
-MCGlauberWrapper::HardPartonPosAndMom MCGlauberWrapper::GetHardPartonPosAndMomentum() {
-    return parton_inf;
+MCGlauberWrapper::HardPartonPosAndMom MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
+    return hardparton_inf_proj;
+}
+
+MCGlauberWrapper::HardPartonPosAndMom MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
+    return hardparton_inf_targ;
 }
 

@@ -34,7 +34,6 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   // configurations
 struct HardPartonPosAndMom{
     double t, x, y, z, E, px, py, pz;
-    int direction;
 };
 
 public:
@@ -76,9 +75,11 @@ public:
   void OutputHardPartonPosAndMomentum(double t, double x, double y, 
                                       double z, double E, double px, 
                                       double py, double pz, int direction);
-  HardPartonPosAndMom GetHardPartonPosAndMomentum();
+  HardPartonPosAndMom GetHardPartonPosAndMomentumProj();
+  HardPartonPosAndMom GetHardPartonPosAndMomentumTarg();
 private:
-  HardPartonPosAndMom parton_inf;
+  HardPartonPosAndMom hardparton_inf_proj;
+  HardPartonPosAndMom hardparton_inf_targ;
   std::unique_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;
