@@ -97,8 +97,7 @@ double MCGlauberWrapper::Get_total_nucleon_density_lab(
         double t, double x, double y, double z) {
     // get the summation of nucleon density over projectile and target
     // at the Lab frame. the unit is 1/fm^3
-    double nucleon_density = mc_gen_->MCGlb_nucleon_density(t, x, y, z);
-    return (nucleon_density);
+    return (mc_gen_->MCGlb_nucleon_density(t, x, y, z));
 }
 
 
@@ -116,3 +115,21 @@ double MCGlauberWrapper::Get_projectile_nucleon_density_lab(
     // moves to the +z direction. the unit is 1/fm^3
     return(mc_gen_->MCGlb_projectile_nucleon_density(t, x, y, z));
 }
+
+void MCGlauberWrapper::OutputHardPartonPosAndMomentum(double t, double x, double y, 
+                 double z, double E, double px, double py, double pz, int direction) {
+    parton_inf.t = t;
+    parton_inf.x = x;
+    parton_inf.y = y;
+    parton_inf.z = z;
+    parton_inf.E = E;
+    parton_inf.px = px;
+    parton_inf.py = py;
+    parton_inf.pz = pz;
+    parton_inf.direction = direction;
+}
+
+MCGlauberWrapper::HardPartonPosAndMom MCGlauberWrapper::GetHardPartonPosAndMomentum() {
+    return parton_inf;
+}
+

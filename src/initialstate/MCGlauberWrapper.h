@@ -32,10 +32,15 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   // this is wrapper class to read external files that
   // stores initial number of binary collisions and corresponding
   // configurations
+struct HardPartonPosAndMom{
+    double t, x, y, z, E, px, py, pz;
+    int direction;
+};
+
 public:
   MCGlauberWrapper();
   ~MCGlauberWrapper() {}
-
+  
   /** Reads the input parameters from the XML file under the tag  <IS>. Calls InitTask(); This explicit call of InitTask() can be used for actual initialization of modules such as @a Trento if attached as a @a polymorphic class. It also initializes the tasks within the current module.
       @sa Read about @a polymorphism in C++.
    */
@@ -68,7 +73,12 @@ public:
                                         double y, double z);
   double Get_projectile_nucleon_density_lab(double t, double x,
                                             double y, double z);
+  void OutputHardPartonPosAndMomentum(double t, double x, double y, 
+                                      double z, double E, double px, 
+                                      double py, double pz, int direction);
+  HardPartonPosAndMom GetHardPartonPosAndMomentum();
 private:
+  HardPartonPosAndMom parton_inf;
   std::unique_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;
