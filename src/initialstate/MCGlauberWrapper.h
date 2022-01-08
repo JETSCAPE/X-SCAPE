@@ -32,9 +32,6 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   // this is wrapper class to read external files that
   // stores initial number of binary collisions and corresponding
   // configurations
-struct HardPartonPosAndMom{
-    double t, x, y, z, E, px, py, pz;
-};
 
 public:
   MCGlauberWrapper();
@@ -75,17 +72,17 @@ public:
   void OutputHardPartonPosAndMomentum(double t, double x, double y, 
                                       double z, double E, double px, 
                                       double py, double pz, int direction);
-  HardPartonPosAndMom GetHardPartonPosAndMomentumProj();
-  HardPartonPosAndMom GetHardPartonPosAndMomentumTarg();
+  std::vector<double> GetHardPartonPosAndMomentumProj();
+  std::vector<double> GetHardPartonPosAndMomentumTarg();
+  void GenerateStrings();
 private:
-  HardPartonPosAndMom hardparton_inf_proj;
-  HardPartonPosAndMom hardparton_inf_targ;
   std::unique_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
-
+  std::vector<double> HardPartonPosAndMomProj_;
+  std::vector<double> HardPartonPosAndMomTarg_;
   MCGlb::Parameters parameter_list_;
   std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;

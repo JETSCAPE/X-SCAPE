@@ -96,21 +96,28 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
   }
 }
 
-
-double InitialState::Get_total_nucleon_density_lab(double t, double x,
-                                                   double y, double z) {
-    return 0.0;
+void InitialState::OutputHardPartonPosAndMomentum(double t, double x, double y, 
+                                                  double z, double E, double px, 
+                                                  double py, double pz, int direction) {}
+                                              
+std::vector<double> InitialState::GetHardPartonPosAndMomentumProj() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 8; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
 }
 
-double InitialState::Get_target_nucleon_density_lab(double t, double x,
-                                                    double y, double z) {
-    return 0.0;
+std::vector<double> InitialState::GetHardPartonPosAndMomentumTarg() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 8; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
 }
 
-
-double InitialState::Get_projectile_nucleon_density_lab(double t, double x,
-                                                        double y, double z) {
-    return 0.0;
+void InitialState::GenerateStrings() {
+  // Do whatever is needed to figure out the internal temp...
 }
 
 } // end namespace Jetscape

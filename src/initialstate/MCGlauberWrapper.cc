@@ -50,6 +50,8 @@ void MCGlauberWrapper::Clear() {
     binary_collision_x_.clear();
     binary_collision_y_.clear();
     binary_collision_z_.clear();
+    HardPartonPosAndMomProj_.clear();
+    HardPartonPosAndMomTarg_.clear();
 }
 
 
@@ -103,47 +105,50 @@ double MCGlauberWrapper::Get_total_nucleon_density_lab(
 
 double MCGlauberWrapper::Get_target_nucleon_density_lab(
         double t, double x, double y, double z) {
-    // get the target nucleon density at the Lab frame, target:
-    // moves to the -z direction. the unit is 1/fm^3
+    // get the target nucleon density at the Lab frame, 
+    // target: moves to the -z direction. the unit is 1/fm^3
     return(mc_gen_->MCGlb_target_nucleon_density(t, x, y, z));
 }
 
 
 double MCGlauberWrapper::Get_projectile_nucleon_density_lab(
         double t, double x, double y, double z) {
-    // get the projectile nucleon density at the Lab frame, projectile:
-    // moves to the +z direction. the unit is 1/fm^3
+    // get the projectile nucleon density at the Lab frame, 
+    // projectile: moves to the +z direction. the unit is 1/fm^3
     return(mc_gen_->MCGlb_projectile_nucleon_density(t, x, y, z));
 }
 
 void MCGlauberWrapper::OutputHardPartonPosAndMomentum(double t, double x, double y, 
                  double z, double E, double px, double py, double pz, int direction) {
     if (direction == 1) {
-        hardparton_inf_proj.t = t;
-        hardparton_inf_proj.x = x;
-        hardparton_inf_proj.y = y;
-        hardparton_inf_proj.z = z;
-        hardparton_inf_proj.E = E;
-        hardparton_inf_proj.px = px;
-        hardparton_inf_proj.py = py;
-        hardparton_inf_proj.pz = pz;
+        HardPartonPosAndMomProj_.push_back(t);
+        HardPartonPosAndMomProj_.push_back(x);
+        HardPartonPosAndMomProj_.push_back(y);
+        HardPartonPosAndMomProj_.push_back(z);
+        HardPartonPosAndMomProj_.push_back(E);
+        HardPartonPosAndMomProj_.push_back(px);
+        HardPartonPosAndMomProj_.push_back(py);
+        HardPartonPosAndMomProj_.push_back(pz);
     } else {
-        hardparton_inf_targ.t = t;
-        hardparton_inf_targ.x = x;
-        hardparton_inf_targ.y = y;
-        hardparton_inf_targ.z = z;
-        hardparton_inf_targ.E = E;
-        hardparton_inf_targ.px = px;
-        hardparton_inf_targ.py = py;
-        hardparton_inf_targ.pz = pz;
+        HardPartonPosAndMomTarg_.push_back(t);
+        HardPartonPosAndMomTarg_.push_back(x);
+        HardPartonPosAndMomTarg_.push_back(y);
+        HardPartonPosAndMomTarg_.push_back(z);
+        HardPartonPosAndMomTarg_.push_back(E);
+        HardPartonPosAndMomTarg_.push_back(px);
+        HardPartonPosAndMomTarg_.push_back(py);
+        HardPartonPosAndMomTarg_.push_back(pz);
     }
 }
 
-MCGlauberWrapper::HardPartonPosAndMom MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
-    return hardparton_inf_proj;
+std::vector<double> MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
+    return HardPartonPosAndMomProj_;
 }
 
-MCGlauberWrapper::HardPartonPosAndMom MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
-    return hardparton_inf_targ;
+std::vector<double> MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
+    return HardPartonPosAndMomTarg_;
 }
 
+void MCGlauberWrapper::GenerateStrings() {
+    mc_gen_->generate_posterior_events(); // generate 3D Glauber for MUSIC
+}

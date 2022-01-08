@@ -130,14 +130,27 @@ public:
                                            double &y, double &z);
                                            
   virtual double Get_total_nucleon_density_lab(double t, double x,
-                                               double y, double z);
+                                               double y, double z) {
+      return 0.0;
+  }
                                            
   virtual double Get_target_nucleon_density_lab(double t, double x,
-                                                double y, double z);
+                                                double y, double z) {
+      return 0.0;
+  }
                                                 
   virtual double Get_projectile_nucleon_density_lab(double t, double x,
-                                                    double y, double z);
-                                                    
+                                                    double y, double z) {
+      return 0.0;
+  }
+
+  virtual void OutputHardPartonPosAndMomentum(double t, double x, double y, 
+                                              double z, double E, double px, 
+                                              double py, double pz, int direction);
+  virtual std::vector<double> GetHardPartonPosAndMomentumProj();
+  virtual std::vector<double> GetHardPartonPosAndMomentumTarg();
+
+  virtual void GenerateStrings();
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
    */
   inline double GetXMax() { return grid_max_x_; }
