@@ -150,5 +150,5 @@ std::vector<double> MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
 }
 
 void MCGlauberWrapper::GenerateStrings() {
-    mc_gen_->generate_posterior_events(); // generate 3D Glauber for MUSIC
+    mc_gen_->generate_strings(); // generate 3D Glauber for MUSIC
 }
