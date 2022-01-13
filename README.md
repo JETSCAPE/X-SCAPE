@@ -1,12 +1,15 @@
 ## 3DGlauber support 
 
-3DGlauber is a 3D initial state model. 3DGlauber generate the initial state for the MUSIC and can be integrated into the XETSCAPE framework. To download the lastest version of 3DGlauber, one can run the shell script under the external_packages folder,
+3DGlauber is a 3D initial state model. 3DGlauber generates the initial state for
+ the MUSIC and can be integrated into the XETSCAPE framework. To download the lastest
+ version of 3DGlauber, one can run the shell script under the external_packages folder,
 
 ```bash
     ./get_3dglauber.sh
 ```
 
-To compile the 3DGlauber code together with the XETSCAPE framework, please turn on the 3DGlauber support option,
+To compile the 3DGlauber code together with the XETSCAPE framework, please turn
+ on the 3DGlauber support option,
 ```bash
     mkdir build
     cd build
