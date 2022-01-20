@@ -118,6 +118,18 @@ double MCGlauberWrapper::Get_projectile_nucleon_density_lab(
     return(mc_gen_->MCGlb_projectile_nucleon_density(t, x, y, z));
 }
 
+std::vector<double> MCGlauberWrapper::Get_projectile_nucleon_z_lab() {
+    // get the z coordinate of all projectile nucleons at the Lab frame, 
+    return(mc_gen_->MCGlb_projectile_nucleon_z());
+}
+
+
+std::vector<double> MCGlauberWrapper::Get_target_nucleon_z_lab() {
+    // get the z coordinate of all target nucleons at the Lab frame, 
+    return(mc_gen_->MCGlb_target_nucleon_z());
+}
+
+
 void MCGlauberWrapper::OutputHardPartonPosAndMomentum(double t, double x, double y, 
                  double z, double E, double px, double py, double pz, int direction) {
     if (direction == 1) {

@@ -74,6 +74,8 @@ public:
                                       double py, double pz, int direction);
   std::vector<double> GetHardPartonPosAndMomentumProj();
   std::vector<double> GetHardPartonPosAndMomentumTarg();
+  std::vector<double> Get_projectile_nucleon_z_lab();
+  std::vector<double> Get_target_nucleon_z_lab();
   void GenerateStrings();
 private:
   std::unique_ptr<MCGlb::EventGenerator> mc_gen_;
