@@ -129,7 +129,24 @@ void JetEnergyLoss::Init() {
     JSINFO << "Eloss shower with deltaT = " << deltaT << " and maxT = " << maxT;
   else
     JSINFO << "Eloss shower via Main Clock ...";
+    
+    ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
+    if (!ini)
+    {
 
+      // If not vacuum case, give warning to add initial state module
+      bool in_vac = GetXMLElementInt({"Eloss", "Matter", "in_vac"});
+      if (!in_vac)
+      {
+        JSWARN << "No initial state module for ISR at Framework! Please check whether you intend to "
+                  "add an initial state module.";
+      }
+    }
+    else
+    {
+        JSINFO << BOLDCYAN << " Initial state module connected to JetEnergy Loss";
+    }
+    
   std::string mutexOnString = GetXMLElementText({"Eloss", "mutex"}, false);
   if (!mutexOnString.compare("ON"))
     //Check mutual exclusion of Eloss Modules

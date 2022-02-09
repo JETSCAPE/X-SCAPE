@@ -47,7 +47,7 @@ void DummySplit::Init()
 void DummySplit::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
 
-  VERBOSE(3)<<"DummySplit::DoEnergyLoss at time = "<<time;
+  JSINFO << MAGENTA <<"DummySplit::DoEnergyLoss at time = "<<time;
   VERBOSESHOWER(8)<< MAGENTA << "SentInPartons Signal received : "<<deltaT<<" "<<Q2<<" "<<&pIn;
   //INFO<<"Do dummy splits to test SoftDrop ...";
 

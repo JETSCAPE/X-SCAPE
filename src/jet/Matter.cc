@@ -218,9 +218,9 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   std::unique_ptr<FluidCellInfo> check_fluid_info_ptr;
 
-  VERBOSE(8) << MAGENTA << " the time in fm is " << time
+  JSINFO << MAGENTA << " the time in fm is " << time
              << " The time in GeV-1 is " << Time;
-  VERBOSE(8) << MAGENTA << "pid = " << pIn[0].pid() << " E = " << pIn[0].e()
+  JSINFO << MAGENTA << "pid = " << pIn[0].pid() << " E = " << pIn[0].e()
              << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2)
              << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t()
              << " form_time in fm = " << pIn[0].form_time()
@@ -274,6 +274,11 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       return;
     }
+      
+      if (pIn[i].plabel() < 0) return; // ignore initial state partons.
+      if (pIn[i].time() > time) return; // ignore partons that havent formed yet.
+      
+      
 
     VERBOSE(4) << BOLDYELLOW
                << " *  parton formation spacetime point= " << pIn[i].x_in().t()

@@ -16,6 +16,7 @@
 #ifndef JETENERGYLOSS_H
 #define JETENERGYLOSS_H
 
+#include "InitialState.h"
 #include "JetScapeModuleBase.h"
 #include "FluidDynamics.h"
 #include "FluidCellInfo.h"
@@ -81,6 +82,8 @@ public:
   virtual void InitPerEvent();
 
   virtual void FinishPerEvent();
+                          
+  std::shared_ptr<InitialState> ini;
 
   /** Default function to perform the energy loss for partons at time "time". It should be overridden by different energy loss tasks.
       @param deltaT Step-size.

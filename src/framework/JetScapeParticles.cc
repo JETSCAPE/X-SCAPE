@@ -338,7 +338,11 @@ void Parton::set_mean_form_time() {
 
 void Parton::set_form_time(double form_time) { form_time_ = form_time; }
 
-void Parton::initialize_form_time() { form_time_ = -0.1; }
+void Parton::initialize_form_time()
+{
+    form_time_ = -0.1;
+    if (plabel_ < 0) form_time_ = 0.1;
+}
 
 double Parton::form_time() { return (form_time_); }
 
@@ -350,16 +354,16 @@ const double Parton::t() {
 
   double t_parton = 0.0;
 
-  if ((std::abs(pid()) == 4) || (std::abs(pid()) == 5)) {
+  //if ((std::abs(pid()) == 4) || (std::abs(pid()) == 5)) {
     t_parton = e() * e() - px() * px() - py() * py() - pz() * pz() -
                restmass() * restmass();
-  } else {
-    t_parton = e() * e() - px() * px() - py() * py() - pz() * pz();
-  }
-  if (t_parton < 0.0) {
+  //} else {
+   // t_parton = e() * e() - px() * px() - py() * py() - pz() * pz();
+  //}
+  //if (t_parton < 0.0) {
     // JSWARN << " Virtuality is negative, MATTER cannot handle these particles " << " t = " << t_parton;
     // JSWARN << " pid = "<< pid() << " E = " << e() << " px = " << px() << " py = " << py() << " pz = " << pz() ;
-  }
+  //}
   return (t_parton);
   // return (t_) ;
 }
@@ -367,26 +371,27 @@ const double Parton::t() {
 void Parton::set_t(double t) {
   // This function has a very specific purpose and shouldn't normally be used
   // It scales down p! So catch people trying.
-  if (form_time() >= 0.0) {
-    throw std::runtime_error(
-        "Trying to set virtuality on a normal parton. You almost certainly "
-        "don't want to do that. Please contact the developers if you do.");
-  }
+ // if (form_time() >= 0.0) {
+ //   throw std::runtime_error(
+ //       "Trying to set virtuality on a normal parton. You almost certainly "
+ //       "don't want to do that. Please contact the developers if you do.");
+ // }
 
   //  Reset the momentum due to virtuality
   double newPl = std::sqrt(e() * e() - t - restmass() * restmass());
-  double velocityMod =
-      std::sqrt(std::pow(jet_v_.comp(1), 2) + std::pow(jet_v_.comp(2), 2) +
-                std::pow(jet_v_.comp(3), 2));
+  //double velocityMod = std::sqrt(std::pow(jet_v_.comp(1), 2) + std::pow(jet_v_.comp(2), 2) + std::pow(jet_v_.comp(3), 2));
 
-  newPl = newPl / velocityMod;
+    double p_mod = std::sqrt( px()*px() + py()*py() + pz()*pz()) ;
+    
+    
+  newPl = newPl / p_mod;
   // double newP[4];
   // newP[0] = e();
   // for(int j=1;j<=3;j++) {
   //   newP[j] = newPl*jet_v_.comp(j);
   // }
-  reset_momentum(newPl * jet_v_.comp(1), newPl * jet_v_.comp(2),
-                 newPl * jet_v_.comp(3), e());
+  reset_momentum(newPl * px(), newPl * py(),
+                 newPl * pz(), e());
 }
 
 void Parton::reset_p(double px, double py, double pz) {

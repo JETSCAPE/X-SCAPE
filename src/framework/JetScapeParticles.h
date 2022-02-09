@@ -275,9 +275,8 @@ public:
   static Pythia8::Pythia InternalHelperPythia;
 
 protected:
-  void set_restmass(
-      double
-          mass_input); ///< shouldn't be called from the outside, needs to be consistent with PID
+  void set_restmass(double mass_input);
+    ///< shouldn't be called from the outside, needs to be consistent with PID
 
   int pid_;    ///< particle id
   int pstat_;  ///< status of particle
@@ -337,9 +336,7 @@ public:
   Parton &operator=(const Parton &c);
 
   const double t();
-  void set_t(
-      double
-          t); ///< virtuality of particle, \WARNING: rescales the spatial component
+  void set_t(double t); ///< virtuality of particle, \WARNING: rescales the spatial component
   unsigned int color();      ///< returns the color of the parton
   unsigned int anti_color(); ///< returns the anti-color of the parton
   unsigned int max_color();

@@ -161,6 +161,9 @@ void PythiaGun::Exec() {
     }
   };
 
+
+    FourVector p_p;
+    
   do {
     next();
     p62.clear();
@@ -203,10 +206,8 @@ void PythiaGun::Exec() {
           continue;
       }
       
-        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " status = " << particle.status() ;
-        double blurb;
+        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() ;
         
-        std::cin >> blurb ;
         p62.push_back(particle);
     }
 
@@ -225,35 +226,33 @@ void PythiaGun::Exec() {
 
   } while (!flag62);
 
-  double p[4], xLoc[4];
-
-  // This location should come from an initial state
-  for (int i = 0; i <= 3; i++) {
-    xLoc[i] = 0.0;
-  };
 
   // // Roll for a starting point
   // // See: https://stackoverflow.com/questions/15039688/random-generator-from-vector-with-probability-distribution-in-c
   // std::random_device device;
   // std::mt19937 engine(device()); // Seed the random number engine
 
-  if (!ini) {
-    VERBOSE(1) << "No initial state module, setting the starting location to "
+    FourVector x_p;
+    
+  if (!ini)
+  {
+    JSINFO << BOLDYELLOW << "No initial state module, setting the starting location to "
                   "0. Make sure to add e.g. trento before PythiaGun.";
-  } else {
-    double t, x, y, z;
-    ini->SampleABinaryCollisionPoint(t, x, y, z);
-    xLoc[0] = t;
-    xLoc[1] = x;
-    xLoc[2] = y;
-    xLoc[3] = z;
   }
-
+  else
+  {
+    double t, x, y, z;
+    bool pass = false;
+//  while (!pass)
+  //  {
+        ini->SampleABinaryCollisionPoint(t, x, y, z);
+        JSINFO << MAGENTA << " pass at time " << t << " with x = " << x << " y = " << y << " z = " << z << "  ? " ;
+        //cin >> pass;
+    //}
+    x_p.Set(x,y,z,t);
+  }
+    
   // Loop through particles
-
-  // Only top two
-  //for(int np = 0; np<2; ++np){
-
   // Accept them all
 
     double initial_state_label = -1 ;
@@ -265,47 +264,40 @@ void PythiaGun::Exec() {
     Pythia8::Particle &particle = p62.at(np);
 
     VERBOSE(7) << "Adding particle with pid = " << particle.id()
-               << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
-
-    VERBOSE(7) << "Adding particle with pid = " << particle.id()
                << ", pT = " << particle.pT() << ", y = " << particle.y()
                << ", phi = " << particle.phi() << ", e = " << particle.e();
 
-    JSINFO<< MAGENTA << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3] << ", t = " << xLoc[0];
+    JSINFO<< MAGENTA << " at x=" << x_p.x() << ", y=" << x_p.y() << ", z=" << x_p.z() << ", t = " << x_p.t();
 
       double label = 0;
+      double stat = 0;
       
       if (particle.status()==-21)
       {
           label = initial_state_label;
           initial_state_label--;
+          stat = -1000; // raw initial state status, must go to an initial state module
       }
       if (particle.status()==-23)
       {
           label = final_state_label;
           final_state_label++;
+          stat = 1000; // raw final state status, must go to a final state module with virtuality generation. 
       }
 
+      FourVector p_p(particle.px(),particle.py(),particle.pz(),particle.e());
       
     if (flag_useHybridHad != 1) {
-        AddParton(make_shared<Parton>(label, particle.id(), 0, particle.pT(),
-                                    particle.y(), particle.phi(), particle.e(),
-                                    xLoc));
+        AddParton(make_shared<Parton>(label, particle.id(), stat, p_p,x_p));
+        JSINFO<< BOLDYELLOW << " Pythia particle eta = " << particle.eta() << " pz = " << particle.pz() << " pT = " << particle.pT() << " phi = "  << particle.phi();
     } else {
       auto ptn =
-          make_shared<Parton>(label, particle.id(), 0, particle.pT(), particle.y(),
-                              particle.phi(), particle.e(), xLoc);
+          make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
       ptn->set_color(particle.col());
       ptn->set_anti_color(particle.acol());
       ptn->set_max_color(1000 * (np + 1));
       AddParton(ptn);
     }
-    //}
-    //else
-    //{
-    //          AddHadron(make_shared<Hadron>(hCounter,particle.id(),particle.status(),particle.pT(),particle.eta(),particle.phi(),particle.e(),xLoc));
-    //          hCounter++;
-    //}
   }
 
   VERBOSE(8) << GetNHardPartons();
