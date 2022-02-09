@@ -150,6 +150,9 @@ public:
   virtual std::vector<double> GetHardPartonPosAndMomentumProj();
   virtual std::vector<double> GetHardPartonPosAndMomentumTarg();
 
+  virtual std::vector<double> Get_projectile_nucleon_z_lab();
+  virtual std::vector<double> Get_target_nucleon_z_lab();
+  
   virtual void GenerateStrings();
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
    */

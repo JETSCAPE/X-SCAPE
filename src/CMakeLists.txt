@@ -30,6 +30,7 @@ endif()
 
 if(NOT "${USE_3DGlauber}")
   list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/MCGlauberWrapper.cc)
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/MCGlauberGenStringWrapper.cc)
 endif()
 
 

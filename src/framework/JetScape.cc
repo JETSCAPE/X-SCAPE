@@ -221,7 +221,14 @@ void JetScape::DetermineTaskListFromXML() {
             JSINFO << "JetScape::DetermineTaskList() -- Initial State: Added "
                       "MCGlauber module to task list.";
           }
-        }else if (childElementName == "initial_Ncoll_list") {
+        } else if (childElementName == "MCGlauberGenString") {
+          auto MCGlauberGenString = JetScapeModuleFactory::createInstance("MCGlauberGenString");
+          if (MCGlauberGenString) {
+            Add(MCGlauberGenString);
+            JSINFO << "JetScape::DetermineTaskList() -- Initial State: Added "
+                      "MCGlauberGenString module to task list.";
+          }
+        } else if (childElementName == "initial_Ncoll_list") {
           auto initial =
               JetScapeModuleFactory::createInstance("NcollListFromFile");
           if (initial) {

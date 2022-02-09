@@ -116,6 +116,22 @@ std::vector<double> InitialState::GetHardPartonPosAndMomentumTarg() {
     return Temp;
 }
 
+std::vector<double> InitialState::Get_projectile_nucleon_z_lab() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 8; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_target_nucleon_z_lab() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 8; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
 void InitialState::GenerateStrings() {
   // Do whatever is needed to figure out the internal temp...
 }
