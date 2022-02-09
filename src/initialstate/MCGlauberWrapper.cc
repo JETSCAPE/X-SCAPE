@@ -40,8 +40,8 @@ void MCGlauberWrapper::InitTask() {
         auto ran_seed = (*GetMt19937Generator())();
         auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
 
-        mc_gen_=std::unique_ptr<MCGlb::EventGenerator>(
-                new MCGlb::EventGenerator("mcgluaber.input", ran_seed));
+        mc_gen_ = std::unique_ptr<MCGlb::EventGenerator>(
+                  new MCGlb::EventGenerator("mcgluaber.input", ran_seed));
 }
 
 void MCGlauberWrapper::Clear() {
