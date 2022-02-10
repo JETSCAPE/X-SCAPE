@@ -23,7 +23,7 @@
 
 #include "JetScapeLogger.h"
 #include "MCGlauberGenStringWrapper.h"
-
+#include "JetScapeSignalManager.h"
 
 // Register the module with the base class
 RegisterJetScapeModule<MCGlauberGenStringWrapper> MCGlauberGenStringWrapper::reg("MCGlauberGenString");
@@ -33,12 +33,13 @@ MCGlauberGenStringWrapper::MCGlauberGenStringWrapper() {
     event_id_ = 0;
 }
 
+std::shared_ptr<InitialState> ini_MC = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
+
 void MCGlauberGenStringWrapper::Exec() {
     Jetscape::JSINFO << "Run 3DMCGlauber second time to generate strings for MUSIC "
                      << "...";
     try {
-        auto MCG = make_shared<MCGlauberWrapper>();
-        MCG->GenerateStrings();// generate strings for the MUSIC
+        ini_MC->GenerateStrings();// generate strings for the MUSIC
     } catch (std::exception &err) {
         Jetscape::JSWARN << err.what();
         std::exit(-1);

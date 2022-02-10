@@ -41,6 +41,7 @@ private:
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberGenStringWrapper> reg;
+  std::shared_ptr<InitialState> ini_MC; // temporary pointer to initial state
 };
 
 #endif  // MCGlauberGenStringWrapper_H

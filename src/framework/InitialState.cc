@@ -96,10 +96,12 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
   }
 }
 
-void InitialState::OutputHardPartonPosAndMomentum(double t, double x, double y, 
-                                                  double z, double E, double px, 
-                                                  double py, double pz, int direction) {}
-                                              
+void InitialState::OutputHardCollisionPosition(double t, double x, double y, 
+                                                                   double z) {}
+
+void InitialState::OutputHardPartonMomentum(double E, double px, double py, double pz,
+                                            int direction) {}
+
 std::vector<double> InitialState::GetHardPartonPosAndMomentumProj() {
     std::vector<double> Temp;
     for (int i = 0; i != 8; i++) {

@@ -69,22 +69,26 @@ public:
                                         double y, double z);
   double Get_projectile_nucleon_density_lab(double t, double x,
                                             double y, double z);
-  void OutputHardPartonPosAndMomentum(double t, double x, double y, 
-                                      double z, double E, double px, 
-                                      double py, double pz, int direction);
+  void OutputHardCollisionPosition(double t, double x, double y, 
+                                   double z);
+  void OutputHardPartonMomentum(double E, double px, double py, double pz,
+                                                           int direction);
   std::vector<double> GetHardPartonPosAndMomentumProj();
   std::vector<double> GetHardPartonPosAndMomentumTarg();
   std::vector<double> Get_projectile_nucleon_z_lab();
   std::vector<double> Get_target_nucleon_z_lab();
   void GenerateStrings();
 private:
-  std::unique_ptr<MCGlb::EventGenerator> mc_gen_;
+  std::shared_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
   std::vector<double> HardPartonPosAndMomProj_;
   std::vector<double> HardPartonPosAndMomTarg_;
+  double hard_parton_x_, hard_parton_y_, hard_parton_z_, hard_parton_t_;
+  double targ_parton_px_, targ_parton_py_, targ_parton_pz_, targ_parton_e_;
+  double proj_parton_px_, proj_parton_py_, proj_parton_pz_, proj_parton_e_;
   MCGlb::Parameters parameter_list_;
   std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;

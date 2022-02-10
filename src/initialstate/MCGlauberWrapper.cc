@@ -40,7 +40,7 @@ void MCGlauberWrapper::InitTask() {
         auto ran_seed = (*GetMt19937Generator())();
         auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
 
-        mc_gen_ = std::unique_ptr<MCGlb::EventGenerator>(
+        mc_gen_ = std::shared_ptr<MCGlb::EventGenerator>(
                   new MCGlb::EventGenerator("mcgluaber.input", ran_seed));
 }
 
@@ -129,35 +129,51 @@ std::vector<double> MCGlauberWrapper::Get_target_nucleon_z_lab() {
     return(mc_gen_->MCGlb_target_nucleon_z());
 }
 
+void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x, double y, 
+                                                                    double z) {
+    hard_parton_t_ = t;
+    hard_parton_x_ = x;
+    hard_parton_y_ = y;
+    hard_parton_z_ = z;
+}
 
-void MCGlauberWrapper::OutputHardPartonPosAndMomentum(double t, double x, double y, 
-                 double z, double E, double px, double py, double pz, int direction) {
+void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, double pz,
+                                                int direction) {
     if (direction == 1) {
-        HardPartonPosAndMomProj_.push_back(t);
-        HardPartonPosAndMomProj_.push_back(x);
-        HardPartonPosAndMomProj_.push_back(y);
-        HardPartonPosAndMomProj_.push_back(z);
-        HardPartonPosAndMomProj_.push_back(E);
-        HardPartonPosAndMomProj_.push_back(px);
-        HardPartonPosAndMomProj_.push_back(py);
-        HardPartonPosAndMomProj_.push_back(pz);
+        proj_parton_e_  = E;
+        proj_parton_px_ = px;
+        proj_parton_py_ = py;
+        proj_parton_pz_ = pz;
     } else {
-        HardPartonPosAndMomTarg_.push_back(t);
-        HardPartonPosAndMomTarg_.push_back(x);
-        HardPartonPosAndMomTarg_.push_back(y);
-        HardPartonPosAndMomTarg_.push_back(z);
-        HardPartonPosAndMomTarg_.push_back(E);
-        HardPartonPosAndMomTarg_.push_back(px);
-        HardPartonPosAndMomTarg_.push_back(py);
-        HardPartonPosAndMomTarg_.push_back(pz);
+        targ_parton_e_  = E;
+        targ_parton_px_ = px;
+        targ_parton_py_ = py;
+        targ_parton_pz_ = pz;
     }
 }
 
+
 std::vector<double> MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
+    HardPartonPosAndMomProj_.push_back(hard_parton_t_);
+    HardPartonPosAndMomProj_.push_back(hard_parton_x_);
+    HardPartonPosAndMomProj_.push_back(hard_parton_y_);
+    HardPartonPosAndMomProj_.push_back(hard_parton_z_);
+    HardPartonPosAndMomProj_.push_back(proj_parton_e_);
+    HardPartonPosAndMomProj_.push_back(proj_parton_px_);
+    HardPartonPosAndMomProj_.push_back(proj_parton_py_);
+    HardPartonPosAndMomProj_.push_back(proj_parton_pz_);
     return HardPartonPosAndMomProj_;
 }
 
 std::vector<double> MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
+    HardPartonPosAndMomTarg_.push_back(hard_parton_t_);
+    HardPartonPosAndMomTarg_.push_back(hard_parton_x_);
+    HardPartonPosAndMomTarg_.push_back(hard_parton_y_);
+    HardPartonPosAndMomTarg_.push_back(hard_parton_z_);
+    HardPartonPosAndMomTarg_.push_back(targ_parton_e_);
+    HardPartonPosAndMomTarg_.push_back(targ_parton_px_);
+    HardPartonPosAndMomTarg_.push_back(targ_parton_py_);
+    HardPartonPosAndMomTarg_.push_back(targ_parton_pz_);
     return HardPartonPosAndMomTarg_;
 }
 
