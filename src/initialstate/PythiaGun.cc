@@ -250,6 +250,7 @@ void PythiaGun::Exec() {
         //cin >> pass;
     //}
     x_p.Set(x,y,z,t);
+      ini->OutputHardCollisionPosition(t, x, y, z);
   }
     
   // Loop through particles

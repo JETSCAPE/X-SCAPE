@@ -194,8 +194,8 @@ int main(int argc, char** argv)
   dummy->SetTimeRange(-20.0,20.0);
 
   // Note: if you use Matter, it MUST come first (to set virtuality)
-  //jloss->Add(matter);
-  jloss->Add(dummy);
+  jloss->Add(matter);
+  //jloss->Add(dummy);
 
   // jloss->Add(lbt);  // go to 3rd party and ./get_lbtTab before adding this module
   // jloss->Add(martini);

@@ -245,14 +245,16 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 pid_b = gid;
             }
             
-            FourVector p_Sibling(l_perp_x , l_perp_y , pz*(1-z_frac)/z_frac ,  e*(1-z_frac)/z_frac  ) ;
+            FourVector p_Sibling(pIn[in].px()+l_perp_x ,pIn[in].py()+ l_perp_y , pz*(1-z_frac)/z_frac ,  e*(1-z_frac)/z_frac  ) ;
             
-            FourVector p_Parent(l_perp_x, l_perp_y , pz/z_frac, e/z_frac) ;
+            FourVector p_Parent(pIn[in].px()+l_perp_x, pIn[in].py()+l_perp_y , pz/z_frac, e/z_frac) ;
             
             
             Parton Sibling(pIn[in].plabel()*10, pid_b , 0 , p_Sibling, Current_Location) ;
             
             Parton Parent(pIn[in].plabel()*10-1, pid_a , -900 , p_Parent, Current_Location) ;
+            
+            
             
             pOut.push_back(Sibling);
             
@@ -271,9 +273,14 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         else
         {
 
-            int iout = pOut.size()-1;
             pOut.push_back(pIn[in]);
-
+            int iout = pOut.size()-1;
+            
+            int sign = 1 ;
+            if ( pOut[iout].pz()<0 ) sign=-1;
+            
+            if (pOut[iout].pstat() == -900) ini->OutputHardPartonMomentum(pOut[iout].e(), pOut[iout].px() , pOut[iout].py() , pOut[iout].pz(), sign );
+                
             
         }
         
@@ -310,15 +317,30 @@ double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_
     double r = ZeroOneDistribution(*GetMt19937Generator());
     
     double t = -1*r*std::abs(max_t);
+    // definite negative virtuality
     
     return(t);
 }
     
+/*    double iMATTER::invert_sudakov(double r, Parton p, FourVector location, double max_t, Pythia8::PDF * pdf )
+    {
+      
+        
+        
+        
+    }
+
+    double iMATTER::Sudakov()
+    {
+        
+    }
+
+*/
     double iMATTER::generate_z( Parton p, FourVector r , Pythia8::PDF * pdf)
     {
         return(0.5);
     }
-    
+
     
 double iMATTER::generate_L(double form_time)
 {
