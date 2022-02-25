@@ -52,6 +52,7 @@
 #include "IsrJet.h"
 #include "IsrShowerPSG.h"
 #include "MCGlauberWrapper.h"
+#include "MCGlauberGenStringWrapper.h"
 
 #include "MainClock.h"
 #include "ModuleClock.h"
@@ -123,9 +124,7 @@ int main(int argc, char** argv)
   //hydroTest->SetActive(false);
 
   //jetscape->Add(trento);
-    
-  jetscape->Add(MCG);
-
+    jetscape->Add(MCG);
   auto isrManager = make_shared<IsrManager>();
   //auto isrJloss = make_shared<JetEnergyLoss> (); //to be followed up ... make isr module ... !!!!
   auto isrJloss = make_shared<IsrJet>();
@@ -135,6 +134,7 @@ int main(int argc, char** argv)
     auto iMatter = make_shared<iMATTER> ();
   isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-3.); //will be moved to XML and proper Init() in IsrJet later ...
 
+  auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
   //REMARK: Think a bit harder about directed graph creation and time direction !!!!! Graph inversion !???
   //make positve just for testing of iterating through a shower ...
   //isrJloss->SetDeltaT(0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(3);
@@ -146,7 +146,7 @@ int main(int argc, char** argv)
   isrManager->Add(isrJloss);
 
   pythiaGun->Add(isrManager);
-
+  pythiaGun->Add(MCGsecond);
   jetscape->Add(pythiaGun);
   //jetscape->Add(isr);
   jetscape->Add(hydro);

@@ -102,21 +102,10 @@ void InitialState::OutputHardCollisionPosition(double t, double x, double y,
 void InitialState::OutputHardPartonMomentum(double E, double px, double py, double pz,
                                             int direction) {}
 
-std::vector<double> InitialState::GetHardPartonPosAndMomentumProj() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 8; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
-}
+  
+void InitialState::GetHardPartonPosAndMomentumProj() {}
 
-std::vector<double> InitialState::GetHardPartonPosAndMomentumTarg() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 8; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
-}
+void InitialState::GetHardPartonPosAndMomentumTarg() {}
 
 std::vector<double> InitialState::Get_projectile_nucleon_z_lab() {
     std::vector<double> Temp;
@@ -134,8 +123,10 @@ std::vector<double> InitialState::Get_target_nucleon_z_lab() {
     return Temp;
 }
 
+
 void InitialState::GenerateStrings() {
   // Do whatever is needed to figure out the internal temp...
+  std::cout<<"Call the wrong GenerateStrings function..."<<std::endl;
 }
 
 } // end namespace Jetscape
