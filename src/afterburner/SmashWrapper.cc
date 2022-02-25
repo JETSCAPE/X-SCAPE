@@ -43,57 +43,20 @@ void SmashWrapper::InitTask() {
   std::string smash_config =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_config_file"});
   boost::filesystem::path input_config_path(smash_config);
-  if (!boost::filesystem::exists(input_config_path)) {
-    JSWARN << "SMASH config file " << smash_config << " not found.";
-    exit(-1);
-  } else {
-    JSINFO << "Obtaining SMASH configuration from " << smash_config;
-  }
-  smash::Configuration config(input_config_path.parent_path(),
-                              input_config_path.filename());
   // SMASH hadron list
   std::string hadron_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_particles_file"});
-  if (boost::filesystem::exists(hadron_list)) {
-    config["particles"] =
-        smash::read_all(boost::filesystem::ifstream{hadron_list});
-    smash::ParticleType::create_type_list(config.take({"particles"}));
-    JSINFO << "Obtaining SMASH hadron list from " << hadron_list;
-  } else {
-    JSINFO << "Using default SMASH hadron list.";
-  }
   // SMASH decaymodes
   std::string decays_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_decaymodes_file"});
-  if (boost::filesystem::exists(decays_list)) {
-    config["decaymodes"] =
-        smash::read_all(boost::filesystem::ifstream{decays_list});
-    smash::DecayModes::load_decaymodes(config.take({"decaymodes"}));
-    JSINFO << "Obtaining SMASH decays list from " << decays_list;
-  } else {
-    JSINFO << "Using default SMASH decay list.";
-  }
-  // Make sure that unstable hadrons have decays and stable not
-  smash::ParticleType::check_consistency();
 
-  // Let SMASH tabulate cross sections
-  boost::filesystem::path tabulations_path = "./tabulations";
-  boost::filesystem::create_directories(tabulations_path);
-  const std::string particle_string = config["particles"].to_string();
-  const std::string decay_string = config["decaymodes"].to_string();
-  smash::sha256::Context hash_context;
-  hash_context.update(particle_string);
-  hash_context.update(decay_string);
-  const auto hash = hash_context.finalize();
-  smash::IsoParticleType::tabulate_integrals(hash, tabulations_path);
+  config = smash::configure(input_config_path,
+                            hadron_list.c_str(),
+                            decays_list.c_str());
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
   config["General"]["Randomseed"] = random_seed;
-  // Set SMASH logging
-  smash::set_default_loglevel(
-      config.take({"Logging", "default"}, einhard::TRACE));
-  smash::create_all_loggers(config["Logging"]);
   // Read in the rest of configuration
   float end_time = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
   config["General"]["End_Time"] = end_time;
@@ -103,8 +66,14 @@ void SmashWrapper::InitTask() {
   if (only_final_decays_) {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
-  // output path is just dummy here, because no output from SMASH is foreseen
+
+  boost::filesystem::path tabulations_path = "./tabulations";
+  smash_version = "" // TODO How to get SMASH version here? Not important ATM.
+
+  smash::initalize(config, smash_version, tabulations_path);
+
   JSINFO << "Seting up SMASH Experiment object";
+  // output path is just dummy here, because no output from SMASH is foreseen
   boost::filesystem::path output_path("./smash_output");
   smash_experiment_ =
       make_shared<smash::Experiment<AfterburnerModus>>(config, output_path);
