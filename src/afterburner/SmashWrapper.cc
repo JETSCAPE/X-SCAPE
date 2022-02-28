@@ -112,7 +112,7 @@ void SmashWrapper::ExecuteTask() {
   modus->jetscape_hadrons_ = TestHadronList(); // soft_particlization_sampler_->Hadron_list_;
   const int n_events = modus->jetscape_hadrons_.size();
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
-  smash::Particles *smash_particles = smash_experiment_->particles();
+  smash::Particles *smash_particles = smash_experiment_->first_ensemble();
   for (unsigned int i = 0; i < n_events; i++) {
     JSINFO << "Event " << i << " SMASH starts with "
            << modus->jetscape_hadrons_[i].size() << " particles.";
@@ -121,7 +121,9 @@ void SmashWrapper::ExecuteTask() {
       smash_experiment_->run_time_evolution(300.0);  // endtime hardcoded for now
     }
     smash_experiment_->do_final_decays();
-    smash_experiment_->final_output(i);
+    smash_experiment_->final_output();
+    // TODO(stdnmr): Check that event number is correctly set in final outout,
+    // since now it is not an input to final_ouput() anymore
     smash_particles_to_JS_hadrons(*smash_particles,
                                   modus->jetscape_hadrons_[i]);
     JSINFO << modus->jetscape_hadrons_[i].size() << " hadrons from SMASH.";
