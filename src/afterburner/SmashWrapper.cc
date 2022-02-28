@@ -20,6 +20,7 @@
 
 #include "smash/decaymodes.h"
 #include "smash/inputfunctions.h"
+#include "smash/interfaces.h"
 #include "smash/particles.h"
 #include "smash/sha256.h"
 
@@ -50,7 +51,7 @@ void SmashWrapper::InitTask() {
   std::string decays_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_decaymodes_file"});
 
-  config = smash::configure(input_config_path,
+  auto config = smash::configure(input_config_path,
                             hadron_list.c_str(),
                             decays_list.c_str());
 
@@ -68,7 +69,7 @@ void SmashWrapper::InitTask() {
   }
 
   boost::filesystem::path tabulations_path = "./tabulations";
-  smash_version = "" // TODO How to get SMASH version here? Not important ATM.
+  std::string smash_version = ""; // TODO How to get SMASH version here? Not important ATM.
 
   smash::initalize(config, smash_version, tabulations_path);
 
