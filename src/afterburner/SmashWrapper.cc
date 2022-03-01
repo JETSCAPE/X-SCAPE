@@ -69,7 +69,7 @@ void SmashWrapper::InitTask() {
   }
 
   boost::filesystem::path tabulations_path = "./tabulations";
-  std::string smash_version = ""; // TODO How to get SMASH version here? Not important ATM.
+  const std::string smash_version(VERSION_MAJOR); // FIXME Rename SMASH VERSION_MAJOR macro
 
   smash::initalize(config, smash_version, tabulations_path);
 
