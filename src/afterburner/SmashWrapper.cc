@@ -115,11 +115,13 @@ void SmashWrapper::ExecuteTask() {
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
   smash::Particles *smash_particles = smash_experiment_->first_ensemble();
   for (unsigned int i = 0; i < n_events; i++) {
+    // TODO Use the per event function here to avoid code dup.
     JSINFO << "Event " << i << " SMASH starts with "
            << modus->jetscape_hadrons_[i].size() << " particles.";
-    smash_experiment_->initialize_new_event(i);
+    // TODO(stdnmr): Check that event number is correctly set
+    smash_experiment_->initialize_new_event();
     if (!only_final_decays_) {
-      smash_experiment_->run_time_evolution(300.0);  // endtime hardcoded for now
+      smash_experiment_->run_time_evolution();  // FIXME endtime removed to make it compile  300.0, endtime hardcoded for now, make it compile first
     }
     smash_experiment_->do_final_decays();
     smash_experiment_->final_output();
@@ -137,7 +139,7 @@ void SmashWrapper::InitPerEvent() {
   AfterburnerModus *modus = smash_experiment_->modus();
   modus->reset_event_numbering();
   modus->jetscape_hadrons_ = TestHadronList(); // soft_particlization_sampler_->Hadron_list_;
-  smash_experiment_->initialize_new_event(0);  //event numbering not correct
+  smash_experiment_->initialize_new_event();  // FIXME event numbering?
 
 }
 
@@ -146,7 +148,8 @@ void SmashWrapper::CalculateTimeTask() {
   const double until_time = GetMainClock()->GetCurrentTime();
   JSINFO << "Propgating SMASH until t = " << until_time;
   // if (!only_final_decays_) {
-  smash_experiment_->run_time_evolution(until_time);
+  // smash_experiment_->run_time_evolution(until_time); // FIXME make it compile without updated run_time_evo
+  smash_experiment_->run_time_evolution();
   // }
 
 }
@@ -156,10 +159,10 @@ void SmashWrapper::FinishPerEvent() {
 
   AfterburnerModus *modus = smash_experiment_->modus();
 
-  smash::Particles *smash_particles = smash_experiment_->particles();
+  smash::Particles *smash_particles = smash_experiment_->first_ensemble();
 
   smash_experiment_->do_final_decays();
-  smash_experiment_->final_output(0);
+  smash_experiment_->final_output();  //FIXME Event numbering
   smash_particles_to_JS_hadrons(*smash_particles,
                                 modus->jetscape_hadrons_[0]);
   JSINFO << modus->jetscape_hadrons_[0].size() << " hadrons from SMASH.";
