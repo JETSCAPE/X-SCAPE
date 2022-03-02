@@ -59,11 +59,10 @@ void SmashWrapper::InitTask() {
   auto random_seed = (*GetMt19937Generator())();
   config["General"]["Randomseed"] = random_seed;
   // Read in the rest of configuration
-  float end_time = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
-  config["General"]["End_Time"] = end_time;
+  end_time_ = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
+  JSINFO << "End time until which SMASH propagates is " << end_time_ << " fm/c";
   only_final_decays_ =
       GetXMLElementInt({"Afterburner", "SMASH", "only_decays"});
-  JSINFO << "End time for SMASH is set to " << end_time << " fm/c";
   if (only_final_decays_) {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
@@ -121,7 +120,8 @@ void SmashWrapper::ExecuteTask() {
     // TODO(stdnmr): Check that event number is correctly set
     smash_experiment_->initialize_new_event();
     if (!only_final_decays_) {
-      smash_experiment_->run_time_evolution();  // FIXME endtime removed to make it compile  300.0, endtime hardcoded for now, make it compile first
+      // TODO(stdnmr) Put some sanity checks on end_time of run_time_evolution
+      smash_experiment_->run_time_evolution(end_time_);  // 300.0, endtime hardcoded for now, make it compile first
     }
     smash_experiment_->do_final_decays();
     smash_experiment_->final_output();
@@ -147,10 +147,9 @@ void SmashWrapper::InitPerEvent() {
 void SmashWrapper::CalculateTimeTask() {
   const double until_time = GetMainClock()->GetCurrentTime();
   JSINFO << "Propgating SMASH until t = " << until_time;
-  // if (!only_final_decays_) {
-  // smash_experiment_->run_time_evolution(until_time); // FIXME make it compile without updated run_time_evo
-  smash_experiment_->run_time_evolution();
-  // }
+  if (!only_final_decays_) {
+    smash_experiment_->run_time_evolution(until_time);
+  }
 
 }
 
