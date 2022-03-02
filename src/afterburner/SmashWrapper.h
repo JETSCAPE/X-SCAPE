@@ -72,8 +72,7 @@ private:
   static RegisterJetScapeModule<SmashWrapper> reg;
 
 public:
-  void
-  smash_particles_to_JS_hadrons(const smash::Particles &smash_particles,
+  void smash_particles_to_JS_hadrons(const smash::Particles &smash_particles,
                                 std::vector<shared_ptr<Hadron>> &JS_hadrons);
   SmashWrapper();
   void InitTask();
