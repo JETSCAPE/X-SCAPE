@@ -43,17 +43,23 @@ void SmashWrapper::InitTask() {
   JSINFO << "SMASH: picking SMASH-specific configuration from xml file";
   std::string smash_config =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_config_file"});
-  boost::filesystem::path input_config_path(smash_config);
-  // SMASH hadron list
-  std::string hadron_list =
+  std::string smash_hadron_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_particles_file"});
-  // SMASH decaymodes
-  std::string decays_list =
+  std::string smash_decays_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_decaymodes_file"});
 
-  auto config = smash::configure(input_config_path,
-                                 hadron_list.c_str(),
-                                 decays_list.c_str());
+  boost::filesystem::path input_config_path(smash_config);
+  boost::filesystem::path hadron_list_path(smash_hadron_list);
+  boost::filesystem::path decays_list_path(smash_decays_list);
+  // output path is just dummy here, because no output from SMASH is foreseen
+  boost::filesystem::path output_path("./smash_output");
+  // do not store tabulation, which is achieved by an empty tabulations path
+  boost::filesystem::path tabulations_path ("");
+  const std::string smash_version(VERSION_MAJOR);
+
+  auto config = smash::setup_config_and_logging(input_config_path,
+                                                hadron_list_path,
+                                                decays_list_path);
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
@@ -67,14 +73,9 @@ void SmashWrapper::InitTask() {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
 
-  boost::filesystem::path tabulations_path = "./tabulations";
-  const std::string smash_version(VERSION_MAJOR); // FIXME Rename SMASH VERSION_MAJOR macro
-
   smash::initalize(config, smash_version, tabulations_path);
 
   JSINFO << "Seting up SMASH Experiment object";
-  // output path is just dummy here, because no output from SMASH is foreseen
-  boost::filesystem::path output_path("./smash_output");
   smash_experiment_ =
       make_shared<smash::Experiment<AfterburnerModus>>(config, output_path);
   JSINFO << "Finish initializing SMASH";
