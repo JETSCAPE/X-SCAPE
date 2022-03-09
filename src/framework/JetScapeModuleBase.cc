@@ -66,20 +66,30 @@ shared_ptr<std::mt19937> JetScapeModuleBase::GetMt19937Generator() {
   return mt19937_generator_;
 }
 
+
+void JetScapeModuleBase::ExecuteTasks() {
+  auto tasks =  GetTaskList();
+  VERBOSE(7) << " : # Subtasks = " << tasks.size();
+  for (auto it : tasks) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (!(module && module->is_time_stepped())) {
+      JSDEBUG << "Executing " << it->GetId();
+      it->Exec();
+    }
+  }
+}
+
 void JetScapeModuleBase::CalculateTimeTasks()
 {
   if (ClockUsed()) {
-  auto tasks =  GetTaskList();
-  VERBOSE(3) << " : # Subtasks = " << tasks.size();
-  for (auto it : tasks) {
-    
-    //cout<<it->GetId()<<" "<<it->GetActive()<<endl;
-    if (std::dynamic_pointer_cast<JetScapeModuleBase>(it) && !it->GetActive() && std::dynamic_pointer_cast<JetScapeModuleBase>(it)->IsValidModuleTime()) {
-    VERBOSE(3) << "Calculate Time Step = " << it->GetId();
-    //if (it->active_exec) 
-      std::dynamic_pointer_cast<JetScapeModuleBase>(it)->CalculateTime();
+    auto tasks =  GetTaskList();
+    for (auto it : tasks) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module && module->is_time_stepped() && module->IsValidModuleTime()) {
+        VERBOSE(3) << "Calculate Time Step = " << it->GetId();
+        module->CalculateTime();
+      }
     }
-  }
  }
 }
 
@@ -87,13 +97,11 @@ void JetScapeModuleBase::ExecTimeTasks()
 {
   if (ClockUsed()) {
     auto tasks =  GetTaskList();
-    VERBOSE(3) << " : # Subtasks = " << tasks.size();
-    for (auto it : tasks) {     
-      //cout<<it->GetId()<<" "<<it->GetActive()<<endl;
-      if (std::dynamic_pointer_cast<JetScapeModuleBase>(it) && !it->GetActive() && std::dynamic_pointer_cast<JetScapeModuleBase>(it)->IsValidModuleTime()) {
-	VERBOSE(3) << "Execute Time Step = " << it->GetId();
-	//if (it->active_exec) 
-	std::dynamic_pointer_cast<JetScapeModuleBase>(it)->ExecTime();
+    for (auto it : tasks) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module && module->is_time_stepped() && module->IsValidModuleTime()) {
+  	     VERBOSE(3) << "Execute Time Step = " << it->GetId();
+  	     module->ExecTime();
       }
     }
   }
@@ -102,36 +110,28 @@ void JetScapeModuleBase::ExecTimeTasks()
 void JetScapeModuleBase::InitPerEventTasks()
 {
   if (ClockUsed()) {
-  auto tasks =  GetTaskList();
-  VERBOSE(3) << " : # Subtasks = " << tasks.size();
-  for (auto it : tasks) {
-    
-    //cout<<it->GetId()<<" "<<it->GetActive()<<endl;
-
-    if (std::dynamic_pointer_cast<JetScapeModuleBase>(it) && !it->GetActive()) {
-    VERBOSE(3) << "InitPerEventTasks " << it->GetId();
-    //if (it->active_exec) 
-      std::dynamic_pointer_cast<JetScapeModuleBase>(it)->InitPerEvent();
+    auto tasks =  GetTaskList();
+    for (auto it : tasks) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module && module->is_time_stepped()) {
+         VERBOSE(3) << "InitPerEventTasks " << it->GetId();
+  	     module->InitPerEvent();
+      }
     }
   }
- }
 }
 
 void JetScapeModuleBase::FinishPerEventTasks()
 {
   if (ClockUsed()) {
-  auto tasks =  GetTaskList();
-  VERBOSE(3) << " : # Subtasks = " << tasks.size();
-  for (auto it : tasks) {
-    
-    //cout<<it->GetId()<<" "<<it->GetActive()<<endl;
-
-    if (std::dynamic_pointer_cast<JetScapeModuleBase>(it) && !it->GetActive()) {
-    VERBOSE(3) << "FinishPerEventTasks " << it->GetId();
-    //if (it->active_exec) 
-      std::dynamic_pointer_cast<JetScapeModuleBase>(it)->FinishPerEvent();
+    auto tasks =  GetTaskList();
+    for (auto it : tasks) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module && module->is_time_stepped()) {
+         VERBOSE(3) << "FinishPerEventTasks " << it->GetId();
+  	     module->FinishPerEvent();
+      }
     }
-  }
   }
 }
 

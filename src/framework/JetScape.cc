@@ -874,7 +874,7 @@ void JetScape::Exec() {
     JSDEBUG << "Found " << GetNumberOfTasks() << " Modules Execute them ... ";
 
     // First run all tasks per event if possible/required ...
-    JetScapeTask::ExecuteTasks();
+    ExecuteTasks();
 
     //JP: in case of execution without clock, just to provide that functionality too
     //maybe not really required if only per event execution ... to be discussed ...
