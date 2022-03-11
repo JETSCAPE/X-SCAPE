@@ -18,11 +18,8 @@
 
 #include "SmashWrapper.h"
 
-#include "smash/decaymodes.h"
-#include "smash/inputfunctions.h"
-#include "smash/interfaces.h"
 #include "smash/particles.h"
-#include "smash/sha256.h"
+#include "smash/library.h"
 
 #include <string>
 
