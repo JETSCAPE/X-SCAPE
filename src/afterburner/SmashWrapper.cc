@@ -57,7 +57,11 @@ void SmashWrapper::InitTask() {
   auto random_seed = (*GetMt19937Generator())();
   config["General"]["Randomseed"] = random_seed;
   // Read in the rest of configuration
-  end_time_ = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
+  if (IsTimeStepped()) {
+    end_time_ = GetMainClock()->GetEndTime();
+  } else {
+    end_time_ = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
+  }
   config["General"]["End_Time"] = end_time_;
   JSINFO << "End time until which SMASH propagates is " << end_time_ << " fm/c";
   only_final_decays_ =
@@ -78,8 +82,9 @@ void SmashWrapper::InitTask() {
     const double ts_mod = fmod(delta_t_js, delta_t_sm);
     const double ts_frac = delta_t_js / delta_t_sm;
     if (!(ts_mod < 1E-6 && ts_frac > 1)) {
-      JSWARN << "Timesteps of SMASH and JETSCAPE are incompabitle. SMASH "
-                "timesteps should be a half, a third, etc. from Jetscape's";
+      JSWARN << "Timesteps of SMASH (dt = " << delta_t_sm
+             << ") and JETSCAPE (dt = " << delta_t_js << ") are incompabitle."
+                "SMASH timesteps should be a half, a third, etc. from Jetscape's";
     }
   }
 
