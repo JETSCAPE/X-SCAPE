@@ -21,6 +21,7 @@
 #include "smash/particles.h"
 #include "smash/library.h"
 
+#include <math.h>
 #include <string>
 
 #include <boost/filesystem.hpp>
@@ -33,7 +34,6 @@ RegisterJetScapeModule<SmashWrapper> SmashWrapper::reg("SMASH");
 
 SmashWrapper::SmashWrapper() {
   SetId("SMASH");
-  SetActive(false);
 }
 
 void SmashWrapper::InitTask() {
@@ -44,25 +44,21 @@ void SmashWrapper::InitTask() {
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_particles_file"});
   std::string smash_decays_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_decaymodes_file"});
-
-  boost::filesystem::path input_config_path(smash_config);
-  boost::filesystem::path hadron_list_path(smash_hadron_list);
-  boost::filesystem::path decays_list_path(smash_decays_list);
   // output path is just dummy here, because no output from SMASH is foreseen
   boost::filesystem::path output_path("./smash_output");
   // do not store tabulation, which is achieved by an empty tabulations path
-  boost::filesystem::path tabulations_path ("");
-  const std::string smash_version(VERSION_MAJOR);
+  std::string tabulations_path("");
+  const std::string smash_version(SMASH_VERSION_VERBOSE);
 
-  auto config = smash::setup_config_and_logging(input_config_path,
-                                                hadron_list_path,
-                                                decays_list_path);
+  auto config = smash::setup_config_and_logging(smash_config, smash_hadron_list,
+                                                smash_decays_list);
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
   config["General"]["Randomseed"] = random_seed;
   // Read in the rest of configuration
   end_time_ = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
+  config["General"]["End_Time"] = end_time_;
   JSINFO << "End time until which SMASH propagates is " << end_time_ << " fm/c";
   only_final_decays_ =
       GetXMLElementInt({"Afterburner", "SMASH", "only_decays"});
@@ -70,7 +66,8 @@ void SmashWrapper::InitTask() {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
 
-  smash::initalize(config, smash_version, tabulations_path);
+  smash::initalize_particles_decays_and_tabulations(config, smash_version,
+                                                    tabulations_path);
 
   JSINFO << "Seting up SMASH Experiment object";
   smash_experiment_ =
