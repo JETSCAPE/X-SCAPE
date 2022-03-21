@@ -162,7 +162,7 @@ public:
   //void SetMultiThread(bool m_multiThread) {multiThread = m_multiThread;}
 
   /// Returns whether the module evolves in time steps
-  bool IsTimeStepped() {return time_stepped;}
+  bool IsTimeStepped() const {return time_stepped;}
   /// Sets whether the module evolves in time steps
   void SetTimeStepped(bool m_time_stepped) {time_stepped = m_time_stepped;}
 protected:

@@ -1020,6 +1020,7 @@ void JetScape::Exec() {
     }
 
     // JP: If task not active then per time step is active (see above), which could lead to issues with hydro resuse. Follow up!
+    // JS: New is timestepped flag should resolve this issue. Anything to undo below?
     // For reusal, deactivate task after it has finished
     // but before it gets cleaned up.
     if (reuse_hydro_) {

@@ -176,15 +176,15 @@ int main(int argc, char** argv)
   jetscape->ClockInfo();
 
   auto clockTest1 = make_shared<ClockTest>();
-  clockTest1->SetActive(false);
+  clockTest1->SetTimeStepped(true);
   clockTest1->SetTimeRange(-1,0);
 
   auto clockTest2 = make_shared<ClockTest>();
-  clockTest2->SetActive(false);
+  clockTest2->SetTimeStepped(true);
   //clockTest2->SetTimeRange(0,3.5);
   
   auto clockTest3 = make_shared<ClockTest>();
-  clockTest3->SetActive(false);
+  clockTest3->SetTimeStepped(true);
   //clockTest3->SetTimeRange(0,4.);
   clockTest3->AddModuleClock(mModuleClock);
   
@@ -199,11 +199,11 @@ int main(int argc, char** argv)
   auto isr = make_shared<InitialStateRadiationTest> ();
   auto hydro = make_shared<Brick> ();
   hydro->AddModuleClock(mMilneClock);
-  hydro->SetActive(false);
+  hydro->SetTimeStepped(true);
 
   //auto hydroTest = make_shared<BrickTest> (); 
   //hydroTest->SetMultiThread(true); 
-  //hydroTest->SetActive(false);
+  //hydroTest->SetTimeStepped(true);
 
   jetscape->Add(trento);
   jetscape->Add(pythiaGun);
@@ -215,12 +215,12 @@ int main(int argc, char** argv)
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
 
-  //Set inactive task (per event) and with main clock attached do per time step for these modules ...
+  //Do per time step for these modules with main clock attached ...
   //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get 
   //time, either main clock time or if module clock attached the tranformed time via: GetModuleCurrentTime();
   
-  jlossmanager->SetActive(false);  
-  jloss->SetActive(false);
+  jlossmanager->SetTimeStepped(true); 
+  jloss->SetTimeStepped(true);
   
   //quick and dirty to check if module clock transformation is working conceptually ...
   //jloss->AddModuleClock(mModuleClock);
@@ -241,12 +241,12 @@ int main(int argc, char** argv)
 
   auto cascadeTest = make_shared<CascadeTest> ();  
   cascadeTest->SetMultiThread(true); 
-  cascadeTest->SetActive(false);
+  cascadeTest->SetTimeStepped(true);
   jetscape->Add(cascadeTest);
 
   //Test task for access of History via QueryHistory instance and use any data-type for generic access via JetScapeModuleBase::GetHistory()
   auto histTest = make_shared<HistTest>();
-  histTest->SetActive(false); // to be executed per time step
+  histTest->SetTimeStepped(true);// to be executed per time step
   //jetscape->Add(histTest);
   
   // JP: Leave out for now for testing clock(s) ... has to be updated accordingly ... (see JetEnergyLossManager as an example ...)
