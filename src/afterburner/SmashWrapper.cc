@@ -70,7 +70,7 @@ void SmashWrapper::InitTask() {
                                                     tabulations_path);
 
   // Enforce timestep compatibility (temporarily)
-  if (is_time_stepped()) {
+  if (IsTimeStepped()) {
     const double delta_t_js = GetMainClock()->GetDeltaT();
     const double delta_t_sm = config.read({"General", "Delta_Time"});
     std::cout << "JS timestep: " << delta_t_js << std::endl;

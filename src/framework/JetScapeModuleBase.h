@@ -161,8 +161,10 @@ public:
 
   //void SetMultiThread(bool m_multiThread) {multiThread = m_multiThread;}
 
-  bool is_time_stepped() {return time_stepped;}
-  void set_time_stepped(bool m_time_stepped) {time_stepped = m_time_stepped;}
+  /// Returns whether the module evolves in time steps
+  bool IsTimeStepped() {return time_stepped;}
+  /// Sets whether the module evolves in time steps
+  void SetTimeStepped(bool m_time_stepped) {time_stepped = m_time_stepped;}
 protected:
 
   //template<typename T>
@@ -174,7 +176,7 @@ private:
   static int current_event;
   shared_ptr<std::mt19937> mt19937_generator_;
   //bool multiThread = false;
-  // TODO(stdnmr) CamelCase
+  
   /// Decides whether the module evolves in time steps
   bool time_stepped;
 };
