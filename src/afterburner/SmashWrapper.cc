@@ -69,6 +69,20 @@ void SmashWrapper::InitTask() {
   smash::initalize_particles_decays_and_tabulations(config, smash_version,
                                                     tabulations_path);
 
+  // Enforce timestep compatibility (temporarily)
+  if (is_time_stepped()) {
+    const double delta_t_js = GetMainClock()->GetDeltaT();
+    const double delta_t_sm = config.read({"General", "Delta_Time"});
+    std::cout << "JS timestep: " << delta_t_js << std::endl;
+    std::cout << "SMASH timestep: " << delta_t_sm << std::endl;
+    const double ts_mod = fmod(delta_t_js, delta_t_sm);
+    const double ts_frac = delta_t_js / delta_t_sm;
+    if (!(ts_mod < 1E-6 && ts_frac > 1)) {
+      JSWARN << "Timesteps of SMASH and JETSCAPE are incompabitle. SMASH "
+                "timesteps should be a half, a third, etc. from Jetscape's";
+    }
+  }
+
   JSINFO << "Seting up SMASH Experiment object";
   smash_experiment_ =
       make_shared<smash::Experiment<AfterburnerModus>>(config, output_path);
