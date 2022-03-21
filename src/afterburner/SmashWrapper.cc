@@ -118,68 +118,62 @@ void SmashWrapper::ExecuteTask() {
   // Every hydro event creates a new structure like jetscape_hadrons_
   // with as many events in it as one has samples per hydro
   modus->reset_event_numbering();
-  modus->jetscape_hadrons_ = TestHadronList(); // soft_particlization_sampler_->Hadron_list_;
+  // modus->jetscape_hadrons_ = soft_particlization_sampler_->Hadron_list_;
+  modus->jetscape_hadrons_ = TestHadronList();
   const int n_events = modus->jetscape_hadrons_.size();
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
-  smash::Particles *smash_particles = smash_experiment_->first_ensemble();
   for (unsigned int i = 0; i < n_events; i++) {
     JSINFO << "Event " << i << " SMASH starts with "
-           << modus->jetscape_hadrons_[i].size() << " particles.";
-    // TODO(stdnmr): Check that event number is correctly set
-    smash_experiment_->initialize_new_event();
-    if (!only_final_decays_) {
-      // TODO(stdnmr) Put some sanity checks on end_time of run_time_evolution
-      smash_experiment_->run_time_evolution(end_time_);  // 300.0, endtime hardcoded for now, make it compile first
-    }
-    smash_experiment_->do_final_decays();
-    smash_experiment_->final_output();
-    // TODO(stdnmr): Check that event number is correctly set in final outout,
-    // since now it is not an input to final_ouput() anymore
-    smash_particles_to_JS_hadrons(*smash_particles,
-                                  modus->jetscape_hadrons_[i]);
-    JSINFO << modus->jetscape_hadrons_[i].size() << " hadrons from SMASH.";
-
-    // TODO Use the per event function here to avoid code dup.. Something
-    // like the folowing. Fix:
-    // * How to deal with event number
-    // InitPerEvent();
-    // CalculateTimeTask();  // until_time = end_time_
-    // FinishPerEvent();
+           << modus->jetscape_hadrons_[i].size() << " particles.";  
+    InitPerEvent();
+    CalculateTimeTask();
+    // TODO(stdnmr) Check event numbering
+    std::cout << "event_number_ (before FinishPerEvent)= "
+              << modus->current_event_number() << '\n';
+    FinishPerEvent();
   }
 }
 
 
 void SmashWrapper::InitPerEvent() {
-  JSINFO << "Initalizing new SMASH event with test hadron list...";
-  AfterburnerModus *modus = smash_experiment_->modus();
-  modus->reset_event_numbering();
-  modus->jetscape_hadrons_ = TestHadronList(); // soft_particlization_sampler_->Hadron_list_;
-  smash_experiment_->initialize_new_event();  // FIXME Check event numbering?
+  if (IsTimeStepped()) {
+    JSINFO << "Initalizing new time-stepped SMASH  event ...";
+    AfterburnerModus *modus = smash_experiment_->modus();
+    modus->reset_event_numbering();
+    // modus->jetscape_hadrons_ = soft_particlization_sampler_->Hadron_list_;
+    modus->jetscape_hadrons_ = TestHadronList();
 
+    const int n_events = modus->jetscape_hadrons_.size();
+    if (n_events > 1) {
+      JSWARN << "In timestep mode SMASH only propagates one (= the first "
+                "soft_particlization) event at the moment. No oversampling possible.";
+    }
+  }
+  smash_experiment_->initialize_new_event();
 }
 
 
 void SmashWrapper::CalculateTimeTask() {
-  const double until_time = GetMainClock()->GetCurrentTime();
+  const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
   JSINFO << "Propgating SMASH until t = " << until_time;
   if (!only_final_decays_) {
     smash_experiment_->run_time_evolution(until_time);
   }
-
 }
 
 void SmashWrapper::FinishPerEvent() {
   JSINFO << "Finishing SMASH event...";
 
   AfterburnerModus *modus = smash_experiment_->modus();
-
   smash::Particles *smash_particles = smash_experiment_->first_ensemble();
+  int ev_no = modus->current_event_number();
 
   smash_experiment_->do_final_decays();
-  smash_experiment_->final_output();  //FIXME Check event numbering
+  smash_experiment_->final_output();  // FIXME Check event numbering, no event number input anymore
   smash_particles_to_JS_hadrons(*smash_particles,
-                                modus->jetscape_hadrons_[0]);
-  JSINFO << modus->jetscape_hadrons_[0].size() << " hadrons from SMASH.";
+                                modus->jetscape_hadrons_[ev_no - 1]);
+  JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
+         << " hadrons from SMASH.";
 }
 
 void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
