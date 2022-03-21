@@ -25,7 +25,7 @@ void Afterburner::Init() {
   JetScapeModuleBase::Init();
   JSINFO << "Initializing Afterburner : " << GetId() << " ...";
 
-  // Get the pointer to sampler
+  // Get the pointer to soft sampler
   soft_particlization_sampler_ =
       JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
   if (!soft_particlization_sampler_) {
@@ -33,6 +33,10 @@ void Afterburner::Init() {
            << " hadrons to afterburner.";
     exit(1);
   }
+
+  // Get the pointer to the hard sampler
+  hard_particlization_module_ = ...;
+
   InitTask();
 }
 

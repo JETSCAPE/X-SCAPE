@@ -46,6 +46,12 @@ public:
 protected:
   /// Pointer to particlization sampler, which provides initial hadrons
   std::shared_ptr<SoftParticlization> soft_particlization_sampler_;
+  /// Pointer to hybrid hadronization module, which provides fragmentation hadrons
+  std::shared_ptr<HybridHadronization> hard_particlization_module_;
+
+  std::vector<shared_ptr<Hadron>> GetFragmentationHadrons(){
+    return hard_particlization_module_->GetFinalHadrons();
+  }
 };
 
 } // end namespace Jetscape
