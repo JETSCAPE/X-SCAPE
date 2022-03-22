@@ -50,7 +50,9 @@ protected:
   std::shared_ptr<HybridHadronization> hard_particlization_module_;
 
   std::vector<shared_ptr<Hadron>> GetFragmentationHadrons(){
-    return hard_particlization_module_->GetFinalHadrons();
+    vector<shared_ptr<Hadron>> tmp_list;
+    hard_particlization_module_->GetHadrons(tmp_list);
+    return tmp_list;
   }
 };
 

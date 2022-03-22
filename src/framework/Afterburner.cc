@@ -35,7 +35,8 @@ void Afterburner::Init() {
   }
 
   // Get the pointer to the hard sampler
-  hard_particlization_module_ = ...;
+  hard_particlization_module_ =
+      JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();  // TODO(stdnmr) What does lock() do?
 
   InitTask();
 }
