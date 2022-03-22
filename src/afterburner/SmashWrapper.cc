@@ -77,11 +77,9 @@ void SmashWrapper::InitTask() {
   if (IsTimeStepped()) {
     const double delta_t_js = GetMainClock()->GetDeltaT();
     const double delta_t_sm = config.read({"General", "Delta_Time"});
-    std::cout << "JS timestep: " << delta_t_js << std::endl;
-    std::cout << "SMASH timestep: " << delta_t_sm << std::endl;
-    const double ts_mod = fmod(delta_t_js, delta_t_sm);
+    const double ts_rem = std::remainder(delta_t_js, delta_t_sm);
     const double ts_frac = delta_t_js / delta_t_sm;
-    if (!(ts_mod < 1E-6 && ts_frac > 1)) {
+    if (!(ts_rem < 1E-6 && ts_frac > 1.0)) {
       JSWARN << "Timesteps of SMASH (dt = " << delta_t_sm
              << ") and JETSCAPE (dt = " << delta_t_js << ") are incompabitle."
                 "SMASH timesteps should be a half, a third, etc. from Jetscape's";
@@ -123,8 +121,7 @@ void SmashWrapper::ExecuteTask() {
   // Every hydro event creates a new structure like jetscape_hadrons_
   // with as many events in it as one has samples per hydro
   modus->reset_event_numbering();
-  // modus->jetscape_hadrons_ = soft_particlization_sampler_->Hadron_list_;
-  modus->jetscape_hadrons_ = TestHadronList();
+  modus->jetscape_hadrons_ = soft_particlization_sampler_->Hadron_list_;
   const int n_events = modus->jetscape_hadrons_.size();
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
   for (unsigned int i = 0; i < n_events; i++) {
@@ -145,8 +142,8 @@ void SmashWrapper::InitPerEvent() {
     JSINFO << "Initalizing new time-stepped SMASH  event ...";
     AfterburnerModus *modus = smash_experiment_->modus();
     modus->reset_event_numbering();
-    // modus->jetscape_hadrons_ = soft_particlization_sampler_->Hadron_list_;
-    modus->jetscape_hadrons_ = TestHadronList();
+    modus->jetscape_hadrons_ = soft_particlization_sampler_->Hadron_list_;
+    // modus->jetscape_hadrons_ = TestHadronList();
 
     const int n_events = modus->jetscape_hadrons_.size();
     if (n_events > 1) {

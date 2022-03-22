@@ -90,6 +90,10 @@ int main(int argc, char** argv)
 
   Show();
 
+  // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
+  auto mClock = make_shared<MainClock>("SpaceTime",0,100,10.0); // JP: make consistent with reading from XML in init phase ...
+  mClock->Info();
+
   auto jetscape = make_shared<JetScape>();
   const char* masterXMLName = "../config/jetscape_master.xml";
   const char* userXMLName = "../config/jetscape_user.xml";
@@ -97,6 +101,8 @@ int main(int argc, char** argv)
   jetscape->SetXMLMasterFileName(masterXMLName);
   jetscape->SetXMLUserFileName(userXMLName);
 
+  jetscape->AddMainClock(mClock);
+  jetscape->ClockInfo();
 
   jetscape->SetReuseHydro (false);
   jetscape->SetNReuseHydro (0);
@@ -119,6 +125,8 @@ int main(int argc, char** argv)
 
   // afterburner
   auto smash = make_shared<SmashWrapper> ();
+  smash->SetTimeStepped(true);
+
   jetscape->Add(smash);
 
   // Energy loss
@@ -150,6 +158,7 @@ int main(int argc, char** argv)
 
   // Output
   auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
+  writer->SetId("Writer");
   // same as JetScapeWriterAscii but gzipped
   // auto writer= make_shared<JetScapeWriterAsciiGZ> ("test_out.dat.gz");
   // HEPMC3
