@@ -646,11 +646,7 @@ void HybridHadronization::DoHadronization(
       double mH = HH_hadrons[iHad].mass();
       FourVector p(HH_hadrons[iHad].P());
       FourVector x(HH_hadrons[iHad].pos());
-      // Create list of final hadrons to accessed from outside (would certainly work)
-      // First understand how DoHadronization is called
-      FinalHadron = std::make_shared<Hadron>(Hadron(0, idH, 1, p, x, mH));
-      hOut.push_back(FinalHadron));
-      FinalHadrons.push_back(FinalHadron);
+      hOut.push_back(std::make_shared<Hadron>(Hadron(0, idH, 1, p, x, mH)));
     }
   }
   VERBOSE(2) << "#Showers hadronized together: " << shower.size() << " ( "

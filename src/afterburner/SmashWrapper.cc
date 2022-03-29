@@ -123,6 +123,13 @@ void SmashWrapper::ExecuteTask() {
   modus->reset_event_numbering();
   modus->jetscape_hadrons_ = soft_particlization_sampler_->Hadron_list_;
   const int n_events = modus->jetscape_hadrons_.size();
+  if (n_events == 1) {  // We can only append fragmentation hadrons to one soft hadronziation event
+    std::vector<shared_ptr<Hadron>> frag_hadrons = GetFragmentationHadrons();
+    modus->jetscape_hadrons_[0].insert(
+            modus->jetscape_hadrons_[0].end(), frag_hadrons.begin(),
+            frag_hadrons.end());
+  }
+
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
   for (unsigned int i = 0; i < n_events; i++) {
     JSINFO << "Event " << i << " SMASH starts with "
