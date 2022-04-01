@@ -86,7 +86,7 @@ Afterburner::GatherAfterburnerHadrons() {
   afterburner_had_events = GetSoftParticlizationHadrons();
   if (GetXMLElementInt({"Afterburner", "include_fragmentation_hadrons"})) {
     if (afterburner_had_events.size() != 1) {
-      JSWARN << "Fragmentation hadrons in Afterburner only possible without "
+      JSWARN << "Fragmentation hadrons in Afterburner are only possible without "
                 "repeated sampling from SoftParticlization. Exiting.";
       exit(1);
     }
