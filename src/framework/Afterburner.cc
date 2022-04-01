@@ -37,15 +37,10 @@ void Afterburner::Init() {
   if (GetXMLElementInt({"Afterburner", "include_fragmentation_hadrons"})) {
     // Get the pointer to the hard sampler
     hard_particlization_module_ = JetScapeSignalManager::Instance()
-                                      ->GetHadronizationManagerPointer()
-                                      .lock();
+                                      ->GetHadronizationManagerPointer().lock();
   }
   InitTask();
 }
-
-// TODO(stdnmr) Make intermediate class more useful for other Afterburner
-// e.g. * add afterburner function to get hadrons ftom soft particilizing
-// TODO(stdnmr) Add also functionality to get fragmentation hadrons
 
 void Afterburner::Exec() {
   VERBOSE(2) << "Afterburner running: " << GetId() << " ...";
@@ -57,8 +52,7 @@ void Afterburner::CalculateTime() {
   CalculateTimeTask();
 }
 
-std::vector<std::vector<std::shared_ptr<Hadron>>>
-Afterburner::GetSoftParticlizationHadrons() {
+std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GetSoftParticlizationHadrons() {
   return soft_particlization_sampler_->Hadron_list_;
 }
 
@@ -80,8 +74,7 @@ std::vector<shared_ptr<Hadron>> Afterburner::GetFragmentationHadrons() {
   return h_list;
 }
 
-std::vector<std::vector<std::shared_ptr<Hadron>>>
-Afterburner::GatherAfterburnerHadrons() {
+std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GatherAfterburnerHadrons() {
   std::vector<std::vector<shared_ptr<Hadron>>> afterburner_had_events;
   afterburner_had_events = GetSoftParticlizationHadrons();
   if (GetXMLElementInt({"Afterburner", "include_fragmentation_hadrons"})) {

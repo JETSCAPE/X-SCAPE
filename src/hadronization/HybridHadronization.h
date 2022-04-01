@@ -38,8 +38,6 @@ public:
                        vector<shared_ptr<Parton>> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
 
-  std::vector<shared_ptr<Hadron>> GetFinalHadrons() { return FinalHadrons; }
-
 private:
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<HybridHadronization> reg;
@@ -461,9 +459,6 @@ private:
   parton_collection HH_shower, HH_thermal;
   parton_collection HH_showerptns, HH_remnants, HH_pyremn;
   hadron_collection HH_hadrons;
-
-  // Final hadrons to be passed to Afterburner
-  std::vector<shared_ptr<Hadron>> FinalHadrons;
 
   //function to form strings out of original shower
   void stringform();
