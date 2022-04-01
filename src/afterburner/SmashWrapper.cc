@@ -121,17 +121,10 @@ void SmashWrapper::ExecuteTask() {
   // Every hydro event creates a new structure like jetscape_hadrons_
   // with as many events in it as one has samples per hydro
   modus->reset_event_numbering();
-  modus->jetscape_hadrons_ = GetSoftParticlizationHadrons();
+  modus->jetscape_hadrons_ = GatherAfterburnerHadrons();
   // modus->jetscape_hadrons_ = TestHadronList();
 >>>>>>> 2470eba... Add function to get hard or soft hadrons in Afterburner
   const int n_events = modus->jetscape_hadrons_.size();
-  if (n_events == 1) {  // We can only append fragmentation hadrons to one soft hadronziation event
-    std::vector<shared_ptr<Hadron>> frag_hadrons = GetFragmentationHadrons();
-    modus->jetscape_hadrons_[0].insert(
-            modus->jetscape_hadrons_[0].end(), frag_hadrons.begin(),
-            frag_hadrons.end());
-  }
-
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
   for (unsigned int i = 0; i < n_events; i++) {
     JSINFO << "Event " << i << " SMASH starts with "
@@ -151,7 +144,7 @@ void SmashWrapper::InitPerEvent() {
     JSINFO << "Initalizing new time-stepped SMASH  event ...";
     AfterburnerModus *modus = smash_experiment_->modus();
     modus->reset_event_numbering();
-    // modus->jetscape_hadrons_ = GetSoftParticlizationHadrons();
+    // modus->jetscape_hadrons_ = GatherAfterburnerHadrons();
     modus->jetscape_hadrons_ = TestHadronList();
 >>>>>>> 2470eba... Add function to get hard or soft hadrons in Afterburner
 

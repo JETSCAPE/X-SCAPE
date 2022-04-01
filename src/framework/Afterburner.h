@@ -51,11 +51,10 @@ protected:
   /// Pointer to hadronization module, which provides fragmentation hadrons
   std::shared_ptr<HadronizationManager> hard_particlization_module_;
 
+  // Gather all hadrons from soft particlization and fragmentation
+  std::vector<std::vector<std::shared_ptr<Hadron>>> GatherAfterburnerHadrons();
   /// Get the events of soft particlization hadrons
-  std::vector<std::vector<std::shared_ptr<Hadron>>>
-  GetSoftParticlizationHadrons() {
-    return soft_particlization_sampler_->Hadron_list_;
-  }
+  std::vector<std::vector<std::shared_ptr<Hadron>>> GetSoftParticlizationHadrons();
   /// Get the list of fragmentation hadrons
   std::vector<std::shared_ptr<Hadron>> GetFragmentationHadrons();
 };
