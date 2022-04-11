@@ -31,15 +31,20 @@ void Afterburner::Init() {
   if (!soft_particlization_sampler_) {
     JSWARN << "No soft particlization module found. It is necessary to provide"
            << " hadrons to afterburner.";
-    exit(1);
+    // exit(1);
   }
 
+  // TODO(stdnmr) Add config option here
   // Get the pointer to the hard sampler
   hard_particlization_module_ =
-      JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();  // TODO(stdnmr) What does lock() do?
+      JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
 
   InitTask();
 }
+
+// TODO(stdnmr) Make intermediate class more useful for other Afterburner
+// e.g. * add afterburner function to get hadrons ftom soft particilizing
+// TODO(stdnmr) Add also functionality to get fragmentation hadrons
 
 void Afterburner::Exec() {
   VERBOSE(2) << "Afterburner running: " << GetId() << " ...";
@@ -49,6 +54,23 @@ void Afterburner::Exec() {
 void Afterburner::CalculateTime() {
   VERBOSE(2) << "Afterburner running for time: " << GetId() << " ...";
   CalculateTimeTask();
+}
+
+std::vector<shared_ptr<Hadron>> Afterburner::GetFragmentationHadrons() {
+  JSINFO << "Get fragmentation hadrons in Afterburner";
+  std::vector<shared_ptr<Hadron>> h_list;
+  hard_particlization_module_->GetHadrons(h_list);
+  JSINFO << "Got " << h_list.size() << " fragmentation hadrons from HadronizationManager.";
+  for (auto h : h_list) {
+    std::cout << *h << std::endl;
+    if (h->has_no_position()) {
+      // No position info set in hadronization module
+      JSWARN << "Found fragmentation hadron without properly set position in Afterburner. Exiting.";
+      exit(1);
+    }
+  }
+
+  return h_list;
 }
 
 } // end namespace Jetscape
