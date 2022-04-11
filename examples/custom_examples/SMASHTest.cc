@@ -58,7 +58,9 @@
 #include "PGun.h"
 #include "HadronizationManager.h"
 #include "Hadronization.h"
+#include "ColorlessHadronization.h"
 #include "ColoredHadronization.h"
+#include "HybridHadronization.h"
 
 #include <chrono>
 #include <thread>
@@ -119,16 +121,6 @@ int main(int argc, char** argv)
   jetscape->Add(pGun);
   jetscape->Add(hydro);
 
-  // surface sampler
-  auto iSS = make_shared<iSpectraSamplerWrapper> ();
-  jetscape->Add(iSS);
-
-  // afterburner
-  auto smash = make_shared<SmashWrapper> ();
-  smash->SetTimeStepped(true);
-
-  jetscape->Add(smash);
-
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
@@ -149,12 +141,20 @@ int main(int argc, char** argv)
   // Hadronization
   auto hadroMgr = make_shared<HadronizationManager> ();
   auto hadro = make_shared<Hadronization> ();
-  auto hadroModule = make_shared<ColoredHadronization> ();
-  hadro->Add(hadroModule);
-  // auto colorless = make_shared<ColorlessHadronization> ();
+  auto hybrid = make_shared<HybridHadronization> ();
+  hadro->Add(hybrid);
+  auto colorless = make_shared<ColorlessHadronization> ();
   // hadro->Add(colorless);
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
+
+  // surface sampler
+  auto iSS = make_shared<iSpectraSamplerWrapper>();
+  jetscape->Add(iSS);
+
+  // afterburner
+  auto smash = make_shared<SmashWrapper>();
+  jetscape->Add(smash);
 
   // Output
   auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
