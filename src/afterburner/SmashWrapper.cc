@@ -123,7 +123,6 @@ void SmashWrapper::ExecuteTask() {
   modus->reset_event_numbering();
   modus->jetscape_hadrons_ = GatherAfterburnerHadrons();
   // modus->jetscape_hadrons_ = TestHadronList();
->>>>>>> 2470eba... Add function to get hard or soft hadrons in Afterburner
   const int n_events = modus->jetscape_hadrons_.size();
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
   for (unsigned int i = 0; i < n_events; i++) {
@@ -146,7 +145,6 @@ void SmashWrapper::InitPerEvent() {
     modus->reset_event_numbering();
     // modus->jetscape_hadrons_ = GatherAfterburnerHadrons();
     modus->jetscape_hadrons_ = TestHadronList();
->>>>>>> 2470eba... Add function to get hard or soft hadrons in Afterburner
 
     const int n_events = modus->jetscape_hadrons_.size();
     if (n_events > 1) {
