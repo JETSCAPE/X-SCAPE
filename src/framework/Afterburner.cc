@@ -31,7 +31,7 @@ void Afterburner::Init() {
   if (!soft_particlization_sampler_) {
     JSWARN << "No soft particlization module found. It is necessary to provide"
            << " hadrons to afterburner.";
-    // exit(1);
+    exit(1);
   }
 
   if (GetXMLElementInt({"Afterburner", "include_fragmentation_hadrons"})) {
