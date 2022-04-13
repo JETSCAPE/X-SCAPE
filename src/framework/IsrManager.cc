@@ -109,7 +109,7 @@ void IsrManager::Exec()
         hpp->AddPartonShower(ps);
 
       auto fp = ps->GetFinalPartons();
-      JSDEBUG<<"# of shower initiaing partons after ISR  = "<<fp.size();
+      JSINFO << BOLDYELLOW <<"# of shower initiaing partons after ISR  = "<<fp.size();
 
       for (auto p : fp) if (hpp) hpp->AddParton(p);
 

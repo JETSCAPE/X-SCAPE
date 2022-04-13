@@ -10,6 +10,7 @@
 #include "JetScapeSignalManager.h"
 #include "JetScapeXML.h"
 #include "Matter.h"
+#include "JetScapeConstants.h"
 #include <string>
 #include <thread>
 #include <cmath>
@@ -24,10 +25,15 @@
 
 using namespace Jetscape;
 
-iMATTER::iMATTER()
+double y[] = {0.0,0.0,0.0,0.0};
+
+const Parton initial(0,21,0,0.0,0.0,0.0,0.0,y) ; // a gluon with no momentum at the origin.
+
+iMATTER::iMATTER(): Parent(initial) , Sibling(initial) , Current(initial)
 {
   SetId("iMATTER");
   VERBOSE(8);
+
 }
 
 iMATTER::~iMATTER()
@@ -38,6 +44,18 @@ iMATTER::~iMATTER()
 void iMATTER::Init()
 {
   JSINFO<<"Intialize iMATTER ...";
+    
+    P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
+    
+    P_B = P_A ; /// assuming symmetric system, rewrite for non-symmetric collision.
+    
+    if (!P_A)
+    {
+        JSWARN << "Initial nucleon energy not found by iMATTER, assuming P_A = 2510 GeV" ;
+        P_A = 2510 ;
+        P_B = P_A; /// default symmetric assumption
+    }
+    
     ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
     if (!ini)
     {
@@ -57,6 +75,13 @@ void iMATTER::Init()
   // Initialize random number distribution
   ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
     
+    Pythia8::Info info;
+    pdf = new Pythia8::LHAGrid1( 2212, "20", "../../../../Dropbox/work/pythia8235/share/Pythia8/xmldoc/", &info); /// Assuming its a proton
+    /// Locked to a specific PYTHIA directory
+    /// should be updated to point to the default PYTHIA directory
+    
+    
+    vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});/// use the same virtuality factor as in the final state calculation
     
 }
 
@@ -67,10 +92,10 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     
     
     
-    for (int in=0; in < pIn.size(); in++)
+    for (int in=0; in < pIn.size(); in++) /// we continue with the loop charade, even though the framework is just giving us one parton
     {
         if ( pIn[in].plabel()>0 ) return ;
-    // i-MATTER only deals with initial state (note the i)
+    // i-MATTER only deals with initial state (note the i -> in)
         
        
         
@@ -87,15 +112,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             JSINFO << BOLDYELLOW << "Parton on entry busted on time step " << time;
             Matter::Dump_pIn_info(in, pIn);
             std::cin >> blurb;
-        }
+        } /// usual dump routine for naned out partons
         
         if (pIn[in].pstat()>=0) continue ; // Only accept initial state partons
         
         if (pIn[in].pid()==22) continue ; // neglect photons. 
         
-       
-        Pythia8::Info info;
-        Pythia8::PDF* extPDF = new Pythia8::LHAGrid1( 2212, "20", "../../../../Dropbox/work/pythia8235/share/Pythia8/xmldoc/", &info);
     
         //JSINFO << BOLDYELLOW << " pdfvalue = " << extPDF->xf(1,0.2,10);
     
@@ -178,9 +200,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         {
             pIn[in].set_jet_v(velocity);
             
-            double max_t = -1*pIn[in].e()*pIn[in].e();
+            double max_t = -1*vir_factor*pIn[in].e()*pIn[in].e();
             
-            t1 = generate_initial_virt(pIn[in], Current_Location, max_t, extPDF);
+            t1 = generate_initial_virt(pIn[in], Current_Location, max_t);
         
             pIn[in].set_t(t1);
             
@@ -189,15 +211,20 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pIn[in].set_form_time( generate_L(std::abs( 2*e/t1 ) ) );
             
             pIn[in].set_stat(-900); // status for an unstable initial state parton moving backward in time.
-            
+        
             JSINFO << MAGENTA << " pSTAT = -1000 leads to new virt = " << t1 << " and New formation time = " << pIn[in].form_time() ;
-            
+
         }
     
-        double split_time = t_end + pIn[in].form_time();
         
-        JSINFO << BOLDYELLOW << "virtuality = " << pIn[in].t() << " split time = " << split_time ;
-        JSINFO << BOLDYELLOW << " new px = " << pIn[in].px() << " py =  " << pIn[in].py() << " pz = " << pIn[in].pz() << " energy = " << pIn[in].e();
+        Current = pIn[in] ;
+               
+        //printout_current();
+        
+        double split_time = t_end + Current.form_time();
+        
+        JSINFO << BOLDYELLOW << "virtuality = " << Current.t() << " split time = " << split_time ;
+        JSINFO << BOLDYELLOW << " new px = " << Current.px() << " py =  " << Current.py() << " pz = " << Current.pz() << " energy = " << Current.e();
         
 
         
@@ -206,11 +233,11 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             JSINFO << BOLDRED << "Starting a Split " ;
             
-            z_frac = generate_z( pIn[in], Current_Location, extPDF ) ;
+            z_frac = generate_z( pIn[in], Current_Location) ;
             
             double max_t = pIn[in].t() ;
             
-            double t = generate_initial_virt(pIn[in], Current_Location, max_t, extPDF );
+            double t = generate_initial_virt(pIn[in], Current_Location, max_t );
             
             double t2 = -0.1;
             
@@ -291,13 +318,13 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     
     JSINFO << BOLDCYAN << " Moving to next time step " ;
     
-    //std::cin >> blurb ;
+    std::cin >> blurb ;
 }
 // End of DoEnergyLoss
 
 
 
-double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_t, Pythia8::PDF * pdf)
+double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_t)
 {
     
     double density_projectile=0.0;
@@ -316,27 +343,105 @@ double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_
     
     double r = ZeroOneDistribution(*GetMt19937Generator());
     
-    double t = -1*r*std::abs(max_t);
+   // double t = -1*r*std::abs(max_t);
     // definite negative virtuality
+    
+    double min_t = 0.5;
+    
+    
+    double t = -1*invert_sudakov(r, min_t , max_t );
+    
     
     return(t);
 }
     
-/*    double iMATTER::invert_sudakov(double r, Parton p, FourVector location, double max_t, Pythia8::PDF * pdf )
+    double iMATTER::invert_sudakov( double value , double min_t, double max_t)
     {
-      
         
         
+        if ( (value<=0)||(value>=1) )
+        {
+            JSINFO<< BOLDRED << " error in value passed to sudakov inverter  = " << value ;
+            
+            throw std::runtime_error(" value needs to be > 0 and < 1") ;
+        }
+        
+        double abs_max_t = std::abs(max_t);
+        
+        double abs_min_t = std::abs(min_t);
+        
+        double numer = Sudakov(abs_min_t,abs_max_t);
+        
+        if (value <= numer) return(min_t);
+        
+        double lower_t = abs_min_t ;
+        
+        double upper_t = abs_max_t ;
+        
+        double abs_t = ( lower_t + upper_t )/2.0 ;
+        
+        double denom = Sudakov(abs_min_t, abs_t);
+        
+        double estimate = numer/denom;
+        
+        double diff = std::abs(value - estimate);
+        
+        double span = std::abs( upper_t - lower_t )/ abs_t ;
+        
+        int loop_counter = 1;
+        
+        while ( ( diff > approx )&&( span > error) )
+        {
+            
+            if (loop_counter>1000) throw std::runtime_error(" stuck in infinite loop for finding virtuality ");
+                        
+            if (estimate<value)
+            {
+                lower_t = abs_t ;
+            }
+            else
+            {
+                upper_t = abs_t ;
+            }
+            abs_t = ( lower_t + upper_t )/2.0 ;
+            
+            denom = Sudakov(abs_min_t, abs_t);
+            
+            estimate = numer/denom;
+            
+            diff = std::abs(value - estimate);
+            
+            span = std::abs( upper_t - lower_t )/ abs_t ;
+            
+            loop_counter++;
+        }
+        
+        return(-1.0*abs_t); // returning a space like virtuality t
         
     }
 
-    double iMATTER::Sudakov()
+    double iMATTER::Sudakov(double t_min, double t_max)
     {
+        double sudakov = 1;
         
+        if ( Current.pid()==qid )
+        {
+            sudakov = sudakov_Pgg(t_min , t_max)*pow( sudakov_Pqq(t_min , t_max) , nf );
+        }
+        else if ( Current.pid()==gid )
+        {
+            sudakov = sudakov_Pqg(t_min, t_max);
+        }
+        else
+        {
+            JSWARN << " cannot generate sudakov for pid = " << Current.pid();
+        }
+        
+        return(sudakov);
     }
 
-*/
-    double iMATTER::generate_z( Parton p, FourVector r , Pythia8::PDF * pdf)
+
+    double iMATTER::generate_z( Parton p, FourVector r)
     {
         return(0.5);
     }
@@ -403,26 +508,46 @@ double iMATTER::generate_L(double form_time)
 }
 
 
-double iMATTER::sudakov_Pgg(double g0, double g1, double loc_c, double E)
+double iMATTER::sudakov_Pgg(double g0, double g1)
 {
     
-    double Sudakov = 0.0;
+    double Sudakov = 0.5;
     
     return(Sudakov) ;
 }
 
-double iMATTER::sudakov_Pqg(double g0, double g1, double loc_c, double E)
+double iMATTER::sudakov_Pqg(double g0, double g1)
 {
     
-    double Sudakov = 0.0;
+    double Sudakov = 0.5;
     
     return(Sudakov) ;
 }
 
-double iMATTER::sudakov_Pqq(double g0, double g1, double loc_c, double E)
+double iMATTER::sudakov_Pqq(double g0, double g1)
 {
     
-    double Sudakov = 0.0;
+    double Sudakov = 0.5;
     
     return(Sudakov) ;
+}
+
+
+void iMATTER::printout_current()
+{
+    JSINFO << BOLDYELLOW << " testing Current pid = " << Current.pid() << " stat = " << Current.pstat() << " label = " << Current.plabel();
+    
+    JSINFO << BOLDYELLOW << " Current x = " << Current.x_in().x() << " y = " << Current.x_in().y() << " z = " << Current.x_in().z() << " t = " << Current.time() ;
+    
+    
+    JSINFO << BOLDYELLOW << " Current px = " << Current.px() << " py = " << Current.py() << " pz = " << Current.pz() << " E = " << Current.e() ;
+    
+    
+    JSINFO << BOLDYELLOW << " color = " << Current.color() << " acolor = " << Current.anti_color() << " virt = " << Current.t();
+    
+    JSINFO << BOLDYELLOW << " jet vx = " << Current.jet_v().x() << " vy = " << Current.jet_v().y() << " vz = " << Current.jet_v().z() << " v = " << Current.jet_v().t() ;
+    
+    JSINFO << BOLDYELLOW << " mean form time = " << Current.mean_form_time() << " form time = " << Current.form_time();
+    
+    return;
 }

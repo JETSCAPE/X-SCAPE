@@ -315,6 +315,7 @@ Parton &Parton::operator=(Parton &c) {
   form_time_ = c.form_time_;
   Color_ = c.Color_;
   antiColor_ = c.antiColor_;
+    jet_v_ = c.jet_v_;
   set_edgeid(c.edgeid());
   set_shower(c.shower());
 
@@ -326,6 +327,7 @@ Parton &Parton::operator=(const Parton &c) {
   form_time_ = c.form_time_;
   Color_ = c.Color_;
   antiColor_ = c.antiColor_;
+    jet_v_ = c.jet_v_;
   set_edgeid(c.edgeid());
   set_shower(c.shower());
 
