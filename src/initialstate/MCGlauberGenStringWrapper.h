@@ -21,8 +21,9 @@
 #include "JetScapeModuleBase.h"
 #include "InitialState.h"
 #include "JetScapeLogger.h"
+#include "JetScapeSignalManager.h"
+#include "JetScapeXML.h"
 #include <MakeUniqueHelper.h>
-#include "MCGlauberWrapper.h"
 using namespace Jetscape;
 
 class MCGlauberGenStringWrapper : public Jetscape::InitialState {
@@ -32,16 +33,17 @@ public:
   MCGlauberGenStringWrapper();
   ~MCGlauberGenStringWrapper() {}
 
-
+std::shared_ptr<InitialState> ini; // temporary pointer to initial state
   /** Default Exec() function. It can be overridden by other tasks.
    */
   void Exec();
-
+  void Init();
 private:
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberGenStringWrapper> reg;
-  std::shared_ptr<InitialState> ini_MC; // temporary pointer to initial state
+  std::vector<double> GenHardPartonPosAndMomProj_;
+  std::vector<double> GenHardPartonPosAndMomTarg_;
 };
 
 #endif  // MCGlauberGenStringWrapper_H

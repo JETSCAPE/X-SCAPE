@@ -23,7 +23,6 @@
 #include "JetScapeLogger.h"
 #include <MakeUniqueHelper.h>
 #include "InitialState.h"
-#include "Glauber.h"
 #include "Parameters.h"
 #include "EventGenerator.h"
 using namespace Jetscape;
@@ -73,19 +72,20 @@ public:
                                    double z);
   void OutputHardPartonMomentum(double E, double px, double py, double pz,
                                                            int direction);
-  std::vector<double> GetHardPartonPosAndMomentumProj();
-  std::vector<double> GetHardPartonPosAndMomentumTarg();
+  void GetHardPartonPosAndMomentumProj();
+  void GetHardPartonPosAndMomentumTarg();
   std::vector<double> Get_projectile_nucleon_z_lab();
   std::vector<double> Get_target_nucleon_z_lab();
   void GenerateStrings();
+  
+  std::shared_ptr<InitialState> ini; 
+  
 private:
   std::shared_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
-  std::vector<double> HardPartonPosAndMomProj_;
-  std::vector<double> HardPartonPosAndMomTarg_;
   double hard_parton_x_, hard_parton_y_, hard_parton_z_, hard_parton_t_;
   double targ_parton_px_, targ_parton_py_, targ_parton_pz_, targ_parton_e_;
   double proj_parton_px_, proj_parton_py_, proj_parton_pz_, proj_parton_e_;

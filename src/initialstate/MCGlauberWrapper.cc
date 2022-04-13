@@ -24,7 +24,6 @@
 #include "JetScapeLogger.h"
 #include "MCGlauberWrapper.h"
 
-
 // Register the module with the base class
 RegisterJetScapeModule<MCGlauberWrapper> MCGlauberWrapper::reg("MCGlauber");
 
@@ -50,8 +49,6 @@ void MCGlauberWrapper::Clear() {
     binary_collision_x_.clear();
     binary_collision_y_.clear();
     binary_collision_z_.clear();
-    HardPartonPosAndMomProj_.clear();
-    HardPartonPosAndMomTarg_.clear();
 }
 
 
@@ -153,28 +150,17 @@ void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, 
 }
 
 
-std::vector<double> MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
-    HardPartonPosAndMomProj_.push_back(hard_parton_t_);
-    HardPartonPosAndMomProj_.push_back(hard_parton_x_);
-    HardPartonPosAndMomProj_.push_back(hard_parton_y_);
-    HardPartonPosAndMomProj_.push_back(hard_parton_z_);
-    HardPartonPosAndMomProj_.push_back(proj_parton_e_);
-    HardPartonPosAndMomProj_.push_back(proj_parton_px_);
-    HardPartonPosAndMomProj_.push_back(proj_parton_py_);
-    HardPartonPosAndMomProj_.push_back(proj_parton_pz_);
-    return HardPartonPosAndMomProj_;
+
+void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
+    mc_gen_->GetMomandPos_Proj(hard_parton_t_, hard_parton_x_, hard_parton_y_, 
+                               hard_parton_z_, proj_parton_e_, proj_parton_px_, 
+                               proj_parton_py_, proj_parton_pz_);
 }
 
-std::vector<double> MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
-    HardPartonPosAndMomTarg_.push_back(hard_parton_t_);
-    HardPartonPosAndMomTarg_.push_back(hard_parton_x_);
-    HardPartonPosAndMomTarg_.push_back(hard_parton_y_);
-    HardPartonPosAndMomTarg_.push_back(hard_parton_z_);
-    HardPartonPosAndMomTarg_.push_back(targ_parton_e_);
-    HardPartonPosAndMomTarg_.push_back(targ_parton_px_);
-    HardPartonPosAndMomTarg_.push_back(targ_parton_py_);
-    HardPartonPosAndMomTarg_.push_back(targ_parton_pz_);
-    return HardPartonPosAndMomTarg_;
+void MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
+    mc_gen_->GetMomandPos_Targ(hard_parton_t_, hard_parton_x_, hard_parton_y_, 
+                               hard_parton_z_, targ_parton_e_, targ_parton_px_, 
+                               targ_parton_py_, targ_parton_pz_);
 }
 
 void MCGlauberWrapper::GenerateStrings() {
