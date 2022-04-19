@@ -19,18 +19,24 @@
 #include <iostream>
 //#include "helper.h"
 
+// Needed for cubature integration //
+#include <boost/math/quadrature/gauss_kronrod.hpp>
+
 #include "FluidDynamics.h"
 
 #define MAGENTA "\033[35m"
 
 using namespace Jetscape;
 
+// Register the module with the base class
+RegisterJetScapeModule<iMATTER> iMATTER::reg("iMATTER");
+
 double y[] = {0.0,0.0,0.0,0.0};
 
 const Parton initial(0,21,0,0.0,0.0,0.0,0.0,y) ; // a gluon with no momentum at the origin.
 
 iMATTER::iMATTER(): Parent(initial) , Sibling(initial) , Current(initial)
-{
+{   
   SetId("iMATTER");
   VERBOSE(8);
 
@@ -43,8 +49,10 @@ iMATTER::~iMATTER()
 
 void iMATTER::Init()
 {
-  JSINFO<<"Intialize iMATTER ...";
-    
+    JSINFO<<"Intialize iMATTER ...";
+    alpha_s = 0.2;
+    Q0 = 2.0;
+
     P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
     P_B = P_A ; /// assuming symmetric system, rewrite for non-symmetric collision.
@@ -72,17 +80,20 @@ void iMATTER::Init()
     {
         JSINFO << BOLDCYAN << " Initial state module connected to i-MATTER";
     }
-  // Initialize random number distribution
-  ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
+    // Initialize random number distribution
+    ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
     
     Pythia8::Info info;
-    pdf = new Pythia8::LHAGrid1( 2212, "20", "../../../../Dropbox/work/pythia8235/share/Pythia8/xmldoc/", &info); /// Assuming its a proton
-    /// Locked to a specific PYTHIA directory
-    /// should be updated to point to the default PYTHIA directory
-    
+    // Get Pythia data directory //
+    std::stringstream pdfpath;
+    pdfpath <<  getenv("PYTHIA8DATA") << "/../pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
+    std::cerr << "Pythia path: " << pdfpath.str() << std::endl;
+    pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
     
     vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});/// use the same virtuality factor as in the final state calculation
-    
+
+    SetupIntegration();
+
 }
 
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
@@ -90,12 +101,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
     double blurb; // used all the time for testing
     
-    
+    FourVector PlusZaxis(0.0,0.0,1.0,1.0);
     
     for (int in=0; in < pIn.size(); in++) /// we continue with the loop charade, even though the framework is just giving us one parton
     {
         if ( pIn[in].plabel()>0 ) return ;
-    // i-MATTER only deals with initial state (note the i -> in)
+        // i-MATTER only deals with initial state (note the i -> in)
         
        
         
@@ -161,6 +172,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         
         JSINFO << BOLDYELLOW << " end location x = " << x_end << " y = " << y_end << " z = " << z_end << " t = " << t_end ;
         
+        // parton position by propagating backward from t_end to time
         double x = x_end + velocity[1]*(time - t_end) ;
         double y = y_end + velocity[2]*(time - t_end) ;
         double z = z_end + velocity[3]*(time - t_end) ;
@@ -233,6 +245,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             JSINFO << BOLDRED << "Starting a Split " ;
             
+            // Set x2 the current particle's momentum fraction //
+            MomentumFractionCurrent = Current.e() / P_A;
+            
             z_frac = generate_z( pIn[in], Current_Location) ;
             
             double max_t = pIn[in].t() ;
@@ -277,6 +292,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             FourVector p_Parent(pIn[in].px()+l_perp_x, pIn[in].py()+l_perp_y , pz/z_frac, e/z_frac) ;
             
             
+            // Rotate Back to the current direction 
+            ReverseRotateParton(p_Sibling,Current.p_in());
+
             Parton Sibling(pIn[in].plabel()*10, pid_b , 0 , p_Sibling, Current_Location) ;
             
             Parton Parent(pIn[in].plabel()*10-1, pid_a , -900 , p_Parent, Current_Location) ;
@@ -355,96 +373,188 @@ double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_
     return(t);
 }
     
-    double iMATTER::invert_sudakov( double value , double min_t, double max_t)
+double iMATTER::invert_sudakov( double value , double min_t, double max_t)
+{
+    
+    
+    if ( (value<=0)||(value>=1) )
     {
+        JSINFO<< BOLDRED << " error in value passed to sudakov inverter  = " << value ;
         
-        
-        if ( (value<=0)||(value>=1) )
-        {
-            JSINFO<< BOLDRED << " error in value passed to sudakov inverter  = " << value ;
-            
-            throw std::runtime_error(" value needs to be > 0 and < 1") ;
-        }
-        
-        double abs_max_t = std::abs(max_t);
-        
-        double abs_min_t = std::abs(min_t);
-        
-        double numer = Sudakov(abs_min_t,abs_max_t);
-        
-        if (value <= numer) return(min_t);
-        
-        double lower_t = abs_min_t ;
-        
-        double upper_t = abs_max_t ;
-        
-        double abs_t = ( lower_t + upper_t )/2.0 ;
-        
-        double denom = Sudakov(abs_min_t, abs_t);
-        
-        double estimate = numer/denom;
-        
-        double diff = std::abs(value - estimate);
-        
-        double span = std::abs( upper_t - lower_t )/ abs_t ;
-        
-        int loop_counter = 1;
-        
-        while ( ( diff > approx )&&( span > error) )
-        {
-            
-            if (loop_counter>1000) throw std::runtime_error(" stuck in infinite loop for finding virtuality ");
-                        
-            if (estimate<value)
-            {
-                lower_t = abs_t ;
-            }
-            else
-            {
-                upper_t = abs_t ;
-            }
-            abs_t = ( lower_t + upper_t )/2.0 ;
-            
-            denom = Sudakov(abs_min_t, abs_t);
-            
-            estimate = numer/denom;
-            
-            diff = std::abs(value - estimate);
-            
-            span = std::abs( upper_t - lower_t )/ abs_t ;
-            
-            loop_counter++;
-        }
-        
-        return(-1.0*abs_t); // returning a space like virtuality t
-        
+        throw std::runtime_error(" value needs to be > 0 and < 1") ;
     }
-
-    double iMATTER::Sudakov(double t_min, double t_max)
+    
+    double abs_max_t = std::abs(max_t);
+    
+    double abs_min_t = std::abs(min_t);
+    
+    double numer = Sudakov(abs_min_t,abs_max_t);
+    
+    if (value <= numer) return(min_t);
+    
+    double lower_t = abs_min_t ;
+    
+    double upper_t = abs_max_t ;
+    
+    double abs_t = ( lower_t + upper_t )/2.0 ;
+    
+    double denom = Sudakov(abs_min_t, abs_t);
+    
+    double estimate = numer/denom;
+    
+    double diff = std::abs(value - estimate);
+    
+    double span = std::abs( upper_t - lower_t )/ abs_t ;
+    
+    int loop_counter = 1;
+    
+    while ( ( diff > approx )&&( span > error) )
     {
-        double sudakov = 1;
         
-        if ( Current.pid()==qid )
+        if (loop_counter>1000) throw std::runtime_error(" stuck in infinite loop for finding virtuality ");
+                    
+        if (estimate<value)
         {
-            sudakov = sudakov_Pgg(t_min , t_max)*pow( sudakov_Pqq(t_min , t_max) , nf );
-        }
-        else if ( Current.pid()==gid )
-        {
-            sudakov = sudakov_Pqg(t_min, t_max);
+            lower_t = abs_t ;
         }
         else
         {
-            JSWARN << " cannot generate sudakov for pid = " << Current.pid();
+            upper_t = abs_t ;
         }
+        abs_t = ( lower_t + upper_t )/2.0 ;
         
-        return(sudakov);
+        denom = Sudakov(abs_min_t, abs_t);
+        
+        estimate = numer/denom;
+        
+        diff = std::abs(value - estimate);
+        
+        span = std::abs( upper_t - lower_t )/ abs_t ;
+        
+        loop_counter++;
     }
+    
+    return(-1.0*abs_t); // returning a space like virtuality t
+    
+}
 
+double iMATTER::Sudakov(double t1, double t2)
+{
+    double sudakov = 1;
 
-    double iMATTER::generate_z( Parton p, FourVector r)
+    double logt1 = (0.5 * alpha_s / pi )*std::log( t1/Q0);
+    double logt2 = (0.5 * alpha_s / pi )*std::log( t2/Q0);
+    double z_min = 0.0;
+    double z_max = 1.-z_min;
+    double x2 = MomentumFractionCurrent; 
+    
+    if ( std::abs(Current.pid()) < 4  ) // A light quark
     {
-        return(0.5);
+        // sudakov = sudakov_Pgg(t_min , t_max)*pow( sudakov_Pqq(t_min , t_max) , nf );
+
+        double logP = LogSud_Pqg( z_min, z_max ) + LogSud_Pqq(z_min, z_max);
+        double sudakov1 = std::exp(- logt1 * logP) / PDF(Current.pid(),x2,t1);
+        double sudakov2 = std::exp(- logt2 * logP) / PDF(Current.pid(),x2,t2);
+        sudakov = sudakov2 / sudakov1;
     }
+    else if ( Current.pid()==gid )
+    {
+        // sudakov = sudakov_Pqg(t_min, t_max);
+        double logP = LogSud_Pgg( z_min, z_max ) + 2. * nf * LogSud_Pgq( z_min, z_max );
+        double sudakov1 = std::exp(- logt1 * logP) / PDF(Current.pid(),x2,t1);
+        double sudakov2 = std::exp(- logt2 * logP) / PDF(Current.pid(),x2,t2);
+        sudakov = sudakov2 / sudakov1;
+        
+    }
+    else
+    {
+        JSWARN << " cannot generate sudakov for pid = " << Current.pid();
+    }
+    
+    return(sudakov);
+}
+
+double iMATTER::invert_zDist( double value, std::function<double(double,double)> Dist, double t, double denom)
+{
+    if ( (value<=0)||(value>=1) )
+    {
+        JSINFO<< BOLDRED << " error in value passed to z Distribution inverter  = " << value ;
+        
+        throw std::runtime_error(" value needs to be > 0 and < 1") ;
+    }
+        
+    double lower_z = 0.0;
+    
+    double upper_z = 1.0;
+    
+    double zVal = ( lower_z + upper_z )/2.0 ;
+    
+    double numer = Dist(zVal,t);
+    
+    double estimate = numer/denom;
+    
+    double diff = std::abs(value - estimate);
+    
+    double span = std::abs( upper_z - lower_z )/ zVal ;
+    
+    int loop_counter = 1;
+    
+    while ( ( diff > approx )&&( span > error) )
+    {
+        
+        if (loop_counter>1000) throw std::runtime_error(" stuck in infinite loop for finding z ");
+                    
+        if (estimate<value)
+        {
+            lower_z = zVal ;
+        }
+        else
+        {
+            upper_z = zVal ;
+        }
+        zVal = ( lower_z + upper_z )/2.0 ;
+        
+        numer = Dist(zVal,t);
+        
+        estimate = numer/denom;
+        
+        diff = std::abs(value - estimate);
+        
+        span = std::abs( upper_z - lower_z ) / zVal ;
+        
+        loop_counter++;
+    }
+    
+    return zVal; // returning the splitting fraction z
+    
+
+    
+}
+
+double iMATTER::generate_z( Parton p, FourVector CurrentLocation)
+{
+    double r  = ZeroOneDistribution(*GetMt19937Generator());
+    double r1 = ZeroOneDistribution(*GetMt19937Generator());
+    double zVal = 0.0;
+
+    if ((r > 1) || (r < 0))
+    {
+        throw std::runtime_error(" error in random number in z *GetMt19937Generator()");
+    }
+
+    if( Current.pid() == gid )
+    {
+        double denomPgg = zDist_Pgg_int(1.0,Current.t());
+        // double ratio1 =  full;
+
+        std::function<double(double,double)> FctPgg =  [this](double z_max, double t) { return this->zDist_Pgg_int(z_max,t);};
+        
+        zVal = invert_zDist(r1,FctPgg,Current.t(),denomPgg);
+    }
+
+
+    return zVal;
+}
 
     
 double iMATTER::generate_L(double form_time)
@@ -507,29 +617,112 @@ double iMATTER::generate_L(double form_time)
   return (x);
 }
 
-
-double iMATTER::sudakov_Pgg(double g0, double g1)
+inline double iMATTER::P_z_gg( double z )
 {
-    
-    double Sudakov = 0.5;
-    
-    return(Sudakov) ;
+    return 2. * Nc * (1. - z*(1.-z)*(1. - z*(1.-z))/(z*(1.-z)) );
 }
 
-double iMATTER::sudakov_Pqg(double g0, double g1)
+inline double iMATTER::P_z_qq( double z )
 {
-    
-    double Sudakov = 0.5;
-    
-    return(Sudakov) ;
+    return Cf * ( 1. + z*z )/( 1. - z);
 }
 
-double iMATTER::sudakov_Pqq(double g0, double g1)
+inline double iMATTER::P_z_qg( double z )
 {
-    
-    double Sudakov = 0.5;
-    
-    return(Sudakov) ;
+    return 0.5 * (z * z + (1. - z)*(1. - z));
+}
+
+inline double iMATTER::zDist_Pgg(double y, double t){
+
+    double siny = std::sin(y / 2.0);
+    double z = 1.0 - siny * siny;
+    double Jac = std::sqrt(z * (1.0 - z));
+    return Jac * alpha_s / (2.0 * pi) * P_z_gg(z) * PDF(gid,MomentumFractionCurrent / z,t) / z;
+}
+
+double iMATTER::zDist_Pgg_int(double z_max, double t){
+    double Error;
+
+    // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
+    double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = M_PI;
+
+    std::function<double(double, double)> FctIntegrand = [this](double y, double t) { return this->zDist_Pgg(y,t);};
+    double Sudakov = SingleIntegral(FctIntegrand, t, y_min, y_max,Error,1e-1); // The tolerance is taken to be large for now //
+    return Sudakov;
+}
+
+
+
+inline double iMATTER::P_z_gg_int( double z)
+{  
+    return  2.0 * Ca * (z * (2.0 - 0.5 * z + z * z / 3.0) + std::log((1.0 - z) / z) );
+}
+
+inline double iMATTER::P_z_qq_int( double z )
+{
+    return 0.5 * Cf * (z * (1. - 0.5 * z) - 4. * std::log(1. - z));
+}
+
+inline double iMATTER::P_z_qg_int( double z )
+{
+    return 0.5 * (z * (z - z * z - 1.));
+}
+
+
+inline double iMATTER::LogSud_Pgg(double z_min, double z_max)
+{
+    return ( P_z_gg_int(z_max) - P_z_gg_int(z_min) );
+}
+inline double iMATTER::LogSud_Pqq(double z_min, double z_max)
+{
+    return ( P_z_qq_int(z_max) - P_z_qq_int(z_min) );
+}
+inline double iMATTER::LogSud_Pqg(double z_min, double z_max)
+{
+    return ( P_z_qg_int(z_max) - P_z_qg_int(z_min) );
+}
+inline double iMATTER::LogSud_Pgq(double z_min, double z_max)
+{
+    return ( P_z_qq_int(1. - z_min) - P_z_qq_int(1. - z_max) );
+}
+
+
+void iMATTER::ReverseRotateParton(FourVector &ToRotate, FourVector Axis )
+{
+    //     input:  ToRotate, Axis=(px,py,pz) = (0,0,E)_{z}
+    //     if i=-1, turn ToRotate in the direction (0,0,E)=>(px,py,pz)
+
+    double wx = ToRotate.x();
+    double wy = ToRotate.y();
+    double wz = ToRotate.z();
+
+    double px = Axis.x();
+    double py = Axis.y();
+    double pz = Axis.z();
+
+    double E = sqrt(px * px + py * py + pz * pz);
+    double pt = sqrt(px * px + py * py);
+
+    double w = sqrt(wx * wx + wy * wy + wz * wz);
+    double cosa, sina;
+    if (pt == 0) {
+        cosa = 1;
+        sina = 0;
+    } else {
+        cosa = px / pt;
+        sina = py / pt;
+    }
+
+    double cosb = pz / E;
+    double sinb = pt / E;
+
+    double wx1 = wx * cosa * cosb - wy * sina + wz * cosa * sinb;
+    double wy1 = wx * sina * cosb + wy * cosa + wz * sina * sinb;
+    double wz1 = -wx * sinb + wz * cosb;
+
+    ToRotate.Set(wx1,wy1,wz1,w);
+
+    return;
 }
 
 
@@ -550,4 +743,156 @@ void iMATTER::printout_current()
     JSINFO << BOLDYELLOW << " mean form time = " << Current.mean_form_time() << " form time = " << Current.form_time();
     
     return;
+}
+
+void iMATTER::SetupIntegration()
+{
+    auto helper  = boost::math::quadrature::gauss<double, NLegendre>::abscissa();
+    auto helperW = boost::math::quadrature::gauss<double, NLegendre>::weights();
+    // Populate the positive values of the Gauss-quadrature
+    for (int i = NLegendre / 2; i < NLegendre; i++)
+    {
+      GaussLegendrePoints[i] = helper[i - NLegendre / 2];
+      GaussLegendreWeights[i] = helperW[i - NLegendre / 2];
+    }
+    // Populate the negative values of the Gauss-quadrature
+    for (int i = 0; i < NLegendre / 2; i++)
+    {
+      GaussLegendrePoints [NLegendre / 2 - 1 - i] = -GaussLegendrePoints[NLegendre / 2 + 1 + i];
+      GaussLegendreWeights[NLegendre / 2 - 1 - i] = GaussLegendreWeights[NLegendre / 2 + 1 + i];
+    }
+
+    auto helper1  = boost::math::quadrature::gauss_kronrod<double, Nquadrature>::abscissa();
+    auto helper1W = boost::math::quadrature::gauss_kronrod<double, Nquadrature>::weights();
+
+    // Populate the positive values of the Stieltjes-quadrature
+    for (int i = Nquadrature / 2; i < Nquadrature; i++)
+    {
+      StieltjesPoints[i]  = helper1[i - Nquadrature / 2];
+      StieltjesWeights[i] = helper1W[i - Nquadrature / 2];
+    }
+
+    // Populate the positive values of the Stieltjes-quadrature
+    for (int i = 0; i < Nquadrature / 2; i++)
+    {
+      StieltjesPoints [Nquadrature / 2 - 1 - i]  = -StieltjesPoints [Nquadrature / 2 + 1 + i];
+      StieltjesWeights[Nquadrature / 2 - 1 - i]  =  StieltjesWeights[Nquadrature / 2 + 1 + i];
+    }
+
+
+    // Populate the Double Weights for faster cubature
+    for (size_t i = 0; i < Nquadrature; i++)
+    {
+      for (size_t j = 0; j < Nquadrature; j++)
+      {
+        StieltjesDoubleWeights[j + i * Nquadrature] = StieltjesWeights[i] * StieltjesWeights[j];
+      }
+    }
+
+    for (size_t i = 0; i < NLegendre; i++)
+    {
+      for (size_t j = 0; j < NLegendre; j++)
+      {
+        GaussLegendreDoubleWeights[j + i * NLegendre] = GaussLegendreWeights[i] * GaussLegendreWeights[j];
+      }
+    }
+
+    return;
+}
+
+double iMATTER::DoubleIntegral(std::function<double(double,double)> & Integrand, double a, double b, double a1, double b1, double &Error, double epsabs)
+{
+    // Integrate a 2d std::function \int_{a}^{b} dx \int_{a1}^{b1}dy f(x,y)  //
+    // The cubature is done using NLegendre points for Gauss-Legendre and (2*NLegendre + 1) points for Gauss-Stieltjes //
+    // and the error is computed from the difference of the two //
+
+
+    double kronrod_result = 0;
+    double gauss_result = 0;
+    double Jacobian = 0.25 * (b - a) * (b1 - a1);
+    for (size_t i = 1; i < Nquadrature; i+=2)
+    {
+      double x = 0.5 * (b + a) + 0.5 * (b - a) * StieltjesPoints[i];
+      for (size_t j = 1; j < Nquadrature; j+=2)
+      {
+        double y = 0.5 * (b1 + a1) + 0.5 * (b1 - a1) * StieltjesPoints[j];
+        double w = StieltjesDoubleWeights[j + i * Nquadrature];
+        double fct = Integrand(x, y);
+        kronrod_result += w * fct;
+        gauss_result += GaussLegendreDoubleWeights[(j / 2) + NLegendre * (i / 2)] * fct;
+      }
+
+      for (size_t j = 0; j < Nquadrature; j+=2)
+      {
+        double y = 0.5 * (b1 + a1) + 0.5 * (b1 - a1) * StieltjesPoints[j];
+        double w = StieltjesDoubleWeights[j + i * Nquadrature];
+        double fct = Integrand(x, y);
+        kronrod_result += w * fct;
+      }
+    }
+
+    for (size_t i = 0; i < Nquadrature; i+=2)
+    {
+      double x = 0.5 * (b + a) + 0.5 * (b - a) * StieltjesPoints[i];
+      for (size_t j = 0; j < Nquadrature; j++)
+      {
+        double y = 0.5 * (b1 + a1) + 0.5 * (b1 - a1) * StieltjesPoints[j];
+        double w = StieltjesDoubleWeights[j + i * Nquadrature];
+        double fct = Integrand(x, y);
+        kronrod_result += w * fct;
+
+      }
+    }
+
+    kronrod_result *= Jacobian;
+    gauss_result *= Jacobian;
+
+    Error = std::abs(kronrod_result - gauss_result);
+    if ( std::abs(kronrod_result) > 1e-15 ) Error /= std::abs(kronrod_result);
+
+    if( Error > epsabs) throw std::runtime_error( "Estimate of the cubature error "+std::to_string(Error)+" is larger than the target "+ std::to_string(epsabs) + "\n Try larger target or using more Gauss points" );
+    return kronrod_result;
+}
+
+
+double iMATTER::SingleIntegral(std::function<double(double,double)> &Integrand, double t, double a, double b, double &Error, double epsabs)
+  {
+    // Integrate a 1d with parameter t std::function \int_{a}^{b} dx f(x,y)  //
+    // The cubature is done using NLegendre points for Gauss-Legendre and (2*NLegendre + 1) points for Gauss-Stieltjes //
+    // and the error is computed from the difference of the two //
+
+    double kronrod_result = 0;
+    double gauss_result = 0;
+    double Jacobian = 0.5 * (b - a);
+    for (size_t i = 1; i < Nquadrature; i+=2)
+    {
+      double x = 0.5 * (b + a) + 0.5 * (b - a) * StieltjesPoints[i];
+      double w = StieltjesWeights[i];
+      double fct = Integrand(x,t);
+      kronrod_result += w * fct;
+      gauss_result += GaussLegendreWeights[(i / 2)] * fct;
+    }
+
+    for (size_t i = 0; i < Nquadrature; i+=2)
+    {
+      double x = 0.5 * (b + a) + 0.5 * (b - a) * StieltjesPoints[i];
+      double w = StieltjesWeights[i];
+      double fct = Integrand(x,t);
+      kronrod_result += w * fct;
+    }
+
+    kronrod_result *= Jacobian;
+    gauss_result *= Jacobian;
+
+    Error = std::abs(kronrod_result - gauss_result);
+    if ( std::abs(kronrod_result) > 1e-15 ) Error /= std::abs(kronrod_result);
+
+    if( Error > epsabs) throw std::runtime_error( "Estimate of the cubature error "+std::to_string(Error)+" is larger than the target "+ std::to_string(epsabs) + "\n Try larger target or using more Gauss points" );
+    return kronrod_result;
+  }
+
+
+double iMATTER::PDF(int pid, double z, double t){
+    if(pdf->insideBounds(z,t) == 0 ) throw std::runtime_error(" pdf out of bound z = " + std::to_string(z) + " t= " + std::to_string(t) + "\n");
+    return pdf->xf(pid,z,t) / z;
 }
