@@ -46,12 +46,7 @@ public:
 			   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){}
 
 protected:
-  /// Pointer to particlization sampler, which provides initial hadrons
-  std::shared_ptr<SoftParticlization> soft_particlization_sampler_;
-  /// Pointer to hadronization module, which provides fragmentation hadrons
-  std::shared_ptr<HadronizationManager> hard_particlization_module_;
-
-  // Gather all hadrons from soft particlization and fragmentation
+  /// Gather all hadrons from soft particlization and fragmentation
   std::vector<std::vector<std::shared_ptr<Hadron>>> GatherAfterburnerHadrons();
   /// Get the events of soft particlization hadrons
   std::vector<std::vector<std::shared_ptr<Hadron>>> GetSoftParticlizationHadrons();

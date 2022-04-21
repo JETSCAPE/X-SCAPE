@@ -24,21 +24,6 @@ void Afterburner::Init() {
   // Makes sure that XML file with options and parameters is loaded
   JetScapeModuleBase::Init();
   JSINFO << "Initializing Afterburner : " << GetId() << " ...";
-
-  // Get the pointer to soft sampler
-  soft_particlization_sampler_ =
-      JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
-  if (!soft_particlization_sampler_) {
-    JSWARN << "No soft particlization module found. It is necessary to provide"
-           << " hadrons to afterburner.";
-    exit(1);
-  }
-
-  if (GetXMLElementInt({"Afterburner", "include_fragmentation_hadrons"})) {
-    // Get the pointer to the hard sampler
-    hard_particlization_module_ = JetScapeSignalManager::Instance()
-                                      ->GetHadronizationManagerPointer().lock();
-  }
   InitTask();
 }
 
@@ -53,15 +38,26 @@ void Afterburner::CalculateTime() {
 }
 
 std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GetSoftParticlizationHadrons() {
-  return soft_particlization_sampler_->Hadron_list_;
+  auto soft_particlization = JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
+  if (!soft_particlization) {  
+    JSWARN << "No soft particlization module found. It is necessary to provide"
+           << " hadrons to afterburner.";
+    exit(1);
+  }
+  return soft_particlization->Hadron_list_;
 }
 
 std::vector<shared_ptr<Hadron>> Afterburner::GetFragmentationHadrons() {
   JSINFO << "Get fragmentation hadrons in Afterburner";
+  auto hardonization_mgr = JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
+  if (!hardonization_mgr) {
+    JSWARN << "No hardronization module found. It is necessary to include"
+          << " fargmentation hadrons to afterburner as requested.";
+    exit(1);
+  }
   std::vector<shared_ptr<Hadron>> h_list;
-  hard_particlization_module_->GetHadrons(h_list);
-  JSINFO << "Got " << h_list.size()
-         << " fragmentation hadrons from HadronizationManager.";
+  hardonization_mgr->GetHadrons(h_list);
+  JSINFO << "Got " << h_list.size() << " fragmentation hadrons from HadronizationManager.";
   for (auto h : h_list) {
     if (h->has_no_position()) {
       // No position info set in hadronization module
