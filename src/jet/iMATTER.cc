@@ -28,8 +28,6 @@
 
 using namespace Jetscape;
 
-// Register the module with the base class
-RegisterJetScapeModule<iMATTER> iMATTER::reg("iMATTER");
 
 double y[] = {0.0,0.0,0.0,0.0};
 
@@ -51,7 +49,7 @@ void iMATTER::Init()
 {
     JSINFO<<"Intialize iMATTER ...";
     alpha_s = 0.2;
-    Q0 = 2.0;
+    Q0 = 0.5;
 
     P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
@@ -82,12 +80,12 @@ void iMATTER::Init()
     }
     // Initialize random number distribution
     ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
-    
+
     Pythia8::Info info;
     // Get Pythia data directory //
     std::stringstream pdfpath;
     pdfpath <<  getenv("PYTHIA8DATA") << "/../pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
-    std::cerr << "Pythia path: " << pdfpath.str() << std::endl;
+    JSINFO << "Pythia path: " << pdfpath.str() << "\n";
     pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
     
     vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});/// use the same virtuality factor as in the final state calculation
@@ -105,6 +103,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     
     for (int in=0; in < pIn.size(); in++) /// we continue with the loop charade, even though the framework is just giving us one parton
     {
+
         if ( pIn[in].plabel()>0 ) return ;
         // i-MATTER only deals with initial state (note the i -> in)
         
@@ -114,7 +113,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         
         JSINFO << " ********************************************** " ;
         
-        JSINFO << " pIn.plabel = " << pIn[in].plabel() << " pIn.pstat = " << pIn[in].pstat() << " pIn.px = " << pIn[in].px() << " pIn.py = " << pIn[in].py() << " pIn.pz = " << pIn[in].pz() << " pIn.e = " << pIn[in].e() ;
+        JSINFO << " pIn.plabel = " << pIn[in].plabel() << " pIn.pstat = " << pIn[in].pstat() << " pIn.pid = " << pIn[in].pid() << " pIn.px = " << pIn[in].px() << " pIn.py = " << pIn[in].py() << " pIn.pz = " << pIn[in].pz() << " pIn.e = " << pIn[in].e() ;
         
         if (std::isnan(pIn[in].e()) || std::isnan(pIn[in].px()) ||
         std::isnan(pIn[in].py()) || std::isnan(pIn[in].pz()) ||
@@ -133,8 +132,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         //JSINFO << BOLDYELLOW << " pdfvalue = " << extPDF->xf(1,0.2,10);
     
         //std::cin >> blurb;
-        JSINFO << BOLDYELLOW <<"iMATTER::DoEnergyLoss at time = "<<time;
-        VERBOSESHOWER(8)<< MAGENTA << "SentInPartons Signal received : "<<deltaT<<" "<<Q2<<" "<<&pIn;
+        JSINFO << BOLDYELLOW <<" iMATTER::DoEnergyLoss at time = "<<time;
+        VERBOSESHOWER(8)<< MAGENTA << " SentInPartons Signal received : "<<deltaT<<" "<<Q2<<" "<<&pIn;
         double rNum = ZeroOneDistribution(*GetMt19937Generator());
     
         // Setting the Local assignments, position, momentum, velocity and velocity Mod
@@ -250,17 +249,24 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             z_frac = generate_z( pIn[in], Current_Location) ;
             
-            double max_t = pIn[in].t() ;
+            // double t1 = pIn[in].t();
+            double max_t = pIn[in].t();
             
             double t = generate_initial_virt(pIn[in], Current_Location, max_t );
+
+            double max_t2 = (1.0 - z_frac) * (t - t1 / z_frac);
+            double t2 = generate_initial_virt(pIn[in], Current_Location, max_t2 );
             
-            double t2 = -0.1;
-            
-            double l_perp_2 = (1-z_frac)*std::abs(t1) - std::abs(t)*z_frac*(1-z_frac) - std::abs(t2)*z_frac ;
+            double l_perp_2 = (t - t1 / z_frac - t2 / (1.0 - z_frac)) / z_frac;
+            // (1-z_frac)*std::abs(t1) - std::abs(t)*z_frac*(1-z_frac) - std::abs(t2)*z_frac ;
             
             double l_perp = 0.0 ;
             
             if (l_perp_2 > 0) l_perp = std::sqrt(l_perp_2) ;
+            else{ 
+                JSWARN << " l_perp_2 negative = " << l_perp_2; 
+                JSINFO << " t = " << t << " t1 = " << t1 << " t2 = " << t2; 
+                }
             
             double phi = 2*pi*ZeroOneDistribution(*GetMt19937Generator());
             
@@ -268,7 +274,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             double l_perp_y = l_perp*std::sin(phi);
             
-            JSINFO << BOLDYELLOW << " parent t = " << t << " sibling t2 = " << t2 << " resulting l_perp = " << l_perp ;
+            JSINFO << BOLDYELLOW << " z_frac = " << z_frac << " parent t = " << t << " sibling t2 = " << t2 << " resulting l_perp = " << l_perp ;
             
             int pid_a,pid_b;
             
@@ -299,10 +305,19 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             Parton Parent(pIn[in].plabel()*10-1, pid_a , -900 , p_Parent, Current_Location) ;
             
-            
+        
             
             pOut.push_back(Sibling);
             
+            if (std::isnan(Sibling.e()) || std::isnan(Sibling.px()) ||
+            std::isnan(Sibling.py()) || std::isnan(Sibling.pz()) ||
+            std::isnan(Sibling.t()) || std::isnan(Sibling.form_time()))
+            {
+                JSINFO << BOLDYELLOW << "Parton on entry busted on time step " << time;
+                Matter::Dump_pIn_info(in, pOut);
+                std::cin >> blurb;
+            } /// usual dump routine for naned out partons
+
             pOut.push_back(Parent);
             
             int iout = pOut.size()-1 ;
@@ -364,7 +379,7 @@ double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_
    // double t = -1*r*std::abs(max_t);
     // definite negative virtuality
     
-    double min_t = 0.5;
+    double min_t = Q0;
     
     
     double t = -1*invert_sudakov(r, min_t , max_t );
@@ -442,28 +457,24 @@ double iMATTER::Sudakov(double t1, double t2)
 {
     double sudakov = 1;
 
-    double logt1 = (0.5 * alpha_s / pi )*std::log( t1/Q0);
-    double logt2 = (0.5 * alpha_s / pi )*std::log( t2/Q0);
-    double z_min = 0.0;
-    double z_max = 1.-z_min;
+    double logt2 = (0.5 * alpha_s / pi )*std::log( t2/t1);
+    double z_min = MomentumFractionCurrent;
+    double z_max = 1.;
     double x2 = MomentumFractionCurrent; 
     
     if ( std::abs(Current.pid()) < 4  ) // A light quark
     {
         // sudakov = sudakov_Pgg(t_min , t_max)*pow( sudakov_Pqq(t_min , t_max) , nf );
-
-        double logP = LogSud_Pqg( z_min, z_max ) + LogSud_Pqq(z_min, z_max);
-        double sudakov1 = std::exp(- logt1 * logP) / PDF(Current.pid(),x2,t1);
+        double logP = alpha_s / (2.0 * pi) * (LogSud_Pqg( z_min, z_max ) + LogSud_Pqq(z_min, z_max));
         double sudakov2 = std::exp(- logt2 * logP) / PDF(Current.pid(),x2,t2);
-        sudakov = sudakov2 / sudakov1;
+        sudakov = sudakov2;
     }
     else if ( Current.pid()==gid )
     {
         // sudakov = sudakov_Pqg(t_min, t_max);
-        double logP = LogSud_Pgg( z_min, z_max ) + 2. * nf * LogSud_Pgq( z_min, z_max );
-        double sudakov1 = std::exp(- logt1 * logP) / PDF(Current.pid(),x2,t1);
+        double logP = alpha_s / (2.0 * pi) * (LogSud_Pgg( z_min, z_max ) + 2. * nf * LogSud_Pgq( z_min, z_max ));
         double sudakov2 = std::exp(- logt2 * logP) / PDF(Current.pid(),x2,t2);
-        sudakov = sudakov2 / sudakov1;
+        sudakov = sudakov2;
         
     }
     else
@@ -536,23 +547,37 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation)
     double r  = ZeroOneDistribution(*GetMt19937Generator());
     double r1 = ZeroOneDistribution(*GetMt19937Generator());
     double zVal = 0.0;
-
-    if ((r > 1) || (r < 0))
+    double denomPgg = 0.0;
+    if ((r > 1) || (r < 0) || (r1 > 1) || (r1 < 0))
     {
         throw std::runtime_error(" error in random number in z *GetMt19937Generator()");
     }
 
     if( Current.pid() == gid )
     {
-        double denomPgg = zDist_Pgg_int(1.0,Current.t());
+        denomPgg = zDist_Pgg_int(1.0,Current.t());
         // double ratio1 =  full;
 
         std::function<double(double,double)> FctPgg =  [this](double z_max, double t) { return this->zDist_Pgg_int(z_max,t);};
         
         zVal = invert_zDist(r1,FctPgg,Current.t(),denomPgg);
     }
+    if( Current.pid() <= sid )
+    {
+        denomPgg = zDist_Pqq_int(1.0,Current.t());
+        // double ratio1 =  full;
+
+        std::function<double(double,double)> FctPgg =  [this](double z_max, double t) { return this->zDist_Pqq_int(z_max,t);};
+        
+        zVal = invert_zDist(r1,FctPgg,Current.t(),denomPgg);
+    }
 
 
+    if( std::isnan(zVal) || zVal == 0.0 ){
+
+      JSWARN << BOLDRED << "zVal is not a number " << zVal << " r = " << r << " r1 = " << r1 << " denomPgg = " << denomPgg << " \n";
+      exit(0);
+    }
     return zVal;
 }
 
@@ -640,17 +665,48 @@ inline double iMATTER::zDist_Pgg(double y, double t){
     return Jac * alpha_s / (2.0 * pi) * P_z_gg(z) * PDF(gid,MomentumFractionCurrent / z,t) / z;
 }
 
-double iMATTER::zDist_Pgg_int(double z_max, double t){
-    double Error;
+inline double iMATTER::zDist_Pqq(double y, double t){
 
-    // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
-    double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = M_PI;
-
-    std::function<double(double, double)> FctIntegrand = [this](double y, double t) { return this->zDist_Pgg(y,t);};
-    double Sudakov = SingleIntegral(FctIntegrand, t, y_min, y_max,Error,1e-1); // The tolerance is taken to be large for now //
-    return Sudakov;
+    double siny = std::sin(y / 2.0);
+    double z = 1.0 - siny * siny;
+    double Jac = std::sqrt(z * (1.0 - z));
+    return Jac * alpha_s / (2.0 * pi) * P_z_qq(z) * PDF(Current.pid(),MomentumFractionCurrent / z,t) / z;
 }
 
+inline double iMATTER::zDist_Pqg(double y, double t){
+
+    double siny = std::sin(y / 2.0);
+    double z = 1.0 - siny * siny;
+    double Jac = std::sqrt(z * (1.0 - z));
+    return Jac * alpha_s / (2.0 * pi) * P_z_qq(z) * PDF(Current.pid(),MomentumFractionCurrent / z,t) / z;
+}
+inline double iMATTER::zDist_Pgq(double y, double t){
+
+    double siny = std::sin(y / 2.0);
+    double z = 1.0 - siny * siny;
+    double Jac = std::sqrt(z * (1.0 - z));
+    return Jac * alpha_s / (2.0 * pi) * P_z_qq(z) * PDF(Current.pid(),MomentumFractionCurrent / z,t) / z;
+}
+double iMATTER::zDist_Pgg_int(double z_max, double t){
+    double Error;
+    double z_min = MomentumFractionCurrent;
+    // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
+    double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
+
+    std::function<double(double, double)> FctIntegrand = [this](double y, double t) { return this->zDist_Pgg(y,t);};
+    double Sudakov = SingleIntegral(FctIntegrand, t, y_min, y_max,Error,1e0); // The tolerance is taken to be large for now //
+    return Sudakov;
+}
+double iMATTER::zDist_Pqq_int(double z_max, double t){
+    double Error;
+    double z_min = MomentumFractionCurrent;
+    // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
+    double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
+
+    std::function<double(double, double)> FctIntegrand = [this](double y, double t) { return this->zDist_Pqq(y,t);};
+    double Sudakov = SingleIntegral(FctIntegrand, t, y_min, y_max,Error,1e0); // The tolerance is taken to be large for now //
+    return Sudakov;
+}
 
 
 inline double iMATTER::P_z_gg_int( double z)
@@ -887,7 +943,7 @@ double iMATTER::SingleIntegral(std::function<double(double,double)> &Integrand, 
     Error = std::abs(kronrod_result - gauss_result);
     if ( std::abs(kronrod_result) > 1e-15 ) Error /= std::abs(kronrod_result);
 
-    if( Error > epsabs) throw std::runtime_error( "Estimate of the cubature error "+std::to_string(Error)+" is larger than the target "+ std::to_string(epsabs) + "\n Try larger target or using more Gauss points" );
+    if( Error > epsabs) throw std::runtime_error( "Estimate of the quadrature error "+std::to_string(Error)+" is larger than the target "+ std::to_string(epsabs) + "\n Try larger target or using more Gauss points" );
     return kronrod_result;
   }
 

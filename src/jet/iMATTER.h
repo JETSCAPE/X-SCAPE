@@ -49,18 +49,24 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    // q -> qg 
    double LogSud_Pqq(double z_min, double z_max); 
    double sudakov_Pqq_Integrand(double t, double y);
+   inline double zDist_Pqq(double z, double t);
+   double zDist_Pqq_int(double z_max, double t);
    
    // g -> qqbar 
    double P_z_qg_int(double z);
    double P_z_qg(double z);
    double LogSud_Pqg(double z_min, double z_max); 
    double sudakov_Pqg_Integrand(double t, double y);
+   inline double zDist_Pqg(double z, double t);
+   double zDist_Pqg_int(double z_max, double t);
    
    // q -> gq 
    double P_z_qq_int(double z);
    double P_z_qq(double z);
    double LogSud_Pgq(double z_min, double z_max); 
    double sudakov_Pgq_Integrand(double t, double y);
+   inline double zDist_Pgq(double z, double t);
+   double zDist_Pgq_int(double z_max, double t);
 
     
    //double generate_L(double form_time);
@@ -116,8 +122,6 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     
  protected:
   
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
-  static RegisterJetScapeModule<iMATTER> reg;
   uniform_real_distribution<double> ZeroOneDistribution;
   
 };
