@@ -82,7 +82,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    double sud_z_QQ(double cg, double cg1, double loc_e, double l_fac, double E2);
 
    double generate_initial_virt(Parton p, FourVector location,double max_t);
-   double generate_z( Parton p, FourVector CurrentLocation);
+   double generate_z( Parton p, FourVector CurrentLocation, double tp);
    double generate_L(double form_time);
 
    double invert_sudakov( double value , double min_t, double max_t);
@@ -103,8 +103,11 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     double P_B = P_A; /// symmetric system should be overriden in init.
     Pythia8::PDF * pdf;
     double vir_factor=0.5;
-    double MomentumFractionCurrent;
-    
+    double MomentumFractionCurrent, Maximum_z_frac,z_frac;
+    int pid_Sib,pid_Par;
+    std::string Fpath = "ISR-Partons.dat";
+    std::ofstream* File ;
+    void OUTPUT(Parton P);
 
     // Integration setup 
     static const int Nquadrature = 19; // !!! Only takes odd numbers !!! //

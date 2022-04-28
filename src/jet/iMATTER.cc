@@ -37,12 +37,16 @@ iMATTER::iMATTER(): Parent(initial) , Sibling(initial) , Current(initial)
 {   
   SetId("iMATTER");
   VERBOSE(8);
-
+  File = new std::ofstream;
+  File->open(Fpath.c_str(),std::ofstream::out);
+  (*File) << "z_frac pid status t E Px Py Pz" << std::endl;
 }
 
 iMATTER::~iMATTER()
 {
   VERBOSE(8);
+  File->close();
+
 }
 
 void iMATTER::Init()
@@ -85,11 +89,12 @@ void iMATTER::Init()
     // Get Pythia data directory //
     std::stringstream pdfpath;
     pdfpath <<  getenv("PYTHIA8DATA") << "/../pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
-    JSINFO << "Pythia path: " << pdfpath.str() << "\n";
+    // JSINFO << "Pythia path: " << pdfpath.str() << "\n";
     pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
     
     vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});/// use the same virtuality factor as in the final state calculation
 
+    // Setup the quadrature rules for calculating the z_distribution 
     SetupIntegration();
 
 }
@@ -127,6 +132,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         if (pIn[in].pstat()>=0) continue ; // Only accept initial state partons
         
         if (pIn[in].pid()==22) continue ; // neglect photons. 
+        if ( std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 ) continue ; // neglect heavy quarks. 
         
     
         //JSINFO << BOLDYELLOW << " pdfvalue = " << extPDF->xf(1,0.2,10);
@@ -141,6 +147,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         double py = pIn[in].py();
         double pz = pIn[in].pz();
         double e  = pIn[in].e();
+        double pT2= px * px + py * py;
         double x_end = pIn[in].x_in().x();
         double y_end = pIn[in].x_in().y();
         double z_end = pIn[in].x_in().z();
@@ -193,14 +200,14 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             density_projectile = ini->Get_projectile_nucleon_density_lab(time, x, y, z);
         }
 
-  //DEBUG:
+        //DEBUG:
         std::cout<< " at time " << time << " x = " << x << " y= " << y << " and z = " << z << " target-density   = " << density_target << endl ;
         
         std::cout<< " at time " << time << " x = " << x << " y= " << y << " and z = " << z << " projectile-density   = " << density_projectile << endl ;
        
         double t1 = pIn[in].t();
         
-        double z_frac = 0.5 ;
+        // double z_frac = 0.5 ;
         
         FourVector Current_Location(x,y,z,time);
         
@@ -211,9 +218,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         {
             pIn[in].set_jet_v(velocity);
             
-            double max_t = -1*vir_factor*pIn[in].e()*pIn[in].e();
+            double max_t = vir_factor*pIn[in].e()*pIn[in].e();
             
-            t1 = generate_initial_virt(pIn[in], Current_Location, max_t);
+            t1 = -generate_initial_virt(pIn[in], Current_Location, max_t);
         
             pIn[in].set_t(t1);
             
@@ -224,6 +231,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pIn[in].set_stat(-900); // status for an unstable initial state parton moving backward in time.
         
             JSINFO << MAGENTA << " pSTAT = -1000 leads to new virt = " << t1 << " and New formation time = " << pIn[in].form_time() ;
+
+            // OUTPUT To file //
+            OUTPUT(pIn[in]);
 
         }
     
@@ -242,72 +252,90 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         if (time < split_time)
         {
             
-            JSINFO << BOLDRED << "Starting a Split " ;
+            JSINFO << BOLDRED << "Starting a Split " ;  
+
+            // Direction of Current  //
+            double Direction = (pz >= 0.0 ? 1.0:-1.0);
             
             // Set x2 the current particle's momentum fraction //
-            MomentumFractionCurrent = Current.e() / P_A;
-            
-            z_frac = generate_z( pIn[in], Current_Location) ;
-            
-            // double t1 = pIn[in].t();
-            double max_t = pIn[in].t();
-            
-            double t = generate_initial_virt(pIn[in], Current_Location, max_t );
+            double CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
+            MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
+            Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
 
-            double max_t2 = (1.0 - z_frac) * (t - t1 / z_frac);
+            // Virtuality of current //
+            double max_t = std::abs(t1);
+            
+            // Virtuality of the parent //
+            double t = -generate_initial_virt(pIn[in], Current_Location, max_t );
+
+            z_frac = generate_z( pIn[in], Current_Location, std::abs(t)) ;
+            double zb_frac = 1.0 - z_frac;
+
+            double max_t2 = zb_frac * zb_frac * max_t / z_frac;
+
+            if (max_t2 < 0){ 
+                JSWARN << " max_t2 negative = " << max_t2; 
+                JSINFO << " t = " << t << " t1 = " << t1 << " pT2 = " << pT2 << " z_frac = " << z_frac; 
+            }
+
+            // Virtuality of the sibling //
             double t2 = generate_initial_virt(pIn[in], Current_Location, max_t2 );
             
-            double l_perp_2 = (t - t1 / z_frac - t2 / (1.0 - z_frac)) / z_frac;
-            // (1-z_frac)*std::abs(t1) - std::abs(t)*z_frac*(1-z_frac) - std::abs(t2)*z_frac ;
+            // double l_perp_2 = (1-z_frac)*std::abs(t1) - std::abs(t)*z_frac*(1-z_frac) - std::abs(t2)*z_frac ;
             
-            double l_perp = 0.0 ;
+            // double l_perp = 0.0 ;
             
-            if (l_perp_2 > 0) l_perp = std::sqrt(l_perp_2) ;
-            else{ 
-                JSWARN << " l_perp_2 negative = " << l_perp_2; 
-                JSINFO << " t = " << t << " t1 = " << t1 << " t2 = " << t2; 
-                }
+            // if (l_perp_2 > 0) l_perp = std::sqrt(l_perp_2) ;
+            // else{ 
+            //     JSWARN << " l_perp_2 negative = " << l_perp_2; 
+            //     JSINFO << " t = " << t << " t1 = " << t1 << " t2 = " << t2; 
+            //     }
+
+
             
             double phi = 2*pi*ZeroOneDistribution(*GetMt19937Generator());
             
-            double l_perp_x = l_perp*std::cos(phi);
+            double l_perp_x = std::cos(phi);
             
-            double l_perp_y = l_perp*std::sin(phi);
+            double l_perp_y = std::sin(phi);
             
-            JSINFO << BOLDYELLOW << " z_frac = " << z_frac << " parent t = " << t << " sibling t2 = " << t2 << " resulting l_perp = " << l_perp ;
+            JSINFO << BOLDYELLOW << " z_frac = " << z_frac << " parent t = " << t << " current t1 = " << t1 << " sibling t2 = " << t2 << " resulting l_perp = " << l_perp_x ;
             
-            int pid_a,pid_b;
-            
-            pid_a = pIn[in].pid();
-            pid_b = gid;
-            
-            if (pIn[in].pid()==gid)
-            {
-                pid_a = gid;
-                pid_b = gid;
-            }
-            
-            if (pIn[in].pid()==qid)
-            {
-                pid_a = pIn[in].pid();
-                pid_b = gid;
-            }
-            
-            FourVector p_Sibling(pIn[in].px()+l_perp_x ,pIn[in].py()+ l_perp_y , pz*(1-z_frac)/z_frac ,  e*(1-z_frac)/z_frac  ) ;
-            
-            FourVector p_Parent(pIn[in].px()+l_perp_x, pIn[in].py()+l_perp_y , pz/z_frac, e/z_frac) ;
-            
-            
-            // Rotate Back to the current direction 
-            ReverseRotateParton(p_Sibling,Current.p_in());
+            // We take the proton going along the z-axis
+            // The direction is determined from the Direction of the current 
+            // double SiblingPT2  = -(zb_frac * (( t1 + zb_frac * pT2) / z_frac - t ) + t2) / z_frac;
+            double SiblingPT2  = zb_frac / z_frac * t - zb_frac * t1 / (z_frac * z_frac) - t2 / z_frac - zb_frac * zb_frac * pT2 / (z_frac * z_frac);
 
-            Parton Sibling(pIn[in].plabel()*10, pid_b , 0 , p_Sibling, Current_Location) ;
+
             
-            Parton Parent(pIn[in].plabel()*10-1, pid_a , -900 , p_Parent, Current_Location) ;
+            double SiblingPT   = 0.0;
+            if (SiblingPT2 > 0) SiblingPT = std::sqrt(SiblingPT2);
+            else{ 
+                JSWARN << " SiblingPT2 negative = " << SiblingPT2; 
+                JSINFO << " t = " << t << " t1 = " << t1 << " t2 = " << t2; 
+                }
+
+            double ParentPlus  = CurrentPlus / z_frac;
+            double SiblingPlus = zb_frac * ParentPlus;
+            double SiblingMinu = 0.5 * (t2 + SiblingPT2) / SiblingPlus;
+            double SiblingEn   = (SiblingPlus + SiblingMinu) / M_SQRT2;
+            double SiblingPz   = Direction * (SiblingPlus - SiblingMinu) / M_SQRT2;
+            double SiblingPx   = l_perp_x * SiblingPT;
+            double SiblingPy   = l_perp_y * SiblingPT;
+            double ParentEn    =  e + SiblingEn;
+            double ParentPz    = pz + SiblingPz;
+            double ParentPx    = px + SiblingPx;
+            double ParentPy    = py + SiblingPy;
+
             
-        
+
+            FourVector p_Sibling(SiblingPx,SiblingPy,SiblingPz,SiblingEn);
+            FourVector p_Parent ( ParentPx, ParentPy, ParentPz, ParentEn);
             
-            pOut.push_back(Sibling);
+            
+            Parton Sibling(pIn[in].plabel()*10, pid_Sib , 0 , p_Sibling, Current_Location) ;
+            
+            Parton Parent(pIn[in].plabel()*10-1, pid_Par , -900 , p_Parent, Current_Location) ;
             
             if (std::isnan(Sibling.e()) || std::isnan(Sibling.px()) ||
             std::isnan(Sibling.py()) || std::isnan(Sibling.pz()) ||
@@ -318,6 +346,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 std::cin >> blurb;
             } /// usual dump routine for naned out partons
 
+            pOut.push_back(Sibling);
             pOut.push_back(Parent);
             
             int iout = pOut.size()-1 ;
@@ -327,6 +356,11 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pOut[iout].set_mean_form_time();
         
             pOut[iout].set_form_time( generate_L(std::abs( 2*e/t/z_frac ) ) );
+
+
+            // OUTPUT To file //
+            OUTPUT(pOut[pOut.size()-1]);
+            OUTPUT(pOut[pOut.size()-2]);
             
           
         }
@@ -351,7 +385,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     
     JSINFO << BOLDCYAN << " Moving to next time step " ;
     
-    std::cin >> blurb ;
+    // std::cin >> blurb ;
 }
 // End of DoEnergyLoss
 
@@ -382,7 +416,7 @@ double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_
     double min_t = Q0;
     
     
-    double t = -1*invert_sudakov(r, min_t , max_t );
+    double t = invert_sudakov(r, min_t , max_t );
     
     
     return(t);
@@ -449,7 +483,7 @@ double iMATTER::invert_sudakov( double value , double min_t, double max_t)
         loop_counter++;
     }
     
-    return(-1.0*abs_t); // returning a space like virtuality t
+    return(abs_t); // returning a time like virtuality t
     
 }
 
@@ -494,9 +528,9 @@ double iMATTER::invert_zDist( double value, std::function<double(double,double)>
         throw std::runtime_error(" value needs to be > 0 and < 1") ;
     }
         
-    double lower_z = 0.0;
+    double lower_z = MomentumFractionCurrent;
     
-    double upper_z = 1.0;
+    double upper_z = Maximum_z_frac;
     
     double zVal = ( lower_z + upper_z )/2.0 ;
     
@@ -542,12 +576,11 @@ double iMATTER::invert_zDist( double value, std::function<double(double,double)>
     
 }
 
-double iMATTER::generate_z( Parton p, FourVector CurrentLocation)
+double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
 {
     double r  = ZeroOneDistribution(*GetMt19937Generator());
     double r1 = ZeroOneDistribution(*GetMt19937Generator());
     double zVal = 0.0;
-    double denomPgg = 0.0;
     if ((r > 1) || (r < 0) || (r1 > 1) || (r1 < 0))
     {
         throw std::runtime_error(" error in random number in z *GetMt19937Generator()");
@@ -555,27 +588,85 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation)
 
     if( Current.pid() == gid )
     {
-        denomPgg = zDist_Pgg_int(1.0,Current.t());
-        // double ratio1 =  full;
+        std::array<double,7> denomEach;
+        pid_Par = gid;
+        denomEach[0] = zDist_Pgg_int(Maximum_z_frac,tp);
+        double accum = denomEach[0];
 
-        std::function<double(double,double)> FctPgg =  [this](double z_max, double t) { return this->zDist_Pgg_int(z_max,t);};
+        for (size_t id = 1; id <=3; id++)
+        {
+            /* code */
+            pid_Par = id;
+            denomEach[id]  = zDist_Pgq_int(Maximum_z_frac,tp);
+            accum += denomEach[id];
+
+            pid_Par = -id;
+            denomEach[id+3]  = zDist_Pgq_int(Maximum_z_frac,tp);
+            accum += denomEach[id+3];
+        }
+
+        double ratio =  denomEach[0]/accum;
+        if(r <= ratio ){ // g-> gg
+            pid_Par = gid;
+            pid_Sib = gid;
+            std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pgg_int(z_max,t);};
+            zVal = invert_zDist(r1,Fct,tp,denomEach[0]);
+            // Stop searching for process //
+            goto FoundzVal;
+        } 
         
-        zVal = invert_zDist(r1,FctPgg,Current.t(),denomPgg);
+        for (size_t id = 1; id <=3; id++){ // q -> qg
+            ratio +=  denomEach[id]/accum;
+            if ( r <= ratio ){
+                pid_Par = id;
+                pid_Sib = id;
+                std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pgq_int(z_max,t);};
+                zVal = invert_zDist(r1,Fct,tp,denomEach[id]);
+                // Stop searching for process //
+                goto FoundzVal;
+            }
+        }
+        for (size_t id = 4; id <=6; id++){ // qbar -> qbar g
+            ratio +=  denomEach[id]/accum;
+            if ( r <= ratio ){
+                pid_Par = -((id % 4) + 1);
+                pid_Sib = pid_Par;
+                std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pgq_int(z_max,t);};
+                zVal = invert_zDist(r1,Fct,tp,denomEach[id]);
+                // Stop searching for process //
+                goto FoundzVal;
+            }
+        }
     }
-    if( Current.pid() <= sid )
+    if( std::abs(Current.pid()) <= sid )
     {
-        denomPgg = zDist_Pqq_int(1.0,Current.t());
-        // double ratio1 =  full;
 
-        std::function<double(double,double)> FctPgg =  [this](double z_max, double t) { return this->zDist_Pqq_int(z_max,t);};
-        
-        zVal = invert_zDist(r1,FctPgg,Current.t(),denomPgg);
+        std::array<double,2> denomEach;
+        pid_Par = Current.pid();
+        double denomqq = zDist_Pqq_int(Maximum_z_frac,tp);
+        pid_Par = gid;
+        double denomqg = zDist_Pqg_int(Maximum_z_frac,tp);
+        double accum = denomqq + denomqg;
+        double ratio =  denomqq/accum;
+        if(r <= ratio ){ // q->qg
+            pid_Par = Current.pid();
+            pid_Sib = gid;
+            std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pqq_int(z_max,t);};
+            zVal = invert_zDist(r1,Fct,tp,denomqq);
+        } 
+        else{ // g->qqbar
+            pid_Par = gid;
+            pid_Sib = -Current.pid();
+            std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pqg_int(z_max,t);};
+            zVal = invert_zDist(r1,Fct,tp,denomqg);
+        }
     }
 
-
+    FoundzVal:
     if( std::isnan(zVal) || zVal == 0.0 ){
 
-      JSWARN << BOLDRED << "zVal is not a number " << zVal << " r = " << r << " r1 = " << r1 << " denomPgg = " << denomPgg << " \n";
+      JSWARN << BOLDRED << "zVal is not a number zVal = " << zVal << " r = " << r << " r1 = " << r1;
+      JSINFO << BOLDRED << "pid; Curent  = " << Current.pid() << " Parent = " << pid_Par << " Sibling = " << pid_Sib;
       exit(0);
     }
     return zVal;
@@ -670,23 +761,23 @@ inline double iMATTER::zDist_Pqq(double y, double t){
     double siny = std::sin(y / 2.0);
     double z = 1.0 - siny * siny;
     double Jac = std::sqrt(z * (1.0 - z));
-    return Jac * alpha_s / (2.0 * pi) * P_z_qq(z) * PDF(Current.pid(),MomentumFractionCurrent / z,t) / z;
+    return Jac * alpha_s / (2.0 * pi) * P_z_qq(z) * PDF(pid_Par,MomentumFractionCurrent / z,t) / z;
 }
-
 inline double iMATTER::zDist_Pqg(double y, double t){
 
     double siny = std::sin(y / 2.0);
     double z = 1.0 - siny * siny;
     double Jac = std::sqrt(z * (1.0 - z));
-    return Jac * alpha_s / (2.0 * pi) * P_z_qq(z) * PDF(Current.pid(),MomentumFractionCurrent / z,t) / z;
+    return Jac * alpha_s / (2.0 * pi) * P_z_qg(z) * PDF(gid,MomentumFractionCurrent / z,t) / z;
 }
 inline double iMATTER::zDist_Pgq(double y, double t){
 
     double siny = std::sin(y / 2.0);
     double z = 1.0 - siny * siny;
     double Jac = std::sqrt(z * (1.0 - z));
-    return Jac * alpha_s / (2.0 * pi) * P_z_qq(z) * PDF(Current.pid(),MomentumFractionCurrent / z,t) / z;
+    return Jac * alpha_s / (2.0 * pi) * P_z_qq(1.0 - z) * PDF(pid_Par,MomentumFractionCurrent / z,t) / z;
 }
+
 double iMATTER::zDist_Pgg_int(double z_max, double t){
     double Error;
     double z_min = MomentumFractionCurrent;
@@ -707,7 +798,26 @@ double iMATTER::zDist_Pqq_int(double z_max, double t){
     double Sudakov = SingleIntegral(FctIntegrand, t, y_min, y_max,Error,1e0); // The tolerance is taken to be large for now //
     return Sudakov;
 }
+double iMATTER::zDist_Pgq_int(double z_max, double t){
+    double Error;
+    double z_min = MomentumFractionCurrent;
+    // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
+    double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 
+    std::function<double(double, double)> FctIntegrand = [this](double y, double t) { return this->zDist_Pgq(y,t);};
+    double Sudakov = SingleIntegral(FctIntegrand, t, y_min, y_max,Error,1e0); // The tolerance is taken to be large for now //
+    return Sudakov;
+}
+double iMATTER::zDist_Pqg_int(double z_max, double t){
+    double Error;
+    double z_min = MomentumFractionCurrent;
+    // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
+    double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
+
+    std::function<double(double, double)> FctIntegrand = [this](double y, double t) { return this->zDist_Pqg(y,t);};
+    double Sudakov = SingleIntegral(FctIntegrand, t, y_min, y_max,Error,1e0); // The tolerance is taken to be large for now //
+    return Sudakov;
+}
 
 inline double iMATTER::P_z_gg_int( double z)
 {  
@@ -951,4 +1061,17 @@ double iMATTER::SingleIntegral(std::function<double(double,double)> &Integrand, 
 double iMATTER::PDF(int pid, double z, double t){
     if(pdf->insideBounds(z,t) == 0 ) throw std::runtime_error(" pdf out of bound z = " + std::to_string(z) + " t= " + std::to_string(t) + "\n");
     return pdf->xf(pid,z,t) / z;
+}
+
+void iMATTER::OUTPUT(Parton P){
+
+    (*File) << z_frac << " " 
+         << P.pid() << " " 
+         << P.pstat() << " " 
+         << P.t() << " " 
+         << P.e() << " " 
+         << P.px() << " " 
+         << P.py() << " " 
+         << P.pz() << " " 
+         << std::endl; // N pid status t E Px Py Pz" << std::endl;
 }
