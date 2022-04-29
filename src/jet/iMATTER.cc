@@ -273,25 +273,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             double max_t2 = zb_frac * zb_frac * max_t / z_frac;
 
-            if (max_t2 < 0){ 
-                JSWARN << " max_t2 negative = " << max_t2; 
-                JSINFO << " t = " << t << " t1 = " << t1 << " pT2 = " << pT2 << " z_frac = " << z_frac; 
-            }
-
             // Virtuality of the sibling //
             double t2 = generate_initial_virt(pIn[in], Current_Location, max_t2 );
-            
-            // double l_perp_2 = (1-z_frac)*std::abs(t1) - std::abs(t)*z_frac*(1-z_frac) - std::abs(t2)*z_frac ;
-            
-            // double l_perp = 0.0 ;
-            
-            // if (l_perp_2 > 0) l_perp = std::sqrt(l_perp_2) ;
-            // else{ 
-            //     JSWARN << " l_perp_2 negative = " << l_perp_2; 
-            //     JSINFO << " t = " << t << " t1 = " << t1 << " t2 = " << t2; 
-            //     }
-
-
             
             double phi = 2*pi*ZeroOneDistribution(*GetMt19937Generator());
             
@@ -390,7 +373,6 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 // End of DoEnergyLoss
 
 
-
 double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_t)
 {
     
@@ -437,7 +419,7 @@ double iMATTER::invert_sudakov( double value , double min_t, double max_t)
     
     double abs_min_t = std::abs(min_t);
     
-    double numer = Sudakov(abs_min_t,abs_max_t);
+    double numer = Sudakov(abs_min_t,std::abs(Current.t()));
     
     if (value <= numer) return(min_t);
     
@@ -482,6 +464,9 @@ double iMATTER::invert_sudakov( double value , double min_t, double max_t)
         
         loop_counter++;
     }
+
+    (*File) << " sudakov diff = "<< diff << " estimate = "<< estimate << " denom = "<< denom << " numer = "<< numer
+            << " abs_min_t = " << abs_min_t << " abs_t = " << abs_t << std::endl;
     
     return(abs_t); // returning a time like virtuality t
     
@@ -491,29 +476,33 @@ double iMATTER::Sudakov(double t1, double t2)
 {
     double sudakov = 1;
 
-    double logt2 = (0.5 * alpha_s / pi )*std::log( t2/t1);
-    double z_min = MomentumFractionCurrent;
-    double z_max = 1.;
+    // double logt2 = (0.5 * alpha_s / pi ) * std::log( t2/t1);
+    // double z_min = 1e-5;//MomentumFractionCurrent;
+    // double z_max = 1. - z_min;//Maximum_z_frac;
     double x2 = MomentumFractionCurrent; 
-    
-    if ( std::abs(Current.pid()) < 4  ) // A light quark
-    {
-        // sudakov = sudakov_Pgg(t_min , t_max)*pow( sudakov_Pqq(t_min , t_max) , nf );
-        double logP = alpha_s / (2.0 * pi) * (LogSud_Pqg( z_min, z_max ) + LogSud_Pqq(z_min, z_max));
-        double sudakov2 = std::exp(- logt2 * logP) / PDF(Current.pid(),x2,t2);
-        sudakov = sudakov2;
-    }
-    else if ( Current.pid()==gid )
-    {
-        // sudakov = sudakov_Pqg(t_min, t_max);
-        double logP = alpha_s / (2.0 * pi) * (LogSud_Pgg( z_min, z_max ) + 2. * nf * LogSud_Pgq( z_min, z_max ));
-        double sudakov2 = std::exp(- logt2 * logP) / PDF(Current.pid(),x2,t2);
-        sudakov = sudakov2;
-        
-    }
-    else
-    {
-        JSWARN << " cannot generate sudakov for pid = " << Current.pid();
+    if( t1 == t2 ) sudakov = 0.0;
+    else { 
+        if ( std::abs(Current.pid()) <= sid  ) // A light quark
+        {
+            // sudakov = sudakov_Pgg(t_min , t_max)*pow( sudakov_Pqq(t_min , t_max) , nf );
+            // double logP = LogSud_Pqg( z_min, z_max ) + LogSud_Pqq(z_min, z_max);
+            double logP = LogSud_Pqg(t1, t2) + LogSud_Pqq(t1, t2);
+            // sudakov = std::exp(- logt2 * logP) / PDF(Current.pid(),x2,t2);
+            sudakov = std::exp(-(0.5 * alpha_s / pi ) * logP) / PDF(Current.pid(),x2,t2);
+        }
+        else if ( Current.pid()==gid )
+        {
+            // sudakov = sudakov_Pqg(t_min, t_max);
+            // double logP = LogSud_Pgg( z_min, z_max ) + 2. * nf * LogSud_Pgq( z_min, z_max );
+            // sudakov = std::exp(- logt2 * logP) / PDF(Current.pid(),x2,t2);
+            double logP = LogSud_Pgg(t1, t2) + 2. * nf * LogSud_Pgq(t1, t2);
+            sudakov = std::exp(-(0.5 * alpha_s / pi ) * logP) / PDF(Current.pid(),x2,t2);
+            
+        }
+        else
+        {
+            JSWARN << " cannot generate sudakov for pid = " << Current.pid();
+        }
     }
     
     return(sudakov);
@@ -672,7 +661,6 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
     return zVal;
 }
 
-    
 double iMATTER::generate_L(double form_time)
 {
   double r, x_low, x_high, x, diff, span, val, arg, norm;
@@ -737,12 +725,10 @@ inline double iMATTER::P_z_gg( double z )
 {
     return 2. * Nc * (1. - z*(1.-z)*(1. - z*(1.-z))/(z*(1.-z)) );
 }
-
 inline double iMATTER::P_z_qq( double z )
 {
     return Cf * ( 1. + z*z )/( 1. - z);
 }
-
 inline double iMATTER::P_z_qg( double z )
 {
     return 0.5 * (z * z + (1. - z)*(1. - z));
@@ -755,7 +741,6 @@ inline double iMATTER::zDist_Pgg(double y, double t){
     double Jac = std::sqrt(z * (1.0 - z));
     return Jac * alpha_s / (2.0 * pi) * P_z_gg(z) * PDF(gid,MomentumFractionCurrent / z,t) / z;
 }
-
 inline double iMATTER::zDist_Pqq(double y, double t){
 
     double siny = std::sin(y / 2.0);
@@ -823,35 +808,53 @@ inline double iMATTER::P_z_gg_int( double z)
 {  
     return  2.0 * Ca * (z * (2.0 - 0.5 * z + z * z / 3.0) + std::log((1.0 - z) / z) );
 }
-
 inline double iMATTER::P_z_qq_int( double z )
 {
     return 0.5 * Cf * (z * (1. - 0.5 * z) - 4. * std::log(1. - z));
 }
-
 inline double iMATTER::P_z_qg_int( double z )
 {
     return 0.5 * (z * (z - z * z - 1.));
 }
 
 
-inline double iMATTER::LogSud_Pgg(double z_min, double z_max)
-{
-    return ( P_z_gg_int(z_max) - P_z_gg_int(z_min) );
-}
-inline double iMATTER::LogSud_Pqq(double z_min, double z_max)
-{
-    return ( P_z_qq_int(z_max) - P_z_qq_int(z_min) );
-}
-inline double iMATTER::LogSud_Pqg(double z_min, double z_max)
-{
-    return ( P_z_qg_int(z_max) - P_z_qg_int(z_min) );
-}
-inline double iMATTER::LogSud_Pgq(double z_min, double z_max)
-{
-    return ( P_z_qq_int(1. - z_min) - P_z_qq_int(1. - z_max) );
-}
+// inline double iMATTER::LogSud_Pgg(double z_min, double z_max)
+// {
+//     return ( P_z_gg_int(z_max) - P_z_gg_int(z_min) );
+// }
+// inline double iMATTER::LogSud_Pqq(double z_min, double z_max)
+// {
+//     return ( P_z_qq_int(z_max) - P_z_qq_int(z_min) );
+// }
+// inline double iMATTER::LogSud_Pqg(double z_min, double z_max)
+// {
+//     return ( P_z_qg_int(z_max) - P_z_qg_int(z_min) );
+// }
+// inline double iMATTER::LogSud_Pgq(double z_min, double z_max)
+// {
+//     return ( P_z_qq_int(1. - z_min) - P_z_qq_int(1. - z_max) );
+// }
 
+inline double iMATTER::LogSud_Pgg(double t_min, double t_max)
+{
+    double t_min2 = t_min * t_min;
+    double t_max2 = t_max * t_max;
+    return Ca * (8.0 * std::log(t_max / t_min) + (t_max - t_min) * ((-23.0 * t_max2 - 4.0 * t_max * t_min + 2.0 * t_min2  ) / (3.0 * t_max2) + 4.0 * t_max2 * std::log(t_max / t_min - 1.0)));
+}
+inline double iMATTER::LogSud_Pqq(double t_min, double t_max)
+{
+    return Cf * (0.5 * (t_max - t_min) *(7.0 + 4.0 * std::log(t_max / t_min - 1.0)) + 3.0 * t_min * std::log(t_max/t_min));
+}
+inline double iMATTER::LogSud_Pqg(double t_min, double t_max)
+{
+    double t_min2 = t_min * t_min;
+    double t_max2 = t_max * t_max;
+    return (t_max + t_min ) / 3.0 - t_min2 * (1.0 / t_max + t_min / t_max2) - t_min * std::log(t_max / t_min);
+}
+inline double iMATTER::LogSud_Pgq(double t_min, double t_max)
+{
+    return Cf * (0.5 * (t_max - t_min) *(7.0 + 4.0 * std::log(t_max / t_min - 1.0)) + 3.0 * t_min * std::log(t_max/t_min));
+}
 
 void iMATTER::ReverseRotateParton(FourVector &ToRotate, FourVector Axis )
 {
