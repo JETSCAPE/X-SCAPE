@@ -13,11 +13,10 @@
 # See COPYING for details.
 ##############################################################################
 
+folderName="music"
 # download the code package
-#git clone git://git.code.sf.net/p/music-hydro/code music
-#git clone --depth=1 git://git.code.sf.net/p/music-hydro/code music
-git clone --depth=1 https://github.com/MUSIC-fluid/MUSIC music
-
+rm -fr $folderName
+git clone --depth=1 https://github.com/MUSIC-fluid/MUSIC.git --branch JETSCAPE $folderName
 
 ### ALTERNATIVE VERSION
 ### Download a zipped snapshot
