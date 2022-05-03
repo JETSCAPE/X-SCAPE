@@ -575,8 +575,8 @@ double iMATTER::invert_Backward_sudakov( double value , double min_t, double max
     }
 
     // Debug
-    (*File) << "# Inverse_Backward_sudakov diff = "<< diff << " estimate = "<< estimate << " denom = "<< denom << " numer = "<< numer
-            << " abs_min_t = " << abs_min_t << " abs_t = " << abs_t << std::endl;
+    // (*File) << "# Inverse_Backward_sudakov diff = "<< diff << " estimate = "<< estimate << " denom = "<< denom << " numer = "<< numer
+    //         << " abs_min_t = " << abs_min_t << " abs_t = " << abs_t << std::endl;
     
     return(abs_t); // returning a time like virtuality t
     
