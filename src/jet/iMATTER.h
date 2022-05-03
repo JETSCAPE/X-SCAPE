@@ -24,7 +24,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    iMATTER();
    virtual ~iMATTER();
 
-   double alpha_s, Q0;
+   double Q0;
 
    void Init();
    void DoEnergyLoss(double deltaT,double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut);
@@ -32,7 +32,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    
    void printout_current();
     
-    
+   double alpha_s(double q2);
     
    std::shared_ptr<InitialState> ini; // temporary pointer to initial state
    
@@ -81,17 +81,20 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    double sud_val_QQ(double h0, double h1, double h2, double loc_d, double E1);
    double sud_z_QQ(double cg, double cg1, double loc_e, double l_fac, double E2);
 
+   double generate_Forward_virt(Parton p, FourVector location,double max_t);
    double generate_initial_virt(Parton p, FourVector location,double max_t);
    double generate_z( Parton p, FourVector CurrentLocation, double tp);
    double generate_L(double form_time);
 
-   double invert_sudakov( double value , double min_t, double max_t);
+   double invert_Forward_sudakov( double value , double min_t, double max_t);
+   double invert_Backward_sudakov( double value , double min_t, double max_t);
 
    // Takes function Dist(t,z_min, z_max)
    double invert_zDist( double value, std::function<double(double,double)> Dist, double t, double denom);
 
    // Probability of evolving backwards from t2 to t1 without branching //
-   double Sudakov(double t1, double t2);
+   double Forward_Sudakov(double t1, double t2);
+   double Backward_Sudakov(double t1, double t2);
    
   // Rotate Parton to the Axis
   void ReverseRotateParton( FourVector &ToRotate, FourVector Axis );
