@@ -1,8 +1,8 @@
 ## 3DGlauber support 
 
 3DGlauber is a 3D initial state model. 3DGlauber generates the initial state for
- the MUSIC and can be integrated into the XETSCAPE framework. To download the lastest
- version of 3DGlauber, one can run the shell script under the external_packages folder,
+the MUSIC and can be integrated into the XETSCAPE framework. To download the lastest
+version of 3DGlauber, one can run the shell script under the external_packages folder,
 
 ```bash
     ./get_3dglauber.sh
@@ -10,6 +10,7 @@
 
 To compile the 3DGlauber code together with the XETSCAPE framework, please turn
  on the 3DGlauber support option,
+
 ```bash
     mkdir build
     cd build
@@ -47,6 +48,25 @@ To run JETSCAPE with MUSIC, one needs to use MPI commands,
 
 ```bash
     mpirun -np 1 ./MUSICTest
+```
+## iSS support 
+
+iSS is a Monte Carlo sampler code after the hydrodynamics and can be integrated 
+into the XETSCAPE framework. To download the lastest
+version of iSS, one can run the shell script under the external_packages folder,
+
+```bash
+    ./get_iSS.sh
+```
+
+To compile the iSS code together with the XETSCAPE framework, please turn
+on the iSS support option,
+
+```bash
+    mkdir build
+    cd build
+    cmake -DUSE_ISS=ON ..
+    make
 ```
 
 ## Running JETSCAPE with CLVisc
@@ -114,5 +134,5 @@ To run JetScape test with SMASH:
     ./SMASHTest
 ```
 
-Currently the iSS sampler performs resonance decays after sampling.
+Currently the iSS sampler doesn't performs resonance decays after sampling.
 For reasonable physics with SMASH these decays should be switched off.
