@@ -32,6 +32,7 @@ export DYLD_LIBRARY_PATH=${JetScape}:${DYLD_LIBRARY_PATH}
 # PYTHIA8 directory
 export PYTHIA8DIR=${PYTHIAINSTALLDIR}
 export PYTHIA8_ROOT_DIR=${PYTHIAINSTALLDIR}
+export PYTHIA8DATA=${PYTHIA8DIR}/share/Pythia8/xmldoc
 #export PYTHIA8_INCLUDE_DIR=`${PYTHIA8DIR}/bin/pythia8-config --includedir`/Pythia8
 #export PYTHIA8_LIBRARIES=`${PYTHIA8DIR}/bin/pythia8-config --libdir`
 export LD_LIBRARY_PATH=${PYTHIA8DIR}/lib:${LD_LIBRARY_PATH}

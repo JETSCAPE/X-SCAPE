@@ -2,7 +2,7 @@
 //  iMATTER.cc
 //  
 //
-//  Created by Abhijit Majumder on 9/13/21.
+//  Created by Abhijit Majumder & Ismail Soudi on 9/13/21.
 //
 
 #include "iMATTER.h"
@@ -39,15 +39,11 @@ iMATTER::iMATTER(): Parent(initial) , Sibling(initial) , Current(initial)
 {   
   SetId("iMATTER");
   VERBOSE(8);
-  File = new std::ofstream;
-  File->open(Fpath.c_str(),std::ofstream::out);
-  (*File) << "z_frac pid status t E Px Py Pz" << std::endl;
 }
 
 iMATTER::~iMATTER()
 {
   VERBOSE(8);
-  File->close();
 
 }
 
@@ -56,6 +52,17 @@ void iMATTER::Init()
     JSINFO<<"Intialize iMATTER ...";
     // alpha_s = 0.2;
     Q0 = 1.0;
+
+    File = new std::ofstream;
+    File->open(Fpath.c_str(),std::ofstream::out);
+    (*File) << "EventId z_frac x2 pid plabel status form_time t E Px Py Pz" << std::endl;
+    File->close();
+
+    File1 = new std::ofstream;
+    File1->open(Fpath1.c_str(),std::ofstream::out);
+    (*File1) << "EventId pid plabel status form_time t E Px Py Pz" << std::endl;
+    File1->close();
+
 
     P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
@@ -110,17 +117,36 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     
     for (int in=0; in < pIn.size(); in++) /// we continue with the loop charade, even though the framework is just giving us one parton
     {
+        if( std::abs(time - GetMaxT()) <= 1e-10 )
+        {
 
-        if ( pIn[in].plabel()>0 ) return ;
+            File1->open(Fpath1.c_str(),std::ofstream::app);
+            // File1->precision(16);
+            (*File1) << "########################### " << std::endl;
+            (*File1) << "# " << time << " " 
+                << pIn[in].pid() << " " 
+                << pIn[in].plabel() << " " 
+                << pIn[in].pstat() << " " 
+                << pIn[in].form_time() << " " 
+                << pIn[in].t() << " " 
+                << pIn[in].e() << " " 
+                << pIn[in].px() << " " 
+                << pIn[in].py() << " " 
+                << pIn[in].pz() << " " 
+                << std::endl
+                << std::endl; 
+            File1->close();
+        }
+        if ( pIn[in].plabel()>0 ) return;
         // i-MATTER only deals with initial state (note the i -> in)
         
        
         
-        JSINFO << " " ;
+        // JSINFO << " " ;
         
-        JSINFO << " ********************************************** " ;
+        // JSINFO << " ********************************************** " ;
         
-        JSINFO << " pIn.plabel = " << pIn[in].plabel() << " pIn.pstat = " << pIn[in].pstat() << " pIn.pid = " << pIn[in].pid() << " pIn.px = " << pIn[in].px() << " pIn.py = " << pIn[in].py() << " pIn.pz = " << pIn[in].pz() << " pIn.e = " << pIn[in].e() ;
+        // JSINFO << " pIn.plabel = " << pIn[in].plabel() << " pIn.pstat = " << pIn[in].pstat() << " pIn.pid = " << pIn[in].pid() << " pIn.px = " << pIn[in].px() << " pIn.py = " << pIn[in].py() << " pIn.pz = " << pIn[in].pz() << " pIn.e = " << pIn[in].e() ;
         
         if (std::isnan(pIn[in].e()) || std::isnan(pIn[in].px()) ||
         std::isnan(pIn[in].py()) || std::isnan(pIn[in].pz()) ||
@@ -131,15 +157,66 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             std::cin >> blurb;
         } /// usual dump routine for naned out partons
         
-        if (pIn[in].pstat()>=0) continue ; // Only accept initial state partons
         
         if (pIn[in].pid()==22) continue ; // neglect photons. 
         if ( std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 ) continue ; // neglect heavy quarks. 
         
-    
+
         //JSINFO << BOLDYELLOW << " pdfvalue = " << extPDF->xf(1,0.2,10);
     
         //std::cin >> blurb;
+        // int NumberOfPartons = GetShower()->GetFinalPartons().size();
+        // File1->open(Fpath1.c_str(),std::ofstream::app);
+        // (*File1) << "# " << Current_Status << " " 
+        //     << pIn[in].pstat() << " " 
+        //     << std::endl; 
+        // File1->close();
+
+        if( pIn[in].pstat() + 900 == Current_Status || pIn[in].pstat() == Current_Status) {
+            File1->open(Fpath1.c_str(),std::ofstream::app);
+            double Direction = (pIn[in].pz() >= 0.0 ? 1.0:-1.0);
+
+            (*File1) << "# " << GetCurrentEvent() << " "
+                << time << " " 
+                << Current_Status << " " 
+                << pIn[in].pid() << " " 
+                << pIn[in].plabel() << " " 
+                << pIn[in].pstat() << " " 
+                << pIn[in].form_time() << " " 
+                << pIn[in].t() << " " 
+                << pIn[in].e() << " " 
+                << pIn[in].px() << " " 
+                << pIn[in].py() << " " 
+                << pIn[in].pz() << " " 
+                << std::endl; 
+
+
+            FourVector p_Parton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),0.0);
+            Rotate(p_Parton,RotationVector,1);
+            pIn[in].reset_p(p_Parton.x(),p_Parton.y(),Direction * p_Parton.z());
+            pIn[in].set_stat(pIn[in].pstat() + 1);
+            
+            (*File1) << "    "
+                << GetMaxT() << " " 
+                << Current_Status << " " 
+                << pIn[in].pid() << " " 
+                << pIn[in].plabel() << " " 
+                << pIn[in].pstat() << " " 
+                << pIn[in].form_time() << " " 
+                << pIn[in].t() << " " 
+                << pIn[in].e() << " " 
+                << pIn[in].px() << " " 
+                << pIn[in].py() << " " 
+                << pIn[in].pz() << " " 
+                << std::endl << std::endl; 
+            File1->close();
+        }
+
+        if (pIn[in].pstat()>=0) { 
+            pOut.push_back(pIn[in]);
+            continue ;
+        } // Only accept initial state partons
+
         JSINFO << BOLDYELLOW <<" iMATTER::DoEnergyLoss at time = "<<time;
         VERBOSESHOWER(8)<< MAGENTA << " SentInPartons Signal received : "<<deltaT<<" "<<Q2<<" "<<&pIn;
         double rNum = ZeroOneDistribution(*GetMt19937Generator());
@@ -180,10 +257,10 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             Matter::Dump_pIn_info(0, pIn);
             //assert(velocityMod < 1.0 + rounding_error);
         }
-        JSINFO << BOLDYELLOW << " velocityMod = " << velocityMod << " vx = " << velocity[1] << " vy = " << velocity[2] << " vz = " << velocity[3];
+        // JSINFO << BOLDYELLOW << " velocityMod = " << velocityMod << " vx = " << velocity[1] << " vy = " << velocity[2] << " vz = " << velocity[3];
         velocity[0] = velocityMod ;
         
-        JSINFO << BOLDYELLOW << " end location x = " << x_end << " y = " << y_end << " z = " << z_end << " t = " << t_end ;
+        // JSINFO << BOLDYELLOW << " end location x = " << x_end << " y = " << y_end << " z = " << z_end << " t = " << t_end ;
         
         // parton position by propagating backward from t_end to time
         double x = x_end + velocity[1]*(time - t_end) ;
@@ -208,9 +285,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         }
 
         //DEBUG:
-        std::cout<< " at time " << time << " x = " << x << " y= " << y << " and z = " << z << " target-density   = " << density_target << endl ;
-        
-        std::cout<< " at time " << time << " x = " << x << " y= " << y << " and z = " << z << " projectile-density   = " << density_projectile << endl ;
+        // std::cout<< " at time " << time << " x = " << x << " y= " << y << " and z = " << z << " target-density   = " << density_target << endl ;
+        // std::cout<< " at time " << time << " x = " << x << " y= " << y << " and z = " << z << " projectile-density   = " << density_projectile << endl ;
        
         double t1 = pIn[in].t();
         
@@ -219,7 +295,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         FourVector Current_Location(x,y,z,time);
         
         
-        JSINFO << BOLDYELLOW << " formation time " << pIn[in].form_time() << " end time = " <<  t_end ;
+        // JSINFO << BOLDYELLOW << " formation time " << pIn[in].form_time() << " end time = " <<  t_end ;
         Current = pIn[in];
         
         if (pIn[in].pstat()==-1000) // parton stub from pythia, needs to be reset.
@@ -240,8 +316,17 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         
             JSINFO << MAGENTA << " pSTAT = -1000 leads to new virt = " << t1 << " and New formation time = " << pIn[in].form_time() ;
 
+
+
+            // Set x2 the current particle's momentum fraction //
+            CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
+            MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
+            Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
             // OUTPUT To file //
             OUTPUT(pIn[in]);
+
+            Current_Label = pIn[in].plabel();
+            
 
         }
     
@@ -252,26 +337,44 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         
         double split_time = t_end + Current.form_time();
         
-        JSINFO << BOLDYELLOW << "virtuality = " << Current.t() << " split time = " << split_time ;
-        JSINFO << BOLDYELLOW << " new px = " << Current.px() << " py =  " << Current.py() << " pz = " << Current.pz() << " energy = " << Current.e();
+        // JSINFO << BOLDYELLOW << "virtuality = " << Current.t() << " split time = " << split_time ;
+        // JSINFO << BOLDYELLOW << " new px = " << Current.px() << " py =  " << Current.py() << " pz = " << Current.pz() << " energy = " << Current.e();
         
 
-        
-        if (time < split_time)
+
+
+        if (time < split_time && pIn[in].plabel() == Current_Label)
         {
             
-            JSINFO << BOLDRED << "Starting a Split " ;  
+            // JSINFO << BOLDRED << "Starting a Split " ;  
 
             // Direction of Current  //
             double Direction = (pz >= 0.0 ? 1.0:-1.0);
             
+            FourVector p_Current(px,py,pz,OnShellEnergy);
+            // Setting the Local assignments, position, momentum, velocity and velocity Mod
+            OnShellEnergy = sqrt( px*px + py*py + pz*pz);
+            px = 0.0;
+            py = 0.0;
+            pz = OnShellEnergy;
+            // e  = pIn[in].e();
+            pT2= 0.0;
+
+            // Set x2 the current particle's momentum fraction //
+            CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
+            MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
+            Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
+
 
             // Virtuality of current //
             double max_t = std::abs(t1);
             
             // Virtuality of the parent //
             double t = -generate_initial_virt(pIn[in], Current_Location, max_t );
-
+            
+            int NumbSampling =0;
+            RedoSampling:
+            NumbSampling++;
             z_frac = generate_z( pIn[in], Current_Location, std::abs(t)) ;
             double zb_frac = 1.0 - z_frac;
 
@@ -286,21 +389,28 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             double l_perp_y = std::sin(phi);
             
-            JSINFO << BOLDYELLOW << " z_frac = " << z_frac << " parent t = " << t << " current t1 = " << t1 << " sibling t2 = " << t2 << " resulting l_perp = " << l_perp_x ;
+            // JSINFO << BOLDYELLOW << " z_frac = " << z_frac << " parent t = " << t << " current t1 = " << t1 << " sibling t2 = " << t2 << " resulting l_perp = " << l_perp_x ;
             
             // We take the proton going along the z-axis
             // The direction is determined from the Direction of the current 
             // double SiblingPT2  = -(zb_frac * (( t1 + zb_frac * pT2) / z_frac - t ) + t2) / z_frac;
-            double SiblingPT2  = zb_frac / z_frac * t - zb_frac * t1 / (z_frac * z_frac) - t2 / z_frac - zb_frac * zb_frac * pT2 / (z_frac * z_frac);
+            // double SiblingPT2  = zb_frac / z_frac * t - zb_frac * t1 / (z_frac * z_frac) - t2 / z_frac - zb_frac * zb_frac * pT2 / (z_frac * z_frac);
+            double SiblingPT2  = -(zb_frac / z_frac / z_frac) * t1 + (zb_frac / z_frac) * t - t2 / z_frac;
 
 
             
             double SiblingPT   = 0.0;
             if (SiblingPT2 > 0) SiblingPT = std::sqrt(SiblingPT2);
             else{ 
-                JSWARN << " SiblingPT2 negative = " << SiblingPT2; 
-                JSINFO << " t = " << t << " t1 = " << t1 << " t2 = " << t2; 
+                if(NumbSampling > 20)
+                {
+                    JSWARN << " SiblingPT2 negative = " << SiblingPT2 << " z = " << z_frac << " pT2 = " << pT2; 
+                    JSINFO << " t = " << t << " t1 = " << t1 << " t2 = " << t2; 
+                    JSINFO << " Current.status = " << Current.pstat(); 
+                    exit(0);
                 }
+                goto RedoSampling;
+            }
 
             double ParentPlus  = CurrentPlus / z_frac;
             double SiblingPlus = zb_frac * ParentPlus;
@@ -310,19 +420,26 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             double SiblingPx   = l_perp_x * SiblingPT;
             double SiblingPy   = l_perp_y * SiblingPT;
             double ParentEn    =  e + SiblingEn;
-            double ParentPz    = pz + SiblingPz;
-            double ParentPx    = px + SiblingPx;
-            double ParentPy    = py + SiblingPy;
+            double ParentPz    = Direction * pz + SiblingPz;
+            double ParentPx    = SiblingPx;
+            double ParentPy    = SiblingPy;
 
-            
+
 
             FourVector p_Sibling(SiblingPx,SiblingPy,SiblingPz,SiblingEn);
             FourVector p_Parent ( ParentPx, ParentPy, ParentPz, ParentEn);
             
+            // Rotate(p_Sibling,p_Current,-1);
+            // Rotate(p_Parent,p_Current,-1);
             
-            Parton Sibling(pIn[in].plabel()*10, pid_Sib , 0 , p_Sibling, Current_Location) ;
+            Current_Status = Current.pstat() + 900;
+            RotationVector = p_Parent;
+
+            Current_Label = pIn[in].plabel()*10-1;
+
+            Parton Sibling(pIn[in].plabel()*10, pid_Sib , 0 + Current_Status, p_Sibling, Current_Location) ;
             
-            Parton Parent(pIn[in].plabel()*10-1, pid_Par , -900 , p_Parent, Current_Location) ;
+            Parton Parent(Current_Label, pid_Par , -900 + Current_Status, p_Parent, Current_Location) ;
             
             if (std::isnan(Sibling.e()) || std::isnan(Sibling.px()) ||
             std::isnan(Sibling.py()) || std::isnan(Sibling.pz()) ||
@@ -333,6 +450,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 std::cin >> blurb;
             } /// usual dump routine for naned out partons
 
+            pOut.push_back(pIn[in]);
             pOut.push_back(Sibling);
             pOut.push_back(Parent);
             
@@ -346,9 +464,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
 
             // OUTPUT To file //
+            OUTPUT(pOut[pOut.size()-3]);
             OUTPUT(pOut[pOut.size()-1]);
             OUTPUT(pOut[pOut.size()-2]);
-            
           
         }
         else
@@ -370,7 +488,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         
     }
     
-    JSINFO << BOLDCYAN << " Moving to next time step " ;
+    // JSINFO << BOLDCYAN << " Moving to next time step " ;
     
     // std::cin >> blurb ;
 }
@@ -530,7 +648,10 @@ double iMATTER::invert_Backward_sudakov( double value , double min_t, double max
     
     double numer = Backward_Sudakov(abs_min_t,abs_max_t);
     
-    if (value <= numer) return(min_t);
+    if (value <= numer) {
+
+        return(min_t);
+        }
     
     double lower_t = abs_min_t ;
     
@@ -984,14 +1105,16 @@ inline double iMATTER::LogSud_Pgq(double t_min, double t_max)
     return LogSud_Pqq(t_min, t_max);
 }
 
-void iMATTER::ReverseRotateParton(FourVector &ToRotate, FourVector Axis )
+void iMATTER::Rotate(FourVector &ToRotate, FourVector Axis, int icc)
 {
     //     input:  ToRotate, Axis=(px,py,pz) = (0,0,E)_{z}
+    //     if i=1, turn (wx,wy,wz) in the direction (px,py,pz)=>(0,0,E)
     //     if i=-1, turn ToRotate in the direction (0,0,E)=>(px,py,pz)
 
     double wx = ToRotate.x();
     double wy = ToRotate.y();
     double wz = ToRotate.z();
+    double e  = ToRotate.t();
 
     double px = Axis.x();
     double py = Axis.y();
@@ -1013,11 +1136,20 @@ void iMATTER::ReverseRotateParton(FourVector &ToRotate, FourVector Axis )
     double cosb = pz / E;
     double sinb = pt / E;
 
-    double wx1 = wx * cosa * cosb - wy * sina + wz * cosa * sinb;
-    double wy1 = wx * sina * cosb + wy * cosa + wz * sina * sinb;
-    double wz1 = -wx * sinb + wz * cosb;
+    double wx1, wy1, wz1;
+    if (icc == 1) {
+        wx1 = wx * cosb * cosa + wy * cosb * sina - wz * sinb;
+        wy1 = -wx * sina + wy * cosa;
+        wz1 = wx * sinb * cosa + wy * sinb * sina + wz * cosb;
+    }
 
-    ToRotate.Set(wx1,wy1,wz1,w);
+    else {
+        wx1 = wx * cosa * cosb - wy * sina + wz * cosa * sinb;
+        wy1 = wx * sina * cosb + wy * cosa + wz * sina * sinb;
+        wz1 = -wx * sinb + wz * cosb;
+    }
+
+    ToRotate.Set(wx1,wy1,wz1,e);
 
     return;
 }
@@ -1197,17 +1329,22 @@ double iMATTER::PDF(int pid, double z, double t){
 void iMATTER::OUTPUT(Parton P){
 
 
-    (*File) << z_frac << " " 
+    File->open(Fpath.c_str(),std::ofstream::app);
+    (*File) << GetCurrentEvent() << " "
+         << z_frac << " "
+         << MomentumFractionCurrent << " " 
          << P.pid() << " " 
+         << P.plabel() << " " 
          << P.pstat() << " " 
+         << P.form_time() << " " 
          << P.t() << " " 
          << P.e() << " " 
          << P.px() << " " 
          << P.py() << " " 
          << P.pz() << " " 
-         << std::endl; // N pid status t E Px Py Pz" << std::endl;
+         << std::endl; 
+    File->close();
 }
-
 
 
 double iMATTER::alpha_s(double q2) {

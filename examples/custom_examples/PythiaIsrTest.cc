@@ -133,6 +133,7 @@ int main(int argc, char** argv)
 
     auto iMatter = make_shared<iMATTER> ();
   isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-3.); //will be moved to XML and proper Init() in IsrJet later ...
+  iMatter->SetMaxT(-3.); // Have To figure out a proper way to get this when it's moved to XML
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
   //REMARK: Think a bit harder about directed graph creation and time direction !!!!! Graph inversion !???

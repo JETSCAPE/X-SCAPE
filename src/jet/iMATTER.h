@@ -2,7 +2,7 @@
 //  iMATTER.h
 //  
 //
-//  Created by Abhijit Majumder on 9/13/21.
+//  Created by Abhijit Majumder & Ismail Soudi on 9/13/21.
 //
 
 #ifndef iMATTER_H
@@ -96,20 +96,22 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    double Forward_Sudakov(double t1, double t2);
    double Backward_Sudakov(double t1, double t2);
    
-  // Rotate Parton to the Axis
-  void ReverseRotateParton( FourVector &ToRotate, FourVector Axis );
+    // Rotate Parton to the Axis
+    void Rotate( FourVector &ToRotate, FourVector Axis, int icc);
     
  private:
     
     Parton Parent,Sibling,Current;
+    int Current_Status = 1e4, Current_Label = -1;
+    FourVector RotationVector;
     double P_A = 2510;
     double P_B = P_A; /// symmetric system should be overriden in init.
     Pythia8::PDF * pdf;
     double vir_factor=0.5;
     double MomentumFractionCurrent, Maximum_z_frac,z_frac;
     int pid_Sib,pid_Par;
-    std::string Fpath = "ISR-Partons.dat";
-    std::ofstream* File ;
+    std::string Fpath = "ISR-Partons.dat", Fpath1 = "ISR-Rotation.dat";
+    std::ofstream* File,* File1;
     void OUTPUT(Parton P);
 
     // Integration setup 
