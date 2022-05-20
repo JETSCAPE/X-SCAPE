@@ -261,7 +261,8 @@ void PythiaGun::Exec() {
     double final_state_label = 1 ;
     
   int hCounter = 0;
-  for (int np = 0; np < p62.size(); ++np)
+  // for (int np = 0; np < p62.size(); ++np)
+  for (int np = p62.size()-1; np >= 0 ; --np)
   {
     Pythia8::Particle &particle = p62.at(np);
 

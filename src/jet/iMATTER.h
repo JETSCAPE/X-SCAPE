@@ -103,7 +103,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     
     Parton Parent,Sibling,Current;
     int Current_Status = 1e4, Current_Label = -1;
-    FourVector RotationVector;
+    FourVector RotationVector, CollisionPositive, CollisionNegative;
     double P_A = 2510;
     double P_B = P_A; /// symmetric system should be overriden in init.
     Pythia8::PDF * pdf;

@@ -119,7 +119,6 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     {
         if( std::abs(time - GetMaxT()) <= 1e-10 )
         {
-
             File1->open(Fpath1.c_str(),std::ofstream::app);
             // File1->precision(16);
             (*File1) << "########################### " << std::endl;
@@ -133,9 +132,53 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 << pIn[in].px() << " " 
                 << pIn[in].py() << " " 
                 << pIn[in].pz() << " " 
+                << std::endl; 
+
+
+            if(pIn[in].plabel() == -1 || pIn[in].plabel() == -2){
+                if( pIn[in].pz() >= 0) CollisionPositive = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
+                if( pIn[in].pz() < 0) CollisionNegative = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
+            }
+            
+            if ( pIn[in].pstat() == 1000 ){
+
+                double DeltaPx = CollisionPositive.x() - CollisionNegative.x();
+                double DeltaPy = CollisionPositive.y() - CollisionNegative.y();
+                double DeltaPz = CollisionPositive.z() - CollisionNegative.z();
+
+                double Factor = 0.0;
+                if( pIn[in].pstat() == 1 ) Factor =  1.0;
+                if( pIn[in].pstat() == 2 ) Factor = -1.0;
+
+                double Px = pIn[in].px() + Factor * DeltaPx / 2.0;
+                double Py = pIn[in].py() + Factor * DeltaPy / 2.0;
+                double Pz = pIn[in].pz() + Factor * DeltaPz / 2.0;
+
+                FourVector p_Out(Px,Py,Pz,pIn[in].e());
+
+                Parton Out = pIn[in];
+                Out.reset_momentum(p_Out);
+
+                pOut.push_back(Out);
+                
+            }
+
+            // File1->precision(16);
+            (*File1) << "# " << time << " " 
+                << pIn[in].pid() << " " 
+                << pIn[in].plabel() << " " 
+                << pIn[in].pstat() << " " 
+                << pIn[in].form_time() << " " 
+                << pIn[in].t() << " " 
+                << pIn[in].e() << " " 
+                << pIn[in].px() << " " 
+                << pIn[in].py() << " " 
+                << pIn[in].pz() << " " 
                 << std::endl
                 << std::endl; 
             File1->close();
+            if ( pIn[in].plabel()>0 ) return;
+
         }
         if ( pIn[in].plabel()>0 ) return;
         // i-MATTER only deals with initial state (note the i -> in)
