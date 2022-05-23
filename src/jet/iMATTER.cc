@@ -136,50 +136,104 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
 
             if(pIn[in].plabel() == -1 || pIn[in].plabel() == -2){
-                if( pIn[in].pz() >= 0) CollisionPositive = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
-                if( pIn[in].pz() < 0) CollisionNegative = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
+                if( pIn[in].pz() >= 0) {
+                    (*File1) << " Here\n " ;
+                    CollisionPositive = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());  
+                    
+                    auto File = new std::ofstream;
+                    File->open("CollisionPositive.txt",std::ofstream::out);
+                    (*File) << CollisionPositive.x() << " "
+                            << CollisionPositive.y() << " " 
+                            << CollisionPositive.z() << " " 
+                            << CollisionPositive.t();
+                    File->close();  
+                }
+
+                if( pIn[in].pz() < 0)  {
+                    (*File1) << " Here2\n " ;
+                    CollisionNegative = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
+                    File->open("CollisionNegative.txt",std::ofstream::out);
+                    (*File) << CollisionNegative.x() << " "
+                            << CollisionNegative.y() << " " 
+                            << CollisionNegative.z() << " " 
+                            << CollisionNegative.t();
+                    File->close();  
+                }
+
+                (*File1) << CollisionPositive.x() << " "
+                        << CollisionPositive.y() << " " 
+                        << CollisionPositive.z() << " " 
+                        << CollisionPositive.t() << " " 
+                        << "\n ";
+                (*File1) << CollisionNegative.x() << " "
+                        << CollisionNegative.y() << " " 
+                        << CollisionNegative.z() << " " 
+                        << CollisionNegative.t() << " " 
+                        << "\n ";
             }
             
             if ( pIn[in].pstat() == 1000 ){
 
-                double DeltaPx = CollisionPositive.x() - CollisionNegative.x();
-                double DeltaPy = CollisionPositive.y() - CollisionNegative.y();
-                double DeltaPz = CollisionPositive.z() - CollisionNegative.z();
+                // double x,y,z,t;
+                // auto File = new std::ifstream;
+                // File->open("CollisionPositive.txt",std::ifstream::in);
+                // // (*File) >> x;// >> y >> z >> t;
+                // File->close();  
+                // CollisionPositive = FourVector(x,y,z,t);  
+                // (*File1) << x << " "
+                //          << y << " " 
+                //          << z << " " 
+                //          << t << " " 
+                //          << "\n ";
+                // File->open("CollisionPositive.txt",std::ifstream::in);
+                // (*File) >> x >> y >> z >> t;
+                // File->close();  
+                // CollisionPositive = FourVector(x,y,z,t);  
 
-                double Factor = 0.0;
-                if( pIn[in].pstat() == 1 ) Factor =  1.0;
-                if( pIn[in].pstat() == 2 ) Factor = -1.0;
+                // double DeltaPx = (CollisionPositive.x() - CollisionNegative.x()) / 2.0;
+                // double DeltaPy = (CollisionPositive.y() - CollisionNegative.y()) / 2.0;
+                // double DeltaPz = (CollisionPositive.z() - CollisionNegative.z()) / 2.0;
 
-                double Px = pIn[in].px() + Factor * DeltaPx / 2.0;
-                double Py = pIn[in].py() + Factor * DeltaPy / 2.0;
-                double Pz = pIn[in].pz() + Factor * DeltaPz / 2.0;
+                // double Factor = 0.0;
+                // if( pIn[in].pstat() == 1 ) Factor =  1.0;
+                // if( pIn[in].pstat() == 2 ) Factor = -1.0;
 
-                FourVector p_Out(Px,Py,Pz,pIn[in].e());
+                // double OnShellEnergy = sqrt(DeltaPx * DeltaPx +
+                //                             DeltaPy * DeltaPy +
+                //                             DeltaPz * DeltaPz );
 
+                // DeltaPx /= OnShellEnergy;
+                // DeltaPy /= OnShellEnergy;
+                // DeltaPz /= OnShellEnergy;
+
+
+                FourVector p_Out(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
+
+                // p_Out.boost(DeltaPx,DeltaPy,DeltaPz);
+                
                 Parton Out = pIn[in];
                 Out.reset_momentum(p_Out);
 
                 pOut.push_back(Out);
+                // File1->precision(16);
+                // (*File1) << "# " << time << " " 
+                //     << (*pOut.end()).pid() << " " 
+                //     << (*pOut.end()).plabel() << " " 
+                //     << (*pOut.end()).pstat() << " " 
+                //     << (*pOut.end()).form_time() << " " 
+                //     << (*pOut.end()).t() << " " 
+                //     << (*pOut.end()).e() << " " 
+                //     << (*pOut.end()).px() << " " 
+                //     << (*pOut.end()).py() << " " 
+                //     << (*pOut.end()).pz() << " " 
+                //     << std::endl
+                //     << std::endl; 
                 
             }
 
-            // File1->precision(16);
-            (*File1) << "# " << time << " " 
-                << pIn[in].pid() << " " 
-                << pIn[in].plabel() << " " 
-                << pIn[in].pstat() << " " 
-                << pIn[in].form_time() << " " 
-                << pIn[in].t() << " " 
-                << pIn[in].e() << " " 
-                << pIn[in].px() << " " 
-                << pIn[in].py() << " " 
-                << pIn[in].pz() << " " 
-                << std::endl
-                << std::endl; 
             File1->close();
-            if ( pIn[in].plabel()>0 ) return;
-
         }
+
         if ( pIn[in].plabel()>0 ) return;
         // i-MATTER only deals with initial state (note the i -> in)
         
