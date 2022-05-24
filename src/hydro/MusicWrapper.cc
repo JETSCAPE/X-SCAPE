@@ -145,8 +145,6 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   }
 
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
-  // need further improvement to accept multiple source term objects
-  music_hydro_ptr->generate_hydro_source_terms();
 }
 
 void MpiMusic::EvolveHydro() {
@@ -157,6 +155,9 @@ void MpiMusic::EvolveHydro() {
   double dz = ini->GetZStep();
   double z_max = ini->GetZMax();
   int nz = ini->GetZSize();
+
+  // need further improvement to accept multiple source term objects
+  music_hydro_ptr->generate_hydro_source_terms();
 
   if (pre_eq_ptr == nullptr) {
     JSWARN << "Missing the pre-equilibrium module ...";
