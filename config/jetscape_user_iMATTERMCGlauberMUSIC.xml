@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+
+<jetscape>
+
+  <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
+
+  <setReuseHydro> false </setReuseHydro>
+  <!-- <nReuseHydro> 10 </nReuseHydro> -->
+
+  <vlevel> 4 </vlevel>
+
+  <nEvents> 1 </nEvents>
+
+  <Random>
+    <seed>1</seed>
+  </Random>
+
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <!--Trento> </Trento-->
+    <MCGlauber>
+        <nEvents_MCGla> 1 </nEvents_MCGla>
+    </MCGlauber>
+  </IS>
+
+  <!-- Hard Process -->
+  <Hard>
+    <PythiaGun>
+      <pTHatMin>100</pTHatMin>
+      <pTHatMax>120</pTHatMax>
+      <eCM>5040</eCM>
+    </PythiaGun>
+  </Hard>
+
+  <!--Preequilibrium Dynamics Module -->
+  <Preequilibrium>
+    <NullPreDynamics> </NullPreDynamics>
+  </Preequilibrium>
+
+  <!-- Hydro  Module  -->
+  <Hydro>
+        <MUSIC>
+            <InitialProfile>13</InitialProfile>
+            <freezeout_temperature>0.15</freezeout_temperature>
+        </MUSIC>
+  </Hydro>
+
+  <!--Eloss Modules -->
+  <Eloss>
+    <Matter>
+      <in_vac> 0 </in_vac>
+    </Matter>
+  </Eloss>
+
+  <!-- Jet Hadronization Module -->
+  <JetHadronization>
+    <name>colorless</name>
+  </JetHadronization>
+
+</jetscape>
