@@ -92,7 +92,8 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("f0_is_not_small", 1);
 
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("calculate_vn", 0);
-  iSpectraSampler_ptr_->paraRdr_ptr->setVal("MC_sampling", 2);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("MC_sampling", 4);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("include_spectators", 0);
 
   iSpectraSampler_ptr_->paraRdr_ptr->setVal(
       "sample_upto_desired_particle_number", 0);
@@ -121,9 +122,9 @@ void iSpectraSamplerWrapper::Exec() {
     exit(-1);
   }
 
-  auto random_seed = (*GetMt19937Generator())(); // get random seed
+  long random_seed = (*GetMt19937Generator())(); // get random seed
   iSpectraSampler_ptr_->set_random_seed(random_seed);
-  VERBOSE(2) << "Random seed used for the iSS module" << random_seed;
+  VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
   status = iSpectraSampler_ptr_->generate_samples();
   if (status != 0) {

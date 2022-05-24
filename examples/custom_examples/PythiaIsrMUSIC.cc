@@ -52,6 +52,7 @@
 #include "MCGlauberWrapper.h"
 #include "MCGlauberGenStringWrapper.h"
 #include "MusicWrapper.h"
+#include "iSpectraSamplerWrapper.h"
 
 #include "MainClock.h"
 #include "ModuleClock.h"
@@ -118,6 +119,7 @@ int main(int argc, char** argv)
   auto pythiaGun= make_shared<PythiaGun> ();
   //auto isr = make_shared<InitialStateRadiationTest> ();
   auto hydro = make_shared<MpiMusic> ();
+  auto iSS = make_shared<iSpectraSamplerWrapper> ();
 
   //jetscape->Add(trento);
     jetscape->Add(MCG);
@@ -138,8 +140,8 @@ int main(int argc, char** argv)
 
   isrJloss->AddPartonShowerGenerator(oldPSG);
 //  isrJloss->Add(iDummy);
-    isrJloss->Add(iMatter);
-    
+  isrJloss->Add(iMatter);
+
   isrManager->Add(isrJloss);
 
   pythiaGun->Add(isrManager);
@@ -147,6 +149,7 @@ int main(int argc, char** argv)
   jetscape->Add(pythiaGun);
   //jetscape->Add(isr);
   jetscape->Add(hydro);
+  jetscape->Add(iSS);
 
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
