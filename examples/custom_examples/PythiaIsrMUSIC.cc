@@ -81,7 +81,7 @@ int main(int argc, char** argv)
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
   JetScapeLogger::Instance()->SetInfo(true);
-    JetScapeLogger::Instance()->SetDebug(false);
+  JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
@@ -106,8 +106,12 @@ int main(int argc, char** argv)
 
   auto jetscape = make_shared<JetScape>();
   jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
-  //jetscape->SetXMLUserFileName("../config/jetscape_user_test.xml");
-  jetscape->SetXMLUserFileName(argv[1]);
+  if (argc > 1) {
+    jetscape->SetXMLUserFileName(argv[1]);
+  } else {
+    jetscape->SetXMLUserFileName(
+            "../config/jetscape_user_iMATTERMCGlauberMUSIC.xml");
+  }
   jetscape->SetId("primary");
   jetscape->AddMainClock(mClock);
   jetscape->ClockInfo();
@@ -121,15 +125,13 @@ int main(int argc, char** argv)
   auto hydro = make_shared<MpiMusic> ();
   auto iSS = make_shared<iSpectraSamplerWrapper> ();
 
-  //jetscape->Add(trento);
-    jetscape->Add(MCG);
+  jetscape->Add(MCG);
   auto isrManager = make_shared<IsrManager>();
   //auto isrJloss = make_shared<JetEnergyLoss> (); //to be followed up ... make isr module ... !!!!
   auto isrJloss = make_shared<IsrJet>();
   auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
-//  auto iDummy = make_shared<DummySplit> ();
 
-    auto iMatter = make_shared<iMATTER> ();
+  auto iMatter = make_shared<iMATTER> ();
   isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-3.); //will be moved to XML and proper Init() in IsrJet later ...
   iMatter->SetMaxT(-3.); // Have To figure out a proper way to get this when it's moved to XML
 
