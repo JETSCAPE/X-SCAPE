@@ -117,122 +117,110 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     
     for (int in=0; in < pIn.size(); in++) /// we continue with the loop charade, even though the framework is just giving us one parton
     {
-        if( std::abs(time - GetMaxT()) <= 1e-10 )
-        {
-            File1->open(Fpath1.c_str(),std::ofstream::app);
-            // File1->precision(16);
-            (*File1) << "########################### " << std::endl;
-            (*File1) << "# " << time << " " 
-                << pIn[in].pid() << " " 
-                << pIn[in].plabel() << " " 
-                << pIn[in].pstat() << " " 
-                << pIn[in].form_time() << " " 
-                << pIn[in].t() << " " 
-                << pIn[in].e() << " " 
-                << pIn[in].px() << " " 
-                << pIn[in].py() << " " 
-                << pIn[in].pz() << " " 
-                << std::endl; 
+        // if( std::abs(time - GetMaxT()) <= 1e-10 )
+        // {
+        //     File1->open(Fpath1.c_str(),std::ofstream::app);
+        //     // File1->precision(16);
+        //     (*File1) << "########################### " << std::endl;
+        //     (*File1) << "# " << time << " " 
+        //         << pIn[in].pid() << " " 
+        //         << pIn[in].plabel() << " " 
+        //         << pIn[in].pstat() << " " 
+        //         << pIn[in].form_time() << " " 
+        //         << pIn[in].t() << " " 
+        //         << pIn[in].e() << " " 
+        //         << pIn[in].px() << " " 
+        //         << pIn[in].py() << " " 
+        //         << pIn[in].pz() << " " 
+        //         << std::endl; 
 
 
-            if(pIn[in].plabel() == -1 || pIn[in].plabel() == -2){
-                if( pIn[in].pz() >= 0) {
-                    (*File1) << " Here\n " ;
-                    CollisionPositive = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());  
+        //     if(pIn[in].plabel() == -1 || pIn[in].plabel() == -2){
+        //         if( pIn[in].pz() >= 0) {
+        //             (*File1) << " Here\n " ;
+        //             ini->CollisionPositiveMomentum = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());  
                     
-                    auto File = new std::ofstream;
-                    File->open("CollisionPositive.txt",std::ofstream::out);
-                    (*File) << CollisionPositive.x() << " "
-                            << CollisionPositive.y() << " " 
-                            << CollisionPositive.z() << " " 
-                            << CollisionPositive.t();
-                    File->close();  
-                }
+        //             // auto File = new std::ofstream;
+        //             // File->open("CollisionPositive.txt",std::ofstream::out);
+        //             // (*File) << CollisionPositive.x() << " "
+        //             //         << CollisionPositive.y() << " " 
+        //             //         << CollisionPositive.z() << " " 
+        //             //         << CollisionPositive.t();
+        //             // File->close();  
+        //         }
 
-                if( pIn[in].pz() < 0)  {
-                    (*File1) << " Here2\n " ;
-                    CollisionNegative = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
-                    File->open("CollisionNegative.txt",std::ofstream::out);
-                    (*File) << CollisionNegative.x() << " "
-                            << CollisionNegative.y() << " " 
-                            << CollisionNegative.z() << " " 
-                            << CollisionNegative.t();
-                    File->close();  
-                }
+        //         if( pIn[in].pz() < 0)  {
+        //             (*File1) << " Here2\n " ;
+        //             ini->CollisionNegativeMomentum = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
+        //             // File->open("CollisionNegative.txt",std::ofstream::out);
+        //             // (*File) << CollisionNegative.x() << " "
+        //             //         << CollisionNegative.y() << " " 
+        //             //         << CollisionNegative.z() << " " 
+        //             //         << CollisionNegative.t();
+        //             // File->close();  
+        //         }
 
-                (*File1) << CollisionPositive.x() << " "
-                        << CollisionPositive.y() << " " 
-                        << CollisionPositive.z() << " " 
-                        << CollisionPositive.t() << " " 
-                        << "\n ";
-                (*File1) << CollisionNegative.x() << " "
-                        << CollisionNegative.y() << " " 
-                        << CollisionNegative.z() << " " 
-                        << CollisionNegative.t() << " " 
-                        << "\n ";
-            }
+        //         (*File1) << ini->CollisionPositiveMomentum.x() << " "
+        //                 << ini->CollisionPositiveMomentum.y() << " " 
+        //                 << ini->CollisionPositiveMomentum.z() << " " 
+        //                 << ini->CollisionPositiveMomentum.t() << " " 
+        //                 << "\n ";
+        //         (*File1) << ini->CollisionNegativeMomentum.x() << " "
+        //                 << ini->CollisionNegativeMomentum.y() << " " 
+        //                 << ini->CollisionNegativeMomentum.z() << " " 
+        //                 << ini->CollisionNegativeMomentum.t() << " " 
+        //                 << "\n ";
+        //     }
             
-            if ( pIn[in].pstat() == 1000 ){
+        //     if ( pIn[in].pstat() == 1000 ){
 
-                // double x,y,z,t;
-                // auto File = new std::ifstream;
-                // File->open("CollisionPositive.txt",std::ifstream::in);
-                // // (*File) >> x;// >> y >> z >> t;
-                // File->close();  
-                // CollisionPositive = FourVector(x,y,z,t);  
-                // (*File1) << x << " "
-                //          << y << " " 
-                //          << z << " " 
-                //          << t << " " 
-                //          << "\n ";
-                // File->open("CollisionPositive.txt",std::ifstream::in);
-                // (*File) >> x >> y >> z >> t;
-                // File->close();  
-                // CollisionPositive = FourVector(x,y,z,t);  
+        //         CollisionPositive = ini->CollisionPositiveMomentum;  
+        //         CollisionNegative = ini->CollisionNegativeMomentum;  
 
-                // double DeltaPx = (CollisionPositive.x() - CollisionNegative.x()) / 2.0;
-                // double DeltaPy = (CollisionPositive.y() - CollisionNegative.y()) / 2.0;
-                // double DeltaPz = (CollisionPositive.z() - CollisionNegative.z()) / 2.0;
+        //         double DeltaPx = (CollisionPositive.x() - CollisionNegative.x()) / 2.0;
+        //         double DeltaPy = (CollisionPositive.y() - CollisionNegative.y()) / 2.0;
+        //         double DeltaPz = (CollisionPositive.z() - CollisionNegative.z()) / 2.0;
 
-                // double Factor = 0.0;
-                // if( pIn[in].pstat() == 1 ) Factor =  1.0;
-                // if( pIn[in].pstat() == 2 ) Factor = -1.0;
+        //         double Factor = 0.0;
+        //         if( pIn[in].pstat() == 1 ) Factor =  1.0;
+        //         if( pIn[in].pstat() == 2 ) Factor = -1.0;
 
-                // double OnShellEnergy = sqrt(DeltaPx * DeltaPx +
-                //                             DeltaPy * DeltaPy +
-                //                             DeltaPz * DeltaPz );
+        //         // double OnShellEnergy = sqrt(DeltaPx * DeltaPx +
+        //         //                             DeltaPy * DeltaPy +
+        //         //                             DeltaPz * DeltaPz );
 
-                // DeltaPx /= OnShellEnergy;
-                // DeltaPy /= OnShellEnergy;
-                // DeltaPz /= OnShellEnergy;
+        //         // DeltaPx /= OnShellEnergy;
+        //         // DeltaPy /= OnShellEnergy;
+        //         // DeltaPz /= OnShellEnergy;
 
 
-                FourVector p_Out(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
+        //         // FourVector p_Out(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
 
-                // p_Out.boost(DeltaPx,DeltaPy,DeltaPz);
+        //         // p_Out.boost(DeltaPx,DeltaPy,DeltaPz);
                 
-                Parton Out = pIn[in];
-                Out.reset_momentum(p_Out);
+        //         // Parton Out = pIn[in];
+        //         // Out.reset_momentum(p_Out);
 
-                pOut.push_back(Out);
-                // File1->precision(16);
-                // (*File1) << "# " << time << " " 
-                //     << (*pOut.end()).pid() << " " 
-                //     << (*pOut.end()).plabel() << " " 
-                //     << (*pOut.end()).pstat() << " " 
-                //     << (*pOut.end()).form_time() << " " 
-                //     << (*pOut.end()).t() << " " 
-                //     << (*pOut.end()).e() << " " 
-                //     << (*pOut.end()).px() << " " 
-                //     << (*pOut.end()).py() << " " 
-                //     << (*pOut.end()).pz() << " " 
-                //     << std::endl
-                //     << std::endl; 
+        //         // pOut.push_back(Out);
+        //         // auto out = pOut.size() - 1;
+        //         // File1->precision(16);
+        //         // (*File1) << "# " << time << " " 
+        //         //     << pOut[out].pid() << " " 
+        //         //     << pOut[out].plabel() << " " 
+        //         //     << pOut[out].pstat() << " " 
+        //         //     << pOut[out].form_time() << " " 
+        //         //     << pOut[out].t() << " " 
+        //         //     << pOut[out].e() << " " 
+        //         //     << pOut[out].px() << " " 
+        //         //     << pOut[out].py() << " " 
+        //         //     << pOut[out].pz() << " " 
+        //         //     << std::endl
+        //         //     << std::endl; 
                 
-            }
+        //     }
 
-            File1->close();
-        }
+        //     File1->close();
+        // }
 
         if ( pIn[in].plabel()>0 ) return;
         // i-MATTER only deals with initial state (note the i -> in)
