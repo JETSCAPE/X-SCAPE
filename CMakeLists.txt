@@ -469,6 +469,9 @@ target_link_libraries(PythiaBrickTest JetScape )
 add_executable(PythiaIsrTest ./examples/custom_examples/PythiaIsrTest.cc)
 target_link_libraries(PythiaIsrTest JetScape )
 
+add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
+target_link_libraries(PythiaIsrMUSIC JetScape )
+
 # executables with additional dependencies
 if ( USE_IPGlasma )
     target_link_libraries(runJetscape ${GSL_LIBRARIES})
