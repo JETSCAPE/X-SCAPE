@@ -204,6 +204,9 @@ public:
     return nz;
   }
 
+  FourVector CollisionPositiveMomentum, CollisionNegativeMomentum,CollisionPositiveRotatedMomentum, CollisionNegativeRotatedMomentum;
+  double Olds, Oldt, Oldu, News, Newt, Newu, pTHat;
+
 protected:
   // initial state entropy density distribution for the given grids
   // stored order: for z { for y {for x } }

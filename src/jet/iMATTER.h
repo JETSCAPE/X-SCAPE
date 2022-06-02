@@ -102,16 +102,16 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
  private:
     
     Parton Parent,Sibling,Current;
-    int Current_Status = 1e4, Current_Label = -1;
-    FourVector RotationVector, CollisionPositive, CollisionNegative;
+    int Current_Status = 1e8, Current_Label = -1;
+    FourVector RotationVector;
     double P_A = 2510;
     double P_B = P_A; /// symmetric system should be overriden in init.
     Pythia8::PDF * pdf;
-    double vir_factor=0.5;
+    double vir_factor=0.25;
     double MomentumFractionCurrent, Maximum_z_frac,z_frac;
     int pid_Sib,pid_Par;
     std::string Fpath = "ISR-Partons.dat", Fpath1 = "ISR-Rotation.dat";
-    std::ofstream* File,* File1;
+    std::ofstream *File, *File1, *File2, *File3, *File4;
     void OUTPUT(Parton P);
 
     // Integration setup 

@@ -288,6 +288,9 @@ void PythiaGun::Exec() {
           stat = 1000; // raw final state status, must go to a final state module with virtuality generation. 
       }
 
+    if(label == 2){
+      ini->pTHat = particle.pT();
+    }
       FourVector p_p(particle.px(),particle.py(),particle.pz(),particle.e());
       
     if (flag_useHybridHad != 1) {
