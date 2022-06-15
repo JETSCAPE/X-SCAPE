@@ -55,7 +55,7 @@ void iMATTER::Init()
 
     File = new std::ofstream;
     File->open(Fpath.c_str(),std::ofstream::out);
-    (*File) << "EventId z_frac x2 pid plabel status form_time t E Px Py Pz" << std::endl;
+    (*File) << "EventId z_frac x2 color anti_color max_color pid plabel status form_time t E Px Py Pz" << std::endl;
     File->close();
 
     File1 = new std::ofstream;
@@ -100,6 +100,11 @@ void iMATTER::Init()
     {
         JSINFO << BOLDCYAN << " Initial state module connected to i-MATTER";
     }
+    Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+    if(Hard)
+    {
+        JSINFO << BOLDCYAN << " Hard process module connected to i-MATTER";
+    }
     // Initialize random number distribution
     ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
 
@@ -119,14 +124,14 @@ void iMATTER::Init()
 
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
-
+    
     double blurb; // used all the time for testing
     
     FourVector PlusZaxis(0.0,0.0,1.0,1.0);
 
 
     for (int in=0; in < pIn.size(); in++) /// we continue with the loop charade, even though the framework is just giving us one parton
-    {
+    {  
         if( std::abs(time - GetMaxT()) <= 1e-10 )
         {
             File1->open(Fpath1.c_str(),std::ofstream::app);
@@ -144,8 +149,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 << pIn[in].pz() << " " 
                 << std::endl; 
 
-
-            if(pIn[in].plabel() == -1 || pIn[in].plabel() == -2){
+            int lab = pIn[in].plabel();
+            if( lab < 0 && lab > -NPartonPerShower){
 
 
                 File3->open("ISR-Col.dat",std::ofstream::app);
@@ -161,12 +166,17 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                             << pIn[in].pz() << std::endl;
                 File3->close();
                 if( pIn[in].pz() >= 0) {
-                    (*File1) << " Here\n ";
+                    (*File1) << " CollisionPositiveRotatedMomentum Pushing " << pIn[in].plabel() << std::endl;
 
-                    double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
-                                                pIn[in].py() * pIn[in].py() +
-                                                pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
-                    ini->CollisionPositiveRotatedMomentum = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);  
+                    if(pIn[in].pstat()<= -900){ // Set momentum to zero to signal that no rotation is needed from this side
+                        ini->CollisionPositiveRotatedMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(0,0,0,0);  
+                    }
+                    else{
+                        double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
+                                                    pIn[in].py() * pIn[in].py() +
+                                                    pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
+                        ini->CollisionPositiveRotatedMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);  
+                    }
                     
                     // auto File = new std::ofstream;
                     // File->open("CollisionPositive.txt",std::ofstream::out);
@@ -178,12 +188,17 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 }
 
                 if( pIn[in].pz() < 0)  {
-                    (*File1) << " Here2\n ";
+                    (*File1) << " CollisionNegativeRotatedMomentum Pushing " << pIn[in].plabel() << std::endl;
 
-                    double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
-                                                pIn[in].py() * pIn[in].py() +
-                                                pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
-                    ini->CollisionNegativeRotatedMomentum = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);
+                    if(pIn[in].pstat()<= -900){ // Set momentum to zero to signal that no rotation is needed from this side
+                        ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(0,0,0,0);  
+                    }
+                    else{
+                        double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
+                                                    pIn[in].py() * pIn[in].py() +
+                                                    pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
+                        ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);
+                    }
                     // File->open("CollisionNegative.txt",std::ofstream::out);
                     // (*File) << CollisionNegative.x() << " "
                     //         << CollisionNegative.y() << " " 
@@ -192,37 +207,54 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                     // File->close();  
                 }
 
-                (*File1) << ini->CollisionPositiveRotatedMomentum.x() << " "
-                        << ini->CollisionPositiveRotatedMomentum.y() << " " 
-                        << ini->CollisionPositiveRotatedMomentum.z() << " " 
-                        << ini->CollisionPositiveRotatedMomentum.t() << " " 
+                (*File1) << ini->CollisionPositiveRotatedMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                        << ini->CollisionPositiveRotatedMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                        << ini->CollisionPositiveRotatedMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                        << ini->CollisionPositiveRotatedMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
                         << "\n ";
-                (*File1) << ini->CollisionNegativeRotatedMomentum.x() << " "
-                        << ini->CollisionNegativeRotatedMomentum.y() << " " 
-                        << ini->CollisionNegativeRotatedMomentum.z() << " " 
-                        << ini->CollisionNegativeRotatedMomentum.t() << " " 
+                (*File1) << ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                        << ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                        << ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                        << ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
                         << "\n ";
             }
             
             if ( pIn[in].pstat() == 1000 ){
 
-                double Factor = 0.0;
-                if( pIn[in].pstat() == 1 ) Factor =  1.0;
-                if( pIn[in].pstat() == 2 ) Factor = -1.0;
-
 
                 FourVector p_Out(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
 
+                int Index = (pIn[in].plabel() - 1) / 2;
 
-                auto CollisionPositive = ini->CollisionPositiveMomentum;  
-                auto CollisionNegative = ini->CollisionNegativeMomentum;  
+                auto CollisionPositive = ini->CollisionPositiveMomentum[Index];  
+                auto CollisionNegative = ini->CollisionNegativeMomentum[Index];  
                 
+                auto CollisionPositive1 = ini->CollisionPositiveRotatedMomentum[Index];  
+                auto CollisionNegative1 = ini->CollisionNegativeRotatedMomentum[Index];  
+
+                if(CollisionPositive1.t() == 0 && CollisionNegative1.t() == 0){// Don't perform any boost
+                    File1->close();
+                    return;
+                }
+                else if(CollisionPositive1.t() == 0) { // if only positive side doesn't need rotation
+                    CollisionPositive1 = ini->CollisionPositiveMomentum[Index];
+                }
+                else if(CollisionNegative1.t() == 0) { // if only positive side doesn't need rotation
+                    CollisionNegative1 = ini->CollisionNegativeMomentum[Index];
+                }
 
                 double EnergySum = CollisionPositive.t() + CollisionNegative.t();
                 double vx = (CollisionPositive.x() + CollisionNegative.x()) / EnergySum;
                 double vy = (CollisionPositive.y() + CollisionNegative.y()) / EnergySum;
                 double vz = (CollisionPositive.z() + CollisionNegative.z()) / EnergySum;
                 
+                    
+                    
+                double EnergySum1 = CollisionPositive1.t() + CollisionNegative1.t();
+                double vx1 = -(CollisionPositive1.x() + CollisionNegative1.x()) / EnergySum1;
+                double vy1 = -(CollisionPositive1.y() + CollisionNegative1.y()) / EnergySum1;
+                double vz1 = -(CollisionPositive1.z() + CollisionNegative1.z()) / EnergySum1;
+
                 if(pIn[in].plabel() == 1){
                     ini->Olds = 2.0 * CollisionPositive.t() * CollisionNegative.t()
                                   -2.0 * CollisionPositive.x() * CollisionNegative.x()
@@ -245,73 +277,57 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                     << vy << " " 
                     << vz << " " 
                     << std::endl; 
+                (*File1) << "## " << vx1 << " " 
+                    << vy1 << " " 
+                    << vz1 << " " 
+                    << std::endl;
 
-                p_Out.boost(vx,vy,vz);
-                
-                CollisionPositive = ini->CollisionPositiveRotatedMomentum;  
-                CollisionNegative = ini->CollisionNegativeRotatedMomentum;  
-                
+                if (!(std::abs(vx - vx1) < 1e-10 &&
+                      std::abs(vy - vy1) < 1e-10 &&
+                      std::abs(vz - vz1) < 1e-10)) {
+                  p_Out.boost(vx, vy, vz);
 
-                EnergySum = CollisionPositive.t() + CollisionNegative.t();
-                vx = -(CollisionPositive.x() + CollisionNegative.x()) / EnergySum;
-                vy = -(CollisionPositive.y() + CollisionNegative.y()) / EnergySum;
-                vz = -(CollisionPositive.z() + CollisionNegative.z()) / EnergySum;
+                  if (pIn[in].plabel() <= NPartonPerShower) {
+                    ini->News =
+                        2.0 * CollisionPositive.t() * CollisionNegative.t() -
+                        2.0 * CollisionPositive.x() * CollisionNegative.x() -
+                        2.0 * CollisionPositive.y() * CollisionNegative.y() -
+                        2.0 * CollisionPositive.z() * CollisionNegative.z();
+                    ini->Newt = -2.0 * CollisionPositive.t() * pIn[in].e() +
+                                2.0 * CollisionPositive.x() * pIn[in].px() +
+                                2.0 * CollisionPositive.y() * pIn[in].py() +
+                                2.0 * CollisionPositive.z() * pIn[in].pz();
+                  }
 
-                (*File1) << "## " << vx << " " 
-                    << vy << " " 
-                    << vz << " " 
-                    << std::endl; 
-
-
-                if(pIn[in].plabel() == 1){
-                    ini->News =  2.0 * CollisionPositive.t() * CollisionNegative.t()
-                                  -2.0 * CollisionPositive.x() * CollisionNegative.x()
-                                  -2.0 * CollisionPositive.y() * CollisionNegative.y()
-                                  -2.0 * CollisionPositive.z() * CollisionNegative.z();
-                    ini->Newt = -2.0 * CollisionPositive.t() * pIn[in].e()
-                                  +2.0 * CollisionPositive.x() * pIn[in].px()
-                                  +2.0 * CollisionPositive.y() * pIn[in].py()
-                                  +2.0 * CollisionPositive.z() * pIn[in].pz();
-                }
-
-                if(pIn[in].plabel() == 2){
-                    ini->Newu = -2.0 * CollisionPositive.t() * pIn[in].e()
-                                  +2.0 * CollisionPositive.x() * pIn[in].px()
-                                  +2.0 * CollisionPositive.y() * pIn[in].py()
-                                  +2.0 * CollisionPositive.z() * pIn[in].pz();
-                    File2->open("Mandelstamn.dat",std::ofstream::app);
-                    (*File2) << GetCurrentEvent() << " "
-                             << ini->Olds << " "
-                             << ini->Oldt << " "
-                             << ini->Oldu << " "
-                             << ini->News << " "
-                             << ini->Newt << " "
-                             << ini->Newu << std::endl;
+                  if (pIn[in].plabel() <= NPartonPerShower) {
+                    ini->Newu = -2.0 * CollisionPositive.t() * pIn[in].e() +
+                                2.0 * CollisionPositive.x() * pIn[in].px() +
+                                2.0 * CollisionPositive.y() * pIn[in].py() +
+                                2.0 * CollisionPositive.z() * pIn[in].pz();
+                    File2->open("Mandelstamn.dat", std::ofstream::app);
+                    (*File2)
+                        << GetCurrentEvent() << " " << ini->Olds << " "
+                        << ini->Oldt << " " << ini->Oldu << " " << ini->News
+                        << " " << ini->Newt << " " << ini->Newu << std::endl;
                     File2->close();
+                  }
 
+                  p_Out.boost(vx1, vy1, vz1);
+
+                  Parton Out = pIn[in];
+                  Out.reset_momentum(p_Out);
+
+                  pOut.push_back(Out);
+                  auto out = pOut.size() - 1;
+                  // File1->precision(16);
+                  (*File1) << "# " << time << " " << pOut[out].pid() << " "
+                           << pOut[out].plabel() << " " << pOut[out].pstat()
+                           << " " << pOut[out].form_time() << " "
+                           << pOut[out].t() << " " << pOut[out].e() << " "
+                           << pOut[out].px() << " " << pOut[out].py() << " "
+                           << pOut[out].pz() << " " << std::endl
+                           << std::endl;
                 }
-                p_Out.boost(vx,vy,vz);
-
-                Parton Out = pIn[in];
-                Out.reset_momentum(p_Out);
-
-                pOut.push_back(Out);
-                auto out = pOut.size() - 1;
-                // File1->precision(16);
-                (*File1) << "# " << time << " " 
-                    << pOut[out].pid() << " " 
-                    << pOut[out].plabel() << " " 
-                    << pOut[out].pstat() << " " 
-                    << pOut[out].form_time() << " " 
-                    << pOut[out].t() << " " 
-                    << pOut[out].e() << " " 
-                    << pOut[out].px() << " " 
-                    << pOut[out].py() << " " 
-                    << pOut[out].pz() << " " 
-                    << std::endl
-                    << std::endl; 
-
-                
             }
 
             File1->close();
@@ -339,7 +355,42 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         
         
         if (pIn[in].pid()==22) continue ; // neglect photons. 
-        if ( std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 ) continue ; // neglect heavy quarks. 
+        if ( std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 ) {
+            // throw std::runtime_error(" Only light flavors allowed when using iMATTER for now");
+            {
+                File1->open(Fpath1.c_str(),std::ofstream::app);
+                if( pIn[in].pz() >= 0) {
+                    (*File1) << " CollisionPositiveMomentum \n ";
+
+                    double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
+                                                pIn[in].py() * pIn[in].py() +
+                                                pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
+                    ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);  
+                    
+                }
+
+                if( pIn[in].pz() < 0)  {
+                    (*File1) << " CollisionNegativeMomentum \n ";
+                    double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
+                                                pIn[in].py() * pIn[in].py() +
+                                                pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
+                    ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);
+                }
+
+                (*File1) << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
+                        << "\n ";
+                (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
+                        << "\n ";
+                File1->close();
+            }
+            continue ; // neglect heavy quarks. 
+        }
         
 
         //JSINFO << BOLDYELLOW << " pdfvalue = " << extPDF->xf(1,0.2,10);
@@ -492,32 +543,32 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             {
                 File1->open(Fpath1.c_str(),std::ofstream::app);
                 if( pIn[in].pz() >= 0) {
-                    (*File1) << " Here\n ";
+                    (*File1) << " CollisionPositiveMomentum \n ";
 
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
                                                 pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
-                    ini->CollisionPositiveMomentum = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);  
+                    ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);  
                     
                 }
 
                 if( pIn[in].pz() < 0)  {
-                    (*File1) << " Here2\n ";
+                    (*File1) << " CollisionNegativeMomentum \n ";
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
                                                 pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
-                    ini->CollisionNegativeMomentum = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);
+                    ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);
                 }
 
-                (*File1) << ini->CollisionPositiveMomentum.x() << " "
-                        << ini->CollisionPositiveMomentum.y() << " " 
-                        << ini->CollisionPositiveMomentum.z() << " " 
-                        << ini->CollisionPositiveMomentum.t() << " " 
+                (*File1) << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
                         << "\n ";
-                (*File1) << ini->CollisionNegativeMomentum.x() << " "
-                        << ini->CollisionNegativeMomentum.y() << " " 
-                        << ini->CollisionNegativeMomentum.z() << " " 
-                        << ini->CollisionNegativeMomentum.t() << " " 
+                (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
                         << "\n ";
                 File1->close();
             }
@@ -525,7 +576,6 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pIn[in].set_jet_v(velocity);
             
             double max_t = vir_factor * ini->pTHat * ini->pTHat;//*pIn[in].e()*pIn[in].e();
-
             t1 = -generate_initial_virt(pIn[in], Current_Location, max_t);
         
             pIn[in].set_t(t1);
@@ -548,6 +598,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             OUTPUT(pIn[in]);
 
             Current_Label = pIn[in].plabel();
+            if(-pIn[in].plabel() >= NPartonPerShower ){
+                JSWARN << "NHard partons: " << -pIn[in].plabel() << " allowed: " << NPartonPerShower;
+                throw std::runtime_error(" More Hard partons than allowed");
+            }
+
+            LabelOfTheShower = (-Current_Label - 1) / 2;
             Current_Status = 1e4;
 
         }
@@ -565,7 +621,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
 
 
-        if (time < split_time && pIn[in].plabel() == Current_Label)
+        if (time < split_time && pIn[in].plabel() == Current_Label && (t1 + Q0) <= error )
         {
             if(abs(pIn[in].px()) >= rounding_error || abs(pIn[in].py()) >= rounding_error ){
                 JSWARN << " Current parton not along the z-axis ";
@@ -597,15 +653,33 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             double max_t = std::abs(t1);
             
             // Virtuality of the parent //
-            double t = -generate_initial_virt(pIn[in], Current_Location, max_t );
-            
             int NumbSampling =0;
+            redovirt:
+            NumbSampling++;
+            double t = -generate_initial_virt(pIn[in], Current_Location, max_t );
+            if(t > max_t){
+                if(NumbSampling > 100)
+                {
+                    JSWARN << " Parent virtuality larger than current"; 
+                    JSINFO << " t = " << t << " t1 = " << t1; 
+                    JSINFO << " Current.status = " << Current.pstat(); 
+                    exit(0);
+                }
+                goto redovirt;
+            }
+            
+            NumbSampling =0;
             RedoSampling:
             NumbSampling++;
             z_frac = generate_z( pIn[in], Current_Location, std::abs(t)) ;
             double zb_frac = 1.0 - z_frac;
 
             double max_t2 = zb_frac * zb_frac * max_t / z_frac;
+
+            if(max_t <= Q0 || max_t2 <= Q0){
+                goto SkipSampling;
+            }
+
 
             // Virtuality of the sibling //
             double t2 = generate_Forward_virt(pIn[in], Current_Location, max_t2 );
@@ -629,11 +703,14 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             double SiblingPT   = 0.0;
             if (SiblingPT2 > 0) SiblingPT = std::sqrt(SiblingPT2);
             else{ 
-                if(NumbSampling > 20)
+                if(NumbSampling > 100)
                 {
                     JSWARN << " SiblingPT2 negative = " << SiblingPT2 << " z = " << z_frac << " pT2 = " << pT2; 
                     JSINFO << " t = " << t << " t1 = " << t1 << " t2 = " << t2; 
+                    JSINFO << " Current.pid() = " << Current.pid() << " pid_Par = " << pid_Par << " pid_Sib = " << pid_Sib; 
+                    JSINFO << " E = " << Current.e() << " px = " << Current.px() << " py = " << Current.py() << " pz = " << Current.pz(); 
                     JSINFO << " Current.status = " << Current.pstat(); 
+                    JSINFO << " Current.form_time = " << Current.form_time(); 
                     exit(0);
                 }
                 goto RedoSampling;
@@ -658,12 +735,24 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             Current_Status = Current.pstat() + 900;
             RotationVector = p_Parent;
 
-            Current_Label = pIn[in].plabel()*10-1;
+            if( -pIn[in].plabel() < NPartonPerShower ){
+                Current_Label = NPartonPerShower * pIn[in].plabel() - 1;  
+            }
+            else {
+                Current_Label = pIn[in].plabel()-2;
+            }
 
-            Parton Sibling(pIn[in].plabel()*10, pid_Sib , 0 + Current_Status, p_Sibling, Current_Location) ;
+            Hard->max_color += 1;
+            Parton Sibling(Current_Label+1, pid_Sib , 0 + Current_Status, p_Sibling, Current_Location) ;
+            Sibling.set_max_color(Hard->max_color);
+            Sibling.set_color(Color_Sib);
+            Sibling.set_anti_color(AntiColor_Sib);
             
             Parton Parent(Current_Label, pid_Par , -900 + Current_Status, p_Parent, Current_Location) ;
-            
+            Parent.set_max_color(Hard->max_color);
+            Parent.set_color(Color_Par);
+            Parent.set_anti_color(AntiColor_Par);
+
             if (std::isnan(Sibling.e()) || std::isnan(Sibling.px()) ||
             std::isnan(Sibling.py()) || std::isnan(Sibling.pz()) ||
             std::isnan(Sibling.t()) || std::isnan(Sibling.form_time()))
@@ -683,7 +772,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             pOut[iout].set_mean_form_time();
         
-            pOut[iout].set_form_time( generate_L(std::abs( 2*e/t/z_frac ) ) );
+            pOut[iout].set_form_time( generate_L(std::abs( 2*e/t ) ) );
 
 
             // OUTPUT To file //
@@ -712,6 +801,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         }
         else
         {
+            SkipSampling:
 
             pOut.push_back(pIn[in]);
             int iout = pOut.size()-1;
@@ -761,7 +851,8 @@ double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_
     double min_t = Q0;
     
     
-    double t = invert_Backward_sudakov(r, min_t , max_t );
+    double t = Q0;
+    if(max_t > Q0) t = invert_Backward_sudakov(r, min_t , max_t );
     
     
     return(t);
@@ -792,7 +883,8 @@ double iMATTER::generate_Forward_virt(Parton p, FourVector location, double max_
     double min_t = Q0;
     
     
-    double t = invert_Forward_sudakov(r, min_t , max_t );
+    double t = Q0;
+    if(max_t > Q0) t = invert_Forward_sudakov(r, min_t , max_t );
     
     
     return(t);
@@ -815,13 +907,13 @@ double iMATTER::invert_Forward_sudakov( double value , double min_t, double max_
     
     double denom = Forward_Sudakov(abs_min_t,abs_max_t);
     
-    // if (value <= denom) {
+    if (value <= 1./denom) {
 
-    //     // Debug
-    //     (*File) << "# Inverse_Forward_sudakov (value <= denom) value = "<< value << " denom = "<< denom
-    //             << " abs_min_t = " << abs_min_t << " abs_max_t = " << abs_max_t << std::endl;
-    //     return(min_t);
-    //     }
+        // Debug
+        (*File) << "# Inverse_Forward_sudakov (value <= denom) value = "<< value << " denom = "<< denom
+                << " abs_min_t = " << abs_min_t << " abs_max_t = " << abs_max_t << std::endl;
+        return(min_t);
+        }
     
     double lower_t = abs_min_t ;
     
@@ -1074,6 +1166,17 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
         if(r <= ratio ){ // g-> gg
             pid_Par = gid;
             pid_Sib = gid;
+            if( ZeroOneDistribution(*GetMt19937Generator()) <= 0.5){
+                Color_Sib = Hard->max_color + 1;
+                Color_Par = Current.color();
+                AntiColor_Sib = Current.anti_color();
+                AntiColor_Par = Hard->max_color + 1;
+            } else {
+                Color_Sib = Current.color();
+                Color_Par = Hard->max_color + 1;
+                AntiColor_Sib = Hard->max_color + 1;
+                AntiColor_Par = Current.anti_color();
+            }
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pgg_int(z_max,t);};
             zVal = invert_zDist(r1,Fct,tp,denomEach[0]);
             // Stop searching for process //
@@ -1085,6 +1188,10 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
             if ( r <= ratio ){
                 pid_Par = id;
                 pid_Sib = id;
+                Color_Sib = Current.anti_color();
+                Color_Par = Current.color();
+                AntiColor_Sib = 0;
+                AntiColor_Par = 0;
                 std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pgq_int(z_max,t);};
                 zVal = invert_zDist(r1,Fct,tp,denomEach[id]);
                 // Stop searching for process //
@@ -1096,6 +1203,10 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
             if ( r <= ratio ){
                 pid_Par = -((id % 4) + 1);
                 pid_Sib = pid_Par;
+                Color_Sib = 0;
+                Color_Par = 0;
+                AntiColor_Sib = Current.color();
+                AntiColor_Par = Current.anti_color();
                 std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pgq_int(z_max,t);};
                 zVal = invert_zDist(r1,Fct,tp,denomEach[id]);
                 // Stop searching for process //
@@ -1116,12 +1227,20 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
         if(r <= ratio ){ // q->qg
             pid_Par = Current.pid();
             pid_Sib = gid;
+            Color_Sib = Hard->max_color + 1;
+            Color_Par = Hard->max_color + 1;
+            AntiColor_Sib = Current.color();
+            AntiColor_Par = Current.anti_color();
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pqq_int(z_max,t);};
             zVal = invert_zDist(r1,Fct,tp,denomqq);
         } 
         else{ // g->qqbar
             pid_Par = gid;
             pid_Sib = -Current.pid();
+            Color_Sib = Current.color();
+            Color_Par = Current.anti_color();
+            AntiColor_Sib = Hard->max_color + 1;
+            AntiColor_Par = Hard->max_color + 1;
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pqg_int(z_max,t);};
             zVal = invert_zDist(r1,Fct,tp,denomqg);
         }
@@ -1569,11 +1688,15 @@ double iMATTER::PDF(int pid, double z, double t){
 
 void iMATTER::OUTPUT(Parton P){
 
-
+    // (*File) << "EventId z_frac x2 color anti_color max_color pid plabel status form_time t E Px Py Pz" << std::endl;
+    
     File->open(Fpath.c_str(),std::ofstream::app);
     (*File) << GetCurrentEvent() << " "
          << z_frac << " "
          << MomentumFractionCurrent << " " 
+         << P.color() << " " 
+         << P.anti_color() << " " 
+         << P.max_color() << " " 
          << P.pid() << " " 
          << P.plabel() << " " 
          << P.pstat() << " " 

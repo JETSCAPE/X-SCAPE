@@ -132,7 +132,9 @@ public:
       @return The number of hadrons.
   */
   int GetNHadrons() { return hd_list.size(); }
+  
 
+  int max_color;
 private:
   // Think of always using unique_ptr for any vector in jetscape framework !???
   // To be discussed ...

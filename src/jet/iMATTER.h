@@ -12,6 +12,7 @@
 #include "JetEnergyLossModule.h"
 #include "Pythia8/Pythia.h"
 #include "Matter.h"
+#include "HardProcess.h"
 
 using namespace Jetscape;
 
@@ -34,8 +35,8 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     
    double alpha_s(double q2);
     
-   std::shared_ptr<InitialState> ini; // temporary pointer to initial state
-   
+   std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
+   std::shared_ptr<HardProcess> Hard; // temporary pointer to initial state   
 
    // Log of Sudakov Without Virtuality dependence part
    // g -> gg 
@@ -100,6 +101,8 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     void Rotate( FourVector &ToRotate, FourVector Axis, int icc);
     
  private:
+
+    int LabelOfTheShower, NPartonPerShower = 100000;
     
     Parton Parent,Sibling,Current;
     int Current_Status = 1e8, Current_Label = -1;
@@ -109,7 +112,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     Pythia8::PDF * pdf;
     double vir_factor=0.25;
     double MomentumFractionCurrent, Maximum_z_frac,z_frac;
-    int pid_Sib,pid_Par;
+    int pid_Sib,pid_Par, Color_Sib = 0, Color_Par = 0, AntiColor_Sib = 0, AntiColor_Par = 0;
     std::string Fpath = "ISR-Partons.dat", Fpath1 = "ISR-Rotation.dat";
     std::ofstream *File, *File1, *File2, *File3, *File4;
     void OUTPUT(Parton P);

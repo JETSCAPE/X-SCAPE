@@ -204,7 +204,7 @@ public:
     return nz;
   }
 
-  FourVector CollisionPositiveMomentum, CollisionNegativeMomentum,CollisionPositiveRotatedMomentum, CollisionNegativeRotatedMomentum;
+  std::vector<FourVector> CollisionPositiveMomentum, CollisionNegativeMomentum,CollisionPositiveRotatedMomentum, CollisionNegativeRotatedMomentum;
   double Olds, Oldt, Oldu, News, Newt, Newu, pTHat;
 
 protected:

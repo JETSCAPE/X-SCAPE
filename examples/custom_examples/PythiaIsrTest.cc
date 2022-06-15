@@ -23,7 +23,8 @@
 #include "JetScape.h"
 #include "JetEnergyLoss.h"
 #include "JetEnergyLossManager.h"
-#include "JetScapeWriterStream.h"
+#include "JetScapeWriterFinalStateStream.h"
+// #include "JetScapeWriterStream.h"
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
 #endif
@@ -132,8 +133,9 @@ int main(int argc, char** argv)
 //  auto iDummy = make_shared<DummySplit> ();
 
     auto iMatter = make_shared<iMATTER> ();
-  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-3.); //will be moved to XML and proper Init() in IsrJet later ...
-  iMatter->SetMaxT(-3.); // Have To figure out a proper way to get this when it's moved to XML
+  double tMax = 10.0;
+  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax); //will be moved to XML and proper Init() in IsrJet later ...
+  iMatter->SetMaxT(-tMax); // Have To figure out a proper way to get this when it's moved to XML
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
   //REMARK: Think a bit harder about directed graph creation and time direction !!!!! Graph inversion !???
@@ -189,10 +191,10 @@ int main(int argc, char** argv)
 
   //Has to be set now if one wants to deal with negative
   //times in forward evolution; default is: 0 -- 100 ...
-  jlossmanager->SetTimeRange(-20.0,20.0);
-  jloss->SetTimeRange(-20.0,20.0);
-  matter->SetTimeRange(-20.0,20.0);
-  dummy->SetTimeRange(-20.0,20.0);
+  jlossmanager->SetTimeRange(-tMax,tMax);
+  jloss->SetTimeRange(-tMax,tMax);
+  matter->SetTimeRange(-tMax,tMax);
+  dummy->SetTimeRange(-tMax,tMax);
 
   // Note: if you use Matter, it MUST come first (to set virtuality)
   jloss->Add(matter);
@@ -224,8 +226,14 @@ int main(int argc, char** argv)
   */
 
   // Output
-  auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
-  writer->SetId("AsciiWriter"); //for task search test ...
+  // auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
+  // writer->SetId("AsciiWriter"); //for task search test ...
+  // jetscape->Add(writer);
+
+
+  auto writer= make_shared<JetScapeWriterFinalStatePartonsAscii>();
+  writer->SetOutputFileName(string("test_out_final_state_partons.dat"));
+  writer->SetId("FinalStatePartonsAscii"); //for task search test ...
   jetscape->Add(writer);
 
   /*

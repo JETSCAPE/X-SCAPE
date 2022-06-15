@@ -35,7 +35,7 @@ void PythiaGun::InitTask() {
   // Show initialization at INFO level
   readString("Init:showProcesses = off");
   readString("Init:showChangedSettings = off");
-  readString("Init:showMultipartonInteractions = off");
+  readString("Init:showMultipartonInteractions = on");
   readString("Init:showChangedParticleData = off");
   if (JetScapeLogger::Instance()->GetInfo()) {
     readString("Init:showProcesses = on");
@@ -49,16 +49,28 @@ void PythiaGun::InitTask() {
   readString("Next:numberShowProcess = 0");
   readString("Next:numberShowEvent = 0");
 
-  // Standard settings
-  readString(
-      "HardQCD:all = on"); // will repeat this line in the xml for demonstration
+  // Standard settings 
+  readString("HardQCD:all = off"); // will repeat this line in the xml for demonstration
+  readString("HardQCD:gg2gg = on");
+  readString("HardQCD:gg2qqbar = on");
+  readString("HardQCD:qg2qg = on");
+  readString("HardQCD:qq2qq = on");
+  readString("HardQCD:qqbar2gg = on");
+  readString("HardQCD:qqbar2qqbarNew = on");
+  readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
+
+  readString("HardQCD:gg2ccbar = off");
+  readString("HardQCD:qqbar2ccbar = off");
+  readString("HardQCD:hardccbar = off");
+  readString("HardQCD:gg2bbbar = off");
+  readString("HardQCD:qqbar2bbbar = off");
+
   //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
   //readString("HardQCD:qqbar2ccbar = on");
-  readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
   readString("HadronLevel:Decay = off");
-  readString("HadronLevel:all = off");
+  readString("HadronLevel:all = on");
   readString("PartonLevel:ISR = off");
-  readString("PartonLevel:MPI = off");
+  readString("PartonLevel:MPI = on");
   //readString("PartonLevel:FSR = on");
   readString("PromptPhoton:all=on");
   readString("WeakSingleBoson:all=off");
@@ -85,7 +97,7 @@ void PythiaGun::InitTask() {
   pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
   pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
 
-  flag_useHybridHad = GetXMLElementInt({"Hard", "PGun", "useHybridHad"});
+  flag_useHybridHad = GetXMLElementInt({"Hard", "PythiaGun", "useHybridHad"});
 
   JSINFO << MAGENTA << "Pythia Gun with FSR_on: " << FSR_on;
   JSINFO << MAGENTA << "Pythia Gun with " << pTHatMin << " < pTHat < "
@@ -179,7 +191,8 @@ void PythiaGun::Exec() {
 
       if (!FSR_on) {
 
-          if ( (particle.status() > -21)||(particle.status()<-23) ) continue ;
+          if ( !( (particle.status() == -21) || (particle.status() == -23) || (particle.status() == -31) || (particle.status() == -33) )) continue ;
+          // if ( (particle.status() > -21)||(particle.status()<-23) ) continue ;
           
         // only accept particles after MPI
         //if (particle.status() != 62)
@@ -207,7 +220,7 @@ void PythiaGun::Exec() {
           continue;
       }
       
-        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() ;
+        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index();
         
         p62.push_back(particle);
     }
@@ -219,7 +232,7 @@ void PythiaGun::Exec() {
 
     // Now have all candidates, sort them
     // sort by pt
-    std::sort(p62.begin(), p62.end(), greater_than_pt());
+    // std::sort(p62.begin(), p62.end(), greater_than_pt());
     // // check...
     // for (auto& p : p62 ) cout << p.pT() << endl;
 
@@ -261,8 +274,8 @@ void PythiaGun::Exec() {
     double final_state_label = 1 ;
     
   int hCounter = 0;
-  // for (int np = 0; np < p62.size(); ++np)
-  for (int np = p62.size()-1; np >= 0 ; --np)
+  for (int np = 0; np < p62.size(); ++np)
+  // for (int np = p62.size()-1; np >= 0 ; --np)
   {
     Pythia8::Particle &particle = p62.at(np);
 
@@ -275,13 +288,13 @@ void PythiaGun::Exec() {
       double label = 0;
       double stat = 0;
       
-      if (particle.status()==-21)
+      if (particle.status()==-21 || particle.status()==-31 )
       {
           label = initial_state_label;
           initial_state_label--;
           stat = -1000; // raw initial state status, must go to an initial state module
       }
-      if (particle.status()==-23)
+      if (particle.status()==-23 || particle.status()==-33)
       {
           label = final_state_label;
           final_state_label++;
@@ -300,12 +313,19 @@ void PythiaGun::Exec() {
       auto ptn =
           make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
       ptn->set_color(particle.col());
-      ptn->set_anti_color(particle.acol());
+      ptn->set_anti_color(particle.acol()); 
       ptn->set_max_color(1000 * (np + 1));
       AddParton(ptn);
+      JSINFO<< MAGENTA << "pythia id " << particle.index() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e()  << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2() << " JS id " << label;
     }
   }
 
+  max_color = 1000 * (p62.size()-1 + 1);
+  ini->CollisionNegativeMomentum.resize(p62.size()-1);
+  ini->CollisionPositiveMomentum.resize(p62.size()-1);
+  ini->CollisionNegativeRotatedMomentum.resize(p62.size()-1);
+  ini->CollisionPositiveRotatedMomentum.resize(p62.size()-1);
+  
   VERBOSE(8) << GetNHardPartons();
 
   //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????

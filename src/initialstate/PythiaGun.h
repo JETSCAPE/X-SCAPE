@@ -37,6 +37,7 @@ private:
   static RegisterJetScapeModule<PythiaGun> reg;
 
 public:
+  int NumberOfHardPartons;
   /** standard ctor
       @param xmlDir: Note that the environment variable PYTHIA8DATA takes precedence! So don't use it.
       @param printBanner: Suppress starting blurb. Should be set to true in production, credit where it's due
