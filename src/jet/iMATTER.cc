@@ -255,7 +255,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 double vy1 = -(CollisionPositive1.y() + CollisionNegative1.y()) / EnergySum1;
                 double vz1 = -(CollisionPositive1.z() + CollisionNegative1.z()) / EnergySum1;
 
-                if(pIn[in].plabel() == 1){
+                if(pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 0){
                     ini->Olds = 2.0 * CollisionPositive.t() * CollisionNegative.t()
                                   -2.0 * CollisionPositive.x() * CollisionNegative.x()
                                   -2.0 * CollisionPositive.y() * CollisionNegative.y()
@@ -266,7 +266,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                                   +2.0 * CollisionPositive.z() * pIn[in].pz();
                 }
 
-                if(pIn[in].plabel() == 2){
+                if(pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 1){
                     ini->Oldu =  -2.0 * CollisionPositive.t() * pIn[in].e()
                                   +2.0 * CollisionPositive.x() * pIn[in].px()
                                   +2.0 * CollisionPositive.y() * pIn[in].py()
@@ -287,23 +287,23 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                       std::abs(vz - vz1) < 1e-10)) {
                   p_Out.boost(vx, vy, vz);
 
-                  if (pIn[in].plabel() <= NPartonPerShower) {
+                  if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 0) {
                     ini->News =
-                        2.0 * CollisionPositive.t() * CollisionNegative.t() -
-                        2.0 * CollisionPositive.x() * CollisionNegative.x() -
-                        2.0 * CollisionPositive.y() * CollisionNegative.y() -
-                        2.0 * CollisionPositive.z() * CollisionNegative.z();
-                    ini->Newt = -2.0 * CollisionPositive.t() * pIn[in].e() +
-                                2.0 * CollisionPositive.x() * pIn[in].px() +
-                                2.0 * CollisionPositive.y() * pIn[in].py() +
-                                2.0 * CollisionPositive.z() * pIn[in].pz();
+                        2.0 * CollisionPositive1.t() * CollisionNegative1.t() -
+                        2.0 * CollisionPositive1.x() * CollisionNegative1.x() -
+                        2.0 * CollisionPositive1.y() * CollisionNegative1.y() -
+                        2.0 * CollisionPositive1.z() * CollisionNegative1.z();
+                    ini->Newt = -2.0 * CollisionPositive1.t() * pIn[in].e() +
+                                2.0 * CollisionPositive1.x() * pIn[in].px() +
+                                2.0 * CollisionPositive1.y() * pIn[in].py() +
+                                2.0 * CollisionPositive1.z() * pIn[in].pz();
                   }
 
-                  if (pIn[in].plabel() <= NPartonPerShower) {
-                    ini->Newu = -2.0 * CollisionPositive.t() * pIn[in].e() +
-                                2.0 * CollisionPositive.x() * pIn[in].px() +
-                                2.0 * CollisionPositive.y() * pIn[in].py() +
-                                2.0 * CollisionPositive.z() * pIn[in].pz();
+                  if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 1) {
+                    ini->Newu = -2.0 * CollisionPositive1.t() * pIn[in].e() +
+                                2.0 * CollisionPositive1.x() * pIn[in].px() +
+                                2.0 * CollisionPositive1.y() * pIn[in].py() +
+                                2.0 * CollisionPositive1.z() * pIn[in].pz();
                     File2->open("Mandelstamn.dat", std::ofstream::app);
                     (*File2)
                         << GetCurrentEvent() << " " << ini->Olds << " "
@@ -354,13 +354,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         } /// usual dump routine for naned out partons
         
         
-        if (pIn[in].pid()==22) continue ; // neglect photons. 
-        if ( std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 ) {
+        if (  std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 ) { // neglect photons and heavy quarks
             // throw std::runtime_error(" Only light flavors allowed when using iMATTER for now");
-            {
+            if(pIn[in].pstat() == -1000 && std::abs(deltaT - time) <= 1e-10){
                 File1->open(Fpath1.c_str(),std::ofstream::app);
                 if( pIn[in].pz() >= 0) {
-                    (*File1) << " CollisionPositiveMomentum \n ";
+                    (*File1) << " CollisionPositiveMomentum HeavyQ \n ";
 
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
@@ -370,7 +369,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 }
 
                 if( pIn[in].pz() < 0)  {
-                    (*File1) << " CollisionNegativeMomentum \n ";
+                    (*File1) << " CollisionNegativeMomentum HeavyQ \n ";
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
                                                 pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
@@ -574,8 +573,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             }
 
             pIn[in].set_jet_v(velocity);
-            
-            double max_t = vir_factor * ini->pTHat * ini->pTHat;//*pIn[in].e()*pIn[in].e();
+            double pThat = ini->pTHat[(-pIn[in].plabel()-1)/2];
+            double max_t = vir_factor * pThat * pThat;//*pIn[in].e()*pIn[in].e();
             t1 = -generate_initial_virt(pIn[in], Current_Location, max_t);
         
             pIn[in].set_t(t1);

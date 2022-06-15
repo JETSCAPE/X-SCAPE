@@ -272,7 +272,7 @@ void PythiaGun::Exec() {
 
     double initial_state_label = -1 ;
     double final_state_label = 1 ;
-    
+  ini->pTHat.resize((p62.size()-1)/2);
   int hCounter = 0;
   for (int np = 0; np < p62.size(); ++np)
   // for (int np = p62.size()-1; np >= 0 ; --np)
@@ -301,8 +301,8 @@ void PythiaGun::Exec() {
           stat = 1000; // raw final state status, must go to a final state module with virtuality generation. 
       }
 
-    if(label == 2){
-      ini->pTHat = particle.pT();
+    if( (label-1) / 2 == 0){
+      ini->pTHat[label/2] = particle.pT();
     }
       FourVector p_p(particle.px(),particle.py(),particle.pz(),particle.e());
       
@@ -321,10 +321,10 @@ void PythiaGun::Exec() {
   }
 
   max_color = 1000 * (p62.size()-1 + 1);
-  ini->CollisionNegativeMomentum.resize(p62.size()-1);
-  ini->CollisionPositiveMomentum.resize(p62.size()-1);
-  ini->CollisionNegativeRotatedMomentum.resize(p62.size()-1);
-  ini->CollisionPositiveRotatedMomentum.resize(p62.size()-1);
+  ini->CollisionNegativeMomentum.resize((p62.size()-1)/2);
+  ini->CollisionPositiveMomentum.resize((p62.size()-1/1));
+  ini->CollisionNegativeRotatedMomentum.resize((p62.size()-1/1));
+  ini->CollisionPositiveRotatedMomentum.resize((p62.size()-1/1));
   
   VERBOSE(8) << GetNHardPartons();
 
