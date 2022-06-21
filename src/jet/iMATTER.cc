@@ -217,6 +217,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                         << ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
                         << ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
                         << "\n ";
+
+                ini->OutputHardPartonMomentum(pIn[in].e(), pIn[in].px() , pIn[in].py() , pIn[in].pz(), (pIn[in].pz() >= 0.0 ? 1:-1) );
             }
             
             if ( pIn[in].pstat() == 1000 ){
@@ -233,8 +235,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 auto CollisionNegative1 = ini->CollisionNegativeRotatedMomentum[Index];  
 
                 if(CollisionPositive1.t() == 0 && CollisionNegative1.t() == 0){// Don't perform any boost
-                    File1->close();
+                    File1->close();            
                     return;
+
                 }
                 else if(CollisionPositive1.t() == 0) { // if only positive side doesn't need rotation
                     CollisionPositive1 = ini->CollisionPositiveMomentum[Index];
@@ -620,7 +623,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
 
 
-        if (time < split_time && pIn[in].plabel() == Current_Label && (t1 + Q0) <= error )
+        if (time < split_time && pIn[in].plabel() == Current_Label && (t1 + Q0) <= error && std::abs(time - GetMaxT()) > 1e-10  )
         {
             if(abs(pIn[in].px()) >= rounding_error || abs(pIn[in].py()) >= rounding_error ){
                 JSWARN << " Current parton not along the z-axis ";
@@ -805,10 +808,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pOut.push_back(pIn[in]);
             int iout = pOut.size()-1;
             
-            int sign = 1 ;
-            if ( pOut[iout].pz()<0 ) sign=-1;
+            int sign = pOut[iout].pz()>=0 ? 1:-1;
             
-            if (pIn[in].plabel() == Current_Label) ini->OutputHardPartonMomentum(pOut[iout].e(), pOut[iout].px() , pOut[iout].py() , pOut[iout].pz(), sign );
+            // if (pIn[in].plabel() == Current_Label) ini->OutputHardPartonMomentum(pOut[iout].e(), pOut[iout].px() , pOut[iout].py() , pOut[iout].pz(), sign );
                 
             
         }

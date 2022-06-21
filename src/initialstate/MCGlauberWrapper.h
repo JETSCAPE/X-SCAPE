@@ -87,10 +87,10 @@ private:
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
   double hard_parton_x_, hard_parton_y_, hard_parton_z_, hard_parton_t_;
-  double targ_parton_px_, targ_parton_py_, targ_parton_pz_, targ_parton_e_;
-  double proj_parton_px_, proj_parton_py_, proj_parton_pz_, proj_parton_e_;
+  std::vector<double> targ_parton_px_, targ_parton_py_, targ_parton_pz_, targ_parton_e_;
+  std::vector<double> proj_parton_px_, proj_parton_py_, proj_parton_pz_, proj_parton_e_;
   MCGlb::Parameters parameter_list_;
-  std::shared_ptr<MCGlb::RandomUtil::Random> ran_gen_ptr_;
+  std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
   // Allows the registration of the module so that it is available to be

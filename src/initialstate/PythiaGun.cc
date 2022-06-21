@@ -176,10 +176,39 @@ void PythiaGun::Exec() {
 
 
     FourVector p_p;
-    
+
+ 
+
   do {
     next();
     p62.clear();
+ 
+    std::vector<int> IndexToSkip;
+
+    for (int parid = 0; parid < event.size(); parid++) {
+      if (parid < 3)
+        continue; // 0, 1, 2: total event and beams
+      Pythia8::Particle &particle = event[parid];
+
+      if (!(particle.isGluon() ||
+            particle.isQuark())) { // Getting rid of diquark
+        if (particle.status() == -31) {
+          IndexToSkip.push_back(particle.daughter1());
+          IndexToSkip.push_back(particle.daughter2());
+          IndexToSkip.push_back(event[particle.daughter1()].mother1());
+          IndexToSkip.push_back(event[particle.daughter1()].mother2());
+        } else if (particle.status() == -33) {
+          IndexToSkip.push_back(particle.mother1());
+          IndexToSkip.push_back(particle.mother2());
+          IndexToSkip.push_back(event[particle.mother1()].daughter1());
+          IndexToSkip.push_back(event[particle.mother1()].daughter2());
+        }
+      }
+    }
+
+    for (auto &ToSkip : IndexToSkip) {
+      JSWARN << " Skipping non-parton index " << ToSkip;
+    }
 
     // pTarr[0]=0.0; pTarr[1]=0.0;
     // pindexarr[0]=0; pindexarr[1]=0;
@@ -187,13 +216,18 @@ void PythiaGun::Exec() {
     for (int parid = 0; parid < event.size(); parid++) {
       if (parid < 3)
         continue; // 0, 1, 2: total event and beams
+        
       Pythia8::Particle &particle = event[parid];
-
       if (!FSR_on) {
-
-          if ( !( (particle.status() == -21) || (particle.status() == -23) || (particle.status() == -31) || (particle.status() == -33) )) continue ;
-          // if ( (particle.status() > -21)||(particle.status()<-23) ) continue ;
           
+          if ( !( (particle.status() == -21) || (particle.status() == -23) || (particle.status() == -31) || (particle.status() == -33) )) continue ;
+          for(auto &ToSkip: IndexToSkip) {
+            if(ToSkip == parid){
+              goto SkipParton;
+            }
+          }
+          // if ( (particle.status() > -21)||(particle.status()<-23) ) continue ;
+
         // only accept particles after MPI
         //if (particle.status() != 62)
           //continue;
@@ -221,8 +255,9 @@ void PythiaGun::Exec() {
       }
       
         JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index();
-        
         p62.push_back(particle);
+
+        SkipParton:;
     }
 
     // if you want at least 2

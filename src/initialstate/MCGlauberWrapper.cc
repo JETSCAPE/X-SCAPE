@@ -137,15 +137,15 @@ void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x, double y,
 void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, double pz,
                                                 int direction) {
     if (direction == 1) {
-        proj_parton_e_  = E;
-        proj_parton_px_ = px;
-        proj_parton_py_ = py;
-        proj_parton_pz_ = pz;
+        proj_parton_e_.push_back(E);
+        proj_parton_px_.push_back(px);
+        proj_parton_py_.push_back(px);
+        proj_parton_pz_.push_back(py);
     } else {
-        targ_parton_e_  = E;
-        targ_parton_px_ = px;
-        targ_parton_py_ = py;
-        targ_parton_pz_ = pz;
+        targ_parton_e_.push_back(E);
+        targ_parton_px_.push_back(px);
+        targ_parton_py_.push_back(px);
+        targ_parton_pz_.push_back(py);
     }
 }
 
