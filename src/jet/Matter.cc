@@ -195,6 +195,8 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
     Dump_pIn_info(0, pIn);
   }
 
+  if(pIn[0].pstat() < 0) return;
+
   double z = 0.5;
   double blurb, zeta, tQ2;
   int iSplit, pid_a, pid_b;
@@ -220,7 +222,8 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   JSINFO << MAGENTA << " the time in fm is " << time
              << " The time in GeV-1 is " << Time;
-  JSINFO << MAGENTA << "pid = " << pIn[0].pid() << " E = " << pIn[0].e()
+  JSINFO << MAGENTA << "pid = " << pIn[0].pid()  << " status = " << pIn[0].pstat()
+             << " E = " << pIn[0].e()
              << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2)
              << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t()
              << " form_time in fm = " << pIn[0].form_time()

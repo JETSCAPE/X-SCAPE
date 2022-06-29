@@ -349,13 +349,13 @@ void PythiaGun::Exec() {
           make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
       ptn->set_color(particle.col());
       ptn->set_anti_color(particle.acol()); 
-      ptn->set_max_color(1000 * (np + 1));
+      ptn->set_max_color(max_colorPerShower * (np + 1));
       AddParton(ptn);
       JSINFO<< MAGENTA << "pythia id " << particle.index() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e()  << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2() << " JS id " << label;
     }
   }
 
-  max_color = 1000 * (p62.size()-1 + 1);
+  max_color = max_colorPerShower * (p62.size());
   ini->CollisionNegativeMomentum.resize((p62.size()-1)/2);
   ini->CollisionPositiveMomentum.resize((p62.size()-1/1));
   ini->CollisionNegativeRotatedMomentum.resize((p62.size()-1/1));
