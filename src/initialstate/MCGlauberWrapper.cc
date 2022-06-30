@@ -149,7 +149,21 @@ void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, 
     }
 }
 
+std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab() {
+    // get the x, y, z of the three valence quarks of colliding projectile
+    // Output formulation is (x,y,z, x,y,z, x,y,z)
+    mc_gen_->GetHardPos(hard_parton_t_, hard_parton_x_, hard_parton_y_, 
+                        hard_parton_z_);
+    return(mc_gen_->GetQuarkPosProj());
+}
 
+std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab() {
+    // get the x, y, z of the three valence quarks of colliding target
+    // Output formulation is (x,y,z, x,y,z, x,y,z)
+    mc_gen_->GetHardPos(hard_parton_t_, hard_parton_x_, hard_parton_y_, 
+                        hard_parton_z_);
+    return(mc_gen_->GetQuarkPosTarg());
+}
 
 void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
     mc_gen_->GetMomandPos_Proj(hard_parton_t_, hard_parton_x_, hard_parton_y_, 
