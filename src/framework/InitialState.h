@@ -153,6 +153,9 @@ public:
   virtual std::vector<double> Get_projectile_nucleon_z_lab();
   virtual std::vector<double> Get_target_nucleon_z_lab();
 
+  virtual std::vector<double> Get_quarks_pos_proj_lab();
+  virtual std::vector<double> Get_quarks_pos_targ_lab();
+
   virtual void GetHardPartonPosAndMomentumProj();
   virtual void GetHardPartonPosAndMomentumTarg();
 

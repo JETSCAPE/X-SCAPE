@@ -76,6 +76,8 @@ public:
   void GetHardPartonPosAndMomentumTarg();
   std::vector<double> Get_projectile_nucleon_z_lab();
   std::vector<double> Get_target_nucleon_z_lab();
+  std::vector<double> Get_quarks_pos_proj_lab();
+  std::vector<double> Get_quarks_pos_targ_lab();
   void GenerateStrings();
   
   std::shared_ptr<InitialState> ini; 
