@@ -606,12 +606,15 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             }
 
             LabelOfTheShower = (-Current_Label - 1) / 2;
-            Current_Status = 1e4;
+            MAX_COLOR = -Current_Label * Hard->max_colorPerShower;
+            Current_Status = NPartonPerShower;
+            JSINFO << MAGENTA << " MAX_COLOR " << MAX_COLOR;
 
         }
     
         
         Current = pIn[in];
+
                
         //printout_current();
         
@@ -665,7 +668,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                     JSWARN << " Parent virtuality larger than current"; 
                     JSINFO << " t = " << t << " t1 = " << t1; 
                     JSINFO << " Current.status = " << Current.pstat(); 
-                    exit(0);
+                    return;
+                    // exit(0);
                 }
                 goto redovirt;
             }
@@ -713,7 +717,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                     JSINFO << " E = " << Current.e() << " px = " << Current.px() << " py = " << Current.py() << " pz = " << Current.pz(); 
                     JSINFO << " Current.status = " << Current.pstat(); 
                     JSINFO << " Current.form_time = " << Current.form_time(); 
-                    exit(0);
+                    return;
+                    // exit(0);
                 }
                 goto RedoSampling;
             }
@@ -743,15 +748,18 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             else {
                 Current_Label = pIn[in].plabel()-2;
             }
+            
 
-            Hard->max_color += 1;
+            Hard->NISRShower += 1;
+            // Hard->max_color += 1;
+            MAX_COLOR += 1;
             Parton Sibling(Current_Label+1, pid_Sib , 0 + Current_Status, p_Sibling, Current_Location) ;
-            Sibling.set_max_color(Hard->max_color);
+            Sibling.set_max_color(Hard->max_color + Hard->NISRShower * Hard->max_colorPerShower);
             Sibling.set_color(Color_Sib);
             Sibling.set_anti_color(AntiColor_Sib);
             
             Parton Parent(Current_Label, pid_Par , -900 + Current_Status, p_Parent, Current_Location) ;
-            Parent.set_max_color(Hard->max_color);
+            Parent.set_max_color(MAX_COLOR);
             Parent.set_color(Color_Par);
             Parent.set_anti_color(AntiColor_Par);
 
@@ -1139,6 +1147,8 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
     double r  = ZeroOneDistribution(*GetMt19937Generator());
     double r1 = ZeroOneDistribution(*GetMt19937Generator());
     double zVal = 0.0;
+    double ratio = 0.0;
+    std::array<double,7> denomEach;
     if ((r > 1) || (r < 0) || (r1 > 1) || (r1 < 0))
     {
         throw std::runtime_error(" error in random number in z *GetMt19937Generator()");
@@ -1146,7 +1156,6 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
 
     if( Current.pid() == gid )
     {
-        std::array<double,7> denomEach;
         pid_Par = gid;
         denomEach[0] = zDist_Pgg_int(Maximum_z_frac,tp);
         double accum = denomEach[0];
@@ -1163,19 +1172,19 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
             accum += denomEach[id+3];
         }
 
-        double ratio =  denomEach[0]/accum;
+        ratio =  denomEach[0]/accum;
         if(r <= ratio ){ // g-> gg
             pid_Par = gid;
             pid_Sib = gid;
             if( ZeroOneDistribution(*GetMt19937Generator()) <= 0.5){
-                Color_Sib = Hard->max_color + 1;
+                Color_Sib = MAX_COLOR + 1;
                 Color_Par = Current.color();
                 AntiColor_Sib = Current.anti_color();
-                AntiColor_Par = Hard->max_color + 1;
+                AntiColor_Par = MAX_COLOR + 1;
             } else {
                 Color_Sib = Current.color();
-                Color_Par = Hard->max_color + 1;
-                AntiColor_Sib = Hard->max_color + 1;
+                Color_Par = MAX_COLOR + 1;
+                AntiColor_Sib = MAX_COLOR + 1;
                 AntiColor_Par = Current.anti_color();
             }
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pgg_int(z_max,t);};
@@ -1228,8 +1237,8 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
         if(r <= ratio ){ // q->qg
             pid_Par = Current.pid();
             pid_Sib = gid;
-            Color_Sib = Hard->max_color + 1;
-            Color_Par = Hard->max_color + 1;
+            Color_Sib = MAX_COLOR + 1;
+            Color_Par = MAX_COLOR + 1;
             AntiColor_Sib = Current.color();
             AntiColor_Par = Current.anti_color();
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pqq_int(z_max,t);};
@@ -1240,8 +1249,8 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
             pid_Sib = -Current.pid();
             Color_Sib = Current.color();
             Color_Par = Current.anti_color();
-            AntiColor_Sib = Hard->max_color + 1;
-            AntiColor_Par = Hard->max_color + 1;
+            AntiColor_Sib = MAX_COLOR + 1;
+            AntiColor_Par = MAX_COLOR + 1;
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pqg_int(z_max,t);};
             zVal = invert_zDist(r1,Fct,tp,denomqg);
         }
@@ -1251,7 +1260,13 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
     if( std::isnan(zVal) || zVal == 0.0 ){
 
       JSWARN << BOLDRED << "zVal is not a number zVal = " << zVal << " r = " << r << " r1 = " << r1;
+      JSWARN << BOLDRED << "MomentumFractionCurrent = " << MomentumFractionCurrent;
       JSINFO << BOLDRED << "pid; Curent  = " << Current.pid() << " Parent = " << pid_Par << " Sibling = " << pid_Sib;
+      JSWARN << BOLDRED << "ratio = " << ratio;
+      JSWARN << BOLDRED << "denomEach[0] = " << denomEach[0] << " denomEach[1] = " << denomEach[1]
+                        << " denomEach[2] = " << denomEach[2] << " denomEach[3] = " << denomEach[3] 
+                        << " denomEach[4] = " << denomEach[4] << " denomEach[5] = " << denomEach[5]
+                        << " denomEach[6] = " << denomEach[6];
       exit(0);
     }
     return zVal;

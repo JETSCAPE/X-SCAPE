@@ -102,7 +102,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     
  private:
 
-    int LabelOfTheShower, NPartonPerShower = 100000;
+    int LabelOfTheShower, NPartonPerShower = 100000, MAX_COLOR;
     
     Parton Parent,Sibling,Current;
     int Current_Status = 1e8, Current_Label = -1;
