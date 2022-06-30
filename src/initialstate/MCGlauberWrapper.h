@@ -90,7 +90,7 @@ private:
   double targ_parton_px_ = 0.0, targ_parton_py_ = 0.0, targ_parton_pz_ = 0.0, targ_parton_e_ = 0.0;
   double proj_parton_px_ = 0.0, proj_parton_py_ = 0.0, proj_parton_pz_ = 0.0, proj_parton_e_ = 0.0;
   MCGlb::Parameters parameter_list_;
-  std::shared_ptr<RandomUtil::Random> ran_gen_ptr_;
+  std::shared_ptr<MCGlb::RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
   // Allows the registration of the module so that it is available to be
