@@ -626,7 +626,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
 
 
-        if (time < split_time && pIn[in].plabel() == Current_Label && (t1 + Q0) <= error && std::abs(time - GetMaxT()) > 1e-10  )
+        if (time < split_time && pIn[in].plabel() == Current_Label 
+            && t1 < - Q0 - error  && std::abs(time - GetMaxT()) > 1e-10 )
         {
             if(abs(pIn[in].px()) >= rounding_error || abs(pIn[in].py()) >= rounding_error ){
                 JSWARN << " Current parton not along the z-axis ";
@@ -1262,7 +1263,7 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
       JSWARN << BOLDRED << "zVal is not a number zVal = " << zVal << " r = " << r << " r1 = " << r1;
       JSWARN << BOLDRED << "MomentumFractionCurrent = " << MomentumFractionCurrent;
       JSINFO << BOLDRED << "pid; Curent  = " << Current.pid() << " Parent = " << pid_Par << " Sibling = " << pid_Sib;
-      JSWARN << BOLDRED << "ratio = " << ratio;
+      JSWARN << BOLDRED << "ratio = " << ratio << " t = " << tp;
       JSWARN << BOLDRED << "denomEach[0] = " << denomEach[0] << " denomEach[1] = " << denomEach[1]
                         << " denomEach[2] = " << denomEach[2] << " denomEach[3] = " << denomEach[3] 
                         << " denomEach[4] = " << denomEach[4] << " denomEach[5] = " << denomEach[5]
