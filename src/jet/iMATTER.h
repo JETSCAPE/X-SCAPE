@@ -104,6 +104,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
  private:
 
     int LabelOfTheShower, NPartonPerShower = 100000, MAX_COLOR;
+    const double z_min_factor = 1.; // this limits the parent momentum to be P_A/z_min_factor, since z_min = x_current * z_min_factor = p_current / (P_A / z_min_factor)
     
     Parton Parent,Sibling,Current;
     int Current_Status = 1e8, Current_Label = -1;

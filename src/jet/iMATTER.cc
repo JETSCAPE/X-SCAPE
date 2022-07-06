@@ -228,11 +228,11 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             }
 
             if (pIn[in].plabel() == Current_Label) {
-                // JSWARN <<  MAGENTA << " Pushing label " << Current_Label << " to MCGlauber ";
-                // JSINFO <<  MAGENTA << " e " << pIn[in].e();
-                // JSINFO <<  MAGENTA << " px " << pIn[in].px();
-                // JSINFO <<  MAGENTA << " py " << pIn[in].py();
-                // JSINFO <<  MAGENTA << " pz " << pIn[in].pz();
+                JSWARN <<  MAGENTA << " Pushing label " << Current_Label << " to MCGlauber ";
+                JSINFO <<  MAGENTA << " e " << pIn[in].e();
+                JSINFO <<  MAGENTA << " px " << pIn[in].px();
+                JSINFO <<  MAGENTA << " py " << pIn[in].py();
+                JSINFO <<  MAGENTA << " pz " << pIn[in].pz();
                 ini->OutputHardPartonMomentum(pIn[in].e(), pIn[in].px() , pIn[in].py() , pIn[in].pz(), (pIn[in].pz() >= 0.0 ? 1:-1) );
                 }
 
@@ -493,7 +493,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         double CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
         MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
         Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
-        
+
         double mass = pIn[in].restmass();
         
         double velocity[4];
@@ -1241,7 +1241,7 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
             }
         }
     }
-    if( std::abs(Current.pid()) <= sid )
+    else if( std::abs(Current.pid()) <= sid )
     {
 
         std::array<double,2> denomEach;
@@ -1393,7 +1393,7 @@ inline double iMATTER::zDist_Pgq(double y, double t){
 
 double iMATTER::zDist_Pgg_int(double z_max, double t){
     double Error;
-    double z_min = MomentumFractionCurrent;
+    double z_min = z_min_factor * MomentumFractionCurrent;
     // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
     double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 
@@ -1403,7 +1403,7 @@ double iMATTER::zDist_Pgg_int(double z_max, double t){
 }
 double iMATTER::zDist_Pqq_int(double z_max, double t){
     double Error;
-    double z_min = MomentumFractionCurrent;
+    double z_min = z_min_factor * MomentumFractionCurrent;
     // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
     double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 
@@ -1413,7 +1413,7 @@ double iMATTER::zDist_Pqq_int(double z_max, double t){
 }
 double iMATTER::zDist_Pgq_int(double z_max, double t){
     double Error;
-    double z_min = MomentumFractionCurrent;
+    double z_min = z_min_factor * MomentumFractionCurrent;
     // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
     double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 
@@ -1423,7 +1423,7 @@ double iMATTER::zDist_Pgq_int(double z_max, double t){
 }
 double iMATTER::zDist_Pqg_int(double z_max, double t){
     double Error;
-    double z_min = MomentumFractionCurrent;
+    double z_min = z_min_factor * MomentumFractionCurrent;
     // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
     double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 

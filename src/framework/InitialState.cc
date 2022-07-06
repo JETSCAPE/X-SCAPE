@@ -102,6 +102,8 @@ void InitialState::OutputHardCollisionPosition(double t, double x, double y,
 void InitialState::OutputHardPartonMomentum(double E, double px, double py, double pz,
                                             int direction) {}
 
+void InitialState::ClearHardPartonMomentum() {}
+
   
 void InitialState::GetHardPartonPosAndMomentumProj() {}
 

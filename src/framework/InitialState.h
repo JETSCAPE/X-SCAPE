@@ -146,8 +146,10 @@ public:
 
   virtual void OutputHardCollisionPosition(double t, double x, double y, 
                                                                double z);
+
   virtual void OutputHardPartonMomentum(double E, double px, double py, double pz,
                                         int direction);
+  virtual void ClearHardPartonMomentum();
                                    
 
   virtual std::vector<double> Get_projectile_nucleon_z_lab();

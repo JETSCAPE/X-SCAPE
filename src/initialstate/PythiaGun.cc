@@ -51,12 +51,12 @@ void PythiaGun::InitTask() {
 
   // Standard settings 
   readString("HardQCD:all = off"); // will repeat this line in the xml for demonstration
-  readString("HardQCD:gg2gg = on");
-  readString("HardQCD:gg2qqbar = on");
-  readString("HardQCD:qg2qg = on");
-  readString("HardQCD:qq2qq = on");
-  readString("HardQCD:qqbar2gg = on");
-  readString("HardQCD:qqbar2qqbarNew = on");
+  // readString("HardQCD:gg2gg = on");
+  // readString("HardQCD:gg2qqbar = on");
+  // readString("HardQCD:qg2qg = on");
+  // readString("HardQCD:qq2qq = on");
+  // readString("HardQCD:qqbar2gg = on");
+  // readString("HardQCD:qqbar2qqbarNew = on");
   readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
 
   readString("HardQCD:gg2ccbar = off");
@@ -360,7 +360,8 @@ void PythiaGun::Exec() {
   ini->CollisionPositiveMomentum.resize((p62.size()-1/1));
   ini->CollisionNegativeRotatedMomentum.resize((p62.size()-1/1));
   ini->CollisionPositiveRotatedMomentum.resize((p62.size()-1/1));
-  
+  ini->ClearHardPartonMomentum();
+
   VERBOSE(8) << GetNHardPartons();
 
   //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????

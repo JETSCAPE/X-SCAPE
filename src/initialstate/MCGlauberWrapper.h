@@ -72,6 +72,7 @@ public:
                                    double z);
   void OutputHardPartonMomentum(double E, double px, double py, double pz,
                                                            int direction);
+  void ClearHardPartonMomentum();
   void GetHardPartonPosAndMomentumProj();
   void GetHardPartonPosAndMomentumTarg();
   std::vector<double> Get_projectile_nucleon_z_lab();
