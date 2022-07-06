@@ -13,6 +13,7 @@
 #include "Pythia8/Pythia.h"
 #include "Matter.h"
 #include "HardProcess.h"
+#include "gsl/gsl_rng.h"
 
 using namespace Jetscape;
 
@@ -128,6 +129,9 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     double DoubleIntegral(std::function<double(double,double)> & Integrand, double a, double b, double a1, double b1, double &Error, double epsabs);
     double SingleIntegral(std::function<double(double,double)> &Integrand, double t, double a, double b, double &Error, double epsabs);
     
+    std::shared_ptr<gsl_rng>GSL_RNG;
+
+    std::array<double,2> Sample_PT();
     // Get pdf from pythia and check the bounds 
     double PDF(int pid, double z, double t);
     

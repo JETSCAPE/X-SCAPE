@@ -17,6 +17,9 @@
 #include "Pythia8/Pythia.h"
 #include "tinyxml2.h"
 #include <iostream>
+
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 //#include "helper.h"
 
 // Needed for cubature integration //
@@ -44,7 +47,6 @@ iMATTER::iMATTER(): Parent(initial) , Sibling(initial) , Current(initial)
 iMATTER::~iMATTER()
 {
   VERBOSE(8);
-
 }
 
 void iMATTER::Init()
@@ -120,10 +122,15 @@ void iMATTER::Init()
     // Setup the quadrature rules for calculating the z_distribution 
     SetupIntegration();
 
+    // Setup Gaussian generator 
+    GSL_RNG = std::shared_ptr<gsl_rng>(gsl_rng_alloc(gsl_rng_default), gsl_rng_free);
+
 }
 
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
+
+    
     
     double blurb; // used all the time for testing
     
@@ -148,7 +155,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 << pIn[in].py() << " " 
                 << pIn[in].pz() << " " 
                 << std::endl; 
-
+            
             int lab = pIn[in].plabel();
             if( lab < 0 && lab > -NPartonPerShower){
 
@@ -608,7 +615,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             LabelOfTheShower = (-Current_Label - 1) / 2;
             MAX_COLOR = -Current_Label * Hard->max_colorPerShower;
             Current_Status = NPartonPerShower;
-            JSINFO << MAGENTA << " MAX_COLOR " << MAX_COLOR;
+            // JSINFO << MAGENTA << " MAX_COLOR " << MAX_COLOR;
 
         }
     
@@ -1753,4 +1760,17 @@ double iMATTER::alpha_s(double q2) {
 //   }
 
   return (0.25);
+}
+
+
+std::array<double,2> iMATTER::Sample_PT(){
+
+    // double PositiveQuark = ini->Get_quarks_pos_proj_lab();
+    // double NegativeQuark = ini->Get_quarks_pos_targ_lab();
+    double px = 0.0, py = 0.0;
+    double sigma = 1.0/0.2;
+    px = gsl_ran_gaussian(GSL_RNG.get(), sigma);
+    py = gsl_ran_gaussian(GSL_RNG.get(), sigma);
+
+    return std::array<double,2>{px,py};
 }

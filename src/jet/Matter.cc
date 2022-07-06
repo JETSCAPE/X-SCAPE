@@ -195,6 +195,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
     Dump_pIn_info(0, pIn);
   }
 
+  // Ignore initial state partons //
   if(pIn[0].pstat() < 0) return;
 
   double z = 0.5;
