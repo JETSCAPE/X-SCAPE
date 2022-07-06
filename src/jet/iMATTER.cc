@@ -225,8 +225,17 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                         << ini->CollisionNegativeRotatedMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
                         << "\n ";
 
-                ini->OutputHardPartonMomentum(pIn[in].e(), pIn[in].px() , pIn[in].py() , pIn[in].pz(), (pIn[in].pz() >= 0.0 ? 1:-1) );
             }
+
+            if (pIn[in].plabel() == Current_Label) {
+                // JSWARN <<  MAGENTA << " Pushing label " << Current_Label << " to MCGlauber ";
+                // JSINFO <<  MAGENTA << " e " << pIn[in].e();
+                // JSINFO <<  MAGENTA << " px " << pIn[in].px();
+                // JSINFO <<  MAGENTA << " py " << pIn[in].py();
+                // JSINFO <<  MAGENTA << " pz " << pIn[in].pz();
+                ini->OutputHardPartonMomentum(pIn[in].e(), pIn[in].px() , pIn[in].py() , pIn[in].pz(), (pIn[in].pz() >= 0.0 ? 1:-1) );
+                }
+
             
             if ( pIn[in].pstat() == 1000 ){
 

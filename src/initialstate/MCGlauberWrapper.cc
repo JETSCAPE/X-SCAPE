@@ -136,17 +136,27 @@ void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x, double y,
 
 void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, double pz,
                                                 int direction) {
+    // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
     if (direction == 1) {
         proj_parton_e_ += E;
         proj_parton_px_ += px;
-        proj_parton_py_ += px;
-        proj_parton_pz_ += py;
+        proj_parton_py_ += py;
+        proj_parton_pz_ += pz;
+        // JSINFO <<  MAGENTA << " proj_parton_e_ " << proj_parton_e_; 
+        // JSINFO <<  MAGENTA << " proj_parton_px_ " << proj_parton_px_;
+        // JSINFO <<  MAGENTA << " proj_parton_py_ " << proj_parton_py_;
+        // JSINFO <<  MAGENTA << " proj_parton_pz_ " << proj_parton_pz_;
     } else {
         targ_parton_e_ += E;
         targ_parton_px_ += px;
-        targ_parton_py_ += px;
-        targ_parton_pz_ += py;
+        targ_parton_py_ += py;
+        targ_parton_pz_ += pz;
+        // JSINFO <<  MAGENTA << " targ_parton_e_ " << targ_parton_e_;
+        // JSINFO <<  MAGENTA << " targ_parton_px_ " << targ_parton_px_;
+        // JSINFO <<  MAGENTA << " targ_parton_py_ " << targ_parton_py_;
+        // JSINFO <<  MAGENTA << " targ_parton_pz_ " << targ_parton_pz_;
     }
+
 }
 
 std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab() {
