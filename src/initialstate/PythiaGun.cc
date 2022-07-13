@@ -309,6 +309,8 @@ void PythiaGun::Exec() {
     double final_state_label = 1 ;
   ini->pTHat.resize((p62.size()-1)/2);
   int hCounter = 0;
+  TotalMomentumFractionPositive = 0.0;
+  TotalMomentumFractionNegative = 0.0;
   for (int np = 0; np < p62.size(); ++np)
   // for (int np = p62.size()-1; np >= 0 ; --np)
   {
@@ -328,6 +330,8 @@ void PythiaGun::Exec() {
           label = initial_state_label;
           initial_state_label--;
           stat = -1000; // raw initial state status, must go to an initial state module
+          if(particle.pz() >= 0.0) TotalMomentumFractionPositive += (particle.e() + particle.pz() ) / (eCM);
+          else TotalMomentumFractionNegative += (particle.e() - particle.pz() ) / (eCM);
       }
       if (particle.status()==-23 || particle.status()==-33)
       {

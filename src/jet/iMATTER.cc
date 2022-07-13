@@ -85,7 +85,11 @@ void iMATTER::Init()
         P_A = 2510 ;
         P_B = P_A; /// default symmetric assumption
     }
+
+    P_A /= z_min_factor;
     
+    
+
     ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
     if (!ini)
     {
@@ -130,8 +134,7 @@ void iMATTER::Init()
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
 
-    
-    
+
     double blurb; // used all the time for testing
     
     FourVector PlusZaxis(0.0,0.0,1.0,1.0);
@@ -227,12 +230,16 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             }
 
-            if (pIn[in].plabel() == Current_Label) {
-                JSWARN <<  MAGENTA << " Pushing label " << Current_Label << " to MCGlauber ";
+            if ( (pIn[in].plabel() == Current_Label || std::abs(pIn[in].pid()) == cid || std::abs(pIn[in].pid()) == bid  ) && pIn[in].pstat() < 0 ) {
+                JSWARN <<  MAGENTA << " Pushing label " << pIn[in].plabel() <<  " status " << pIn[in].pstat() <<  " pid " << pIn[in].pid() << " to MCGlauber ";
                 JSINFO <<  MAGENTA << " e " << pIn[in].e();
                 JSINFO <<  MAGENTA << " px " << pIn[in].px();
                 JSINFO <<  MAGENTA << " py " << pIn[in].py();
                 JSINFO <<  MAGENTA << " pz " << pIn[in].pz();
+                if(pIn[in].e() < 0){
+                    JSWARN << "Energy to subtract is negative !";
+                    exit(1);
+                }
                 ini->OutputHardPartonMomentum(pIn[in].e(), pIn[in].px() , pIn[in].py() , pIn[in].pz(), (pIn[in].pz() >= 0.0 ? 1:-1) );
                 }
 
@@ -491,7 +498,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
         // Set x2 the current particle's momentum fraction //
         double CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
-        MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
+
         Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
 
         double mass = pIn[in].restmass();
@@ -594,6 +601,16 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pIn[in].set_jet_v(velocity);
             double pThat = ini->pTHat[(-pIn[in].plabel()-1)/2];
             double max_t = vir_factor * pThat * pThat;//*pIn[in].e()*pIn[in].e();
+
+
+
+            // Set x2 the current particle's momentum fraction //
+            CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
+            MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
+            if(pIn[in].pz() >= 0.0) TotalMomentumFraction =  Hard->TotalMomentumFractionPositive - MomentumFractionCurrent; 
+            else TotalMomentumFraction = Hard->TotalMomentumFractionNegative - MomentumFractionCurrent;
+            MomentumFractionCurrent = MomentumFractionCurrent / (1.0 - TotalMomentumFraction);
+
             t1 = -generate_initial_virt(pIn[in], Current_Location, max_t);
         
             pIn[in].set_t(t1);
@@ -611,6 +628,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             // Set x2 the current particle's momentum fraction //
             CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
             MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
+            MomentumFractionCurrent = MomentumFractionCurrent / (1.0 - TotalMomentumFraction);
+            
             Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
             // OUTPUT To file //
             OUTPUT(pIn[in]);
@@ -668,6 +687,13 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             // Set x2 the current particle's momentum fraction //
             CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
             MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
+            MomentumFractionCurrent = MomentumFractionCurrent / (1.0 - TotalMomentumFraction);
+
+            // if(MomentumFractionCurrent > 1.) {
+            //     JSWARN << " Current MomentumFractionCurrent = " << MomentumFractionCurrent << " is larger than 1";
+            //     JSWARN << " P_A / z_min_factor = " << P_A;
+            //     goto SkipSampling;
+            // }
             Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
 
 
@@ -1393,7 +1419,7 @@ inline double iMATTER::zDist_Pgq(double y, double t){
 
 double iMATTER::zDist_Pgg_int(double z_max, double t){
     double Error;
-    double z_min = z_min_factor * MomentumFractionCurrent;
+    double z_min = MomentumFractionCurrent;
     // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
     double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 
@@ -1403,7 +1429,7 @@ double iMATTER::zDist_Pgg_int(double z_max, double t){
 }
 double iMATTER::zDist_Pqq_int(double z_max, double t){
     double Error;
-    double z_min = z_min_factor * MomentumFractionCurrent;
+    double z_min = MomentumFractionCurrent;
     // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
     double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 
@@ -1413,7 +1439,7 @@ double iMATTER::zDist_Pqq_int(double z_max, double t){
 }
 double iMATTER::zDist_Pgq_int(double z_max, double t){
     double Error;
-    double z_min = z_min_factor * MomentumFractionCurrent;
+    double z_min = MomentumFractionCurrent;
     // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
     double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 
@@ -1423,7 +1449,7 @@ double iMATTER::zDist_Pgq_int(double z_max, double t){
 }
 double iMATTER::zDist_Pqg_int(double z_max, double t){
     double Error;
-    double z_min = z_min_factor * MomentumFractionCurrent;
+    double z_min = MomentumFractionCurrent;
     // // Change of variables z -> y = 2 arcSin(\sqrt{1-z}) //
     double y_min= 2.0 * std::asin(std::sqrt(1.0 - z_max)), y_max = 2.0 * std::asin(std::sqrt(1.0 - z_min));
 
