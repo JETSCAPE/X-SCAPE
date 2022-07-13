@@ -58,12 +58,13 @@ void PythiaGun::InitTask() {
   // readString("HardQCD:qqbar2gg = on");
   // readString("HardQCD:qqbar2qqbarNew = on");
   readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
+  readString("MultipartonInteractions:processLevel = 0"); // Number Of Quark flavours
 
-  readString("HardQCD:gg2ccbar = off");
-  readString("HardQCD:qqbar2ccbar = off");
-  readString("HardQCD:hardccbar = off");
-  readString("HardQCD:gg2bbbar = off");
-  readString("HardQCD:qqbar2bbbar = off");
+  // readString("HardQCD:gg2ccbar = off");
+  // readString("HardQCD:qqbar2ccbar = off");
+  // readString("HardQCD:hardccbar = off");
+  // readString("HardQCD:gg2bbbar = off");
+  // readString("HardQCD:qqbar2bbbar = off");
 
   //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
   //readString("HardQCD:qqbar2ccbar = on");
@@ -309,6 +310,8 @@ void PythiaGun::Exec() {
     double final_state_label = 1 ;
   ini->pTHat.resize((p62.size()-1)/2);
   int hCounter = 0;
+  TotalMomentumFractionPositive = 0.0;
+  TotalMomentumFractionNegative = 0.0;
   for (int np = 0; np < p62.size(); ++np)
   // for (int np = p62.size()-1; np >= 0 ; --np)
   {
@@ -328,6 +331,8 @@ void PythiaGun::Exec() {
           label = initial_state_label;
           initial_state_label--;
           stat = -1000; // raw initial state status, must go to an initial state module
+          if(particle.pz() >= 0.0) TotalMomentumFractionPositive += (particle.e() + particle.pz() ) / (eCM);
+          else TotalMomentumFractionNegative += (particle.e() - particle.pz() ) / (eCM);
       }
       if (particle.status()==-23 || particle.status()==-33)
       {

@@ -135,6 +135,7 @@ public:
   
 
   int max_colorPerShower =1000, max_color, NISRShower = 0;
+  double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
 private:
   // Think of always using unique_ptr for any vector in jetscape framework !???
   // To be discussed ...
