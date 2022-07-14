@@ -236,7 +236,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 JSINFO <<  MAGENTA << " px " << pIn[in].px();
                 JSINFO <<  MAGENTA << " py " << pIn[in].py();
                 JSINFO <<  MAGENTA << " pz " << pIn[in].pz();
-                if(pIn[in].e() < 0 || std::abs(pIn[in].e() - std::abs(pIn[in].pz())) > error){
+                if(pIn[in].e() < 0){
                     JSWARN << "Energy to subtract is negative !";
                     exit(1);
                 }
