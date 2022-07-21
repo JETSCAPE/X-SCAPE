@@ -8,6 +8,8 @@
 #ifndef iMATTER_H
 #define iMATTER_H
 
+#include <memory.h>
+#include "ISRRotation.h"
 #include "InitialState.h"
 #include "JetEnergyLossModule.h"
 #include "Pythia8/Pythia.h"
@@ -37,7 +39,8 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    double alpha_s(double q2);
     
    std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
-   std::shared_ptr<HardProcess> Hard; // temporary pointer to initial state   
+   std::shared_ptr<HardProcess> Hard; // temporary pointer to hard   
+   std::shared_ptr<ISRRotation> FinalRotation; 
 
    // Log of Sudakov Without Virtuality dependence part
    // g -> gg 
@@ -102,7 +105,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     void Rotate( FourVector &ToRotate, FourVector Axis, int icc);
     
  private:
-
+    
     int LabelOfTheShower, NPartonPerShower = 100000, MAX_COLOR;
     const double z_min_factor = 3.; // this limits the parent momentum to be P_A/z_min_factor
     double TotalMomentumFraction;
@@ -117,7 +120,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     double MomentumFractionCurrent, Maximum_z_frac,z_frac;
     int pid_Sib,pid_Par, Color_Sib = 0, Color_Par = 0, AntiColor_Sib = 0, AntiColor_Par = 0;
     std::string Fpath = "ISR-Partons.dat", Fpath1 = "ISR-Rotation.dat";
-    std::ofstream *File, *File1, *File2, *File3, *File4;
+    std::ofstream *File, *File1, *File2, *File3, *File4, *File5;
     void OUTPUT(Parton P);
 
     // Integration setup 
@@ -131,9 +134,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     double DoubleIntegral(std::function<double(double,double)> & Integrand, double a, double b, double a1, double b1, double &Error, double epsabs);
     double SingleIntegral(std::function<double(double,double)> &Integrand, double t, double a, double b, double &Error, double epsabs);
     
-    std::shared_ptr<gsl_rng>GSL_RNG;
 
-    std::array<double,2> Sample_PT();
     // Get pdf from pythia and check the bounds 
     double PDF(int pid, double z, double t);
     
