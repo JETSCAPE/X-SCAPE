@@ -136,7 +136,6 @@ void iMATTER::Init()
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
 
-
     double blurb; // used all the time for testing
     
     FourVector PlusZaxis(0.0,0.0,1.0,1.0);
@@ -146,7 +145,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     {  
         if( std::abs(time - GetMaxT()) <= 1e-10 )
         {
-            FinalRotation->SetParameters(LabelOfTheShower,NPartonPerShower);
+            FinalRotation->SetParameters(LabelOfTheShower,NPartonPerShower, Current_Label);
             FinalRotation->DoEnergyLoss(deltaT,time,Q2,pIn,pOut);
             return;
         }
@@ -252,7 +251,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pIn[in].reset_p(p_Parton.x(),p_Parton.y(),Direction * p_Parton.z());
             pIn[in].set_stat(pIn[in].pstat() + 1);
 
-            if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error ) FinalRotation->SetLatestInitialParton(p_Parton.x(),p_Parton.y(),p_Parton.z(),std::abs(p_Parton.z()));
+            if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error ) FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),std::abs(pIn[in].pz()));
 
             
             (*File1) << "    "
@@ -624,7 +623,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             pOut[iout].set_mean_form_time();
         
-            pOut[iout].set_form_time( generate_L(std::abs( 2*e/t ) ) );
+            pOut[iout].set_form_time( generate_L(std::abs( 2*ParentEn/t ) ) );
 
 
 
@@ -632,6 +631,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             OUTPUT(pOut[pOut.size()-3]);
             OUTPUT(pOut[pOut.size()-1]);
             OUTPUT(pOut[pOut.size()-2]);
+
+            
 
 
 
@@ -657,7 +658,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             SkipSampling:
 
             pOut.push_back(pIn[in]);
-            int iout = pOut.size()-1;
+            // int iout = pOut.size()-1;
             
             // int sign = pOut[iout].pz()>=0 ? 1:-1;
             
@@ -674,6 +675,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     // JSINFO << BOLDCYAN << " Moving to next time step " ;
     
     // std::cin >> blurb ;
+
+    return;
 }
 // End of DoEnergyLoss
 
@@ -1355,17 +1358,39 @@ void iMATTER::Rotate(FourVector &ToRotate, FourVector Axis, int icc)
     double cosb = pz / E;
     double sinb = pt / E;
 
+    double sinbHalf2 = 0.5*(1. - cosb);// sin(b/2)^2
+    double sin2a = 2.*cosa*sina; //sin(2a)
+    double cosa2 = cosa*cosa;
+    double sina2 = sina*sina;
+
+    double R11 = (cosa2 * cosb + sina2);
+    double R12 = (sin2a * sinbHalf2);
+    double R13 = (cosa * sinb);
+
+    double R22 = cosa2 + cosb * sina2;
+    double R23 = (sina * sinb);
+    
+    double R33 = cosb;
+
     double wx1, wy1, wz1;
     if (icc == 1) {
-        wx1 = wx * cosb * cosa + wy * cosb * sina - wz * sinb;
-        wy1 = -wx * sina + wy * cosa;
-        wz1 = wx * sinb * cosa + wy * sinb * sina + wz * cosb;
+        // wx1 = wx * cosb * cosa + wy * cosb * sina - wz * sinb;
+        // wy1 = -wx * sina + wy * cosa;
+        // wz1 = wx * sinb * cosa + wy * sinb * sina + wz * cosb;
+        wx1 =  wx * R11 - wy * R12 - wz * R13;
+        wy1 = -wx * R12 + wy * R22 - wz * R23;
+        wz1 =  wx * R13 + wy * R23 + wz * R33;
     }
 
     else {
-        wx1 = wx * cosb * cosa - wy * sina + wz * cosa * sinb;
-        wy1 = wx * sina * cosb + wy * cosa + wz * sina * sinb;
-        wz1 = -wx * sinb + wz * cosb;
+        // wx1 = wx * cosb * cosa - wy * sina + wz * cosa * sinb;
+        // wy1 = wx * sina * cosb + wy * cosa + wz * sina * sinb;
+        // wz1 = -wx * sinb + wz * cosb;
+
+
+        wx1 =  wx * R11 - wy * R12 + wz * R13;
+        wy1 = -wx * R12 + wy * R22 + wz * R23;
+        wz1 = -wx * R13 - wy * R23 + wz * R33;
     }
 
     ToRotate.Set(wx1,wy1,wz1,e);

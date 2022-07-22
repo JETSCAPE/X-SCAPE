@@ -122,12 +122,16 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
                << Out.form_time() << " " << Out.t() << " "
                << Out.e() << " " << Out.px() << " " << Out.py()
                << " " << Out.pz() << " " << std::endl;
-      if(Out.plabel() < 1000 ){
+      if(Out.pstat() < 1000 ){
         // Generating final pT 
         if(!AlreadyGeneratedPTForThisShower) {
+          int Num =0;
+          SampleAgain:
+          Num++;
           pT = GeneratPT();
 
           if(pT[0]*pT[0] + pT[1]*pT[1] >= LatestInitialParton.z() * LatestInitialParton.z() ){
+            if(Num < 1000) goto SampleAgain;
             pT[0] = 0.0;
             pT[1] = 0.0;
           }
@@ -140,7 +144,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           AlreadyGeneratedPTForThisShower = true;
           (*File1) << "Generated new (px, py) : " << pT[0] << " " << pT[1] << std::endl;
         }
-
+        
         FourVector p_Out(Out.px(), Out.py(),Out.pz(), Out.e());
         RotateVector(p_Out);
         Out.reset_momentum(p_Out);
@@ -154,7 +158,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
       }
 
       int lab = Out.plabel();
-      if (lab < 0 && lab > -NPartonPerShower){ // Take only ISR partons to perform a shit in pT // Chooses only the inital MPI partons from Pythia who undergo the scattering
+      if (lab < 0 && lab > -NPartonPerShower){ // Take only ISR partons to perform a shift in pT // Chooses only the inital MPI partons from Pythia who undergo the scattering
         (*File3) << GetCurrentEvent() << " " << Out.pid() << " "
                 << Out.plabel() << " " << Out.form_time() << " "
                 << Out.t() << " " << Out.e() << " " << Out.px()
@@ -198,9 +202,6 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
               << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].z()<< " "
               << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].t()<< " "
               << "\n ";
-
-
-            
       }
 
 
@@ -225,7 +226,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
 
 
-      if (pIn[in].pstat() == 1000 ) {
+      if (pIn[in].pstat() == 1000) {
 
         FourVector p_Out(pIn[in].px(), pIn[in].py(), pIn[in].pz(), pIn[in].e());
 
@@ -283,8 +284,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
               std::abs(vz - vz1) < 1e-10)) {
           p_Out.boost(vx, vy, vz);
 
-          if (pIn[in].plabel() <= NPartonPerShower &&
-              (pIn[in].plabel() - 1) % 2 == 0) {
+          if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 0) {
             ini->News = 2.0 * CollisionPositive1.t() * CollisionNegative1.t() -
                         2.0 * CollisionPositive1.x() * CollisionNegative1.x() -
                         2.0 * CollisionPositive1.y() * CollisionNegative1.y() -
@@ -295,8 +295,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
                         2.0 * CollisionPositive1.z() * pIn[in].pz();
           }
 
-          if (pIn[in].plabel() <= NPartonPerShower &&
-              (pIn[in].plabel() - 1) % 2 == 1) {
+          if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 1) {
             ini->Newu = -2.0 * CollisionPositive1.t() * pIn[in].e() +
                         2.0 * CollisionPositive1.x() * pIn[in].px() +
                         2.0 * CollisionPositive1.y() * pIn[in].py() +
@@ -316,13 +315,14 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           pOut.push_back(Out);
           auto out = pOut.size() - 1;
           // File1->precision(16);
-          (*File1) << "# " << time << " " << pOut[out].pid() << " "
+          (*File1) << "# Boosted " << pOut[out].pid() << " "
                    << pOut[out].plabel() << " " << pOut[out].pstat() << " "
                    << pOut[out].form_time() << " " << pOut[out].t() << " "
                    << pOut[out].e() << " " << pOut[out].px() << " "
                    << pOut[out].py() << " " << pOut[out].pz() << " "
                    << std::endl
                    << std::endl;
+          File1->close();
           return;
         }
       }
@@ -346,9 +346,10 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 void ISRRotation::ResetShower(){
   AlreadyGeneratedPTForThisShower = false;
 }
-void ISRRotation::SetParameters(int LabelOfTheShower_, int NPartonPerShower_){
+void ISRRotation::SetParameters(int LabelOfTheShower_, int NPartonPerShower_, int Current_label_){
   LabelOfTheShower = LabelOfTheShower_;
   NPartonPerShower = NPartonPerShower_;
+  Current_Label = Current_label_;
 }
 double ISRRotation::DisP(double pxGeV, double pyGeV){
     double px = pxGeV * fmToGeVinv;
@@ -396,9 +397,10 @@ std::array<double, 2> ISRRotation::GeneratPT() {
 
 void ISRRotation::DefineRotationMatrix() {
 
+    double Signb = (LatestInitialParton.z() >=0 ? 1.:-1.);
     double px = LatestInitialParton.x() + pT[0];
     double py = LatestInitialParton.y() + pT[1];
-    double pz = std::sqrt(LatestInitialParton.z()*LatestInitialParton.z() - px*px - py*py);
+    double pz = Signb * std::sqrt(LatestInitialParton.z()*LatestInitialParton.z() - px*px - py*py);
 
     double E = sqrt(px * px + py * py + pz * pz);
     double pt = sqrt(px * px + py * py);
@@ -413,13 +415,27 @@ void ISRRotation::DefineRotationMatrix() {
     }
 
     double cosb = pz / E;
+    double abscosb = std::abs(cosb);
     double sinb = pt / E;
 
+    double sinbHalf2 = 0.5*(1. - abscosb);// sin(b/2)^2
+    double sin2a = 2.*cosa*sina; //sin(2a)
+    double cosa2 = cosa*cosa;
+    double sina2 = sina*sina;
 
-    RotationMatrix[0] = cosa;
-    RotationMatrix[1] = sina;
-    RotationMatrix[2] = cosb;
-    RotationMatrix[3] = sinb;
+    // RotationMatrix[0] = cosa;
+    // RotationMatrix[1] = sina;
+    // RotationMatrix[2] = cosb;
+    // RotationMatrix[3] = sinb;
+
+
+    RotationMatrix[0] = (cosa2 * abscosb + sina2); // R11
+    RotationMatrix[1] = (sin2a * sinbHalf2); // R12
+    RotationMatrix[2] = (Signb * cosa * sinb);// R13
+
+    RotationMatrix[3] = cosa2 + abscosb * sina2; // R22
+    RotationMatrix[4] = (Signb * sina * sinb);// R23
+    RotationMatrix[5] = abscosb;// R33
 
   return;
 }
@@ -429,10 +445,12 @@ void ISRRotation::RotateVector(FourVector &ToRotate) {
   //     input:  ToRotate, Axis=(px,py,pz) = (0,0,E)_{z}
   //     if i=-1, turn ToRotate in the direction (0,0,E)=>(px,py,pz)
 
-  double &cosa = RotationMatrix[0];
-  double &sina = RotationMatrix[1];
-  double &cosb = RotationMatrix[2];
-  double &sinb = RotationMatrix[3];
+  double &R11 = RotationMatrix[0];
+  double &R12 = RotationMatrix[1];
+  double &R13 = RotationMatrix[2];
+  double &R22 = RotationMatrix[3];
+  double &R23 = RotationMatrix[4];
+  double &R33 = RotationMatrix[3];
 
   double wx = ToRotate.x();
   double wy = ToRotate.y();
@@ -440,9 +458,9 @@ void ISRRotation::RotateVector(FourVector &ToRotate) {
   double e  = ToRotate.t();
 
   double wx1, wy1, wz1;
-  wx1 = wx * cosa * cosb - wy * sina + wz * cosa * sinb;
-  wy1 = wx * sina * cosb + wy * cosa + wz * sina * sinb;
-  wz1 = -wx * sinb + wz * cosb;
+  wx1 =  wx * R11 - wy * R12 + wz * R13;
+  wy1 = -wx * R12 + wy * R22 + wz * R23;
+  wz1 = -wx * R13 - wy * R23 + wz * R33;
 
   
   ToRotate.Set(wx1,wy1,wz1,e);

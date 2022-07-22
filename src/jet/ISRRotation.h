@@ -30,7 +30,7 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
    void Init();
    void DoEnergyLoss(double deltaT,double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut);
    void WriteTask(weak_ptr<JetScapeWriter> w) {}; //funny, should not break if not not overriden !???
-   void SetParameters(int LabelOfTheShower, int NPartonPerShower);
+   void SetParameters(int LabelOfTheShower, int NPartonPerShower, int Current_label_);
 
    void printout_current();
    void SetLatestInitialParton(double px, double py, double pz, double E);
@@ -64,7 +64,7 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
     std::array<double,2> Sample_PT();
     double DisP(double pxGeV, double pyGeV);
     std::array<double,2> GeneratPT();
-    std::array<double,4> RotationMatrix;
+    std::array<double,6> RotationMatrix;
     FourVector LatestInitialParton;
     void DefineRotationMatrix();
     void RotateVector(FourVector &ToRotate);
