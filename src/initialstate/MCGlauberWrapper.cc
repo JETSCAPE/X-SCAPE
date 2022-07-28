@@ -192,6 +192,16 @@ std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab() {
     return(mc_gen_->GetQuarkPosTarg());
 }
 
+std::vector<double> MCGlauberWrapper::Get_remnant_proj() {
+    // get the fout-momentum (E, px, py, pz) of the remnant in projectile
+    return(mc_gen_->GetRemMom_Proj());
+}
+
+std::vector<double> MCGlauberWrapper::Get_remnant_targ() {
+    // get the fout-momentum (E, px, py, pz) of the remnant in target 
+    return(mc_gen_->GetRemMom_Targ());
+}
+
 void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
     mc_gen_->GetMomandPos_Proj(hard_parton_t_, hard_parton_x_, hard_parton_y_, 
                                hard_parton_z_, proj_parton_e_, proj_parton_px_, 
