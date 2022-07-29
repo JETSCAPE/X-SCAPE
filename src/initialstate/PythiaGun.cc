@@ -29,6 +29,11 @@ PythiaGun::~PythiaGun() { VERBOSE(8); }
 
 void PythiaGun::InitTask() {
 
+  std::ofstream File6;
+  File6.open("Hotspots.dat",std::ofstream::out);
+  File6 << "Hotspot" << std::endl;
+  File6.close();   
+
   JSDEBUG << "Initialize PythiaGun";
   VERBOSE(8);
 
@@ -59,7 +64,8 @@ void PythiaGun::InitTask() {
   // readString("HardQCD:qqbar2qqbarNew = on");
   readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
   readString("MultipartonInteractions:processLevel = 0"); // Number Of Quark flavours
-
+  readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
+ 
   // readString("HardQCD:gg2ccbar = off");
   // readString("HardQCD:qqbar2ccbar = off");
   // readString("HardQCD:hardccbar = off");
@@ -361,13 +367,29 @@ void PythiaGun::Exec() {
   }
 
   max_color = max_colorPerShower * (p62.size());
-  ini->CollisionNegativeMomentum.resize((p62.size()-1)/2);
-  ini->CollisionPositiveMomentum.resize((p62.size()-1/1));
-  ini->CollisionNegativeRotatedMomentum.resize((p62.size()-1/1));
-  ini->CollisionPositiveRotatedMomentum.resize((p62.size()-1/1));
+  FourVector Zeros(0,0,0,0);
+  ini->CollisionNegativeMomentum = std::vector<FourVector>((p62.size()-1)/2,Zeros);
+  ini->CollisionPositiveMomentum = std::vector<FourVector>((p62.size()-1/1),Zeros);
+  ini->CollisionNegativeRotatedMomentum = std::vector<FourVector>((p62.size()-1/1),Zeros);
+  ini->CollisionPositiveRotatedMomentum = std::vector<FourVector>((p62.size()-1/1),Zeros);
   ini->ClearHardPartonMomentum();
 
   VERBOSE(8) << GetNHardPartons();
+
+  std::ofstream File6;
+  File6.open("Hotspots.dat",std::ofstream::app);
+
+  auto Hotspots1 = ini->Get_quarks_pos_proj_lab();
+  auto Hotspots2 = ini->Get_quarks_pos_targ_lab();
+  for(auto &x : Hotspots1){
+    File6 << x << " ";
+  }
+    File6 << " | ";
+  for(auto &x : Hotspots2){
+    File6 << x << " ";
+  }
+  File6 <<std::endl;
+  File6.close();  
 
   //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????
   

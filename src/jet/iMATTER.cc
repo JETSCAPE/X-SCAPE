@@ -251,7 +251,10 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pIn[in].reset_p(p_Parton.x(),p_Parton.y(),Direction * p_Parton.z());
             pIn[in].set_stat(pIn[in].pstat() + 1);
 
-            if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error ) FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),std::abs(pIn[in].pz()));
+            if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error ) 
+            {
+                FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),std::abs(pIn[in].pz()), pIn[in].plabel());
+            }
 
             
             (*File1) << "    "
@@ -439,7 +442,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             Current_Status = NPartonPerShower;
             // JSINFO << MAGENTA << " MAX_COLOR " << MAX_COLOR;
 
-            FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e());
+            FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e(),pIn[in].plabel());
             FinalRotation->ResetShower();
 
         }

@@ -33,7 +33,7 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
    void SetParameters(int LabelOfTheShower, int NPartonPerShower, int Current_label_);
 
    void printout_current();
-   void SetLatestInitialParton(double px, double py, double pz, double E);
+   void SetLatestInitialParton(double px, double py, double pz, double E, int label);
    void ResetShower();
     
    
@@ -44,7 +44,7 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
     // std::shared_ptr<JetEnergyLossModule> *iMatterShower;
     int LabelOfTheShower, NPartonPerShower = 100000;
     bool AlreadyGeneratedPTForThisShower = false;
-    std::array<double, 2> pT;
+    std::array<double, 2> pT; double LatestPartonNewPz;
     double s0 = 0.2, sP0;
     double TotalMomentumFraction;
 
@@ -66,6 +66,7 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
     std::array<double,2> GeneratPT();
     std::array<double,6> RotationMatrix;
     FourVector LatestInitialParton;
+    int LatestPartonLabel;
     void DefineRotationMatrix();
     void RotateVector(FourVector &ToRotate);
 

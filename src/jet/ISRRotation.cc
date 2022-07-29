@@ -56,6 +56,11 @@ void ISRRotation::Init()
   (*File) << "EventId z_frac x2 color anti_color max_color pid plabel status form_time t E Px Py Pz" << std::endl;
   File->close();    
 
+  std::ofstream File6;
+  File6.open("pTDist.dat",std::ofstream::out);
+  File6 << "# px py" << std::endl;
+  File6.close();    
+
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   if (!ini)
   {
@@ -142,10 +147,20 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
                   << LatestInitialParton.t() << std::endl;
           DefineRotationMatrix();
           AlreadyGeneratedPTForThisShower = true;
-          (*File1) << "Generated new (px, py) : " << pT[0] << " " << pT[1] << std::endl;
+          (*File1) << "Generated new (px, py, new pz) : " << pT[0] << " " << pT[1] << " " << LatestPartonNewPz << std::endl;
+
+          std::ofstream File6;
+          File6.open("pTDist.dat",std::ofstream::app);
+          File6 << pT[0] << " " << pT[1] << std::endl;
+          File6.close();    
         }
         
         FourVector p_Out(Out.px(), Out.py(),Out.pz(), Out.e());
+        // if(Out.plabel() == LatestPartonLabel ){
+        //   p_Out.Set(pT[0],pT[1],LatestPartonNewPz,LatestInitialParton.t());
+        // } else {
+        //   RotateVector(p_Out);
+        // }
         RotateVector(p_Out);
         Out.reset_momentum(p_Out);
 
@@ -354,6 +369,12 @@ void ISRRotation::SetParameters(int LabelOfTheShower_, int NPartonPerShower_, in
 double ISRRotation::DisP(double pxGeV, double pyGeV){
     double px = pxGeV * fmToGeVinv;
     double py = pyGeV * fmToGeVinv;
+
+
+    // double x0=0.4,xy0=-0.4;
+    // double x1=-0.1,xy1=1.0;
+    // double x2=0.0,xy2=-0.2;
+    // double x3=0.4,xy3=0.2;
     // return 2. * std::exp(-2. * s0 * s0 * (px * px + py * py)) * (2. + std::cos(px * (x0 - x1) + py * (xy0 - xy1)) 
     //           + std::cos(px * (x0 - x2) + py * (xy0 - xy2)) + std::cos(px * (x0 - x3) + py * (xy0 - xy3))
     //           + std::cos(px * (x1 - x2) + py * (xy1 - xy2)) + std::cos(px * (x1 - x3) + py * (xy1 - xy3))
@@ -401,7 +422,7 @@ void ISRRotation::DefineRotationMatrix() {
     double px = LatestInitialParton.x() + pT[0];
     double py = LatestInitialParton.y() + pT[1];
     double pz = Signb * std::sqrt(LatestInitialParton.z()*LatestInitialParton.z() - px*px - py*py);
-
+    LatestPartonNewPz = pz;
     double E = sqrt(px * px + py * py + pz * pz);
     double pt = sqrt(px * px + py * py);
 
@@ -430,11 +451,11 @@ void ISRRotation::DefineRotationMatrix() {
 
 
     RotationMatrix[0] = (cosa2 * abscosb + sina2); // R11
-    RotationMatrix[1] = (sin2a * sinbHalf2); // R12
-    RotationMatrix[2] = (Signb * cosa * sinb);// R13
+    RotationMatrix[1] = (sin2a * sinbHalf2); // -R12 & (- R21)
+    RotationMatrix[2] = (Signb * cosa * sinb);// R13 & (- R31)
 
     RotationMatrix[3] = cosa2 + abscosb * sina2; // R22
-    RotationMatrix[4] = (Signb * sina * sinb);// R23
+    RotationMatrix[4] = (Signb * sina * sinb);// R23 & (- R32)
     RotationMatrix[5] = abscosb;// R33
 
   return;
@@ -450,7 +471,7 @@ void ISRRotation::RotateVector(FourVector &ToRotate) {
   double &R13 = RotationMatrix[2];
   double &R22 = RotationMatrix[3];
   double &R23 = RotationMatrix[4];
-  double &R33 = RotationMatrix[3];
+  double &R33 = RotationMatrix[5];
 
   double wx = ToRotate.x();
   double wy = ToRotate.y();
@@ -469,6 +490,7 @@ void ISRRotation::RotateVector(FourVector &ToRotate) {
 }
 
 
-void ISRRotation::SetLatestInitialParton(double px, double py, double pz, double E){
+void ISRRotation::SetLatestInitialParton(double px, double py, double pz, double E, int Label){
   LatestInitialParton.Set(px,py,pz,E);
+  LatestPartonLabel = Label;
 }
