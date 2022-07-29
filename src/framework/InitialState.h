@@ -158,6 +158,9 @@ public:
   virtual std::vector<double> Get_quarks_pos_proj_lab();
   virtual std::vector<double> Get_quarks_pos_targ_lab();
 
+  virtual std::vector<double> Get_remnant_proj();
+  virtual std::vector<double> Get_remnant_targ();
+
   virtual void GetHardPartonPosAndMomentumProj();
   virtual void GetHardPartonPosAndMomentumTarg();
 

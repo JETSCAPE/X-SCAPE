@@ -141,6 +141,21 @@ std::vector<double> InitialState::Get_quarks_pos_targ_lab() {
     return Temp;
 }
 
+std::vector<double> InitialState::Get_remnant_proj() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_remnant_targ() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
 
 void InitialState::GenerateStrings() {
   // Do whatever is needed to figure out the internal temp...
