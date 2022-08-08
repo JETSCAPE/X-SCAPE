@@ -221,16 +221,16 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   std::unique_ptr<FluidCellInfo> check_fluid_info_ptr;
 
-  JSINFO << MAGENTA << " the time in fm is " << time
-             << " The time in GeV-1 is " << Time;
-  JSINFO << MAGENTA << "pid = " << pIn[0].pid()  << " status = " << pIn[0].pstat()
-             << " E = " << pIn[0].e()
-             << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2)
-             << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t()
-             << " form_time in fm = " << pIn[0].form_time()
-             << " split time = " << pIn[0].form_time() + pIn[0].x_in().t();
-  VERBOSE(8) << " color = " << pIn[0].color()
-             << " anti-color = " << pIn[0].anti_color();
+  // JSINFO << MAGENTA << " the time in fm is " << time
+  //            << " The time in GeV-1 is " << Time;
+  // JSINFO << MAGENTA << "pid = " << pIn[0].pid()  << " status = " << pIn[0].pstat()
+  //            << " E = " << pIn[0].e()
+  //            << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2)
+  //            << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t()
+  //            << " form_time in fm = " << pIn[0].form_time()
+  //            << " split time = " << pIn[0].form_time() + pIn[0].x_in().t();
+  // VERBOSE(8) << " color = " << pIn[0].color()
+  //            << " anti-color = " << pIn[0].anti_color();
 
   unsigned int ShowerMaxColor = pIn[0].max_color();
   unsigned int CurrentMaxColor;

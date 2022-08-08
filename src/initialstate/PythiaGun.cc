@@ -55,7 +55,7 @@ void PythiaGun::InitTask() {
   readString("Next:numberShowEvent = 0");
 
   // Standard settings 
-  readString("HardQCD:all = off"); // will repeat this line in the xml for demonstration
+  readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
   // readString("HardQCD:gg2gg = on");
   // readString("HardQCD:gg2qqbar = on");
   // readString("HardQCD:qg2qg = on");
@@ -63,7 +63,7 @@ void PythiaGun::InitTask() {
   // readString("HardQCD:qqbar2gg = on");
   // readString("HardQCD:qqbar2qqbarNew = on");
   readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
-  readString("MultipartonInteractions:processLevel = 0"); // Number Of Quark flavours
+  readString("MultipartonInteractions:processLevel = 0"); 
   readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
  
   // readString("HardQCD:gg2ccbar = off");
@@ -261,7 +261,8 @@ void PythiaGun::Exec() {
           continue;
       }
       
-        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index();
+        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index() << 
+        " Color " << particle.col() << " " << particle.acol() << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2();
         p62.push_back(particle);
 
         SkipParton:;
@@ -302,7 +303,7 @@ void PythiaGun::Exec() {
 //  while (!pass)
   //  {
         ini->SampleABinaryCollisionPoint(t, x, y, z);
-        JSINFO << MAGENTA << " pass at time " << t << " with x = " << x << " y = " << y << " z = " << z << "  ? " ;
+        // JSINFO << MAGENTA << " pass at time " << t << " with x = " << x << " y = " << y << " z = " << z << "  ? " ;
         //cin >> pass;
     //}
     x_p.Set(x,y,z,t);
@@ -323,11 +324,11 @@ void PythiaGun::Exec() {
   {
     Pythia8::Particle &particle = p62.at(np);
 
-    VERBOSE(7) << "Adding particle with pid = " << particle.id()
-               << ", pT = " << particle.pT() << ", y = " << particle.y()
-               << ", phi = " << particle.phi() << ", e = " << particle.e();
+    // VERBOSE(7) << "Adding particle with pid = " << particle.id()
+    //            << ", pT = " << particle.pT() << ", y = " << particle.y()
+    //            << ", phi = " << particle.phi() << ", e = " << particle.e();
 
-    JSINFO<< MAGENTA << " at x=" << x_p.x() << ", y=" << x_p.y() << ", z=" << x_p.z() << ", t = " << x_p.t();
+    // JSINFO<< MAGENTA << " at x=" << x_p.x() << ", y=" << x_p.y() << ", z=" << x_p.z() << ", t = " << x_p.t();
 
       double label = 0;
       double stat = 0;
@@ -356,22 +357,27 @@ void PythiaGun::Exec() {
         AddParton(make_shared<Parton>(label, particle.id(), stat, p_p,x_p));
         JSINFO<< BOLDYELLOW << " Pythia particle eta = " << particle.eta() << " pz = " << particle.pz() << " pT = " << particle.pT() << " phi = "  << particle.phi();
     } else {
-      auto ptn =
-          make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
+      auto ptn = make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
       ptn->set_color(particle.col());
       ptn->set_anti_color(particle.acol()); 
       ptn->set_max_color(max_colorPerShower * (np + 1));
       AddParton(ptn);
-      JSINFO<< MAGENTA << "pythia id " << particle.index() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e()  << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2() << " JS id " << label;
+      JSINFO<< MAGENTA << "pythia id " << particle.index() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() << 
+      " Color " << particle.col() << " " << particle.acol() << 
+      " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2() << " JS id " << label;
     }
   }
-
-  max_color = max_colorPerShower * (p62.size());
+  int NPP = p62.size();
+  max_color = max_colorPerShower * NPP;
   FourVector Zeros(0,0,0,0);
-  ini->CollisionNegativeMomentum = std::vector<FourVector>((p62.size()-1)/2,Zeros);
-  ini->CollisionPositiveMomentum = std::vector<FourVector>((p62.size()-1/1),Zeros);
-  ini->CollisionNegativeRotatedMomentum = std::vector<FourVector>((p62.size()-1/1),Zeros);
-  ini->CollisionPositiveRotatedMomentum = std::vector<FourVector>((p62.size()-1/1),Zeros);
+  // ini->CollisionNegativeMomentum.resize(NPP/2);
+  // ini->CollisionPositiveMomentum.resize(NPP/2);
+  // ini->CollisionNegativeRotatedMomentum.resize(NPP/2);
+  // ini->CollisionPositiveRotatedMomentum.resize(NPP/2);
+  ini->CollisionNegativeMomentum = std::vector<FourVector>(NPP/2,Zeros);
+  ini->CollisionPositiveMomentum = std::vector<FourVector>(NPP/2,Zeros);
+  ini->CollisionNegativeRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
+  ini->CollisionPositiveRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
   ini->ClearHardPartonMomentum();
 
   VERBOSE(8) << GetNHardPartons();

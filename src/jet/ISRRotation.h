@@ -8,6 +8,7 @@
 #ifndef ISRRotation_H
 #define ISRRotation_H
 
+#include "HadronizationManager.h"
 #include "InitialState.h"
 #include "JetEnergyLossModule.h"
 #include "Pythia8/Pythia.h"
@@ -35,10 +36,11 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
    void printout_current();
    void SetLatestInitialParton(double px, double py, double pz, double E, int label);
    void ResetShower();
+   void AddRemenant(Parton &Out);
     
    
    std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
-   std::shared_ptr<HardProcess> Hard; // temporary pointer to initial state   
+   std::shared_ptr<HardProcess> Hard; // temporary pointer to Hard process   
     
  private:
     // std::shared_ptr<JetEnergyLossModule> *iMatterShower;

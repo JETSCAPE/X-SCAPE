@@ -43,6 +43,7 @@
 #include "InitialStateRadiationTest.h"
 #include "HadronizationManager.h"
 #include "Hadronization.h"
+#include "iColoredHadronization.h"
 #include "ColoredHadronization.h"
 #include "ColorlessHadronization.h"
 #include "CascadeTest.h"
@@ -106,8 +107,32 @@ int main(int argc, char** argv)
   mModuleClock->Info();
 
   auto jetscape = make_shared<JetScape>();
-  jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
-  jetscape->SetXMLUserFileName("../config/jetscape_user_test.xml");
+  const char* masterXMLName = "../config/jetscape_master.xml";
+  const char* userXMLName = "../config/jetscape_user_test.xml";
+  if (argc == 2)  {
+    if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
+      std::cout << "Command line options:" << std::endl;
+      std::cout << "    First (optional) argument: path to user XML file         ./runJetscape /path/to/user.xml" << std::endl;
+      std::cout << "    Second (optional) argument: path to master XML file      ./runJetscape /path/to/user.xml /path/to/master.xml" << std::endl;
+      std::cout << "    If no command line options are given, defaults are used: config/jetscape_user.xml config/jetscape_master.xml" << std::endl;
+      return -1;
+    }
+    else {
+      userXMLName = argv[1];
+    }
+  }
+  else if (argc == 3) {
+    userXMLName = argv[1];
+    masterXMLName = argv[2];
+  }
+  std::cout << userXMLName << std::endl;
+  
+  jetscape->SetXMLMasterFileName(masterXMLName);
+  jetscape->SetXMLUserFileName(userXMLName);
+
+  // jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
+  // jetscape->SetXMLUserFileName("../config/jetscape_user_test.xml");
+
   jetscape->SetId("primary");
   jetscape->AddMainClock(mClock);
   jetscape->ClockInfo();
@@ -224,6 +249,12 @@ int main(int argc, char** argv)
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
   */
+  auto hadroMgr = make_shared<HadronizationManager> ();
+  auto hadro = make_shared<Hadronization> ();
+  auto hadroModule = make_shared<iColoredHadronization> ();
+  hadro->Add(hadroModule);
+  hadroMgr->Add(hadro);
+  jetscape->Add(hadroMgr);
 
   // Output
   // auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
@@ -231,10 +262,17 @@ int main(int argc, char** argv)
   // jetscape->Add(writer);
 
 
-  auto writer= make_shared<JetScapeWriterFinalStatePartonsAscii>();
+  auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
+  auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
+  // auto Filename = jetscape->GetXMLElementText({"outputFilename"});
+  // writer->SetOutputFileName(Filename + string("_partons.dat"));
+  // writer2->SetOutputFileName(Filename + string("_hadrons.dat"));
   writer->SetOutputFileName(string("test_out_final_state_partons.dat"));
+  writer2->SetOutputFileName(string("test_out_final_state_hadrons.dat"));
   writer->SetId("FinalStatePartonsAscii"); //for task search test ...
+  writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
   jetscape->Add(writer);
+  jetscape->Add(writer2);
 
   /*
 #ifdef USE_GZIP

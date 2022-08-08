@@ -145,6 +145,44 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     {  
         if( std::abs(time - GetMaxT()) <= 1e-10 )
         {
+
+            if (  std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 &&  pIn[in].plabel() < 0) { //  if it's a parton not treated by iMatter 
+                // if(pIn[in].pstat() == -1000 ){
+                File1->open(Fpath1.c_str(),std::ofstream::app);
+                if( pIn[in].pz() >= 0) {
+                    (*File1) << " CollisionPositiveMomentum HeavyQ" << std::endl;
+
+                    double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
+                                                pIn[in].py() * pIn[in].py() +
+                                                pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
+                    ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);  
+                    
+                }
+
+                if( pIn[in].pz() < 0)  {
+                    (*File1) << " CollisionNegativeMomentum HeavyQ" << std::endl;
+                    double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
+                                                pIn[in].py() * pIn[in].py() +
+                                                pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
+                    ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);
+                }
+
+                FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),std::abs(pIn[in].pz()), pIn[in].plabel());
+
+
+                (*File1) << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
+                        << std::endl;
+                (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
+                        << std::endl;
+                File1->close();
+            }
+
             FinalRotation->SetParameters(LabelOfTheShower,NPartonPerShower, Current_Label);
             FinalRotation->DoEnergyLoss(deltaT,time,Q2,pIn,pOut);
             return;
@@ -173,38 +211,6 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         
         if (  std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 ) { // neglect photons and heavy quarks
             // throw std::runtime_error(" Only light flavors allowed when using iMATTER for now");
-            if(pIn[in].pstat() == -1000 && std::abs(deltaT - time) <= 1e-10){
-                File1->open(Fpath1.c_str(),std::ofstream::app);
-                if( pIn[in].pz() >= 0) {
-                    (*File1) << " CollisionPositiveMomentum HeavyQ \n ";
-
-                    double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
-                                                pIn[in].py() * pIn[in].py() +
-                                                pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
-                    ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);  
-                    
-                }
-
-                if( pIn[in].pz() < 0)  {
-                    (*File1) << " CollisionNegativeMomentum HeavyQ \n ";
-                    double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
-                                                pIn[in].py() * pIn[in].py() +
-                                                pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
-                    ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);
-                }
-
-                (*File1) << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
-                        << "\n ";
-                (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
-                        << "\n ";
-                File1->close();
-            }
             continue ; // neglect heavy quarks. 
         }
         
@@ -365,7 +371,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             {
                 File1->open(Fpath1.c_str(),std::ofstream::app);
                 if( pIn[in].pz() >= 0) {
-                    (*File1) << " CollisionPositiveMomentum \n ";
+                    (*File1) << " CollisionPositiveMomentum" << std::endl;
 
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
@@ -375,7 +381,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 }
 
                 if( pIn[in].pz() < 0)  {
-                    (*File1) << " CollisionNegativeMomentum \n ";
+                    (*File1) << " CollisionNegativeMomentum" << std::endl;
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
                                                 pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
@@ -386,12 +392,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                         << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
                         << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
                         << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
-                        << "\n ";
+                        << std::endl;
                 (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
                         << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
                         << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
                         << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
-                        << "\n ";
+                        << std::endl;
                 File1->close();
             }
 

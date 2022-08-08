@@ -83,6 +83,12 @@ void ISRRotation::Init()
       JSINFO << BOLDCYAN << " Hard process module connected to i-MATTER";
   }
 
+  // Hadronization = JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
+  // if(Hadronization)
+  // {
+  //     JSINFO << BOLDCYAN << " Hadronization module connected to i-MATTER";
+  // }
+
   sP0 = 0.5 / s0 / fmToGeVinv;
   // Initialize random number distribution
   ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
@@ -103,7 +109,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
   for (int in = 0; in < pIn.size();in++) /// we continue with the loop charade, even though the framework is just giving us one parton
   {
-    JSWARN << "Starting Rotation";
+    // JSWARN << "Starting Rotation";
     if (pIn[in].pz() >= 0) {
       Hotspots = ini->Get_quarks_pos_proj_lab();
 
@@ -111,16 +117,16 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
       Hotspots = ini->Get_quarks_pos_targ_lab();
     }
 
-    NumHotspots = Hotspots.size() / 3;
+    std::ofstream *File1 = new std::ofstream,*File2 = new std::ofstream,*File3 = new std::ofstream;
+    File3->open("ISR-Col.dat", std::ofstream::app);
+    File1->open("ISR-Rotation.dat", std::ofstream::app);
+
+    // NumHotspots = Hotspots.size() / 3;
+    NumHotspots = 3;
     auto Out = pIn[in];
+    
 
     if (true) {
-
-
-
-      std::ofstream *File1 = new std::ofstream,*File2 = new std::ofstream,*File3 = new std::ofstream;
-      File3->open("ISR-Col.dat", std::ofstream::app);
-      File1->open("ISR-Rotation.dat", std::ofstream::app);
       (*File1) << "########################### " << std::endl;
       (*File1) << "# " << time << " " << Out.pid() << " "
                << Out.plabel() << " " << Out.pstat() << " "
@@ -134,6 +140,8 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           SampleAgain:
           Num++;
           pT = GeneratPT();
+          // double pTX = std::abs(LatestInitialParton.z()) / 10.;
+          // pT = std::array<double,2>{pTX,0.0};
 
           if(pT[0]*pT[0] + pT[1]*pT[1] >= LatestInitialParton.z() * LatestInitialParton.z() ){
             if(Num < 1000) goto SampleAgain;
@@ -156,6 +164,9 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         }
         
         FourVector p_Out(Out.px(), Out.py(),Out.pz(), Out.e());
+        if(Out.plabel() == LatestPartonLabel ){
+          AddRemenant(Out);
+        }
         // if(Out.plabel() == LatestPartonLabel ){
         //   p_Out.Set(pT[0],pT[1],LatestPartonNewPz,LatestInitialParton.t());
         // } else {
@@ -183,26 +194,16 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           if (Out.pz() >= 0) {
             (*File1) << " CollisionPositiveRotatedMomentum Pushing "
                     << Out.plabel() << std::endl;
-
-            if (Out.pstat() <=-900) { // Set momentum to zero to signal that no rotation is needed from this side
-              ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) / 2] = FourVector(0, 0, 0, 0);
-            } else {
               double OnShellEnergy =sqrt(Out.px() * Out.px() + Out.py() * Out.py() +Out.pz() * Out.pz() +Out.restmass() * Out.restmass());
               ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) / 2] = FourVector(Out.px(), Out.py(), Out.pz(),OnShellEnergy);
-            }
 
           }
 
           if (Out.pz() < 0) {
             (*File1) << " CollisionNegativeRotatedMomentum Pushing "
                     << Out.plabel() << std::endl;
-
-            if (Out.pstat() <=-900) { // Set momentum to zero to signal that no rotation is needed from this side
-              ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) / 2] = FourVector(0, 0, 0, 0);
-            } else {
               double OnShellEnergy = sqrt(Out.px() * Out.px() + Out.py() * Out.py() +Out.pz() * Out.pz() +Out.restmass() * Out.restmass());
               ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) / 2] = FourVector(Out.px(), Out.py(), Out.pz(),OnShellEnergy);
-            }
           }
 
           (*File1)
@@ -222,13 +223,13 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
 
       if ((Out.plabel() == Current_Label || std::abs(Out.pid()) == cid || std::abs(Out.pid()) == bid) && Out.pstat() < 0) {
-        JSWARN << MAGENTA << " Pushing label " << Out.plabel() << " status "
-               << Out.pstat() << " pid " << Out.pid()
-               << " to MCGlauber ";
-        JSINFO << MAGENTA << " e " << Out.e();
-        JSINFO << MAGENTA << " px " << Out.px();
-        JSINFO << MAGENTA << " py " << Out.py();
-        JSINFO << MAGENTA << " pz " << Out.pz();
+        // JSWARN << MAGENTA << " Pushing label " << Out.plabel() << " status "
+        //        << Out.pstat() << " pid " << Out.pid()
+        //        << " to MCGlauber ";
+        // JSINFO << MAGENTA << " e " << Out.e();
+        // JSINFO << MAGENTA << " px " << Out.px();
+        // JSINFO << MAGENTA << " py " << Out.py();
+        // JSINFO << MAGENTA << " pz " << Out.pz();
         if (Out.e() < 0) {
           JSWARN << "Energy to subtract is negative !";
           exit(1);
@@ -253,14 +254,15 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         auto CollisionPositive1 = ini->CollisionPositiveRotatedMomentum[Index];
         auto CollisionNegative1 = ini->CollisionNegativeRotatedMomentum[Index];
 
-        if (CollisionPositive1.t() == 0 && CollisionNegative1.t() == 0) { // Don't perform any boost
+        if (CollisionPositive1.x() == 0 && CollisionNegative1.x() == 0 && CollisionPositive1.y() == 0 && CollisionNegative1.y() == 0 ) { // Don't perform any boost
           File1->close();
           return;
-        } else if (CollisionPositive1.t() == 0) { // if only positive side doesn't need rotation
-          CollisionPositive1 = ini->CollisionPositiveMomentum[Index];
-        } else if (CollisionNegative1.t() == 0) { // if only negative side doesn't need rotation
-          CollisionNegative1 = ini->CollisionNegativeMomentum[Index];
         }
+        //  else if (CollisionPositive1.x() == CollisionPositive.x() && ) { // if only positive side doesn't need rotation
+        //   CollisionPositive1 = ini->CollisionPositiveMomentum[Index];
+        // } else if (CollisionNegative1.t() == 0) { // if only negative side doesn't need rotation
+        //   CollisionNegative1 = ini->CollisionNegativeMomentum[Index];
+        // }
 
         double EnergySum = CollisionPositive.t() + CollisionNegative.t();
         double vx = (CollisionPositive.x() + CollisionNegative.x()) / EnergySum;
@@ -493,4 +495,19 @@ void ISRRotation::RotateVector(FourVector &ToRotate) {
 void ISRRotation::SetLatestInitialParton(double px, double py, double pz, double E, int Label){
   LatestInitialParton.Set(px,py,pz,E);
   LatestPartonLabel = Label;
+}
+
+void ISRRotation::AddRemenant(Parton &Out){
+  Parton Rem = Out;
+  Rem.set_label(LatestPartonLabel-1);
+  double direction = (Rem.pz() >=0 ? 1.:-1.);
+  int NHardScatterings = ini->pTHat.size();
+  double Pz = (Rem.pz() >=0 ? 1.0:-1.0);
+
+  Rem.reset_momentum(Lambda_QCD,Lambda_QCD,Pz,0.0);
+  Rem.set_color(Out.anti_color()); 
+  Rem.set_anti_color(Out.color());
+  if(Rem.pid() != 21 ) Rem.set_id(-Out.pid()); 
+  Hard->Remnants.push_back(Rem);
+  return;
 }

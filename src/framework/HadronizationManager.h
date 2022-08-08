@@ -63,6 +63,9 @@ public:
   }
   const bool GetGetHadronListConnected() { return GetHadronListConnected; }
 
+  
+  std::vector<Parton> Remenants;
+
 private:
   bool GetFinalPartonListConnected;
   bool GetHadronListConnected;
