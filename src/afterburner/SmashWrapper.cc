@@ -154,10 +154,15 @@ void SmashWrapper::InitPerEvent() {
 
 
 void SmashWrapper::CalculateTimeTask() {
-  const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
+  // TODO(stdnmr) Get new hadrons from partilization here
+  // TODO(stdnmr) Convert to SMASH ParticleList (change existinng function's name probably and create static version)
+  // Pseudo Version:
+  smash::ParticleList new_particles = convert_to_plist(soft_particlization_sampler_->New_Hadrons)
+
+  const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_
   JSINFO << "Propgating SMASH until t = " << until_time;
   if (!only_final_decays_) {
-    smash_experiment_->run_time_evolution(until_time);
+    smash_experiment_->run_time_evolution(until_time, new_particles);
   }
 }
 
