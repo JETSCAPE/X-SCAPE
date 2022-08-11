@@ -83,11 +83,11 @@ int main(int argc, char** argv)
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
   JetScapeLogger::Instance()->SetInfo(true);
-    JetScapeLogger::Instance()->SetDebug(false);
+  JetScapeLogger::Instance()->SetDebug(true);
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
-  JetScapeLogger::Instance()->SetVerboseLevel(0);
+  JetScapeLogger::Instance()->SetVerboseLevel(5);
 
 
   Show();
@@ -107,8 +107,11 @@ int main(int argc, char** argv)
   mModuleClock->Info();
 
   auto jetscape = make_shared<JetScape>();
+
+  // TAKING THE OUTPUT FOLDER FROM THE ARGS
   const char* masterXMLName = "../config/jetscape_master.xml";
   const char* userXMLName = "../config/jetscape_user_test.xml";
+  char* OutputFolder = "";
   if (argc == 2)  {
     if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
       std::cout << "Command line options:" << std::endl;
@@ -123,7 +126,7 @@ int main(int argc, char** argv)
   }
   else if (argc == 3) {
     userXMLName = argv[1];
-    masterXMLName = argv[2];
+    OutputFolder = argv[2];
   }
   std::cout << userXMLName << std::endl;
   
@@ -254,6 +257,7 @@ int main(int argc, char** argv)
   auto hadroModule = make_shared<iColoredHadronization> ();
   hadro->Add(hadroModule);
   hadroMgr->Add(hadro);
+  // hadroMgr->SetActive(false);
   jetscape->Add(hadroMgr);
 
   // Output
@@ -264,11 +268,8 @@ int main(int argc, char** argv)
 
   auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
   auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
-  // auto Filename = jetscape->GetXMLElementText({"outputFilename"});
-  // writer->SetOutputFileName(Filename + string("_partons.dat"));
-  // writer2->SetOutputFileName(Filename + string("_hadrons.dat"));
-  writer->SetOutputFileName(string("test_out_final_state_partons.dat"));
-  writer2->SetOutputFileName(string("test_out_final_state_hadrons.dat"));
+  writer->SetOutputFileName(string(OutputFolder) + string("test_out_final_state_partons.dat"));
+  writer2->SetOutputFileName(string(OutputFolder) + string("test_out_final_state_hadrons.dat"));
   writer->SetId("FinalStatePartonsAscii"); //for task search test ...
   writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
   jetscape->Add(writer);
@@ -286,7 +287,9 @@ int main(int argc, char** argv)
   jetscape->Add(hepmcwriter);
 #endif
   */
-
+//  for(auto k : jetscape->GetTaskList()){
+//   JSINFO << "Task " << k->GetId();
+//  }
   // Intialize all modules tasks
   jetscape->Init();
 

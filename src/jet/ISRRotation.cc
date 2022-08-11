@@ -504,7 +504,7 @@ void ISRRotation::AddRemenant(Parton &Out){
   int NHardScatterings = ini->pTHat.size();
   double Pz = (Rem.pz() >=0 ? 1.0:-1.0);
 
-  Rem.reset_momentum(Lambda_QCD,Lambda_QCD,Pz,0.0);
+  Rem.reset_momentum(0.25 * Lambda_QCD, 0.25 * Lambda_QCD,Pz,0.0);
   Rem.set_color(Out.anti_color()); 
   Rem.set_anti_color(Out.color());
   if(Rem.pid() != 21 ) Rem.set_id(-Out.pid()); 

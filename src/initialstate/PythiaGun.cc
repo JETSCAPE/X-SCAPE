@@ -261,8 +261,9 @@ void PythiaGun::Exec() {
           continue;
       }
       
-        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index() << 
-        " Color " << particle.col() << " " << particle.acol() << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2();
+        // JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index() << 
+        // " Color " << particle.col() << " " << particle.acol() << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2();
+
         p62.push_back(particle);
 
         SkipParton:;
@@ -365,15 +366,12 @@ void PythiaGun::Exec() {
       JSINFO<< MAGENTA << "pythia id " << particle.index() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() << 
       " Color " << particle.col() << " " << particle.acol() << 
       " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2() << " JS id " << label;
+
     }
   }
   int NPP = p62.size();
   max_color = max_colorPerShower * NPP;
   FourVector Zeros(0,0,0,0);
-  // ini->CollisionNegativeMomentum.resize(NPP/2);
-  // ini->CollisionPositiveMomentum.resize(NPP/2);
-  // ini->CollisionNegativeRotatedMomentum.resize(NPP/2);
-  // ini->CollisionPositiveRotatedMomentum.resize(NPP/2);
   ini->CollisionNegativeMomentum = std::vector<FourVector>(NPP/2,Zeros);
   ini->CollisionPositiveMomentum = std::vector<FourVector>(NPP/2,Zeros);
   ini->CollisionNegativeRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);

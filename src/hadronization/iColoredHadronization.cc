@@ -31,7 +31,7 @@ RegisterJetScapeModule<iColoredHadronization>
 Pythia8::Pythia iColoredHadronization::pythia("IntentionallyEmpty", false);
 
 iColoredHadronization::iColoredHadronization() {
-  SetId("MyHadroTest");
+  SetId("ISRMyHadroTest");
   VERBOSE(8);
 }
 
@@ -101,19 +101,23 @@ void iColoredHadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
 void iColoredHadronization::DoHadronization(
     vector<vector<shared_ptr<Parton>>> &shower,
     vector<shared_ptr<Hadron>> &hOut, vector<shared_ptr<Parton>> &pOut) {
-
+  
+  // JSINFO << "Starting "
   Event &event = pythia.event;
   event.reset();
   double pz = p_fake;
   std::ofstream File3;
   File3.open("ISR-FinalPartons.dat", std::ofstream::out);
-  File3 << "status label pid col acol px py pz E" << std::endl;
-  JSDEBUG << "&&&&&&&&&&&&&&&&&&& the number of showers are: " << shower.size();
+  File3 << "## &&&&&&&&&&&&&&&&&&& the number of showers are: " << shower.size()  << " time " << GetModuleCurrentTime() << std::endl;
+  File3 << "# event status label pid col acol px py pz E" << std::endl;
+  // auto Particles = shower->GetFinalPartons();
   for (unsigned int ishower = 0; ishower < shower.size(); ++ishower) {
     JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
             << " partons in the shower number " << ishower;
     for (unsigned int ipart = 0; ipart < shower.at(ishower).size(); ++ipart) {
-      if(shower.at(ishower).at(ipart)->pstat() <0 ) continue;
+      
+      if(shower.at(ishower).at(ipart)->pstat() < 0 ) continue;
+
       double onshellE = pow(pow(shower.at(ishower).at(ipart)->px(), 2) +
                                 pow(shower.at(ishower).at(ipart)->py(), 2) +
                                 pow(shower.at(ishower).at(ipart)->pz(), 2),
@@ -134,7 +138,7 @@ void iColoredHadronization::DoHadronization(
                    shower.at(ishower).at(ipart)->px(),
                    shower.at(ishower).at(ipart)->py(),
                    shower.at(ishower).at(ipart)->pz(), onshellE);
-      File3 << shower.at(ishower).at(ipart)->pstat() << " "<< shower.at(ishower).at(ipart)->plabel() << " " << shower.at(ishower).at(ipart)->pid() << " " <<
+      File3 << GetCurrentEvent() << " " << shower.at(ishower).at(ipart)->pstat() << " "<< shower.at(ishower).at(ipart)->plabel() << " " << shower.at(ishower).at(ipart)->pid() << " " <<
                    shower.at(ishower).at(ipart)->color()<< " " <<
                    shower.at(ishower).at(ipart)->anti_color()<< " " <<
                    shower.at(ishower).at(ipart)->px()<< " " <<
@@ -167,7 +171,7 @@ void iColoredHadronization::DoHadronization(
                    Rem.px(),
                    Rem.py(),
                    Pz, onshellE);
-      File3 << Rem.pstat() << " "<< Rem.plabel() << " " << Rem.pid() << " " <<
+      File3 << GetCurrentEvent() << " "  << Rem.pstat() << " "<< Rem.plabel() << " " << Rem.pid() << " " <<
                    Rem.color()<< " " <<
                    Rem.anti_color()<< " " <<
                    Rem.px()<< " " <<
