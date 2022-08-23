@@ -127,12 +127,9 @@ void SmashWrapper::ExecuteTask() {
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
   for (unsigned int i = 0; i < n_events; i++) {
     JSINFO << "Event " << i << " SMASH starts with "
-           << modus->jetscape_hadrons_[i].size() << " particles.";  
+           << modus->jetscape_hadrons_[i].size() << " particles.";
     InitPerEvent();
     CalculateTimeTask();
-    // TODO(stdnmr) Check event numbering
-    std::cout << "event_number_ (before FinishPerEvent)= "
-              << modus->current_event_number() << '\n';
     FinishPerEvent();
   }
 }
@@ -172,7 +169,7 @@ void SmashWrapper::FinishPerEvent() {
   int ev_no = modus->current_event_number();
 
   smash_experiment_->do_final_decays();
-  smash_experiment_->final_output();  // FIXME Check event numbering, no event number input anymore
+  smash_experiment_->final_output();
   smash_particles_to_JS_hadrons(*smash_particles,
                                 modus->jetscape_hadrons_[ev_no - 1]);
   JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
