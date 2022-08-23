@@ -74,11 +74,15 @@ public:
 
   // --------------
 
+  //  Virtual functions to define what is done during the timestep. They can be overridden by different modules/tasks.
+
   virtual void CalculateTime() {};
 
   virtual void CalculateTimeTasks();
 
   virtual void CalculateTimeTask() {};
+
+  //  Virtual functions to define what is done at the end of the timestep. They can be overridden by different modules/tasks.
 
   virtual void ExecTime() {};
 
