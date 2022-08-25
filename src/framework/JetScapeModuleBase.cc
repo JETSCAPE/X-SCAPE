@@ -67,13 +67,13 @@ shared_ptr<std::mt19937> JetScapeModuleBase::GetMt19937Generator() {
 }
 
 
-void JetScapeModuleBase::ExecuteTasks() 
+void JetScapeModuleBase::ExecuteTasks()
 {
   auto tasks =  GetTaskList();
   VERBOSE(7) << " : # Subtasks = " << tasks.size();
   for (auto it : tasks) {
     auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-    if (!(module && module->IsTimeStepped())) {
+    if (module && module->GetActive() && !module->IsTimeStepped()) {
       JSDEBUG << "Executing " << it->GetId();
       it->Exec();
     }
