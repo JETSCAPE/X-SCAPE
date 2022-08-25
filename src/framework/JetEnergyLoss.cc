@@ -72,6 +72,7 @@ JetEnergyLoss::~JetEnergyLoss() {
 JetEnergyLoss::JetEnergyLoss(const JetEnergyLoss &j) {
   qhat = j.GetQhat();
   SetActive(j.GetActive());
+  SetTimeStepped(j.IsTimeStepped());
   SetId(j.GetId());
   SetJetSignalConnected(false);
   SetEdensitySignalConnected(false);

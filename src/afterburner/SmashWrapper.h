@@ -40,6 +40,7 @@ public:
     JSINFO << "Constructing AfterburnerModus";
   }
   void reset_event_numbering() { event_number_ = 0; }
+  int current_event_number() {return event_number_;}
   // The converter is not static, because modus holds int variables
   // for the number of warnings, which are used in try_create_particle,
   // called by this function. Maybe I (oliiny) will change this design in SMASH
@@ -65,14 +66,14 @@ private:
 class SmashWrapper : public Afterburner {
 private:
   bool only_final_decays_ = false;
+  double end_time_ = -1.0;
   shared_ptr<smash::Experiment<AfterburnerModus>> smash_experiment_;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<SmashWrapper> reg;
 
 public:
-  void
-  smash_particles_to_JS_hadrons(const smash::Particles &smash_particles,
+  void smash_particles_to_JS_hadrons(const smash::Particles &smash_particles,
                                 std::vector<shared_ptr<Hadron>> &JS_hadrons);
   SmashWrapper();
   void InitTask();

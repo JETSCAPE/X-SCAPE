@@ -24,14 +24,6 @@ void Afterburner::Init() {
   // Makes sure that XML file with options and parameters is loaded
   JetScapeModuleBase::Init();
   JSINFO << "Initializing Afterburner : " << GetId() << " ...";
-
-  // Get the pointer to sampler
-  soft_particlization_sampler_ =
-      JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
-  if (!soft_particlization_sampler_) {
-    JSWARN << "No soft particlization module found. It is necessary to provide"
-           << " hadrons to afterburner.";
-  }
   InitTask();
 }
 
@@ -43,6 +35,55 @@ void Afterburner::Exec() {
 void Afterburner::CalculateTime() {
   VERBOSE(2) << "Afterburner running for time: " << GetId() << " ...";
   CalculateTimeTask();
+}
+
+std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GetSoftParticlizationHadrons() {
+  auto soft_particlization = JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
+  if (!soft_particlization) {  
+    JSWARN << "No soft particlization module found. It is necessary to provide"
+           << " hadrons to afterburner.";
+    exit(1);
+  }
+  return soft_particlization->Hadron_list_;
+}
+
+std::vector<shared_ptr<Hadron>> Afterburner::GetFragmentationHadrons() {
+  JSINFO << "Get fragmentation hadrons in Afterburner";
+  auto hardonization_mgr = JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
+  if (!hardonization_mgr) {
+    JSWARN << "No hardronization module found. It is necessary to include"
+          << " fargmentation hadrons to afterburner as requested.";
+    exit(1);
+  }
+  std::vector<shared_ptr<Hadron>> h_list;
+  hardonization_mgr->GetHadrons(h_list);
+  JSINFO << "Got " << h_list.size() << " fragmentation hadrons from HadronizationManager.";
+  for (auto h : h_list) {
+    if (h->has_no_position()) {
+      // No position info set in hadronization module
+      JSWARN << "Found fragmentation hadron without properly set position in "
+                "Afterburner.\nInclusion of fragmentation hadrons only "
+                "possible for HybridHadronization.\nExiting.";
+      exit(1);
+    }
+  }
+  return h_list;
+}
+
+std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GatherAfterburnerHadrons() {
+  std::vector<std::vector<shared_ptr<Hadron>>> afterburner_had_events;
+  afterburner_had_events = GetSoftParticlizationHadrons();
+  if (GetXMLElementInt({"Afterburner", "include_fragmentation_hadrons"})) {
+    if (afterburner_had_events.size() != 1) {
+      JSWARN << "Fragmentation hadrons in Afterburner are only possible without "
+                "repeated sampling from SoftParticlization. Exiting.";
+      exit(1);
+    }
+    std::vector<shared_ptr<Hadron>> frag_hadrons = GetFragmentationHadrons();
+    afterburner_had_events[0].insert(afterburner_had_events[0].end(),
+                                     frag_hadrons.begin(), frag_hadrons.end());
+  }
+  return afterburner_had_events;
 }
 
 } // end namespace Jetscape

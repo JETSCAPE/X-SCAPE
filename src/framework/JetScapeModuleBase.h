@@ -69,13 +69,20 @@ public:
    */
   virtual void Clear(){};
 
+  // Override execute tasks at least (for now) to keep is-time-stepped handling on module level and not include in JetScapeTask
+  virtual void ExecuteTasks() override;
+
   // --------------
+
+  //  Virtual functions to define what is done during the timestep. They can be overridden by different modules/tasks.
 
   virtual void CalculateTime() {};
 
   virtual void CalculateTimeTasks();
 
   virtual void CalculateTimeTask() {};
+
+  //  Virtual functions to define what is done at the end of the timestep. They can be overridden by different modules/tasks.
 
   virtual void ExecTime() {};
 
@@ -157,6 +164,11 @@ public:
   //bool GetMultiThread() {return multiThread;}
 
   //void SetMultiThread(bool m_multiThread) {multiThread = m_multiThread;}
+
+  /// Returns whether the module evolves in time steps
+  bool IsTimeStepped() const {return time_stepped;}
+  /// Sets whether the module evolves in time steps
+  void SetTimeStepped(bool m_time_stepped) {time_stepped = m_time_stepped;}
 protected:
 
   //template<typename T>
@@ -168,6 +180,9 @@ private:
   static int current_event;
   shared_ptr<std::mt19937> mt19937_generator_;
   //bool multiThread = false;
+  
+  /// Decides whether the module evolves in time steps
+  bool time_stepped;
 };
 
 /**

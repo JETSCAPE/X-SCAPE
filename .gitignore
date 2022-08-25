@@ -8,6 +8,7 @@
 *.hepmc
 *.*~
 .DS_Store
+.vscode
 html/*
 build*/*
 external_packages/LBT*

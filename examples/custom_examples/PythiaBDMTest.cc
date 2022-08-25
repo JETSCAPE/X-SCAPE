@@ -113,12 +113,12 @@ int main(int argc, char** argv)
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
 
-  //Set inactive task (per event) and with main clock attached do per time step for these modules ...
+  //Do per time step for these modules with main clock attached ...
   //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get
   //time, either main clock time or if module clock attached the tranformed time via: GetModuleCurrentTime();
 
-  jlossmanager->SetActive(false);
-  jloss->SetActive(false);
+  jlossmanager->SetTimeStepped(true);
+  jloss->SetTimeStepped(true);
 
   //Matter is added but not executed, need to implement the per time step execution in JetEnergyLoss::DoShower()...
   auto matter = make_shared<Matter> ();
@@ -135,10 +135,10 @@ int main(int argc, char** argv)
 
   auto cascadeTest = make_shared<CascadeTest> ();
   cascadeTest->SetMultiThread(true);
-  cascadeTest->SetActive(false);
+  cascadeTest->SetTimeStepped(true);
 
   auto bulkmanager = make_shared<BulkDynamicsManager> ();
-  bulkmanager->SetActive(true);//Time-step evolution
+  bulkmanager->SetTimeStepped(true);  //Time-step evolution
   bulkmanager->SetTimeRange(-20.0,20.0);
   bulkmanager->Add(hydro);
   //bulkmanager->Add(cascadeTest);

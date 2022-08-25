@@ -318,6 +318,7 @@
 
   <!-- Hadronic Afterburner  -->
   <Afterburner>
+    <include_fragmentation_hadrons>0</include_fragmentation_hadrons>
     <!-- SMASH -->
     <SMASH>
       <name>SMASH</name>
