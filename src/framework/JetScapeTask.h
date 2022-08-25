@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -45,11 +45,11 @@ public:
   */
   JetScapeTask();
 
-  /** Default destructor for a JetScapeTask.                     
+  /** Default destructor for a JetScapeTask.
    */
   virtual ~JetScapeTask();
 
-  /**  A virtual function to define a default initialization function for a JetScapeTask. It can  be overridden by different modules tasks.                                
+  /**  A virtual function to define a default initialization function for a JetScapeTask. It can  be overridden by different modules tasks.
   */
   virtual void Init();
 
@@ -70,11 +70,11 @@ public:
    */
   virtual void ExecuteTasks();
 
-  /** A virtual function to define a default ExecuteTask() function for a JetScapeTask. It can be overridden by different modules/tasks. 
+  /** A virtual function to define a default ExecuteTask() function for a JetScapeTask. It can be overridden by different modules/tasks.
    */
   virtual void ExecuteTask(){};
 
-  /** A virtual function to define a default InitTask() function for a JetScapeTask. It can be overridden by different modules/tasks.                                 
+  /** A virtual function to define a default InitTask() function for a JetScapeTask. It can be overridden by different modules/tasks.
    */
   virtual void InitTask(){};
 
@@ -91,7 +91,7 @@ public:
    */
   virtual void ClearTask(){};
 
-  /** A virtual function to define a default FinishTask() function for a JetScapeTask. It can be overridden by different modules/tasks.                           
+  /** A virtual function to define a default FinishTask() function for a JetScapeTask. It can be overridden by different modules/tasks.
    */
   virtual void FinishTask(){};
 
@@ -111,12 +111,12 @@ public:
       Current setup: Every task gets handed a pointer to the writer
       and can add any information it likes to it
       (using predefined functions like WriteComment())
-      This is maximally flexible but makes it difficult to 
+      This is maximally flexible but makes it difficult to
       properly store information for a variety of outputs.
       E.g., sigmaGen: A HardProcess can easily write the xsec to any stream-type output
-      using WriteComment. But to set it in a HepMC file, either HardProcess needs to 
+      using WriteComment. But to set it in a HepMC file, either HardProcess needs to
       make a case-by-case selection, meaning a new file format would need to percolate
-      through multiple base classes, or the writer needs to know this information 
+      through multiple base classes, or the writer needs to know this information
       and implement WriteEvent appropriately. The latter is obviously better, but
       it's non-trivial to collect this information.
    */
@@ -136,7 +136,7 @@ public:
   */
   virtual void Add(shared_ptr<JetScapeTask> m_tasks);
 
-  /** This function returns the current task number. 
+  /** This function returns the current task number.
    */
   virtual const inline int GetMyTaskNumber() const { return my_task_number_; };
 
@@ -155,7 +155,7 @@ public:
    */
   void EraseTaskAt(int i) { tasks.erase((tasks.begin() + i)); }
 
-  /** This function resizes the length of the vector of tasks to "i". If "i" is less than the current size, it will keep the first i elements of the vector of the tasks of a JetScapeTask. 
+  /** This function resizes the length of the vector of tasks to "i". If "i" is less than the current size, it will keep the first i elements of the vector of the tasks of a JetScapeTask.
    */
   void ResizeTaskList(int i) { tasks.resize(i); }
 
@@ -167,7 +167,7 @@ public:
    */
   int GetNumberOfTasks() { return (int)tasks.size(); }
 
-  /** This function tells whether the task is active or not.
+  /** This function tells whether the task is active or not i.e. whether its Exec() function is run.
    */
   const bool GetActive() const { return active_exec; }
 
@@ -202,9 +202,12 @@ private:
   vector<shared_ptr<JetScapeTask>> tasks;
   //list<shared_ptr<JetScapeTask>> tasks; // list vs vector any advantage of list?
 
+  /** Flag to set taks to be inactive. When false, task execution is
+   * decactivated i.e. their Exec() function is not run.
+   */
   bool active_exec;
   bool multiThread = false;
-  
+
   string id;
   // if for example a search rather position ... (or always sort with predefined order!?)
 
