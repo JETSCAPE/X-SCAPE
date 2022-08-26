@@ -171,35 +171,11 @@ smash::ParticleList SmashWrapper::convert_to_plist(std::vector<shared_ptr<Hadron
   return new_particles;
 }
 
-// Just produce a few new hadrons with some random positions
-std::vector<shared_ptr<Hadron>> SomeNewHadrons(double randomness) {
-  const int nparticles = 3;
-  std::vector<shared_ptr<Hadron>> hadron_list;
-
-  for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
-    const int hadron_label = 0;
-    const int hadron_status = 11;
-    const int hadron_id = 111; // current_hadron.pid;
-    const double hadron_mass = 0.138;
-    const double pz = 0.1  * ipart;
-    const double energy = std::sqrt(hadron_mass*hadron_mass + pz*pz);
-    FourVector hadron_p(pz, 0.0, 0.0, energy);
-    // Just make sure particles are not at the same pos.
-    FourVector hadron_x(ipart, randomness/10., 0.0, ipart);
-
-    // create a JETSCAPE Hadron
-    hadron_list.push_back(make_shared<Hadron>(hadron_label, hadron_id,
-                                          hadron_status, hadron_p, hadron_x,
-                                          hadron_mass));
-  }
-  return hadron_list;
-}
 
 void SmashWrapper::CalculateTimeTask() {
 
-  // For testing: Just get some new random hadrons to inject into SMASH
-  std::vector<shared_ptr<Hadron>> new_JS_hadrons = SomeNewHadrons(GetMainClock()->GetCurrentTime());
-  // TODO(stdnmr) Get new hadrons from partilization here
+  // TODO(stdnmr) Get new hadrons from BDM here
+  std::vector<shared_ptr<Hadron>> new_JS_hadrons = {}; 
 
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
   JSINFO << "Propgating SMASH until t = " << until_time;
