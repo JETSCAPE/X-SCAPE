@@ -218,4 +218,12 @@ void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell
   }
 }
 
+std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {
+  std::vector<shared_ptr<Hadron>> new_h_to_return;
+  // The swap puts the empty vector for new_hadrons_for_timestep
+  // and therefore clears the vector to be filled again at next timestep
+  new_h_to_return.swap(new_hadrons_for_timestep);
+  return new_h_to_return;
+}
+
 } // end namespace Jetscape

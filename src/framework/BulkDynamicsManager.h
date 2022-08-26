@@ -85,10 +85,20 @@ public:
 
   void InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
 
+  /** Get the new hadrons for the upcoming timesteps and clear the vector for the next timestep
+   */
+  std::vector<shared_ptr<Hadron>> GetNewHadronsAndClear();
+
 private:
 
+  /** New hadrons for upcoming timestep of transport evolution,
+   * to be filled at end of timestep by particlization routine.
+   */
+  std::vector<shared_ptr<Hadron>> new_hadrons_for_timestep;
+  /** Switching temperature between media.
+   */
   float Tc;
-  
+
 };
 
 } // end namespace Jetscape
