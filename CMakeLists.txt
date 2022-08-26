@@ -444,6 +444,11 @@ target_link_libraries(PythiaNoBDMTest JetScape )
 add_executable(PythiaBDMTest_Hydro_Cascade ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
 target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
 
+if ( USE_SMASH )
+    add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
+    target_link_libraries(SMASHTest JetScape )
+endif (USE_SMASH )
+
 # executables with additional dependencies
 if ( USE_IPGlasma )
     target_link_libraries(runJetscape ${GSL_LIBRARIES})
