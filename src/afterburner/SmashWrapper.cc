@@ -48,7 +48,7 @@ void SmashWrapper::InitTask() {
   boost::filesystem::path output_path("./smash_output");
   // do not store tabulation, which is achieved by an empty tabulations path
   std::string tabulations_path("");
-  const std::string smash_version(SMASH_VERSION_VERBOSE);
+  const std::string smash_version(SMASH_VERSION);
 
   auto config = smash::setup_config_and_logging(smash_config, smash_hadron_list,
                                                 smash_decays_list);
