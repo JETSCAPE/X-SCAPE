@@ -129,15 +129,12 @@ void BulkDynamicsManager::ExecTime()
 {
   VERBOSE(3) << "Execute Bulk Dynamics Manager at timestep (end) ... Current Time = "<<GetModuleCurrentTime()<<" Thread Id = "<<this_thread::get_id();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
-
   VERBOSE(3) << "Size of new hadron list at beginning of ExecTime (should be empty) = " << new_hadrons_for_timestep.size();
 
   AddNewHadrons(SomeNewHadrons(GetModuleCurrentTime()));
-
   JetScapeModuleBase::ExecTimeTasks();
 
   VERBOSE(3) << "Size of new hadron list at end of ExecTime (should be something) = " << new_hadrons_for_timestep.size();
-
 }
 
 void BulkDynamicsManager::InitPerEvent()
@@ -258,7 +255,7 @@ void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell
 std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {
   std::vector<shared_ptr<Hadron>> new_h_to_return;
   // The swap puts the empty vector for new_hadrons_for_timestep
-  // and therefore clears the vector to be filled again at next timestep
+  // and therefore clears the vector (to be filled again at next timestep)
   new_h_to_return.swap(new_hadrons_for_timestep);
   return new_h_to_return;
 }
