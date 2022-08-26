@@ -101,10 +101,11 @@ std::vector<std::vector<shared_ptr<Hadron>>> TestHadronList() {
     const int hadron_status = 11;
     const int hadron_id = 111; // current_hadron.pid;
     const double hadron_mass = 0.138;
-    FourVector hadron_p(1.0 * ipart, 0.0,
-                            0.0, +1.0  * ipart);
-    FourVector hadron_x(ipart, 0.0, 0.0,
-                        ipart);
+    const double pz = 0.1  * ipart;
+    const double energy = std::sqrt(hadron_mass*hadron_mass + pz*pz);
+    FourVector hadron_p(pz, 0.0, 0.0, energy);
+    FourVector hadron_x(ipart, 0.0, 0.0, ipart);
+
 
     // create a JETSCAPE Hadron
     hadron_list.push_back(make_shared<Hadron>(hadron_label, hadron_id,
