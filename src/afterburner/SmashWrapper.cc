@@ -70,8 +70,8 @@ void SmashWrapper::InitTask() {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
 
-  smash::initalize_particles_decays_and_tabulations(config, smash_version,
-                                                    tabulations_path);
+  smash::initialize_particles_decays_and_tabulations(config, smash_version,
+                                                     tabulations_path);
 
   // Enforce timestep compatibility (temporarily)
   if (IsTimeStepped()) {
@@ -154,16 +154,57 @@ void SmashWrapper::InitPerEvent() {
 }
 
 
-void SmashWrapper::CalculateTimeTask() {
-  // TODO(stdnmr) Get new hadrons from partilization here
-  // TODO(stdnmr) Convert to SMASH ParticleList (change existinng function's name probably and create static version)
-  // Pseudo Version:
-  smash::ParticleList new_particles = convert_to_plist(soft_particlization_sampler_->New_Hadrons)
+smash::ParticleList SmashWrapper::convert_to_plist(std::vector<shared_ptr<Hadron>>& JS_hadrons) {
+  // TODO Merge/generalize this to be also used in JS_hadrons_to_smash_particles()
+  smash::ParticleList new_particles;
+  for (const auto JS_had : JS_hadrons) {
+    const FourVector p = JS_had->p_in();
+    const FourVector r = JS_had->x_in();
+    smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
+    new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
+    new_p.set_4momentum(p.t(), p.x(), p.y(), p.z());
 
-  const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_
+    std::cout << "particle to be put into smash: " << new_p << '\n';
+
+    new_particles.push_back(new_p);
+  }
+  return new_particles;
+}
+
+// Just produce a few new hadrons with some random positions
+std::vector<shared_ptr<Hadron>> SomeNewHadrons(double randomness) {
+  const int nparticles = 3;
+  std::vector<shared_ptr<Hadron>> hadron_list;
+
+  for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
+    const int hadron_label = 0;
+    const int hadron_status = 11;
+    const int hadron_id = 111; // current_hadron.pid;
+    const double hadron_mass = 0.138;
+    const double pz = 0.1  * ipart;
+    const double energy = std::sqrt(hadron_mass*hadron_mass + pz*pz);
+    FourVector hadron_p(pz, 0.0, 0.0, energy);
+    // Just make sure particles are not at the same pos.
+    FourVector hadron_x(ipart, randomness/10., 0.0, ipart);
+
+    // create a JETSCAPE Hadron
+    hadron_list.push_back(make_shared<Hadron>(hadron_label, hadron_id,
+                                          hadron_status, hadron_p, hadron_x,
+                                          hadron_mass));
+  }
+  return hadron_list;
+}
+
+void SmashWrapper::CalculateTimeTask() {
+
+  // For testing: Just get some new random hadrons to inject into SMASH
+  std::vector<shared_ptr<Hadron>> new_JS_hadrons = SomeNewHadrons(GetMainClock()->GetCurrentTime());
+  // TODO(stdnmr) Get new hadrons from partilization here
+
+  const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
   JSINFO << "Propgating SMASH until t = " << until_time;
   if (!only_final_decays_) {
-    smash_experiment_->run_time_evolution(until_time, new_particles);
+    smash_experiment_->run_time_evolution(until_time, convert_to_plist(new_JS_hadrons));
   }
 }
 
