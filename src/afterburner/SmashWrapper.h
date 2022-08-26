@@ -67,7 +67,7 @@ class SmashWrapper : public Afterburner {
 private:
 
   /// Convert Jetscape hadron list to smash particle list
-  smash::ParticleList convert_to_plist(std::vector<shared_ptr<Hadron>>& JS_hadrons);
+  smash::ParticleList convert_to_plist(const std::vector<shared_ptr<Hadron>>& JS_hadrons);
 
   bool only_final_decays_ = false;
   double end_time_ = -1.0;

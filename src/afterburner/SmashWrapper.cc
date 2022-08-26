@@ -154,10 +154,10 @@ void SmashWrapper::InitPerEvent() {
 }
 
 
-smash::ParticleList SmashWrapper::convert_to_plist(std::vector<shared_ptr<Hadron>>& JS_hadrons) {
+smash::ParticleList SmashWrapper::convert_to_plist(const std::vector<shared_ptr<Hadron>>& JS_hadrons) {
   // TODO Merge/generalize this to be also used in JS_hadrons_to_smash_particles()
   smash::ParticleList new_particles;
-  for (const auto JS_had : JS_hadrons) {
+  for (const auto& JS_had : JS_hadrons) {
     const FourVector p = JS_had->p_in();
     const FourVector r = JS_had->x_in();
     smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
