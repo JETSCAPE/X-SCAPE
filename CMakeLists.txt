@@ -449,6 +449,9 @@ if ( USE_SMASH )
     target_link_libraries(SMASHTest JetScape )
 endif (USE_SMASH )
 
+# add_executable(ConcurrencyTest ./examples/custom_examples/ConcurrencyTest.cc)
+# target_link_libraries(ConcurrencyTest JetScape )
+
 # executables with additional dependencies
 if ( USE_IPGlasma )
     target_link_libraries(runJetscape ${GSL_LIBRARIES})
