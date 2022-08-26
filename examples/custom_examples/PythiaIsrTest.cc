@@ -87,7 +87,7 @@ int main(int argc, char** argv)
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
-  JetScapeLogger::Instance()->SetVerboseLevel(5);
+  JetScapeLogger::Instance()->SetVerboseLevel(8);
 
 
   Show();
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
   auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
 //  auto iDummy = make_shared<DummySplit> ();
 
-    auto iMatter = make_shared<iMATTER> ();
+  auto iMatter = make_shared<iMATTER> ();
   double tMax = 10.0;
   isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax); //will be moved to XML and proper Init() in IsrJet later ...
   iMatter->SetMaxT(-tMax); // Have To figure out a proper way to get this when it's moved to XML
@@ -186,13 +186,14 @@ int main(int argc, char** argv)
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
+  jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax); //will be moved to XML and proper Init() in IsrJet later ...
 
   //Set inactive task (per event) and with main clock attached do per time step for these modules ...
   //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get
   //time, either main clock time or if module clock attached the tranformed time via: GetModuleCurrentTime();
 
-  jlossmanager->SetActive(false);
-  jloss->SetActive(false);
+  // jlossmanager->SetActive(false);
+  // jloss->SetActive(false);
 
   //***************************************************************************
   //REMARK: Ordering of graph with negative times and iteration to be fixed!!!
@@ -234,9 +235,9 @@ int main(int argc, char** argv)
   jlossmanager->Add(jloss);
   jetscape->Add(jlossmanager);
 
-  auto cascadeTest = make_shared<CascadeTest> ();
-  cascadeTest->SetMultiThread(true);
-  cascadeTest->SetActive(false);
+  // auto cascadeTest = make_shared<CascadeTest> ();
+  // cascadeTest->SetMultiThread(true);
+  // cascadeTest->SetActive(false);
   //jetscape->Add(cascadeTest);
 
 
@@ -258,6 +259,9 @@ int main(int argc, char** argv)
   hadro->Add(hadroModule);
   hadroMgr->Add(hadro);
   // hadroMgr->SetActive(false);
+  // hadroMgr->SetTimeRange(tMax,tMax);
+  // hadroMgr->SetActive(false);
+  // hadroMgr->SetSecond(true);
   jetscape->Add(hadroMgr);
 
   // Output

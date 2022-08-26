@@ -451,7 +451,7 @@ void JetEnergyLoss::Exec() {
   if (pPrinter) {
     pPrinter->GetFinalPartons(pShower);
   }
-
+  if(this->GetId() == std::string("IsrJet")) return;
   shared_ptr<JetEnergyLoss> pEloss =
     JetScapeSignalManager::Instance()->GetEnergyLossPointer().lock();
   if (pEloss) {

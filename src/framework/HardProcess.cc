@@ -78,6 +78,7 @@ void HardProcess::Clear() {
   hp_list.clear();
   hd_list.clear();
   ps_list.clear();
+  Remnants.clear();
 
   VERBOSE(8) << hp_list.size();
 
