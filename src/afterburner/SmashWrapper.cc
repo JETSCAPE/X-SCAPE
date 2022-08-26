@@ -163,9 +163,6 @@ smash::ParticleList SmashWrapper::convert_to_plist(std::vector<shared_ptr<Hadron
     smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
     new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
     new_p.set_4momentum(p.t(), p.x(), p.y(), p.z());
-
-    std::cout << "particle to be put into smash: " << new_p << '\n';
-
     new_particles.push_back(new_p);
   }
   return new_particles;
@@ -174,8 +171,8 @@ smash::ParticleList SmashWrapper::convert_to_plist(std::vector<shared_ptr<Hadron
 
 void SmashWrapper::CalculateTimeTask() {
 
-  // TODO(stdnmr) Get new hadrons from BDM here
-  std::vector<shared_ptr<Hadron>> new_JS_hadrons = {}; 
+  std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimetepParticlizationHadrons();
+  JSINFO << "SMASH got " << new_JS_hadrons.size() << " timestep partilization hadrons from BDM.";
 
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
   JSINFO << "Propgating SMASH until t = " << until_time;
