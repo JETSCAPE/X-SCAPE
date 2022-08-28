@@ -451,6 +451,8 @@ void JetEnergyLoss::Exec() {
   if (pPrinter) {
     pPrinter->GetFinalPartons(pShower);
   }
+
+  // IS: Skip sending the final state partons from the ISRJet modules
   if(this->GetId() == std::string("IsrJet")) return;
   shared_ptr<JetEnergyLoss> pEloss =
     JetScapeSignalManager::Instance()->GetEnergyLossPointer().lock();
