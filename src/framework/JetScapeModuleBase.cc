@@ -80,6 +80,17 @@ void JetScapeModuleBase::ExecuteTasks()
   }
 }
 
+void JetScapeModuleBase::ClearTasks() {
+  auto tasks =  GetTaskList();
+  VERBOSE(7) << " : # Subtasks = " << tasks.size();
+  for (auto it : tasks) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (module && module->GetActive() && !module->IsTimeStepped()) {
+      it->Clear();
+    }
+  }
+}
+
 void JetScapeModuleBase::CalculateTimeTasks()
 {
   if (ClockUsed()) {

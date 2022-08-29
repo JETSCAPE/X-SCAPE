@@ -69,8 +69,11 @@ public:
    */
   virtual void Clear(){};
 
-  // Override execute tasks at least (for now) to keep is-time-stepped handling on module level and not include in JetScapeTask
+  // Override execute tasks (at least for now) to keep is-time-stepped handling on module level and not include in JetScapeTask
   virtual void ExecuteTasks() override;
+
+  // Override clear tasks (at least for now) to keep is-time-stepped handling on module level and not include in JetScapeTask
+  virtual void ClearTasks() override;
 
   // --------------
 

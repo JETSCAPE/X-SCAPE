@@ -1061,7 +1061,7 @@ void JetScape::Exec() {
     }
 
     // Now clean up, only affects active tasks
-    JetScapeTask::ClearTasks();
+    JetScapeModuleBase::ClearTasks();
 
     //have to call this after writer and call explciitly the clear functions
     //in finish per event, because like writer, clear only for active tasks ...
