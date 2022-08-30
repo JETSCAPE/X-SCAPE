@@ -91,13 +91,13 @@ public:
 
   /** Add one new hadron for transport to hadron list for new timestep
    */
-  void AddNewHadron(shared_ptr<Hadron>& new_hadron) {
+  void AddNewHadron(const shared_ptr<Hadron>& new_hadron) {
     new_hadrons_for_timestep.push_back(new_hadron);
   }
 
   /** Add list of new hadrons for transport to hadron list for new timestep
    */
-  void AddNewHadrons(std::vector<shared_ptr<Hadron>>& new_hadrons) {
+  void AddNewHadrons(const std::vector<shared_ptr<Hadron>>& new_hadrons) {
     for (const auto& had : new_hadrons) {
       AddNewHadron(had);
     }
