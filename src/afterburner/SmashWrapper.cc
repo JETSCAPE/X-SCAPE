@@ -48,7 +48,7 @@ void SmashWrapper::InitTask() {
   boost::filesystem::path output_path("./smash_output");
   // do not store tabulation, which is achieved by an empty tabulations path
   std::string tabulations_path("");
-  const std::string smash_version(SMASH_VERSION_VERBOSE);
+  const std::string smash_version(SMASH_VERSION);
 
   auto config = smash::setup_config_and_logging(smash_config, smash_hadron_list,
                                                 smash_decays_list);
@@ -70,8 +70,8 @@ void SmashWrapper::InitTask() {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
 
-  smash::initalize_particles_decays_and_tabulations(config, smash_version,
-                                                    tabulations_path);
+  smash::initialize_particles_decays_and_tabulations(config, smash_version,
+                                                     tabulations_path);
 
   // Enforce timestep compatibility (temporarily)
   if (IsTimeStepped()) {
@@ -101,10 +101,11 @@ std::vector<std::vector<shared_ptr<Hadron>>> TestHadronList() {
     const int hadron_status = 11;
     const int hadron_id = 111; // current_hadron.pid;
     const double hadron_mass = 0.138;
-    FourVector hadron_p(1.0 * ipart, 0.0,
-                            0.0, +1.0  * ipart);
-    FourVector hadron_x(ipart, 0.0, 0.0,
-                        ipart);
+    const double pz = 0.1  * ipart;
+    const double energy = std::sqrt(hadron_mass*hadron_mass + pz*pz);
+    FourVector hadron_p(pz, 0.0, 0.0, energy);
+    FourVector hadron_x(ipart, 0.0, 0.0, ipart);
+
 
     // create a JETSCAPE Hadron
     hadron_list.push_back(make_shared<Hadron>(hadron_label, hadron_id,
@@ -153,11 +154,30 @@ void SmashWrapper::InitPerEvent() {
 }
 
 
+smash::ParticleList SmashWrapper::convert_to_plist(const std::vector<shared_ptr<Hadron>>& JS_hadrons) {
+  // TODO Merge/generalize this to be also used in JS_hadrons_to_smash_particles()
+  smash::ParticleList new_particles;
+  for (const auto& JS_had : JS_hadrons) {
+    const FourVector p = JS_had->p_in();
+    const FourVector r = JS_had->x_in();
+    smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
+    new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
+    new_p.set_4momentum(p.t(), p.x(), p.y(), p.z());
+    new_particles.push_back(new_p);
+  }
+  return new_particles;
+}
+
+
 void SmashWrapper::CalculateTimeTask() {
+
+  std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimetepParticlizationHadrons();
+  JSINFO << "SMASH got " << new_JS_hadrons.size() << " timestep partilization hadrons from BDM.";
+
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
   JSINFO << "Propgating SMASH until t = " << until_time;
   if (!only_final_decays_) {
-    smash_experiment_->run_time_evolution(until_time);
+    smash_experiment_->run_time_evolution(until_time, convert_to_plist(new_JS_hadrons));
   }
 }
 

@@ -92,15 +92,50 @@ void BulkDynamicsManager::CalculateTime()
   VERBOSE(3) << "Calculate Bulk Dynamics Manager per timestep ... Current Time = "<<GetModuleCurrentTime();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
 
+  VERBOSE(3) << "Size of new hadron list at beginning of CalculateTime in BDM (should be something) = " << new_hadrons_for_timestep.size();
+
   JetScapeModuleBase::CalculateTimeTasks();
+
+    VERBOSE(3) << "Size of new hadron list at end of CalculateTime in BDM (should be empty) = " << new_hadrons_for_timestep.size();
+
+}
+
+// Just produce a few new hadrons with some random positions
+// Eventually provided by partilization itself
+std::vector<shared_ptr<Hadron>> SomeNewHadrons(double randomness_by_time) {
+  const int nparticles = 3;
+  std::vector<shared_ptr<Hadron>> hadron_list;
+
+  for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
+    const int hadron_label = 0;
+    const int hadron_status = 11;
+    const int hadron_id = 111; // current_hadron.pid;
+    const double hadron_mass = 0.138;
+    const double pz = 0.1  * ipart;
+    const double energy = std::sqrt(hadron_mass*hadron_mass + pz*pz);
+    FourVector hadron_p(pz, 0.0, 0.0, energy);
+    // Just make sure particles are not at the same pos.
+    FourVector hadron_x(ipart, randomness_by_time/10., 0.0, ipart);
+
+    // create a JETSCAPE Hadron
+    hadron_list.push_back(make_shared<Hadron>(hadron_label, hadron_id,
+                                          hadron_status, hadron_p, hadron_x,
+                                          hadron_mass));
+  }
+  // return {};  // if no new hadrons are wanted uncomment
+  return hadron_list;
 }
 
 void BulkDynamicsManager::ExecTime()
 {
-  VERBOSE(3) << "Execute Bulk Dynamics Manager per timestep ... Current Time = "<<GetModuleCurrentTime()<<" Thread Id = "<<this_thread::get_id();
+  VERBOSE(3) << "Execute Bulk Dynamics Manager at timestep (end) ... Current Time = "<<GetModuleCurrentTime()<<" Thread Id = "<<this_thread::get_id();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
+  VERBOSE(3) << "Size of new hadron list at beginning of ExecTime (should be empty) = " << new_hadrons_for_timestep.size();
 
+  AddNewHadrons(SomeNewHadrons(GetModuleCurrentTime()));
   JetScapeModuleBase::ExecTimeTasks();
+
+  VERBOSE(3) << "Size of new hadron list at end of ExecTime (should be something) = " << new_hadrons_for_timestep.size();
 }
 
 void BulkDynamicsManager::InitPerEvent()
@@ -216,6 +251,14 @@ void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell
       fluid_cell_info_ptr->pi[i][j] = bulk_info_ptr->pi[i][j];
     }
   }
+}
+
+std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {
+  std::vector<shared_ptr<Hadron>> new_h_to_return;
+  // The swap puts the empty vector for new_hadrons_for_timestep
+  // and therefore clears the vector (to be filled again at next timestep)
+  new_h_to_return.swap(new_hadrons_for_timestep);
+  return new_h_to_return;
 }
 
 } // end namespace Jetscape

@@ -39,7 +39,7 @@ void Afterburner::CalculateTime() {
 
 std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GetSoftParticlizationHadrons() {
   auto soft_particlization = JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
-  if (!soft_particlization) {  
+  if (!soft_particlization) {
     JSWARN << "No soft particlization module found. It is necessary to provide"
            << " hadrons to afterburner.";
     exit(1);
@@ -84,6 +84,16 @@ std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GatherAfterburner
                                      frag_hadrons.begin(), frag_hadrons.end());
   }
   return afterburner_had_events;
+}
+
+std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimetepParticlizationHadrons() {
+  auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
+  if (!bdm) {
+    JSWARN << "No BulkDynamicsManager module found . It is necessary to provide"
+           << " hadrons for upcoming timesteps.";
+    exit(1);
+  }
+  return bdm->GetNewHadronsAndClear();
 }
 
 } // end namespace Jetscape

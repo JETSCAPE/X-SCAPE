@@ -52,6 +52,8 @@ protected:
   std::vector<std::vector<std::shared_ptr<Hadron>>> GetSoftParticlizationHadrons();
   /// Get the list of fragmentation hadrons
   std::vector<std::shared_ptr<Hadron>> GetFragmentationHadrons();
+  /// Get the list of hadrons for the upcoming timestep from BulkDynamicsManager (will clear the list)
+  std::vector<std::shared_ptr<Hadron>> GetTimetepParticlizationHadrons();
 };
 
 } // end namespace Jetscape
