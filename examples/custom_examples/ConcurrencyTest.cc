@@ -164,6 +164,7 @@ int main(int argc, char** argv)
   bulkmanager->SetTimeStepped(true);
   smash->SetTimeStepped(true); // if attached modules are not set to timestepped there will be not executed
   bulkmanager->Add(smash);
+  // bulkmanager->Add(cartestianhydro) // todo: attach hydro in cartesian coordinates here as well
   jetscape->Add(bulkmanager);
 
   // afterburner (w/o BDM)
