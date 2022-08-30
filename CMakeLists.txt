@@ -447,10 +447,11 @@ target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
 if ( USE_SMASH )
     add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
     target_link_libraries(SMASHTest JetScape )
+
+    add_executable(ConcurrencyTest ./examples/custom_examples/ConcurrencyTest.cc)
+    target_link_libraries(ConcurrencyTest JetScape )
 endif (USE_SMASH )
 
-# add_executable(ConcurrencyTest ./examples/custom_examples/ConcurrencyTest.cc)
-# target_link_libraries(ConcurrencyTest JetScape )
 
 # executables with additional dependencies
 if ( USE_IPGlasma )
