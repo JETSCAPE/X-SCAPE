@@ -122,6 +122,7 @@ std::vector<shared_ptr<Hadron>> SomeNewHadrons(double randomness_by_time) {
                                           hadron_status, hadron_p, hadron_x,
                                           hadron_mass));
   }
+  // return {};  // if no new hadrons are wanted uncomment
   return hadron_list;
 }
 
