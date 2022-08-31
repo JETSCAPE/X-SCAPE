@@ -96,7 +96,7 @@ public:
   sigslot::signal5<double, double, double, double,
                    std::unique_ptr<FluidCellInfo> &, multi_threaded_local>
       GetHydroCellSignal;
-  
+
   sigslot::signal1<double &, multi_threaded_local> GetHydroTau0Signal;
 
   /** For future development. A signal to connect the JetEnergyLoss object to the function UpdateEnergyDeposit() of the FluidDynamics class.

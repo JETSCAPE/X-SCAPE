@@ -79,11 +79,17 @@ int main(int argc, char** argv)
    
   Show();
 
-  auto jetscape = make_shared<JetScape>("./jetscape_init.xml", 1);
+  auto jetscape = make_shared<JetScape>();
+  const char* mainXMLName = "../config/jetscape_main.xml";
+  const char* userXMLName = "../config/jetscape_user.xml";
+
+  jetscape->SetXMLMainFileName(mainXMLName);
+  jetscape->SetXMLUserFileName(userXMLName);
+
+  jetscape->SetNumberOfEvents(1);
   jetscape->SetReuseHydro (true);
   jetscape->SetNReuseHydro (5);
-
-  //auto jetscape = make_shared<JetScape>("./jetscape_init.xml", 2);
+  // jetscape->SetNumberOfEvents(2);
   //jetscape->SetReuseHydro (false);
   //jetscape->SetNReuseHydro (0);
 
@@ -158,7 +164,7 @@ int main(int argc, char** argv)
 #endif
   jetscape->Add(writer);
 
-  // Intialize all modules tasks
+  // Initialize all modules tasks
   jetscape->Init();
 
   // Run JetScape with all task/modules as specified ...

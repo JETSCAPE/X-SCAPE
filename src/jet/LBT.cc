@@ -85,7 +85,7 @@ LBT::LBT() {
 LBT::~LBT() { VERBOSE(8); }
 
 void LBT::Init() {
-  JSINFO << "Intialize LBT ...";
+  JSINFO << "Initialize LBT ...";
 
   //...Below is added by Shanshan
   //...read parameters from LBT.input first, but can be changed in JETSCAPE xml file if any conflict exists
@@ -101,7 +101,7 @@ void LBT::Init() {
   //    }
 
   std::string s = GetXMLElementText({"Eloss", "Lbt", "name"});
-  JSDEBUG << s << " to be initilizied ...";
+  JSDEBUG << s << " to be initialized ...";
 
   //double m_qhat=-99.99;
   //lbt->FirstChildElement("qhat")->QueryDoubleText(&m_qhat);
@@ -118,13 +118,14 @@ void LBT::Init() {
   }
 
   Kprimary = GetXMLElementInt({"Eloss", "Lbt", "only_leading"});
+  run_alphas = GetXMLElementInt({"Eloss", "Lbt", "run_alphas"});
   Q00 = GetXMLElementDouble({"Eloss", "Lbt", "Q0"});
   fixAlphas = GetXMLElementDouble({"Eloss", "Lbt", "alphas"});
   hydro_Tc = GetXMLElementDouble({"Eloss", "Lbt", "hydro_Tc"});
-
+  tStart = GetXMLElementDouble({"Eloss", "tStart"});
   JSINFO << MAGENTA << "LBT parameters -- in_med: " << vacORmed
          << " Q0: " << Q00 << "  only_leading: " << Kprimary
-         << "  alpha_s: " << fixAlphas << "  hydro_Tc: " << hydro_Tc;
+         << "  alpha_s: " << fixAlphas << "  hydro_Tc: " << hydro_Tc<<", tStart="<<tStart;
 
   if (!flag_init) {
     read_tables(); // initialize various tables
@@ -852,7 +853,20 @@ void LBT::LBT0(int &n, double &ti) {
         //              if(E<T) preKT=4.0*pi/9.0/log(scaleAK*T*T/0.04)/alphas/fixKT;
         //              else preKT=4.0*pi/9.0/log(scaleAK*E*T/0.04)/alphas/fixKT;
 
-        //              runKT=4.0*pi/9.0/log(2.0*E*T/0.04)/0.3;
+        if(run_alphas==1) {
+            //runKT=4.0*pi/9.0/log(2.0*E*T/0.04)/0.3;
+            fixedLog = log(5.7*E/4.0/6.0/pi/0.3/T);
+            scaleMu2 = 2.0*E*T;
+            if(scaleMu2 < 1.0) {
+                scaleMu2 = 1.0;
+                runAlphas = alphas;
+            } else {
+                double lambdaQCD2 = exp(-4.0*pi/9.0/alphas);
+                runAlphas = 4.0*pi/9.0/log(scaleMu2/lambdaQCD2);
+            }
+            runKT = runAlphas/0.3;
+            runLog = log(scaleMu2/6.0/pi/T/T/alphas)/fixedLog;
+        }    
 
         lam(KATTC0, RTE, PLen, T, T1, T2, E1, E2, iT1, iT2, iE1,
             iE2); //modified: use P instead
@@ -863,8 +877,13 @@ void LBT::LBT0(int &n, double &ti) {
         KPfactor = 1.0 + KPamp * exp(-PLen * PLen / 2.0 / KPsig / KPsig);
         KTfactor = 1.0 + KTamp * exp(-pow((temp0 - hydro_Tc), 2) / 2.0 / KTsig /
                                      KTsig);
-        Kfactor =
-            KPfactor * KTfactor * KTfactor * preKT * preKT; // K factor for qhat
+
+        if(run_alphas==1) {
+           Kfactor = KPfactor * KTfactor * KTfactor * runKT * preKT * runLog; // K factor for qhat
+        } else {
+           Kfactor = KPfactor * KTfactor * KTfactor * preKT * preKT; // K factor for qhat
+        }
+       
 
         // get qhat from table
         if (KATTC0 == 21) {
@@ -979,12 +998,19 @@ void LBT::LBT0(int &n, double &ti) {
         Tdiff = Tint_lrf[i];
 
         // get radiation probablity by reading tables -- same for heavy and light partons
-        if (KATTC0 == 21)
-          radng[i] += nHQgluon(KATT1[i], dt_lrf, Tdiff, temp0, E, maxFncHQ) /
-                      2.0 * KTfactor * preKT;
-        else
-          radng[i] += nHQgluon(KATT1[i], dt_lrf, Tdiff, temp0, E, maxFncHQ) *
-                      KTfactor * preKT;
+        if (KATTC0 == 21) {
+            if (run_alphas==1) {
+                radng[i] += nHQgluon(KATT1[i], dt_lrf, Tdiff, temp0, E, maxFncHQ) / 2.0 * KTfactor * runKT;
+            } else {
+                radng[i] += nHQgluon(KATT1[i], dt_lrf, Tdiff, temp0, E, maxFncHQ) / 2.0 * KTfactor * preKT;
+            }
+        } else {
+            if (run_alphas==1) {
+                radng[i] += nHQgluon(KATT1[i], dt_lrf, Tdiff, temp0, E, maxFncHQ) * KTfactor * runKT;
+            } else {
+                radng[i] += nHQgluon(KATT1[i], dt_lrf, Tdiff, temp0, E, maxFncHQ) * KTfactor * preKT;
+            }
+        }
         lim_low = sqrt(6.0 * pi * alphas) * temp0 / E;
         if (abs(KATT1[i]) == 4 || abs(KATT1[i]) == 5)
           lim_high = 1.0;
@@ -1027,7 +1053,11 @@ void LBT::LBT0(int &n, double &ti) {
 
         if (KINT0 == 0)
           probRad = 0.0; // switch off radiation
-        probCol = probCol * KPfactor * KTfactor * preKT;
+        if (run_alphas==1) {
+            probCol = probCol * KPfactor * KTfactor * runKT;
+        } else {
+            probCol = probCol * KPfactor * KTfactor * preKT;
+        }
         probCol = (1.0 - exp(-probCol)) *
                   (1.0 - probRad); // probability of pure elastic scattering
         if (KINT0 == 2)
@@ -2291,6 +2321,13 @@ void LBT::colljet22(int CT, double temp, double qhat0ud, double v0[4],
 
   double p0ex[4] = {0.0};
 
+  int ct1_loop, ct2_loop, flag1, flag2;
+
+  flag1 = 0;
+  flag2 = 0;
+
+
+
   //    Initial 4-momentum of jet
   //
   //************************************************************
@@ -2302,8 +2339,20 @@ void LBT::colljet22(int CT, double temp, double qhat0ud, double v0[4],
 
   int ic = 0;
 
+  ct1_loop = 0;
   do {
+    ct1_loop++;
+    if(flag2 == 1 || ct1_loop > 1e6){
+       flag1 = 1;
+       break;
+    }
+    ct2_loop = 0;
     do {
+      ct2_loop++;
+      if(ct2_loop > 1e6){
+         flag2 = 1;
+         break;
+      }
       xw = 15.0 * ran0(&NUM1);
       razim = 2.0 * pi * ran0(&NUM1);
       rcos = 1.0 - 2.0 * ran0(&NUM1);
@@ -2314,8 +2363,6 @@ void LBT::colljet22(int CT, double temp, double qhat0ud, double v0[4],
       p2[1] = p2[0] * rsin * cos(razim);
       p2[2] = p2[0] * rsin * sin(razim);
 
-      f1 = pow(xw, 3) / (exp(xw) - 1) / 1.4215;
-      f2 = pow(xw, 3) / (exp(xw) + 1) / 1.2845;
       //
       //    cms energy
       //
@@ -2340,6 +2387,9 @@ void LBT::colljet22(int CT, double temp, double qhat0ud, double v0[4],
 
     } while ((tt < qhat0ud) || (tt > (ss - qhat0ud)));
 
+    f1 = pow(xw, 3) / (exp(xw) - 1) / 1.4215;
+    f2 = pow(xw, 3) / (exp(xw) + 1) / 1.2845;
+ 
     uu = ss - tt;
 
     if (CT == 1) {
@@ -2473,6 +2523,21 @@ void LBT::colljet22(int CT, double temp, double qhat0ud, double v0[4],
 
     rank = ran0(&NUM1);
   } while (rank > (msq * ff));
+
+  if(flag1 == 1 || flag2 == 1){ // scatterings cannot be properly sampled
+    transback(v0, p0);
+    transback(v0, p4);
+    qt = 0;
+    p2[0] = 0;
+    p2[1] = 0;
+    p2[2] = 0;
+    p2[3] = 0;
+    p3[0] = 0;
+    p3[1] = 0;
+    p3[2] = 0;
+    p3[3] = 0;
+    return;
+  }
 
   //
   p3[1] = p2[1];
@@ -3791,7 +3856,11 @@ double LBT::nHQgluon(int parID, double dtLRF, double &time_gluon,
     temp_med = temp_min;
   }
 
-  time_num = (int)(time_gluon / delta_tg + 0.5) + 1;
+  if(time_gluon < t_max_1) {
+      time_num = (int)(time_gluon / delta_tg_1 + 0.5) + 1;
+  } else {
+      time_num = (int)((time_gluon - t_max_1) / delta_tg_2 + 0.5) + t_gn_1 + 1;
+  }
   //  temp_num=(int)((temp_med-temp_min)/delta_temp+0.5);
   //  HQenergy_num=(int)(HQenergy/delta_HQener+0.5); // use linear interpolation instead of finding nearest point for E and T dimensions
   temp_num = (int)((temp_med - temp_min) / delta_temp);
@@ -4257,7 +4326,7 @@ void LBT::setParameter(string fileName) {
 
   while (getline(input, line)) {
     char str[1024];
-    strncpy(str, line.c_str(), sizeof(str));
+    strncpy(str, line.c_str(), sizeof(str)-1);
     //          cout << str << endl;
 
     char *divideChar[5];
