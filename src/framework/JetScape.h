@@ -20,6 +20,7 @@
 #include "JetScapeTaskSupport.h"
 #include "JetScapeModuleBase.h"
 #include "CausalLiquefier.h"
+#include <unordered_map>
 
 namespace Jetscape {
 
@@ -99,9 +100,13 @@ protected:
 
   std::shared_ptr<CausalLiquefier> liquefier;
 
-  bool
-      fEnableAutomaticTaskListDetermination; // Option to automatically determine the task list from the XML file,
-      // rather than manually calling JetScapeTask::Add() in the run macro.
+ // Option to automatically determine the task list from the XML file,
+ // rather than manually calling JetScapeTask::Add() in the run macro.
+  bool fEnableAutomaticTaskListDetermination;
+
+  //std::unordered_multimap<bool, std::weak_ptr<JetScapeTask>> taskOrgActiveMap;
+  std::unordered_multimap<int , bool > taskOrgActiveMap;
+
 };
 
 } // end namespace Jetscape

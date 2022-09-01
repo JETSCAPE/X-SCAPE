@@ -143,7 +143,9 @@ int main(int argc, char** argv)
   //mClock->SetTimeRefFrameId("SpaceTime");
 
   // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-1,5,0.1); // JP: make consistent with reading from XML in init phase ...
+  //auto mClock = make_shared<MainClock>("SpaceTime",-1,5,0.1); // JP: make consistent with reading from XML in init phase ...
+  auto mClock = make_shared<MainClock>("SpaceTime",-0.1,0.1,0.1);
+
   auto mModuleClock = make_shared<ModuleClock>();
   mModuleClock->SetTimeRefFrameId("SpaceTime * 2");
   auto mMilneClock = make_shared<MilneClock>();
@@ -253,7 +255,7 @@ int main(int argc, char** argv)
 
   // JP: Leave out for now for testing clock(s) ... has to be updated accordingly ... (see JetEnergyLossManager as an example ...)
   // Hadronization
-  /*
+
   auto hadroMgr = make_shared<HadronizationManager> ();
   auto hadro = make_shared<Hadronization> ();
   //auto hadroModule = make_shared<ColoredHadronization> ();
@@ -262,7 +264,6 @@ int main(int argc, char** argv)
   hadro->Add(colorless);
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
-  */
 
   // Output
   auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");

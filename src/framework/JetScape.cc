@@ -850,12 +850,63 @@ void JetScape::SetPointers() {
 
 void JetScape::SetPrePerEventExecFlags()
 {
+  for (auto it : GetTaskList()) {
 
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+
+    //DEBUG:
+    if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it)) {
+
+      //DEBUG:
+      //cout<<"Before"<<endl;
+      //cout<<module->GetId()<<" "<<module->GetActive()<<" "<<module->IsTimeStepped()<<" "<<module->GetTaskNumber()<<" "<<taskOrgActiveMap.find(module->GetTaskNumber())->second<<endl;
+
+      if (std::dynamic_pointer_cast<HadronizationManager>(module) || std::dynamic_pointer_cast<Afterburner>(module))
+        module->SetActive(false);
+      else
+        module->SetActive(taskOrgActiveMap.find(module->GetTaskNumber())->second);
+
+      //DEBUG:
+      //cout<<"After"<<endl;
+      //cout<<module->GetId()<<" "<<module->GetActive()<<" "<<module->IsTimeStepped()<<" "<<module->GetTaskNumber()<<" "<<taskOrgActiveMap.find(module->GetTaskNumber())->second<<endl;
+
+    }
+
+    //else
+     //cout<<it->GetId()<<" "<<it->GetActive()<<" "<<it->GetTaskNumber()<<" "<<taskOrgActiveMap.find(it->GetTaskNumber())->second<<endl;
+
+    //cout<<it->GetId()<<" "<<it->GetActive()<<" "<<it->IsTimeStepped()<<" "<<it->GetTaskNumber()<<" "<<taskOrgActiveMap.find(it->GetTaskNumber())->second<<endl;
+    //auto ot = taskOrgActiveMap.find(it->GetTaskNumber()); //.second<<endl;
+    //cout<<ot->second<<endl;
+
+
+  }
 }
 
 void JetScape::SetPostPerEventExecFlags()
 {
+  for (auto it : GetTaskList()) {
 
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+
+    //DEBUG:
+    if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it)) {
+
+      //DEBUG:
+      //cout<<"Before"<<endl;
+      //cout<<module->GetId()<<" "<<module->GetActive()<<" "<<module->IsTimeStepped()<<" "<<module->GetTaskNumber()<<" "<<taskOrgActiveMap.find(module->GetTaskNumber())->second<<endl;
+
+      if (std::dynamic_pointer_cast<HadronizationManager>(module) || std::dynamic_pointer_cast<Afterburner>(module))
+        module->SetActive(true);
+      else
+        module->SetActive(false);
+
+      //DEBUG:
+      //cout<<"After"<<endl;
+      //cout<<module->GetId()<<" "<<module->GetActive()<<" "<<module->IsTimeStepped()<<" "<<module->GetTaskNumber()<<" "<<taskOrgActiveMap.find(module->GetTaskNumber())->second<<endl;
+
+   }
+  }
 }
 
 void JetScape::Exec() {
@@ -877,6 +928,11 @@ void JetScape::Exec() {
     if (dynamic_pointer_cast<JetScapeModuleBase>(it) && it->GetActive()) {
       dynamic_pointer_cast<JetScapeModuleBase>(it)->CheckExec();
     }
+
+    //JP: Maybe a map (unordered) might not be truly necessary, since there is an
+    // order, maybe a vector<bool> would suffice, certainly this is more generic
+    // using the task number ... (TBD)
+    taskOrgActiveMap.emplace(it->GetTaskNumber(), it->GetActive());
   }
 
   for (int i = 0; i < GetNumberOfEvents(); i++) {
@@ -990,7 +1046,7 @@ void JetScape::Exec() {
       // Follow upo with per event execution of Hadronization and Afterburner (if not timestepped)  ...
       // Set the proper pre per event active etc flags first ...
       SetPostPerEventExecFlags();
-      //ExecuteTasks();
+      ExecuteTasks();
 
     }
     else
