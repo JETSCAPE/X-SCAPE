@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -23,8 +23,8 @@
 
 namespace Jetscape {
 
-class JetScape : public JetScapeModuleBase, 
-                 public std::enable_shared_from_this<JetScape> 
+class JetScape : public JetScapeModuleBase,
+                 public std::enable_shared_from_this<JetScape>
 {
 
 public:
@@ -40,7 +40,7 @@ public:
   */
   void Init();
 
-  /** This function execute the modules/tasks of a JetScapeTask for all the events. It also calls "GetPartons()" function to print parton shower, and  "WriteTasks()" function to store the data in the XML file.  
+  /** This function execute the modules/tasks of a JetScapeTask for all the events. It also calls "GetPartons()" function to print parton shower, and  "WriteTasks()" function to store the data in the XML file.
   */
   void Exec();
 
@@ -87,6 +87,9 @@ protected:
                    shared_ptr<JetScapeModuleBase> module);
 
   void SetPointers();
+
+  void SetPrePerEventExecFlags();
+  void SetPostPerEventExecFlags();
 
   void Show();
   int n_events;

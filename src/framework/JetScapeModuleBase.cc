@@ -91,6 +91,36 @@ void JetScapeModuleBase::ClearTasks() {
   }
 }
 
+void JetScapeModuleBase::CheckExec()
+{
+  VERBOSE(7) << "JetScapeModuleBase::CheckExec()";
+  auto tasks =  GetTaskList();
+  for (auto it : tasks) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (module && module->GetActive()) {
+      if (IsTimeStepped() != std::dynamic_pointer_cast<JetScapeModuleBase>(it)->IsTimeStepped()) {
+        //if (!std::dynamic_pointer_cast<JetEnergyLoss>(it) && !std::dynamic_pointer_cast<JetEnergyLoss>()) {
+          JSWARN<<" ERROR: "<<GetId() <<" and "<< it->GetId()<<" are not set consistently in time step mode. Proper execution can not be ensured. EXIT!"; exit(-1);
+        //}
+      }
+    }
+  }
+
+  CheckExecs();
+}
+
+void JetScapeModuleBase::CheckExecs()
+{
+  auto tasks =  GetTaskList();
+  VERBOSE(7) << " : # Subtasks = " << tasks.size();
+  for (auto it : tasks) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (module && module->GetActive()) {
+      std::dynamic_pointer_cast<JetScapeModuleBase>(it)->CheckExec();
+    }
+  }
+}
+
 void JetScapeModuleBase::CalculateTimeTasks()
 {
   if (ClockUsed()) {

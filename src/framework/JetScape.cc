@@ -848,6 +848,16 @@ void JetScape::SetPointers() {
   }
 }
 
+void JetScape::SetPrePerEventExecFlags()
+{
+
+}
+
+void JetScape::SetPostPerEventExecFlags()
+{
+
+}
+
 void JetScape::Exec() {
   JSINFO << BOLDRED << "Run JetScape ...";
   JSINFO << BOLDRED << "Number of Events = " << GetNumberOfEvents();
@@ -864,6 +874,9 @@ void JetScape::Exec() {
         vWriter.push_back(dynamic_pointer_cast<JetScapeWriter>(it));
       }
     }
+    if (dynamic_pointer_cast<JetScapeModuleBase>(it) && it->GetActive()) {
+      dynamic_pointer_cast<JetScapeModuleBase>(it)->CheckExec();
+    }
   }
 
   for (int i = 0; i < GetNumberOfEvents(); i++) {
@@ -874,12 +887,14 @@ void JetScape::Exec() {
     JSDEBUG << "Found " << GetNumberOfTasks() << " Modules Execute them ... ";
 
     // First run all tasks per event if possible/required ...
-    ExecuteTasks();
+    //ExecuteTasks();
 
     //JP: in case of execution without clock, just to provide that functionality too
     //maybe not really required if only per event execution ... to be discussed ...
-    QueryHistory::Instance()->UpdateTaskMap();
+    //QueryHistory::Instance()->UpdateTaskMap();
+
     //QueryHistory::Instance()->PrintTaskMap();
+    //QueryHistory::Instance()->PrintTasks();
 
 
     // Execute and run per time step for modules if implemented ...
@@ -887,24 +902,21 @@ void JetScape::Exec() {
     {
       VERBOSE(3)<<"Main Clock Reset ...";
 
+      // Do per event execution except for Hadronization and Afterburner (if not timestepped) ...
+      // Set the proper pre per event active etc flags first ...
+      SetPrePerEventExecFlags();
+      ExecuteTasks();
+
       GetMainClock()->Reset();
 
       JetScapeModuleBase::InitPerEventTasks();
 
+      //JP: Quick and dirty to see all tasks ... make recursive if needed
       QueryHistory::Instance()->UpdateTaskMap();
 
       //QueryHistory::Instance()->PrintTaskMap();
-      //Quick and dirty to see all tasks ... make recursive ...
-      /*
-      for (auto it : GetTaskList()) {
-        cout << it->GetId() << endl;
-        for (auto it2 : it->GetTaskList()) {
-          cout << " " << it2->GetId() << endl;
-          for (auto it3 : it2->GetTaskList())
-            cout << "  " << it3->GetId() << endl;
-        }
-      }
-      */
+      //JP: Quick and dirty to see all tasks ... make recursive ...
+      //QueryHistory::Instance()->PrintTasks();
 
       do {
 
@@ -916,7 +928,7 @@ void JetScape::Exec() {
 
         //JP: silly to do everything per time step, everything with task map and task vectors could be done in InitPerTimeStep ...
         //   --> to be changed!!!
-        
+
         if (multiTask) {
 
           int nTasks = GetNumberOfTasks();
@@ -933,7 +945,7 @@ void JetScape::Exec() {
           VERBOSE(2) << " Use multi-threading: (max) # of threads = # of CPU's "
                << nCPUs << " (found) * 2";
 
-           // also quick and dirty via task map from QueryHistory instance ...
+           // JP: also quick and dirty via task map from QueryHistory instance ...
           auto tMap = QueryHistory::Instance()->GetTaskMap();
 
           for(const auto &x: tMap){
@@ -975,8 +987,19 @@ void JetScape::Exec() {
 
       } while (GetMainClock()->Tick());
 
-      //JetScapeModuleBase::FinishPerEventTasks();
+      // Follow upo with per event execution of Hadronization and Afterburner (if not timestepped)  ...
+      // Set the proper pre per event active etc flags first ...
+      SetPostPerEventExecFlags();
+      //ExecuteTasks();
+
     }
+    else
+    {
+      ExecuteTasks();
+      //JP: Quick and dirty to see all tasks ... make recursive if needed
+      QueryHistory::Instance()->UpdateTaskMap();
+    }
+
 
     // Then hand around the collection of writers and ask
     // modules to write what they like
