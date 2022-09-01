@@ -187,7 +187,6 @@ void Matter::Dump_pIn_info(int i, vector<Parton> &pIn) {
 
 void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                           vector<Parton> &pIn, vector<Parton> &pOut) {
-
   if (std::isnan(pIn[0].e()) || std::isnan(pIn[0].px()) ||
       std::isnan(pIn[0].py()) || std::isnan(pIn[0].pz()) ||
       std::isnan(pIn[0].t()) || std::isnan(pIn[0].form_time())) {
@@ -463,7 +462,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
            (pIn[i].form_time() > -0.1 + rounding_error))) {
         JSWARN << " parton with a negative virtuality was sent to MATTER and "
                   "will now have its virtuality reset!, press 1 and return to "
-                  "proceed... ";
+                  "proceed... pstat "<< pIn[i].pstat();
         // cin >> blurb; //remove the input to prevent an error caused by heavy quark from pythia (by Chathuranga)
       }
 

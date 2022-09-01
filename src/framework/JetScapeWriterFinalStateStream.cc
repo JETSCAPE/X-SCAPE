@@ -70,6 +70,7 @@ template <class T> void JetScapeWriterFinalStateStream<T>::WriteEvent() {
     if(particle->pstat() < 0) continue;
     
     output_file << ipart
+        // << " " << particle->plabel()
         << " " << particle->pid()
         << " " << particle->pstat()
         << " " << particle->e()

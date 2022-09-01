@@ -227,57 +227,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
 
         // Rotate the parton from the earlier times step 
-        if( (pIn[in].pstat() + 900 == Current_Status || pIn[in].pstat() == Current_Status) && pIn[in].pstat() != -1000 ) {
-
-
-            // File->open(Fpath.c_str(),std::ofstream::app);
-            // (*File) << "Doing rotation Current_Status = " << Current_Status << " Current_Label= "<< Current_Label << std::endl; 
-            // File->close();
-
-            File1->open(Fpath1.c_str(),std::ofstream::app);
-            double Direction = (pIn[in].pz() >= 0.0 ? 1.0:-1.0);
-
-            (*File1) << "# " << GetCurrentEvent() << " "
-                << time << " " 
-                << Current_Status << " " 
-                << pIn[in].pid() << " " 
-                << pIn[in].plabel() << " " 
-                << pIn[in].pstat() << " " 
-                << pIn[in].form_time() << " " 
-                << pIn[in].t() << " " 
-                << pIn[in].e() << " " 
-                << pIn[in].px() << " " 
-                << pIn[in].py() << " " 
-                << pIn[in].pz() << " " 
-                << std::endl; 
-
-
-            FourVector p_Parton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),0.0);
-            Rotate(p_Parton,RotationVector,1);
-            pIn[in].reset_p(p_Parton.x(),p_Parton.y(),Direction * p_Parton.z());
-            pIn[in].set_stat(pIn[in].pstat() + 1);
-
-            if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error ) 
-            {
-                FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),std::abs(pIn[in].pz()), pIn[in].plabel());
-            }
-
-            
-            (*File1) << "    "
-                << GetMaxT() << " " 
-                << Current_Status << " " 
-                << pIn[in].pid() << " " 
-                << pIn[in].plabel() << " " 
-                << pIn[in].pstat() << " " 
-                << pIn[in].form_time() << " " 
-                << pIn[in].t() << " " 
-                << pIn[in].e() << " " 
-                << pIn[in].px() << " " 
-                << pIn[in].py() << " " 
-                << pIn[in].pz() << " " 
-                << std::endl << std::endl; 
-            File1->close();
-        }
+        RotateShower(pIn[in]);
 
         if (pIn[in].pstat()>=0) { 
             pOut.push_back(pIn[in]);
@@ -465,14 +415,18 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         // JSINFO << BOLDYELLOW << " new px = " << Current.px() << " py =  " << Current.py() << " pz = " << Current.pz() << " energy = " << Current.e();
         
 
-
-
+        // This logic should be worked out better for now
+        // We have to do the last splitting two time step before the last step 
+        // Because one time step is needed to rotate the shower and then one more for pT generation
         if (time < split_time && pIn[in].plabel() == Current_Label 
-            && t1 < - Q0 - error  && std::abs(time - GetMaxT()) > 1e-10 && time > GetMaxT() )
+            && t1 < - Q0 - error  && std::abs(time - GetMaxT()) > 1e-10 && (time + 2 * deltaT > GetMaxT() + rounding_error ) )
         {
             if(abs(pIn[in].px()) >= rounding_error || abs(pIn[in].py()) >= rounding_error ){
+                std::cout.precision(15);
+                std::cerr.precision(15);
                 JSWARN << " Current parton not along the z-axis ";
                 JSWARN << " time = "<< time << " MaxT = "<< GetMaxT();
+                std::cout << " deltaT = "<< deltaT << " " << (time - deltaT + error) << " MaxT = " << GetMaxT()<< std::endl;
                 OUTPUT(pIn[in]);
                 exit(0);
             }
@@ -689,6 +643,64 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 }
 // End of DoEnergyLoss
 
+
+
+void iMATTER::RotateShower(Parton& pIn){
+    if( (pIn.pstat() + 900 == Current_Status || pIn.pstat() == Current_Status) && pIn.pstat() != -1000 ) {
+        // File->open(Fpath.c_str(),std::ofstream::app);
+        // (*File) << "Doing rotation Current_Status = " << Current_Status << " Current_Label= "<< Current_Label << std::endl; 
+        // File->close();
+
+        File1->open(Fpath1.c_str(),std::ofstream::app);
+        double Direction = (pIn.pz() >= 0.0 ? 1.0:-1.0);
+
+        (*File1) << "# " << GetCurrentEvent() << " "
+            << time << " " 
+            << Current_Status << " " 
+            << pIn.pid() << " " 
+            << pIn.plabel() << " " 
+            << pIn.pstat() << " " 
+            << pIn.form_time() << " " 
+            << pIn.t() << " " 
+            << pIn.e() << " " 
+            << pIn.px() << " " 
+            << pIn.py() << " " 
+            << pIn.pz() << " " 
+            << std::endl; 
+        (*File1) << "# RotationVector= " << RotationVector.x() << " "
+            << RotationVector.y() << " " 
+            << RotationVector.t() << " " 
+            << " time = " << time
+            << std::endl; 
+
+        FourVector p_Parton(pIn.px(),pIn.py(),pIn.pz(),0.0);
+        Rotate(p_Parton,RotationVector,1);
+        pIn.reset_p(p_Parton.x(),p_Parton.y(),Direction * p_Parton.z());
+        pIn.set_stat(pIn.pstat() + 1);
+
+        if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error ) 
+        {
+            FinalRotation->SetLatestInitialParton(pIn.px(),pIn.py(),pIn.pz(),std::abs(pIn.pz()), pIn.plabel());
+        }
+
+        
+        (*File1) << "    "
+            << GetMaxT() << " " 
+            << Current_Status << " " 
+            << pIn.pid() << " " 
+            << pIn.plabel() << " " 
+            << pIn.pstat() << " " 
+            << pIn.form_time() << " " 
+            << pIn.t() << " " 
+            << pIn.e() << " " 
+            << pIn.px() << " " 
+            << pIn.py() << " " 
+            << pIn.pz() << " " 
+            << std::endl << std::endl; 
+        File1->close();
+    }
+    return;
+}
 
 double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_t)
 {
@@ -1032,14 +1044,14 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
             pid_Par = gid;
             pid_Sib = gid;
             if( ZeroOneDistribution(*GetMt19937Generator()) <= 0.5){
-                Color_Sib = MAX_COLOR + 1;
+                Color_Sib = Current.anti_color();
                 Color_Par = Current.color();
-                AntiColor_Sib = Current.anti_color();
+                AntiColor_Sib = MAX_COLOR + 1;
                 AntiColor_Par = MAX_COLOR + 1;
             } else {
-                Color_Sib = Current.color();
+                Color_Sib = MAX_COLOR + 1;
                 Color_Par = MAX_COLOR + 1;
-                AntiColor_Sib = MAX_COLOR + 1;
+                AntiColor_Sib = Current.color();
                 AntiColor_Par = Current.anti_color();
             }
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pgg_int(z_max,t);};
@@ -1092,20 +1104,34 @@ double iMATTER::generate_z( Parton p, FourVector CurrentLocation, double tp)
         if(r <= ratio ){ // q->qg
             pid_Par = Current.pid();
             pid_Sib = gid;
-            Color_Sib = MAX_COLOR + 1;
-            Color_Par = MAX_COLOR + 1;
-            AntiColor_Sib = Current.color();
-            AntiColor_Par = Current.anti_color();
+            if(Current.pid() > 0 ){
+                Color_Sib = MAX_COLOR + 1;
+                Color_Par = MAX_COLOR + 1;
+                AntiColor_Sib = Current.color();
+                AntiColor_Par = 0;
+            } else {
+                Color_Sib = Current.anti_color();
+                Color_Par = 0;
+                AntiColor_Sib = MAX_COLOR + 1;
+                AntiColor_Par = MAX_COLOR + 1;
+            }
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pqq_int(z_max,t);};
             zVal = invert_zDist(r1,Fct,tp,denomqq);
         } 
         else{ // g->qqbar
             pid_Par = gid;
             pid_Sib = -Current.pid();
-            Color_Sib = Current.color();
-            Color_Par = Current.anti_color();
-            AntiColor_Sib = MAX_COLOR + 1;
-            AntiColor_Par = MAX_COLOR + 1;
+            if(Current.pid() > 0 ){
+                Color_Sib = 0;
+                Color_Par = Current.color();
+                AntiColor_Sib = MAX_COLOR + 1;
+                AntiColor_Par = MAX_COLOR + 1;
+            } else {
+                Color_Sib = MAX_COLOR + 1;
+                Color_Par = MAX_COLOR + 1;
+                AntiColor_Sib = 0;
+                AntiColor_Par = Current.anti_color();
+            }
             std::function<double(double,double)> Fct =  [this](double z_max, double t) { return this->zDist_Pqg_int(z_max,t);};
             zVal = invert_zDist(r1,Fct,tp,denomqg);
         }

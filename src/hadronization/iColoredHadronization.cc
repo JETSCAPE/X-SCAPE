@@ -109,7 +109,7 @@ void iColoredHadronization::DoHadronization(
   std::ofstream File3;
   File3.open("ISR-FinalPartons.dat", std::ofstream::out);
   File3 << "## &&&&&&&&&&&&&&&&&&& the number of showers are: " << shower.size()  << " time " << GetModuleCurrentTime() << std::endl;
-  File3 << "# event status label pid col acol px py pz E" << std::endl;
+  File3 << "# event status label pid col acol max_col px py pz E" << std::endl;
   // auto Particles = shower->GetFinalPartons();
   for (unsigned int ishower = 0; ishower < shower.size(); ++ishower) {
     JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
@@ -141,11 +141,13 @@ void iColoredHadronization::DoHadronization(
       File3 << GetCurrentEvent() << " " << shower.at(ishower).at(ipart)->pstat() << " "<< shower.at(ishower).at(ipart)->plabel() << " " << shower.at(ishower).at(ipart)->pid() << " " <<
                    shower.at(ishower).at(ipart)->color()<< " " <<
                    shower.at(ishower).at(ipart)->anti_color()<< " " <<
+                   shower.at(ishower).at(ipart)->max_color()<< " " <<
                    shower.at(ishower).at(ipart)->px()<< " " <<
                    shower.at(ishower).at(ipart)->py()<< " " <<
                    shower.at(ishower).at(ipart)->pz()<< " " << onshellE << std::endl;
     }
   }
+  File3 << "# Remnants now "<< std::endl;
 
   auto ini  = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
@@ -174,6 +176,7 @@ void iColoredHadronization::DoHadronization(
       File3 << GetCurrentEvent() << " "  << Rem.pstat() << " "<< Rem.plabel() << " " << Rem.pid() << " " <<
                    Rem.color()<< " " <<
                    Rem.anti_color()<< " " <<
+                   Rem.max_color()<< " " <<
                    Rem.px()<< " " <<
                    Rem.py()<< " " <<
                    Pz << " " << onshellE << std::endl;
@@ -225,6 +228,11 @@ void iColoredHadronization::DoHadronization(
       File3 << acols[i] << " ";
     }
     File3 << "\n##########" << std::endl;
+
+    if(cols.size() > 0 || acols.size() > 0){
+      std::cerr << "Unpaired colors sent to Pythia" << std::endl;
+      exit(1);
+    }
 
     int pid = 0;
     int color = 0;
