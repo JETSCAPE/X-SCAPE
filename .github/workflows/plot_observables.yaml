@@ -1,10 +1,10 @@
 name: plot observables
 
-on:
-  push:
-    branches:
-      - main
-      - latessa/automatedTests
+# on:
+#   push:
+#     branches:
+#       - main
+#       - latessa/automatedTests
 
 env:
   PULL_NUMBER: ${{ github.event.number }}
