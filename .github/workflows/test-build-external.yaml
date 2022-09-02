@@ -4,13 +4,11 @@ on:
   pull_request:
     branches:
       - main
-      - release-candidate
-      - JETSCAPE-3.5.1-RC
+      - latessa/automatedTests
   push:
     branches:
       - main
-      - release-candidate
-      - JETSCAPE-3.5.1-RC
+      - latessa/automatedTests
 
 jobs:
   build:
@@ -23,36 +21,36 @@ jobs:
 
     steps:
 
-    - name: Checkout JETSCAPE
+    - name: Checkout X-SCAPE-COMP
       uses: actions/checkout@v2
       with:
-        path: JETSCAPE
+        path: X-SCAPE-COMP
 
     - name: Download MUSIC
       run: |
-        cd $GITHUB_WORKSPACE/JETSCAPE/external_packages
+        cd $GITHUB_WORKSPACE/X-SCAPE-COMP/external_packages
         ./get_music.sh
 
     - name: Download ISS
       run: |
-        cd $GITHUB_WORKSPACE/JETSCAPE/external_packages
+        cd $GITHUB_WORKSPACE/X-SCAPE-COMP/external_packages
         ./get_iSS.sh
 
     - name: Download FREESTREAM
       run: |
-        cd $GITHUB_WORKSPACE/JETSCAPE/external_packages
+        cd $GITHUB_WORKSPACE/X-SCAPE-COMP/external_packages
         ./get_freestream-milne.sh
 
     - name: Download SMASH
       run: |
-        cd $GITHUB_WORKSPACE/JETSCAPE/external_packages
+        cd $GITHUB_WORKSPACE/X-SCAPE-COMP/external_packages
         ./get_smash.sh
 
-    - name: Build JETSCAPE
+    - name: Build X-SCAPE-COMP
       run: |
-        cd $GITHUB_WORKSPACE/JETSCAPE
+        cd $GITHUB_WORKSPACE/X-SCAPE-COMP
         mkdir build
         cd build
-        export SMASH_DIR='/__w/JETSCAPE/JETSCAPE/JETSCAPE/external_packages/smash/smash_code'
+        export SMASH_DIR='/__w/X-SCAPE-COMP/X-SCAPE-COMP/X-SCAPE-COMP/external_packages/smash/smash_code'
         cmake .. -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON
         make -j2
