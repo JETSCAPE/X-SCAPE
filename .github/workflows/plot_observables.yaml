@@ -8,6 +8,7 @@ name: plot observables
 
 env:
   PULL_NUMBER: ${{ github.event.number }}
+  REPO_NAME: ${{ github.event.repository.name }}
 
 jobs:
   build:
@@ -20,14 +21,14 @@ jobs:
       
     steps:
       
-    - name: Checkout X-SCAPE-COMP
+    - name: Checkout Repository
       uses: actions/checkout@v2
       with:
-        path: X-SCAPE-COMP
+        path: ${{ github.event.repository.name }}
       
-    - name: Build JETSCAPE
+    - name: Build Application
       run: |
-        cd $GITHUB_WORKSPACE/X-SCAPE-COMP
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
         cmake ..
@@ -35,32 +36,32 @@ jobs:
 
     - name: Generate pp events
       run: |
-        cd $GITHUB_WORKSPACE/X-SCAPE-COMP/build
-        $GITHUB_WORKSPACE/X-SCAPE-COMP/build/runJetscape $GITHUB_WORKSPACE/X-SCAPE-COMP/test/pp/config/jetscape_user_PP19_weighted.xml $GITHUB_WORKSPACE/X-SCAPE-COMP/config/jetscape_main.xml
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/build
+        ${GITHUB_WORKSPACE}/${REPO_NAME}/build/runJetscape ${GITHUB_WORKSPACE}/${REPO_NAME}/test/pp/config/jetscape_user_PP19_weighted.xml ${GITHUB_WORKSPACE}/${REPO_NAME}/config/jetscape_main.xml
 
     - name: Plot observables
       run: |
-        echo $PULL_NUMBER
-        $GITHUB_WORKSPACE/X-SCAPE-COMP/test/generate_plots.sh -j $GITHUB_WORKSPACE/X-SCAPE-COMP -o $GITHUB_WORKSPACE/X-SCAPE-COMP/test/plot/output/new
+        echo ${PULL_NUMBER}
+        ${GITHUB_WORKSPACE}/${REPO_NAME}/test/generate_plots.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -o ${GITHUB_WORKSPACE}/${REPO_NAME}/test/plot/output/new
 
     - name: Prepare TAR file for transfer
       run: |
         export ET=`date "+%Y%m%d%H%M%S"`
-        mkdir /__w/X-SCAPE-COMP/X-SCAPE-COMP/X-SCAPE-COMP/test/plot/output/archive
-        cd /__w/X-SCAPE-COMP/X-SCAPE-COMP/X-SCAPE-COMP/test/plot/output/new
-        tar -cvzf /__w/X-SCAPE-COMP/X-SCAPE-COMP/X-SCAPE-COMP/test/plot/output/archive/files_$ET.tar.gz .
-        cd /__w/X-SCAPE-COMP/X-SCAPE-COMP/X-SCAPE-COMP/test/plot/output/archive
+        mkdir ${GITHUB_WORKSPACE}/${REPO_NAME}/test/plot/output/archive
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/test/plot/output/new
+        tar -cvzf ${GITHUB_WORKSPACE}/${REPO_NAME}/test/plot/output/archive/files_${ET}.tar.gz .
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/test/plot/output/archive
         echo "pwd of archive"
         pwd
         echo "ls of archive"
         ls
-
+        
     - name: Deploy Plots
       uses: airvzxf/ftp-deployment-action@latest
       with:
-        server: "ftp.joelatessa.com"
-        user: "jetscapeTest@plot.joelatessa.com"
+        server: ${{ secrets.JETSCAPE_FTP_SERVER }}
+        user: ${{ secrets.JETSCAPE_FTP_USER }}
         password: ${{ secrets.JETSCAPE_FTP_PASS }}
-        local_dir: "./X-SCAPE-COMP/test/plot/output/archive"
+        local_dir: "./${{ github.event.repository.name }}/test/plot/output/archive"
         remote_dir: "./"
         delete: "false"
