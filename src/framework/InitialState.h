@@ -161,6 +161,9 @@ public:
   virtual std::vector<double> Get_remnant_proj();
   virtual std::vector<double> Get_remnant_targ();
 
+  virtual std::vector<double> Get_Proj_Remnant();
+  virtual std::vector<double> Get_Targ_Remnant();
+
   virtual void GetHardPartonPosAndMomentumProj();
   virtual void GetHardPartonPosAndMomentumTarg();
 

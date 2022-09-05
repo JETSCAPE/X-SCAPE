@@ -38,6 +38,8 @@ std::shared_ptr<InitialState> ini; // temporary pointer to initial state
    */
   void Exec();
   void Init();
+  std::vector<double> Get_Proj_Remnant();
+  std::vector<double> Get_Targ_Remnant();
 private:
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.

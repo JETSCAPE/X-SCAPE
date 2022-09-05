@@ -55,3 +55,11 @@ void MCGlauberGenStringWrapper::Exec() {
     }
 }
 
+std::vector<double> MCGlauberGenStringWrapper::Get_Proj_Remnant() {
+    return(ini->Get_remnant_proj());
+}
+
+std::vector<double> MCGlauberGenStringWrapper::Get_Targ_Remnant() {
+    return(ini->Get_remnant_targ());
+}
+

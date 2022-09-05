@@ -7,15 +7,19 @@
   <setReuseHydro> false </setReuseHydro>
   <!-- <nReuseHydro> 10 </nReuseHydro> -->
 
-  <vlevel> 4 </vlevel>
+  <vlevel> 0 </vlevel>
 
   <nEvents> 1 </nEvents>
 
   <Random>
-    <seed>1</seed>
+    <seed>0</seed>
   </Random>
-
+  
+  <outputFilename>ISRTestParticles</outputFilename>
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterFinalStatePartonsAscii> on </JetScapeWriterFinalStatePartonsAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+  <nEvents_printout>1</nEvents_printout>
 
   <!-- Inital State Module  -->
   <IS>
@@ -29,8 +33,9 @@
   <Hard>
     <PythiaGun>
       <pTHatMin>100</pTHatMin>
-      <pTHatMax>120</pTHatMax>
-      <eCM>5040</eCM>
+      <pTHatMax>110</pTHatMax>
+      <eCM>5020</eCM>
+      <useHybridHad>1</useHybridHad>
     </PythiaGun>
   </Hard>
 
@@ -46,14 +51,18 @@
 
   <!--Eloss Modules -->
   <Eloss>
+
+    <maxT>10</maxT>
     <Matter>
+      <useHybridHad>1</useHybridHad>
       <in_vac> 0 </in_vac>
     </Matter>
   </Eloss>
 
   <!-- Jet Hadronization Module -->
-  <JetHadronization>
+  <!-- <JetHadronization>
     <name>colorless</name>
-  </JetHadronization>
+    <weak_decays>off</weak_decays>
+  </JetHadronization> -->
 
 </jetscape>

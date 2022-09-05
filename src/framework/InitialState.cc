@@ -157,6 +157,22 @@ std::vector<double> InitialState::Get_remnant_targ() {
     return Temp;
 }
 
+std::vector<double> InitialState::Get_Proj_Remnant() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_Targ_Remnant() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
 void InitialState::GenerateStrings() {
   // Do whatever is needed to figure out the internal temp...
   std::cout<<"Call the wrong GenerateStrings function..."<<std::endl;

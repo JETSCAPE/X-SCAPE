@@ -159,11 +159,11 @@ void iColoredHadronization::DoHadronization(
       auto Rem = Remnants[ipart];
       double Pz;
       if(Rem.pz() >=0){
-        Pz = MCGsecond->Get_remnant_proj()[3] / double(NHardScatterings);
+        Pz = MCGsecond->Get_Proj_Remnant()[3] / double(NHardScatterings);
         // Pz = 10.;
       } else {
         // Pz = -10.;
-        Pz = MCGsecond->Get_remnant_targ()[3] / double(NHardScatterings);
+        Pz = MCGsecond->Get_Targ_Remnant()[3] / double(NHardScatterings);
       }
 
       double onshellE = pow(pow(Rem.px(), 2) + pow(Rem.py(), 2) +pow(Pz, 2),0.5);
