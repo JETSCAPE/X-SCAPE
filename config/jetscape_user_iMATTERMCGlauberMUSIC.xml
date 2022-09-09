@@ -30,7 +30,7 @@
     <PythiaGun>
       <pTHatMin>100</pTHatMin>
       <pTHatMax>120</pTHatMax>
-      <eCM>5040</eCM>
+      <eCM>5020</eCM>
     </PythiaGun>
   </Hard>
 
@@ -50,6 +50,7 @@
   <!--Eloss Modules -->
   <Eloss>
     <Matter>
+      <useHybridHad>1</useHybridHad>
       <in_vac> 0 </in_vac>
     </Matter>
   </Eloss>

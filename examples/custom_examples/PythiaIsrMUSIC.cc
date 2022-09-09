@@ -23,7 +23,8 @@
 #include "JetScape.h"
 #include "JetEnergyLoss.h"
 #include "JetEnergyLossManager.h"
-#include "JetScapeWriterStream.h"
+//#include "JetScapeWriterStream.h"
+#include "JetScapeWriterFinalStateStream.h"
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
 #endif
@@ -39,6 +40,7 @@
 #include "PythiaGun.h"
 #include "InitialStateRadiationTest.h"
 #include "HadronizationManager.h"
+#include "iColoredHadronization.h"
 #include "Hadronization.h"
 #include "ColoredHadronization.h"
 #include "ColorlessHadronization.h"
@@ -80,7 +82,7 @@ int main(int argc, char** argv)
 
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
-  JetScapeLogger::Instance()->SetInfo(true);
+  JetScapeLogger::Instance()->SetInfo(false);
   JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
@@ -132,8 +134,9 @@ int main(int argc, char** argv)
   auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
 
   auto iMatter = make_shared<iMATTER> ();
-  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-3.); //will be moved to XML and proper Init() in IsrJet later ...
-  iMatter->SetMaxT(-3.); // Have To figure out a proper way to get this when it's moved to XML
+  double tMax = 10.0;
+  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax); //will be moved to XML and proper Init() in IsrJet later ...
+  iMatter->SetMaxT(-tMax); // Have To figure out a proper way to get this when it's moved to XML
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
   //REMARK: Think a bit harder about directed graph creation and time direction !!!!! Graph inversion !???
@@ -156,6 +159,7 @@ int main(int argc, char** argv)
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
+  jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax); //will be moved to XML and proper Init() in IsrJet later ...
 
   //Set inactive task (per event) and with main clock attached do per time step for these modules ...
   //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get
@@ -189,10 +193,10 @@ int main(int argc, char** argv)
 
   //Has to be set now if one wants to deal with negative
   //times in forward evolution; default is: 0 -- 100 ...
-  jlossmanager->SetTimeRange(-20.0,20.0);
-  jloss->SetTimeRange(-20.0,20.0);
-  matter->SetTimeRange(-20.0,20.0);
-  dummy->SetTimeRange(-20.0,20.0);
+  jlossmanager->SetTimeRange(-tMax,tMax);
+  jloss->SetTimeRange(-tMax,tMax);
+  matter->SetTimeRange(-tMax,tMax);
+  dummy->SetTimeRange(-tMax,tMax);
 
   // Note: if you use Matter, it MUST come first (to set virtuality)
   jloss->Add(matter);
@@ -222,11 +226,26 @@ int main(int argc, char** argv)
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
   */
-
+  auto hadroMgr = make_shared<HadronizationManager> ();
+  auto hadro = make_shared<Hadronization> ();
+  auto hadroModule = make_shared<iColoredHadronization> ();
+  hadro->Add(hadroModule);
+  hadroMgr->Add(hadro);
   // Output
-  auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
-  writer->SetId("AsciiWriter"); //for task search test ...
+//  auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
+//  writer->SetId("AsciiWriter"); //for task search test ...
+//  jetscape->Add(writer);
+//  jetscape->Add(hadroMgr);
+  char* OutputFolder = "";
+  auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
+  auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
+  writer->SetOutputFileName(string(OutputFolder) + string("test_out_final_state_partons.dat"));
+  writer2->SetOutputFileName(string(OutputFolder) + string("test_out_final_state_hadrons.dat"));
+  writer->SetId("FinalStatePartonsAscii"); //for task search test ...
+  writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
   jetscape->Add(writer);
+  jetscape->Add(writer2);
+
 
   /*
 #ifdef USE_GZIP
