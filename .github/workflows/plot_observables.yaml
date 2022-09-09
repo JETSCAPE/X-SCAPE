@@ -59,9 +59,9 @@ jobs:
     - name: Deploy Plots
       uses: airvzxf/ftp-deployment-action@latest
       with:
-        server: ${{ secrets.JETSCAPE_FTP_SERVER }}
-        user: ${{ secrets.JETSCAPE_FTP_USER }}
-        password: ${{ secrets.JETSCAPE_FTP_PASS }}
+        server: ${{ secrets.XSCAPE_FTP_SERVER }}
+        user: ${{ secrets.XSCAPE_FTP_USER }}
+        password: ${{ secrets.XSCAPE_FTP_PASS }}
         local_dir: "./${{ github.event.repository.name }}/test/plot/output/archive"
         remote_dir: "./"
         delete: "false"
