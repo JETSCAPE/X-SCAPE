@@ -110,8 +110,14 @@ public:
 
   // --------------
 
+  /**  A (virtual) function to check if module and attached submodules are consistently definded as be executed per time step or not.
+  If for example a module is neither per event nor per timestep, like jet enerrgyloss modules, this check can be avoided by overwriting
+  CheckExec() as an empty function.
+   */
   virtual void CheckExec();
 
+  /**  A virtual function to recursively call the CheckExec() function
+   */
   virtual void CheckExecs();
 
   // --------------

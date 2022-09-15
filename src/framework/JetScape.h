@@ -89,8 +89,14 @@ protected:
 
   void SetPointers();
 
-  void SetPrePerEventExecFlags();
-  void SetPostPerEventExecFlags();
+  /** Function to set the per event execution active flag so that
+  if hadronization and Afterburner are attached and not per time step executed,
+  that they will be automatically executed after the per time step modules are finished
+  So currently possible workflow automatically executed correctly is:
+  per event -> per timestep -> per event
+   */
+  void SetPerEventExecFlags(bool start_of_event);
+
 
   void Show();
   int n_events;
@@ -104,7 +110,7 @@ protected:
  // rather than manually calling JetScapeTask::Add() in the run macro.
   bool fEnableAutomaticTaskListDetermination;
 
-  //std::unordered_multimap<bool, std::weak_ptr<JetScapeTask>> taskOrgActiveMap;
+  // list to store original SetActive flag settings
   std::unordered_multimap<int , bool > taskOrgActiveMap;
 
 };

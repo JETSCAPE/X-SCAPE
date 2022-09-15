@@ -848,63 +848,26 @@ void JetScape::SetPointers() {
   }
 }
 
-void JetScape::SetPrePerEventExecFlags()
+void JetScape::SetPerEventExecFlags(bool start_of_event)
 {
   for (auto it : GetTaskList()) {
 
     auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
 
-    //DEBUG:
     if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it)) {
 
-      //DEBUG:
-      //cout<<"Before"<<endl;
-      //cout<<module->GetId()<<" "<<module->GetActive()<<" "<<module->IsTimeStepped()<<" "<<module->GetTaskNumber()<<" "<<taskOrgActiveMap.find(module->GetTaskNumber())->second<<endl;
-
-      if (std::dynamic_pointer_cast<HadronizationManager>(module) || std::dynamic_pointer_cast<Afterburner>(module))
-        module->SetActive(false);
-      else
-        module->SetActive(taskOrgActiveMap.find(module->GetTaskNumber())->second);
-
-      //DEBUG:
-      //cout<<"After"<<endl;
-      //cout<<module->GetId()<<" "<<module->GetActive()<<" "<<module->IsTimeStepped()<<" "<<module->GetTaskNumber()<<" "<<taskOrgActiveMap.find(module->GetTaskNumber())->second<<endl;
-
-    }
-
-    //else
-     //cout<<it->GetId()<<" "<<it->GetActive()<<" "<<it->GetTaskNumber()<<" "<<taskOrgActiveMap.find(it->GetTaskNumber())->second<<endl;
-
-    //cout<<it->GetId()<<" "<<it->GetActive()<<" "<<it->IsTimeStepped()<<" "<<it->GetTaskNumber()<<" "<<taskOrgActiveMap.find(it->GetTaskNumber())->second<<endl;
-    //auto ot = taskOrgActiveMap.find(it->GetTaskNumber()); //.second<<endl;
-    //cout<<ot->second<<endl;
-
-
-  }
-}
-
-void JetScape::SetPostPerEventExecFlags()
-{
-  for (auto it : GetTaskList()) {
-
-    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-
-    //DEBUG:
-    if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it)) {
-
-      //DEBUG:
-      //cout<<"Before"<<endl;
-      //cout<<module->GetId()<<" "<<module->GetActive()<<" "<<module->IsTimeStepped()<<" "<<module->GetTaskNumber()<<" "<<taskOrgActiveMap.find(module->GetTaskNumber())->second<<endl;
-
-      if (std::dynamic_pointer_cast<HadronizationManager>(module) || std::dynamic_pointer_cast<Afterburner>(module))
-        module->SetActive(true);
-      else
-        module->SetActive(false);
-
-      //DEBUG:
-      //cout<<"After"<<endl;
-      //cout<<module->GetId()<<" "<<module->GetActive()<<" "<<module->IsTimeStepped()<<" "<<module->GetTaskNumber()<<" "<<taskOrgActiveMap.find(module->GetTaskNumber())->second<<endl;
-
+      if (std::dynamic_pointer_cast<HadronizationManager>(module) || std::dynamic_pointer_cast<Afterburner>(module)) {
+        if (start_of_event)
+          module->SetActive(false);
+        else
+          module->SetActive(true);
+      }
+      else {
+        if (start_of_event)
+          module->SetActive(taskOrgActiveMap.find(module->GetTaskNumber())->second);
+        else
+          module->SetActive(false);
+      }
    }
   }
 }
@@ -942,16 +905,6 @@ void JetScape::Exec() {
     VERBOSE(1) << BOLDRED << "Run Event # = " << i;
     JSDEBUG << "Found " << GetNumberOfTasks() << " Modules Execute them ... ";
 
-    // First run all tasks per event if possible/required ...
-    //ExecuteTasks();
-
-    //JP: in case of execution without clock, just to provide that functionality too
-    //maybe not really required if only per event execution ... to be discussed ...
-    //QueryHistory::Instance()->UpdateTaskMap();
-
-    //QueryHistory::Instance()->PrintTaskMap();
-    //QueryHistory::Instance()->PrintTasks();
-
 
     // Execute and run per time step for modules if implemented ...
     if (ClockUsed())
@@ -960,7 +913,7 @@ void JetScape::Exec() {
 
       // Do per event execution except for Hadronization and Afterburner (if not timestepped) ...
       // Set the proper pre per event active etc flags first ...
-      SetPrePerEventExecFlags();
+      SetPerEventExecFlags(true);
       ExecuteTasks();
 
       GetMainClock()->Reset();
@@ -1045,7 +998,7 @@ void JetScape::Exec() {
 
       // Follow upo with per event execution of Hadronization and Afterburner (if not timestepped)  ...
       // Set the proper pre per event active etc flags first ...
-      SetPostPerEventExecFlags();
+      SetPerEventExecFlags(false);
       ExecuteTasks();
 
     }
