@@ -872,6 +872,16 @@ void JetScape::SetPerEventExecFlags(bool start_of_event)
   }
 }
 
+void JetScape::ResetPerEventExecFalgs()
+{
+  for (auto it : GetTaskList()) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+
+    if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it))
+      module->SetActive(taskOrgActiveMap.find(module->GetTaskNumber())->second);
+  }
+}
+
 void JetScape::Exec() {
   JSINFO << BOLDRED << "Run JetScape ...";
   JSINFO << BOLDRED << "Number of Events = " << GetNumberOfEvents();
@@ -1009,6 +1019,9 @@ void JetScape::Exec() {
       QueryHistory::Instance()->UpdateTaskMap();
     }
 
+    // Reset per event flags to orginal state to allow ClearTasks etc to
+    // be executed properly and as expected ...
+    ResetPerEventExecFalgs();
 
     // Then hand around the collection of writers and ask
     // modules to write what they like
