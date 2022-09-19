@@ -1011,6 +1011,9 @@ void JetScape::Exec() {
       SetPerEventExecFlags(false);
       ExecuteTasks();
 
+      // Reset per event flags to orginal state to allow ClearTasks etc to
+      // be executed properly and as expected ...
+      ResetPerEventExecFlags();
     }
     else
     {
@@ -1018,10 +1021,6 @@ void JetScape::Exec() {
       //JP: Quick and dirty to see all tasks ... make recursive if needed
       QueryHistory::Instance()->UpdateTaskMap();
     }
-
-    // Reset per event flags to orginal state to allow ClearTasks etc to
-    // be executed properly and as expected ...
-    ResetPerEventExecFlags();
 
     // Then hand around the collection of writers and ask
     // modules to write what they like
