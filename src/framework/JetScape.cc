@@ -1079,6 +1079,12 @@ void JetScape::Exec() {
           continue;
         }
 
+        if (dynamic_pointer_cast<FluidDynamics>(it))
+          if(dynamic_pointer_cast<FluidDynamics>(it)->IsTimeStepped()) {
+            JSWARN << " Reusing hydro with per time stepped = true not allowed!";
+            throw std::runtime_error("Reusing hydro with per time stepped = true not allowed.");
+          }
+
         // only deactivate the first hydro
         if (dynamic_pointer_cast<FluidDynamics>(it) && hydro_pointer_is_set) {
           continue;
