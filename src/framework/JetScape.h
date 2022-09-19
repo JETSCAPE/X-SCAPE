@@ -98,7 +98,7 @@ protected:
   void SetPerEventExecFlags(bool start_of_event);
   /** Function to reset the per event execution active flags to its orginal state
    */
-  void ResetPerEventExecFalgs();
+  void ResetPerEventExecFlags();
 
 
   void Show();

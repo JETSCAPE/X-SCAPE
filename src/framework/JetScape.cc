@@ -872,7 +872,7 @@ void JetScape::SetPerEventExecFlags(bool start_of_event)
   }
 }
 
-void JetScape::ResetPerEventExecFalgs()
+void JetScape::ResetPerEventExecFlags()
 {
   for (auto it : GetTaskList()) {
     auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
@@ -1021,7 +1021,7 @@ void JetScape::Exec() {
 
     // Reset per event flags to orginal state to allow ClearTasks etc to
     // be executed properly and as expected ...
-    ResetPerEventExecFalgs();
+    ResetPerEventExecFlags();
 
     // Then hand around the collection of writers and ask
     // modules to write what they like
