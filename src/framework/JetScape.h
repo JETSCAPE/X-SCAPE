@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -20,11 +20,12 @@
 #include "JetScapeTaskSupport.h"
 #include "JetScapeModuleBase.h"
 #include "CausalLiquefier.h"
+#include <unordered_map>
 
 namespace Jetscape {
 
-class JetScape : public JetScapeModuleBase, 
-                 public std::enable_shared_from_this<JetScape> 
+class JetScape : public JetScapeModuleBase,
+                 public std::enable_shared_from_this<JetScape>
 {
 
 public:
@@ -40,7 +41,7 @@ public:
   */
   void Init();
 
-  /** This function execute the modules/tasks of a JetScapeTask for all the events. It also calls "GetPartons()" function to print parton shower, and  "WriteTasks()" function to store the data in the XML file.  
+  /** This function execute the modules/tasks of a JetScapeTask for all the events. It also calls "GetPartons()" function to print parton shower, and  "WriteTasks()" function to store the data in the XML file.
   */
   void Exec();
 
@@ -88,6 +89,18 @@ protected:
 
   void SetPointers();
 
+  /** Function to set the per event execution active flag so that
+  if hadronization and Afterburner are attached and not per time step executed,
+  that they will be automatically executed after the per time step modules are finished
+  So currently possible workflow automatically executed correctly is:
+  per event -> per timestep -> per event
+   */
+  void SetPerEventExecFlags(bool start_of_event);
+  /** Function to reset the per event execution active flags to its orginal state
+   */
+  void ResetPerEventExecFlags();
+
+
   void Show();
   int n_events;
   int n_events_printout;
@@ -97,9 +110,13 @@ protected:
 
   std::shared_ptr<CausalLiquefier> liquefier;
 
-  bool
-      fEnableAutomaticTaskListDetermination; // Option to automatically determine the task list from the XML file,
-      // rather than manually calling JetScapeTask::Add() in the run macro.
+ // Option to automatically determine the task list from the XML file,
+ // rather than manually calling JetScapeTask::Add() in the run macro.
+  bool fEnableAutomaticTaskListDetermination;
+
+  // list to store original SetActive flag settings
+  std::unordered_multimap<int , bool > taskOrgActiveMap;
+
 };
 
 } // end namespace Jetscape

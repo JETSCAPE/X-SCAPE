@@ -85,6 +85,10 @@ public:
                           
   std::shared_ptr<InitialState> ini;
 
+  // Bypass check here since the Energloss modules are neither per event or per time_step
+  // but per parton, so there is no need to check for time step consistency here.
+  void CheckExec() {};
+
   /** Default function to perform the energy loss for partons at time "time". It should be overridden by different energy loss tasks.
       @param deltaT Step-size.
       @param time Current time.

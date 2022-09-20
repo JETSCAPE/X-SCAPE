@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -29,14 +29,14 @@ JetScapeModuleFactory::map_type *JetScapeModuleFactory::moduleMap =
 int JetScapeModuleBase::current_event = 0;
 
 // ---------------------------------------------------------------------------
-/** Default constructor to create a JetScapeModuleBase. It sets the XML file name to a default string value.                                 
+/** Default constructor to create a JetScapeModuleBase. It sets the XML file name to a default string value.
    */
 JetScapeModuleBase::JetScapeModuleBase()
     : JetScapeTask(), xml_main_file_name(""), xml_user_file_name(""), time_stepped(false),
       mt19937_generator_(nullptr), TimeModule(0.,100.) {}
 
 // ---------------------------------------------------------------------------
-/** This is a destructor for the JetScapeModuleBase.                       
+/** This is a destructor for the JetScapeModuleBase.
    */
 JetScapeModuleBase::~JetScapeModuleBase() { disconnect_all(); }
 
@@ -66,20 +66,72 @@ shared_ptr<std::mt19937> JetScapeModuleBase::GetMt19937Generator() {
   return mt19937_generator_;
 }
 
+
+void JetScapeModuleBase::ExecuteTasks()
+{
+  auto tasks =  GetTaskList();
+  VERBOSE(7) << " : # Subtasks = " << tasks.size();
+  for (auto it : tasks) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (module && module->GetActive() && !module->IsTimeStepped()) {
+      JSDEBUG << "Executing " << it->GetId();
+      it->Exec();
+    }
+  }
+}
+
+void JetScapeModuleBase::ClearTasks() {
+  auto tasks =  GetTaskList();
+  VERBOSE(7) << " : # Subtasks = " << tasks.size();
+  for (auto it : tasks) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (module && module->GetActive() && !module->IsTimeStepped()) {
+      it->Clear();
+    }
+  }
+}
+
+void JetScapeModuleBase::CheckExec()
+{
+  VERBOSE(7) << "JetScapeModuleBase::CheckExec()";
+  auto tasks =  GetTaskList();
+  for (auto it : tasks) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (module && module->GetActive()) {
+      if (IsTimeStepped() != std::dynamic_pointer_cast<JetScapeModuleBase>(it)->IsTimeStepped()) {
+        //if (!std::dynamic_pointer_cast<JetEnergyLoss>(it) && !std::dynamic_pointer_cast<JetEnergyLoss>()) {
+          JSWARN<<" ERROR: "<<GetId() <<" and "<< it->GetId()<<" are not set consistently in time step mode. Proper execution can not be ensured. EXIT!"; exit(-1);
+        //}
+      }
+    }
+  }
+
+  CheckExecs();
+}
+
+void JetScapeModuleBase::CheckExecs()
+{
+  auto tasks =  GetTaskList();
+  VERBOSE(7) << " : # Subtasks = " << tasks.size();
+  for (auto it : tasks) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (module && module->GetActive()) {
+      std::dynamic_pointer_cast<JetScapeModuleBase>(it)->CheckExec();
+    }
+  }
+}
+
 void JetScapeModuleBase::CalculateTimeTasks()
 {
   if (ClockUsed()) {
-  auto tasks =  GetTaskList();
-  VERBOSE(3) << " : # Subtasks = " << tasks.size();
-  for (auto it : tasks) {
-    
-    //cout<<it->GetId()<<" "<<it->GetActive()<<endl;
-    if (std::dynamic_pointer_cast<JetScapeModuleBase>(it) && !it->GetActive() && std::dynamic_pointer_cast<JetScapeModuleBase>(it)->IsValidModuleTime()) {
-    VERBOSE(3) << "Calculate Time Step = " << it->GetId();
-    //if (it->active_exec) 
-      std::dynamic_pointer_cast<JetScapeModuleBase>(it)->CalculateTime();
+    auto tasks =  GetTaskList();
+    for (auto it : tasks) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module && module->IsTimeStepped() && module->IsValidModuleTime()) {
+        VERBOSE(3) << "Calculate Time Step = " << it->GetId();
+        module->CalculateTime();
+      }
     }
-  }
  }
 }
 
@@ -87,13 +139,11 @@ void JetScapeModuleBase::ExecTimeTasks()
 {
   if (ClockUsed()) {
     auto tasks =  GetTaskList();
-    VERBOSE(3) << " : # Subtasks = " << tasks.size();
-    for (auto it : tasks) {     
-      //cout<<it->GetId()<<" "<<it->GetActive()<<endl;
-      if (std::dynamic_pointer_cast<JetScapeModuleBase>(it) && !it->GetActive() && std::dynamic_pointer_cast<JetScapeModuleBase>(it)->IsValidModuleTime()) {
-	VERBOSE(3) << "Execute Time Step = " << it->GetId();
-	//if (it->active_exec) 
-	std::dynamic_pointer_cast<JetScapeModuleBase>(it)->ExecTime();
+    for (auto it : tasks) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module && module->IsTimeStepped() && module->IsValidModuleTime()) {
+  	     VERBOSE(3) << "Execute Time Step = " << it->GetId();
+  	     module->ExecTime();
       }
     }
   }
@@ -102,36 +152,28 @@ void JetScapeModuleBase::ExecTimeTasks()
 void JetScapeModuleBase::InitPerEventTasks()
 {
   if (ClockUsed()) {
-  auto tasks =  GetTaskList();
-  VERBOSE(3) << " : # Subtasks = " << tasks.size();
-  for (auto it : tasks) {
-    
-    //cout<<it->GetId()<<" "<<it->GetActive()<<endl;
-
-    if (std::dynamic_pointer_cast<JetScapeModuleBase>(it) && !it->GetActive()) {
-    VERBOSE(3) << "InitPerEventTasks " << it->GetId();
-    //if (it->active_exec) 
-      std::dynamic_pointer_cast<JetScapeModuleBase>(it)->InitPerEvent();
+    auto tasks =  GetTaskList();
+    for (auto it : tasks) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module && module->IsTimeStepped()) {
+         VERBOSE(3) << "InitPerEventTasks " << it->GetId();
+  	     module->InitPerEvent();
+      }
     }
   }
- }
 }
 
 void JetScapeModuleBase::FinishPerEventTasks()
 {
   if (ClockUsed()) {
-  auto tasks =  GetTaskList();
-  VERBOSE(3) << " : # Subtasks = " << tasks.size();
-  for (auto it : tasks) {
-    
-    //cout<<it->GetId()<<" "<<it->GetActive()<<endl;
-
-    if (std::dynamic_pointer_cast<JetScapeModuleBase>(it) && !it->GetActive()) {
-    VERBOSE(3) << "FinishPerEventTasks " << it->GetId();
-    //if (it->active_exec) 
-      std::dynamic_pointer_cast<JetScapeModuleBase>(it)->FinishPerEvent();
+    auto tasks =  GetTaskList();
+    for (auto it : tasks) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module && module->IsTimeStepped()) {
+         VERBOSE(3) << "FinishPerEventTasks " << it->GetId();
+  	     module->FinishPerEvent();
+      }
     }
-  }
   }
 }
 

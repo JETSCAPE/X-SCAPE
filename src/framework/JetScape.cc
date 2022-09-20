@@ -215,23 +215,7 @@ void JetScape::DetermineTaskListFromXML() {
             JSINFO << "JetScape::DetermineTaskList() -- Initial State: Added "
                       "IPGlasma module to task list.";
           }
-        } else if (childElementName == "MCGlauber") {
-          auto MCGlauber = JetScapeModuleFactory::createInstance("MCGlauber");
-          if (MCGlauber) {
-            Add(MCGlauber);
-            JSINFO << "JetScape::DetermineTaskList() -- Initial State: Added "
-                      "MCGlauber module to task list.";
-          }
-        } 
-        else if (childElementName == "MCGlauberGenString") {
-          auto MCGlauberGenString = JetScapeModuleFactory::createInstance("MCGlauberGenString");
-          if (MCGlauberGenString) {
-            Add(MCGlauberGenString);
-            JSINFO << "JetScape::DetermineTaskList() -- Initial State: Added "
-                      "MCGlauberGenString module to task list.";
-          }
-        }
-        else if (childElementName == "initial_Ncoll_list") {
+        } else if (childElementName == "initial_Ncoll_list") {
           auto initial =
               JetScapeModuleFactory::createInstance("NcollListFromFile");
           if (initial) {
@@ -822,6 +806,7 @@ void JetScape::SetPointers() {
          << "SignalManager to create Signal/Slots";
 
   bool hydro_pointer_is_set = false;
+  bool bulk_pointer_is_set = false;
   for (auto it : GetTaskList()) {
     if (dynamic_pointer_cast<InitialState>(it)) {
       JetScapeSignalManager::Instance()->SetInitialStatePointer(
@@ -834,6 +819,11 @@ void JetScape::SetPointers() {
       JetScapeSignalManager::Instance()->SetHydroPointer(
           dynamic_pointer_cast<FluidDynamics>(it));
       hydro_pointer_is_set = true;
+    } else if (dynamic_pointer_cast<BulkDynamicsManager>(it) &&
+               !bulk_pointer_is_set) {
+      JetScapeSignalManager::Instance()->SetBulkDynamicsManagerPointer(
+          dynamic_pointer_cast<BulkDynamicsManager>(it));
+      bulk_pointer_is_set = true;
     } else if (dynamic_pointer_cast<JetEnergyLossManager>(it)) {
       JetScapeSignalManager::Instance()->SetJetEnergyLossManagerPointer(
           dynamic_pointer_cast<JetEnergyLossManager>(it));
@@ -859,6 +849,40 @@ void JetScape::SetPointers() {
   }
 }
 
+void JetScape::SetPerEventExecFlags(bool start_of_event)
+{
+  for (auto it : GetTaskList()) {
+
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+
+    if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it)) {
+
+      if (std::dynamic_pointer_cast<HadronizationManager>(module) || std::dynamic_pointer_cast<Afterburner>(module)) {
+        if (start_of_event)
+          module->SetActive(false);
+        else
+          module->SetActive(true);
+      }
+      else {
+        if (start_of_event)
+          module->SetActive(taskOrgActiveMap.find(module->GetTaskNumber())->second);
+        else
+          module->SetActive(false);
+      }
+   }
+  }
+}
+
+void JetScape::ResetPerEventExecFlags()
+{
+  for (auto it : GetTaskList()) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+
+    if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it))
+      module->SetActive(taskOrgActiveMap.find(module->GetTaskNumber())->second);
+  }
+}
+
 void JetScape::Exec() {
   JSINFO << BOLDRED << "Run JetScape ...";
   JSINFO << BOLDRED << "Number of Events = " << GetNumberOfEvents();
@@ -875,6 +899,14 @@ void JetScape::Exec() {
         vWriter.push_back(dynamic_pointer_cast<JetScapeWriter>(it));
       }
     }
+    if (dynamic_pointer_cast<JetScapeModuleBase>(it) && it->GetActive()) {
+      dynamic_pointer_cast<JetScapeModuleBase>(it)->CheckExec();
+    }
+
+    //JP: Maybe a map (unordered) might not be truly necessary, since there is an
+    // order, maybe a vector<bool> would suffice, certainly this is more generic
+    // using the task number ... (TBD)
+    taskOrgActiveMap.emplace(it->GetTaskNumber(), it->GetActive());
   }
 
   for (int i = 0; i < GetNumberOfEvents(); i++) {
@@ -884,38 +916,27 @@ void JetScape::Exec() {
     VERBOSE(1) << BOLDRED << "Run Event # = " << i;
     JSDEBUG << "Found " << GetNumberOfTasks() << " Modules Execute them ... ";
 
-    // First run all tasks per event if possible/required ...
-    JetScapeTask::ExecuteTasks();
-
-    //JP: in case of execution without clock, just to provide that functionality too
-    //maybe not really required if only per event execution ... to be discussed ...
-    QueryHistory::Instance()->UpdateTaskMap();
-    //QueryHistory::Instance()->PrintTaskMap();
-
 
     // Execute and run per time step for modules if implemented ...
     if (ClockUsed())
     {
       VERBOSE(3)<<"Main Clock Reset ...";
 
+      // Do per event execution except for Hadronization and Afterburner (if not timestepped) ...
+      // Set the proper pre per event active etc flags first ...
+      SetPerEventExecFlags(true);
+      ExecuteTasks();
+
       GetMainClock()->Reset();
 
       JetScapeModuleBase::InitPerEventTasks();
 
+      //JP: Quick and dirty to see all tasks ... make recursive if needed
       QueryHistory::Instance()->UpdateTaskMap();
 
       //QueryHistory::Instance()->PrintTaskMap();
-      //Quick and dirty to see all tasks ... make recursive ...
-      /*
-      for (auto it : GetTaskList()) {
-        cout << it->GetId() << endl;
-        for (auto it2 : it->GetTaskList()) {
-          cout << " " << it2->GetId() << endl;
-          for (auto it3 : it2->GetTaskList())
-            cout << "  " << it3->GetId() << endl;
-        }
-      }
-      */
+      //JP: Quick and dirty to see all tasks ... make recursive ...
+      //QueryHistory::Instance()->PrintTasks();
 
       do {
 
@@ -927,7 +948,7 @@ void JetScape::Exec() {
 
         //JP: silly to do everything per time step, everything with task map and task vectors could be done in InitPerTimeStep ...
         //   --> to be changed!!!
-        
+
         if (multiTask) {
 
           int nTasks = GetNumberOfTasks();
@@ -944,7 +965,7 @@ void JetScape::Exec() {
           VERBOSE(2) << " Use multi-threading: (max) # of threads = # of CPU's "
                << nCPUs << " (found) * 2";
 
-           // also quick and dirty via task map from QueryHistory instance ...
+           // JP: also quick and dirty via task map from QueryHistory instance ...
           auto tMap = QueryHistory::Instance()->GetTaskMap();
 
           for(const auto &x: tMap){
@@ -986,7 +1007,20 @@ void JetScape::Exec() {
 
       } while (GetMainClock()->Tick());
 
-      //JetScapeModuleBase::FinishPerEventTasks();
+      // Follow upo with per event execution of Hadronization and Afterburner (if not timestepped)  ...
+      // Set the proper pre per event active etc flags first ...
+      SetPerEventExecFlags(false);
+      ExecuteTasks();
+
+      // Reset per event flags to orginal state to allow ClearTasks etc to
+      // be executed properly and as expected ...
+      ResetPerEventExecFlags();
+    }
+    else
+    {
+      ExecuteTasks();
+      //JP: Quick and dirty to see all tasks ... make recursive if needed
+      QueryHistory::Instance()->UpdateTaskMap();
     }
 
     // Then hand around the collection of writers and ask
@@ -1031,6 +1065,7 @@ void JetScape::Exec() {
     }
 
     // JP: If task not active then per time step is active (see above), which could lead to issues with hydro resuse. Follow up!
+    // JS: New is timestepped flag should resolve this issue. Anything to undo below?
     // For reusal, deactivate task after it has finished
     // but before it gets cleaned up.
     if (reuse_hydro_) {
@@ -1045,6 +1080,12 @@ void JetScape::Exec() {
             !dynamic_pointer_cast<InitialState>(it)) {
           continue;
         }
+
+        if (dynamic_pointer_cast<FluidDynamics>(it))
+          if(dynamic_pointer_cast<FluidDynamics>(it)->IsTimeStepped()) {
+            JSWARN << " Reusing hydro with per time stepped = true not allowed!";
+            throw std::runtime_error("Reusing hydro with per time stepped = true not allowed.");
+          }
 
         // only deactivate the first hydro
         if (dynamic_pointer_cast<FluidDynamics>(it) && hydro_pointer_is_set) {
@@ -1072,7 +1113,7 @@ void JetScape::Exec() {
     }
 
     // Now clean up, only affects active tasks
-    JetScapeTask::ClearTasks();
+    JetScapeModuleBase::ClearTasks();
 
     //have to call this after writer and call explciitly the clear functions
     //in finish per event, because like writer, clear only for active tasks ...

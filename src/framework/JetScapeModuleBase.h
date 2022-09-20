@@ -69,13 +69,23 @@ public:
    */
   virtual void Clear(){};
 
+  // Override execute tasks (at least for now) to keep is-time-stepped handling on module level and not include in JetScapeTask
+  virtual void ExecuteTasks() override;
+
+  // Override clear tasks (at least for now) to keep is-time-stepped handling on module level and not include in JetScapeTask
+  virtual void ClearTasks() override;
+
   // --------------
+
+  //  Virtual functions to define what is done during the timestep. They can be overridden by different modules/tasks.
 
   virtual void CalculateTime() {};
 
   virtual void CalculateTimeTasks();
 
   virtual void CalculateTimeTask() {};
+
+  //  Virtual functions to define what is done at the end of the timestep. They can be overridden by different modules/tasks.
 
   virtual void ExecTime() {};
 
@@ -97,6 +107,18 @@ public:
   virtual void FinishPerEventTasks();
 
   //virtual void FinishPerEventTask() {}; // JP: see also in JetScapeTask ... is it really used or would this be the per event way ...
+
+  // --------------
+
+  /**  A (virtual) function to check if module and attached submodules are consistently definded as be executed per time step or not.
+  If for example a module is neither per event nor per timestep, like jet enerrgyloss modules, this check can be avoided by overwriting
+  CheckExec() as an empty function.
+   */
+  virtual void CheckExec();
+
+  /**  A virtual function to recursively call the CheckExec() function
+   */
+  virtual void CheckExecs();
 
   // --------------
 
@@ -157,6 +179,12 @@ public:
   //bool GetMultiThread() {return multiThread;}
 
   //void SetMultiThread(bool m_multiThread) {multiThread = m_multiThread;}
+
+  /// Returns whether the module evolves in time steps
+  bool IsTimeStepped() const {return time_stepped;}
+  /// Sets whether the module evolves in time steps
+  void SetTimeStepped(bool m_time_stepped) {time_stepped = m_time_stepped;}
+
 protected:
 
   //template<typename T>
@@ -168,6 +196,9 @@ private:
   static int current_event;
   shared_ptr<std::mt19937> mt19937_generator_;
   //bool multiThread = false;
+
+  /// Decides whether the module evolves in time steps
+  bool time_stepped;
 };
 
 /**
