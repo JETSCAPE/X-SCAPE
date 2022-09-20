@@ -197,6 +197,8 @@ public:
 
   void SetMultiThread(bool m_multiThread) {multiThread = m_multiThread;}
 
+  int GetTaskNumber() {return my_task_number_;}
+
 private:
   // can be made sortabele to put in correct oder or via xml file ...
   vector<shared_ptr<JetScapeTask>> tasks;

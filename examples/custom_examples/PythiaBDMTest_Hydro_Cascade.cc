@@ -104,6 +104,7 @@ int main(int argc, char** argv)
   auto trento = make_shared<InitialState>();
   auto pythiaGun= make_shared<PythiaGun> ();
   auto hydro = make_shared<Brick> ();
+  hydro->SetTimeStepped(true);
 
   jetscape->Add(trento);
 

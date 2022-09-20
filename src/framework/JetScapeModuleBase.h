@@ -110,6 +110,18 @@ public:
 
   // --------------
 
+  /**  A (virtual) function to check if module and attached submodules are consistently definded as be executed per time step or not.
+  If for example a module is neither per event nor per timestep, like jet enerrgyloss modules, this check can be avoided by overwriting
+  CheckExec() as an empty function.
+   */
+  virtual void CheckExec();
+
+  /**  A virtual function to recursively call the CheckExec() function
+   */
+  virtual void CheckExecs();
+
+  // --------------
+
   //JP: same can be done with variant if all datatypes are know
   //and put into the varaint definition --> elevated to framework like data types
   //maybe not ideal, to be discussed ...
@@ -172,6 +184,7 @@ public:
   bool IsTimeStepped() const {return time_stepped;}
   /// Sets whether the module evolves in time steps
   void SetTimeStepped(bool m_time_stepped) {time_stepped = m_time_stepped;}
+
 protected:
 
   //template<typename T>
@@ -183,7 +196,7 @@ private:
   static int current_event;
   shared_ptr<std::mt19937> mt19937_generator_;
   //bool multiThread = false;
-  
+
   /// Decides whether the module evolves in time steps
   bool time_stepped;
 };

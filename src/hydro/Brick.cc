@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -124,18 +124,27 @@ void Brick::GetHydroInfo(
 
 void Brick::CalculateTime() {
     Jetscape::real tauCurrent = GetModuleCurrentTime();
-    Jetscape::real tauMax = GetModuleClock()->getTMax();
-    Jetscape::real tauMin = GetModuleClock()->getTMin();
-    VERBOSE(2) << "tau_min = " << tauMin << " fm/c, tau_max = "
-               << tauMax << " fm/c.";
+
+    //REMARK JP: Needs to be made more conssitent, for now, just avoid crash
+    // After the check for timestep is forced  ...
+    if (GetModuleClock()) {
+      Jetscape::real tauMax = GetModuleClock()->getTMax();
+      Jetscape::real tauMin = GetModuleClock()->getTMin();
+
+      VERBOSE(2) << "tau_min = " << tauMin << " fm/c, tau_max = "
+                 << tauMax << " fm/c.";
+
+      EvolveHydroFromTminToTmax(GetModuleClock()->getTMin(),GetModuleClock()->getTMax());
+    }
+    else
+      hydro_status = FINISHED;
+
 }
 
 
 void Brick::ExecTime() {
     JSINFO << "Brick::ExecTime(): Current Main Clock Time = "
            << GetMainClock()->GetCurrentTime() << " fm/c";
-    EvolveHydroFromTminToTmax(GetModuleClock()->getTMin(),
-                              GetModuleClock()->getTMax());
 }
 
 

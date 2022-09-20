@@ -79,8 +79,10 @@ void QueryHistory::PrintTaskMap()
 {
   JSINFO << "QueryHistory::PrintTaskMap()";
 
-  for (auto& x : taskMap)
-    JSINFO << " " << x.first << ":\t " << x.second.lock().get() << "\t active = " << x.second.lock()->GetActive() << "\t multiThread = " << x.second.lock()->GetMultiThread();
+  for (auto& x : taskMap) {
+    JSINFO << " " << x.first << ":\t " << x.second.lock().get() << "\t active = " << x.second.lock()->GetActive() << "\t multiThread = " << x.second.lock()->GetMultiThread()<<"\t Task number = "<<x.second.lock()->GetMyTaskNumber();
+    if (std::dynamic_pointer_cast<JetScapeModuleBase>(x.second.lock())) JSINFO<<" \t \t \t IsTimeStepped = "<<std::dynamic_pointer_cast<JetScapeModuleBase>(x.second.lock())->IsTimeStepped();
+  }
 }
 
 void QueryHistory::PrintTasks()
