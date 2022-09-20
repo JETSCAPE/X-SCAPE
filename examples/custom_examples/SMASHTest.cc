@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -97,10 +97,10 @@ int main(int argc, char** argv)
   mClock->Info();
 
   auto jetscape = make_shared<JetScape>();
-  const char* masterXMLName = "../config/jetscape_master.xml";
+  const char* mainXMLName = "../config/jetscape_main.xml";
   const char* userXMLName = "../config/jetscape_user.xml";
 
-  jetscape->SetXMLMasterFileName(masterXMLName);
+  jetscape->SetXMLMainFileName(mainXMLName);
   jetscape->SetXMLUserFileName(userXMLName);
 
   jetscape->AddMainClock(mClock);
@@ -167,7 +167,7 @@ int main(int argc, char** argv)
 #endif
   jetscape->Add(writer);
 
-  // Intialize all modules tasks
+  // Initialize all modules tasks
   jetscape->Init();
 
   // Run JetScape with all task/modules as specified ...

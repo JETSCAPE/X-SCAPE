@@ -185,6 +185,7 @@ void SmashWrapper::FinishPerEvent() {
   JSINFO << "Finishing SMASH event...";
 
   AfterburnerModus *modus = smash_experiment_->modus();
+  // SMASH within JETSCAPE only works with one (the first) ensemble
   smash::Particles *smash_particles = smash_experiment_->first_ensemble();
   int ev_no = modus->current_event_number();
 
