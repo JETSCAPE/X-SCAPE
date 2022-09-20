@@ -63,6 +63,9 @@ public:
   void SetHydroPointer(shared_ptr<FluidDynamics> m_hydro) { hydro = m_hydro; }
   weak_ptr<FluidDynamics> GetHydroPointer() { return hydro; }
 
+  void SetBulkDynamicsManagerPointer(shared_ptr<BulkDynamicsManager> m_bulk) { bulk = m_bulk; }
+  weak_ptr<BulkDynamicsManager> GetBulkPointer() { return bulk; }
+
   void SetSoftParticlizationPointer(shared_ptr<SoftParticlization> m_soft) {
     softparticlization = m_soft;
   }

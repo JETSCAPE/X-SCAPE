@@ -18,11 +18,10 @@
 
 #include "SmashWrapper.h"
 
-#include "smash/decaymodes.h"
-#include "smash/inputfunctions.h"
 #include "smash/particles.h"
-#include "smash/sha256.h"
+#include "smash/library.h"
 
+#include <math.h>
 #include <string>
 
 #include <boost/filesystem.hpp>
@@ -35,77 +34,59 @@ RegisterJetScapeModule<SmashWrapper> SmashWrapper::reg("SMASH");
 
 SmashWrapper::SmashWrapper() {
   SetId("SMASH");
-  SetActive(false);
 }
 
 void SmashWrapper::InitTask() {
   JSINFO << "SMASH: picking SMASH-specific configuration from xml file";
   std::string smash_config =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_config_file"});
-  boost::filesystem::path input_config_path(smash_config);
-  if (!boost::filesystem::exists(input_config_path)) {
-    JSWARN << "SMASH config file " << smash_config << " not found.";
-    exit(-1);
-  } else {
-    JSINFO << "Obtaining SMASH configuration from " << smash_config;
-  }
-  smash::Configuration config(input_config_path.parent_path(),
-                              input_config_path.filename());
-  // SMASH hadron list
-  std::string hadron_list =
+  std::string smash_hadron_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_particles_file"});
-  if (boost::filesystem::exists(hadron_list)) {
-    config["particles"] =
-        smash::read_all(boost::filesystem::ifstream{hadron_list});
-    smash::ParticleType::create_type_list(config.take({"particles"}));
-    JSINFO << "Obtaining SMASH hadron list from " << hadron_list;
-  } else {
-    JSINFO << "Using default SMASH hadron list.";
-  }
-  // SMASH decaymodes
-  std::string decays_list =
+  std::string smash_decays_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_decaymodes_file"});
-  if (boost::filesystem::exists(decays_list)) {
-    config["decaymodes"] =
-        smash::read_all(boost::filesystem::ifstream{decays_list});
-    smash::DecayModes::load_decaymodes(config.take({"decaymodes"}));
-    JSINFO << "Obtaining SMASH decays list from " << decays_list;
-  } else {
-    JSINFO << "Using default SMASH decay list.";
-  }
-  // Make sure that unstable hadrons have decays and stable not
-  smash::ParticleType::check_consistency();
+  // output path is just dummy here, because no output from SMASH is foreseen
+  boost::filesystem::path output_path("./smash_output");
+  // do not store tabulation, which is achieved by an empty tabulations path
+  std::string tabulations_path("");
+  const std::string smash_version(SMASH_VERSION);
 
-  // Let SMASH tabulate cross sections
-  boost::filesystem::path tabulations_path = "./tabulations";
-  boost::filesystem::create_directories(tabulations_path);
-  const std::string particle_string = config["particles"].to_string();
-  const std::string decay_string = config["decaymodes"].to_string();
-  smash::sha256::Context hash_context;
-  hash_context.update(particle_string);
-  hash_context.update(decay_string);
-  const auto hash = hash_context.finalize();
-  smash::IsoParticleType::tabulate_integrals(hash, tabulations_path);
+  auto config = smash::setup_config_and_logging(smash_config, smash_hadron_list,
+                                                smash_decays_list);
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
   config["General"]["Randomseed"] = random_seed;
-  // Set SMASH logging
-  smash::set_default_loglevel(
-      config.take({"Logging", "default"}, einhard::TRACE));
-  smash::create_all_loggers(config["Logging"]);
   // Read in the rest of configuration
-  float end_time = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
-  config["General"]["End_Time"] = end_time;
+  if (IsTimeStepped()) {
+    end_time_ = GetMainClock()->GetEndTime();
+  } else {
+    end_time_ = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
+  }
+  config["General"]["End_Time"] = end_time_;
+  JSINFO << "End time until which SMASH propagates is " << end_time_ << " fm/c";
   only_final_decays_ =
       GetXMLElementInt({"Afterburner", "SMASH", "only_decays"});
-  JSINFO << "End time for SMASH is set to " << end_time << " fm/c";
   if (only_final_decays_) {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
-  // output path is just dummy here, because no output from SMASH is foreseen
+
+  smash::initialize_particles_decays_and_tabulations(config, smash_version,
+                                                     tabulations_path);
+
+  // Enforce timestep compatibility (temporarily)
+  if (IsTimeStepped()) {
+    const double delta_t_js = GetMainClock()->GetDeltaT();
+    const double delta_t_sm = config.read({"General", "Delta_Time"});
+    const double ts_rem = std::remainder(delta_t_js, delta_t_sm);
+    const double ts_frac = delta_t_js / delta_t_sm;
+    if (!(ts_rem < 1E-6 && ts_frac > 1.0)) {
+      JSWARN << "Timesteps of SMASH (dt = " << delta_t_sm
+             << ") and JETSCAPE (dt = " << delta_t_js << ") are incompabitle."
+                "SMASH timesteps should be a half, a third, etc. from Jetscape's";
+    }
+  }
+
   JSINFO << "Seting up SMASH Experiment object";
-  boost::filesystem::path output_path("./smash_output");
   smash_experiment_ =
       make_shared<smash::Experiment<AfterburnerModus>>(config, output_path);
   JSINFO << "Finish initializing SMASH";
@@ -120,10 +101,11 @@ std::vector<std::vector<shared_ptr<Hadron>>> TestHadronList() {
     const int hadron_status = 11;
     const int hadron_id = 111; // current_hadron.pid;
     const double hadron_mass = 0.138;
-    FourVector hadron_p(1.0 * ipart, 0.0,
-                            0.0, +1.0  * ipart);
-    FourVector hadron_x(ipart, 0.0, 0.0,
-                        ipart);
+    const double pz = 0.1  * ipart;
+    const double energy = std::sqrt(hadron_mass*hadron_mass + pz*pz);
+    FourVector hadron_p(pz, 0.0, 0.0, energy);
+    FourVector hadron_x(ipart, 0.0, 0.0, ipart);
+
 
     // create a JETSCAPE Hadron
     hadron_list.push_back(make_shared<Hadron>(hadron_label, hadron_id,
@@ -140,57 +122,79 @@ void SmashWrapper::ExecuteTask() {
   // Every hydro event creates a new structure like jetscape_hadrons_
   // with as many events in it as one has samples per hydro
   modus->reset_event_numbering();
-  modus->jetscape_hadrons_ = TestHadronList(); // soft_particlization_sampler_->Hadron_list_;
+  modus->jetscape_hadrons_ = GatherAfterburnerHadrons();
+  // modus->jetscape_hadrons_ = TestHadronList();
   const int n_events = modus->jetscape_hadrons_.size();
   JSINFO << "SMASH: obtained " << n_events << " events from particlization";
-  smash::Particles *smash_particles = smash_experiment_->particles();
   for (unsigned int i = 0; i < n_events; i++) {
     JSINFO << "Event " << i << " SMASH starts with "
            << modus->jetscape_hadrons_[i].size() << " particles.";
-    smash_experiment_->initialize_new_event(i);
-    if (!only_final_decays_) {
-      smash_experiment_->run_time_evolution(300.0);  // endtime hardcoded for now
-    }
-    smash_experiment_->do_final_decays();
-    smash_experiment_->final_output(i);
-    smash_particles_to_JS_hadrons(*smash_particles,
-                                  modus->jetscape_hadrons_[i]);
-    JSINFO << modus->jetscape_hadrons_[i].size() << " hadrons from SMASH.";
+    InitPerEvent();
+    CalculateTimeTask();
+    FinishPerEvent();
   }
 }
 
 
 void SmashWrapper::InitPerEvent() {
-  JSINFO << "Initalizing new SMASH event with test hadron list...";
-  AfterburnerModus *modus = smash_experiment_->modus();
-  modus->reset_event_numbering();
-  modus->jetscape_hadrons_ = TestHadronList(); // soft_particlization_sampler_->Hadron_list_;
-  smash_experiment_->initialize_new_event(0);  //event numbering not correct
+  if (IsTimeStepped()) {
+    JSINFO << "Initalizing new time-stepped SMASH  event ...";
+    AfterburnerModus *modus = smash_experiment_->modus();
+    modus->reset_event_numbering();
+    // modus->jetscape_hadrons_ = GatherAfterburnerHadrons();
+    modus->jetscape_hadrons_ = TestHadronList();
 
+    const int n_events = modus->jetscape_hadrons_.size();
+    if (n_events > 1) {
+      JSWARN << "In timestep mode SMASH only propagates one (= the first "
+                "soft_particlization) event at the moment. No oversampling possible.";
+    }
+  }
+  smash_experiment_->initialize_new_event();
+}
+
+
+smash::ParticleList SmashWrapper::convert_to_plist(const std::vector<shared_ptr<Hadron>>& JS_hadrons) {
+  // TODO Merge/generalize this to be also used in JS_hadrons_to_smash_particles()
+  smash::ParticleList new_particles;
+  for (const auto& JS_had : JS_hadrons) {
+    const FourVector p = JS_had->p_in();
+    const FourVector r = JS_had->x_in();
+    smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
+    new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
+    new_p.set_4momentum(p.t(), p.x(), p.y(), p.z());
+    new_particles.push_back(new_p);
+  }
+  return new_particles;
 }
 
 
 void SmashWrapper::CalculateTimeTask() {
-  const double until_time = GetMainClock()->GetCurrentTime();
-  JSINFO << "Propgating SMASH until t = " << until_time;
-  // if (!only_final_decays_) {
-  smash_experiment_->run_time_evolution(until_time);
-  // }
 
+  std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimetepParticlizationHadrons();
+  JSINFO << "SMASH got " << new_JS_hadrons.size() << " timestep partilization hadrons from BDM.";
+
+  const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
+  JSINFO << "Propgating SMASH until t = " << until_time;
+  if (!only_final_decays_) {
+    smash_experiment_->run_time_evolution(until_time, convert_to_plist(new_JS_hadrons));
+  }
 }
 
 void SmashWrapper::FinishPerEvent() {
   JSINFO << "Finishing SMASH event...";
 
   AfterburnerModus *modus = smash_experiment_->modus();
-
-  smash::Particles *smash_particles = smash_experiment_->particles();
+  // SMASH within JETSCAPE only works with one (the first) ensemble
+  smash::Particles *smash_particles = smash_experiment_->first_ensemble();
+  int ev_no = modus->current_event_number();
 
   smash_experiment_->do_final_decays();
-  smash_experiment_->final_output(0);
+  smash_experiment_->final_output();
   smash_particles_to_JS_hadrons(*smash_particles,
-                                modus->jetscape_hadrons_[0]);
-  JSINFO << modus->jetscape_hadrons_[0].size() << " hadrons from SMASH.";
+                                modus->jetscape_hadrons_[ev_no - 1]);
+  JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
+         << " hadrons from SMASH.";
 }
 
 void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {

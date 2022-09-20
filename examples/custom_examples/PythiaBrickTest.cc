@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -13,7 +13,7 @@
  * See COPYING for details.
  ******************************************************************************/
 // -------------------------------------------------
-// XSCAPE Framework Clock Pythia Brick Test Program 
+// XSCAPE Framework Clock Pythia Brick Test Program
 // -------------------------------------------------
 
 #include <iostream>
@@ -72,18 +72,18 @@ class HistTest : public JetScapeModuleBase
 
   virtual void ExecTime()
   {
-    
+
     if (GetMainClock()->GetCurrentTime()<GetMainClock()->GetDeltaT()) QueryHistory::Instance()->PrintTaskMap();
 
     vector<any> eLossHistories = QueryHistory::Instance()->GetHistoryFromModules("JetEnergyLoss");
-   
+
     if (GetMainClock()->GetCurrentTime()<2) {
 
     cout<< "HistTest::ExecTime(): Current Main Clock Time = "<<GetMainClock()->GetCurrentTime() << endl;
     cout<< "HistTest::ExecTime(): Print Histories via vector<any> eLossHistories = QueryHistory::Instance()->GetHistoryFromModules(\"JetEnergyLoss\")" <<endl;
-    
+
     for (auto mHist : eLossHistories)
-    {          
+    {
       any_cast<std::shared_ptr<PartonShower>>(mHist)->PrintEdges(false);
     }
    }
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
   time_t start, end; time(&start);
 
   cout<<endl;
-    
+
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
   JetScapeLogger::Instance()->SetInfo(true);
@@ -133,18 +133,21 @@ int main(int argc, char** argv)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
 
-  
+
   Show();
 
   // -------------
   //Test clock ...
-  
+
   //auto mClock = make_shared<MainClock>();
   //mClock->SetTimeRefFrameId("SpaceTime");
 
   // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-1,5,0.1); // JP: make consistent with reading from XML in init phase ...
-  auto mModuleClock = make_shared<ModuleClock>(); 
+  
+  //auto mClock = make_shared<MainClock>("SpaceTime",-1,5,0.1); // JP: make consistent with reading from XML in init phase ...
+  auto mClock = make_shared<MainClock>("SpaceTime",-0.1,0.1,0.1);
+  
+  auto mModuleClock = make_shared<ModuleClock>();
   mModuleClock->SetTimeRefFrameId("SpaceTime * 2");
   auto mMilneClock = make_shared<MilneClock>();
   mMilneClock->setEtaMax(5.0);
@@ -155,43 +158,43 @@ int main(int argc, char** argv)
 
   /*
   mClock->Info();
-  
+
   //while (mClock->Next()) {
 
   mClock->Tick();
   mClock->Info();
 
   mModuleClock->Transform(mClock);
-  mModuleClock->Info(); 
+  mModuleClock->Info();
 
   //};
   */
   // -------------
 
   auto jetscape = make_shared<JetScape>();
-  jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
+  jetscape->SetXMLMainFileName("../config/jetscape_main.xml");
   jetscape->SetXMLUserFileName("../config/jetscape_user_test.xml");
   jetscape->SetId("primary");
   jetscape->AddMainClock(mClock);
   jetscape->ClockInfo();
 
   auto clockTest1 = make_shared<ClockTest>();
-  clockTest1->SetActive(false);
+  clockTest1->SetTimeStepped(true);
   clockTest1->SetTimeRange(-1,0);
 
   auto clockTest2 = make_shared<ClockTest>();
-  clockTest2->SetActive(false);
+  clockTest2->SetTimeStepped(true);
   //clockTest2->SetTimeRange(0,3.5);
-  
+
   auto clockTest3 = make_shared<ClockTest>();
-  clockTest3->SetActive(false);
+  clockTest3->SetTimeStepped(true);
   //clockTest3->SetTimeRange(0,4.);
   clockTest3->AddModuleClock(mModuleClock);
-  
+
   jetscape->Add(clockTest1);
   jetscape->Add(clockTest2);
   jetscape->Add(clockTest3);
-  
+
   // Initial conditions and hydro
   //auto trento = make_shared<TrentoInitial>();
   auto trento = make_shared<InitialState>();
@@ -199,11 +202,11 @@ int main(int argc, char** argv)
   auto isr = make_shared<InitialStateRadiationTest> ();
   auto hydro = make_shared<Brick> ();
   hydro->AddModuleClock(mMilneClock);
-  hydro->SetActive(false);
+  hydro->SetTimeStepped(true);
 
-  //auto hydroTest = make_shared<BrickTest> (); 
-  //hydroTest->SetMultiThread(true); 
-  //hydroTest->SetActive(false);
+  //auto hydroTest = make_shared<BrickTest> ();
+  //hydroTest->SetMultiThread(true);
+  //hydroTest->SetTimeStepped(true);
 
   jetscape->Add(trento);
   jetscape->Add(pythiaGun);
@@ -215,13 +218,16 @@ int main(int argc, char** argv)
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
 
-  //Set inactive task (per event) and with main clock attached do per time step for these modules ...
-  //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get 
+  //Do per time step for these modules with main clock attached ...
+  //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get
   //time, either main clock time or if module clock attached the tranformed time via: GetModuleCurrentTime();
+
+  jlossmanager->SetTimeStepped(true);
+  jloss->SetTimeStepped(true);
   
-  jlossmanager->SetActive(false);  
-  jloss->SetActive(false);
-  
+  // To test for time step consistency execution settings uncomment next line ...
+  //jloss->SetTimeStepped(false);
+
   //quick and dirty to check if module clock transformation is working conceptually ...
   //jloss->AddModuleClock(mModuleClock);
 
@@ -235,23 +241,23 @@ int main(int argc, char** argv)
   jloss->Add(matter);
   // jloss->Add(lbt);  // go to 3rd party and ./get_lbtTab before adding this module
   // jloss->Add(martini);
-  //jloss->Add(adscft);  
+  //jloss->Add(adscft);
   jlossmanager->Add(jloss);
   jetscape->Add(jlossmanager);
 
-  auto cascadeTest = make_shared<CascadeTest> ();  
-  cascadeTest->SetMultiThread(true); 
-  cascadeTest->SetActive(false);
+  auto cascadeTest = make_shared<CascadeTest> ();
+  cascadeTest->SetMultiThread(true);
+  cascadeTest->SetTimeStepped(true);
   jetscape->Add(cascadeTest);
 
   //Test task for access of History via QueryHistory instance and use any data-type for generic access via JetScapeModuleBase::GetHistory()
   auto histTest = make_shared<HistTest>();
-  histTest->SetActive(false); // to be executed per time step
+  histTest->SetTimeStepped(true);// to be executed per time step
   //jetscape->Add(histTest);
-  
+
   // JP: Leave out for now for testing clock(s) ... has to be updated accordingly ... (see JetEnergyLossManager as an example ...)
   // Hadronization
-  /*
+
   auto hadroMgr = make_shared<HadronizationManager> ();
   auto hadro = make_shared<Hadronization> ();
   //auto hadroModule = make_shared<ColoredHadronization> ();
@@ -260,8 +266,7 @@ int main(int argc, char** argv)
   hadro->Add(colorless);
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
-  */
-  
+
   // Output
   auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
   writer->SetId("AsciiWriter"); //for task search test ...
@@ -300,7 +305,7 @@ int main(int argc, char** argv)
 
   //printAllTasks(taskList);
 
-  // Intialize all modules tasks
+  // Initialize all modules tasks
   jetscape->Init();
 
   // Run JetScape with all task/modules as specified
@@ -308,7 +313,7 @@ int main(int argc, char** argv)
 
   // For the future, cleanup is mostly already done in write and clear
   jetscape->Finish();
-  
+
   INFO_NICE<<"Finished!";
   cout<<endl;
 
@@ -325,9 +330,9 @@ int main(int argc, char** argv)
   // cout << " nTried    = " << info.nTried() << endl;
   // cout << " nSelected = " << info.nSelected()  << endl;
   // cout << " nAccepted = " << info.nAccepted()  << endl;
-  // cout << " sigmaGen  = " <<   info.sigmaGen()  << endl;  
+  // cout << " sigmaGen  = " <<   info.sigmaGen()  << endl;
   // cout << " sigmaErr  = " <<   info.sigmaErr()  << endl;
-   
+
   return 0;
 }
 

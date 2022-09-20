@@ -40,7 +40,7 @@ namespace Jetscape {
    * By default, hydro events are used only once
    */
 JetScape::JetScape()
-    : JetScapeModuleBase(), n_events(1), reuse_hydro_(false), n_reuse_hydro_(1),
+    : JetScapeModuleBase(), n_events(1), n_events_printout(100), reuse_hydro_(false), n_reuse_hydro_(1),
       liquefier(nullptr), fEnableAutomaticTaskListDetermination(true) {
   VERBOSE(8);
   SetId("primary");
@@ -58,10 +58,10 @@ void JetScape::Show() { ShowJetscapeBanner(); }
 void JetScape::Init() {
   Show();
 
-  JSINFO << BOLDRED << "Intialize JetScape ...";
+  JSINFO << BOLDRED << "Initialize JetScape ...";
 
   // Set the names of the XML files in the JetScapeXML instance
-  JetScapeXML::Instance()->OpenXMLMasterFile(GetXMLMasterFileName());
+  JetScapeXML::Instance()->OpenXMLMainFile(GetXMLMainFileName());
   JetScapeXML::Instance()->OpenXMLUserFile(GetXMLUserFileName());
   JSINFO << "================================================================";
 
@@ -127,6 +127,7 @@ void JetScape::ReadGeneralParametersFromXML() {
     SetNumberOfEvents(nEvents);
     JSINFO << "nEvents = " << nEvents;
   }
+  n_events_printout = GetXMLElementInt({"nEvents_printout"});
 
   // Set whether to reuse hydro
   std::string reuseHydro = GetXMLElementText({"setReuseHydro"});
@@ -877,7 +878,7 @@ void JetScape::Exec() {
   }
 
   for (int i = 0; i < GetNumberOfEvents(); i++) {
-    if (i % 100 == 0) {
+    if (i % n_events_printout == 0) {
       JSINFO << BOLDRED << "Run Event # = " << i;
     }
     VERBOSE(1) << BOLDRED << "Run Event # = " << i;
@@ -1040,6 +1041,7 @@ void JetScape::Exec() {
       bool hydro_pointer_is_set = false;
       for (auto it : GetTaskList()) {
         if (!dynamic_pointer_cast<FluidDynamics>(it) &&
+            !dynamic_pointer_cast<PreequilibriumDynamics>(it) &&
             !dynamic_pointer_cast<InitialState>(it)) {
           continue;
         }

@@ -176,11 +176,11 @@ void JetScapeSignalManager::ConnectTransformPartonsSignal(
 
 
 void JetScapeSignalManager::ConnectGetFinalHadronListSignal(
-	shared_ptr<HadronPrinter> h){
-		auto hadroMgrShared = GetHadronizationManagerPointer().lock();
-  //hadronPrinter->GetFinalHadronList.connect(hadro.get(), &Hadronization::GetHadrons);
-  h->GetFinalHadronList.connect(hadroMgrShared.get(),
-			&HadronizationManager::GetHadrons);
+                                                shared_ptr<HadronPrinter> h){
+    auto hadroMgrShared = GetHadronizationManagerPointer().lock();
+    //hadronPrinter->GetFinalHadronList.connect(hadro.get(), &Hadronization::GetHadrons);
+    h->GetFinalHadronList.connect(hadroMgrShared.get(),
+                                  &HadronizationManager::GetHadrons);
 }
 
 

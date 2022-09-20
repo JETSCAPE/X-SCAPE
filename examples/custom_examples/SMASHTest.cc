@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -58,7 +58,9 @@
 #include "PGun.h"
 #include "HadronizationManager.h"
 #include "Hadronization.h"
+#include "ColorlessHadronization.h"
 #include "ColoredHadronization.h"
+#include "HybridHadronization.h"
 
 #include <chrono>
 #include <thread>
@@ -90,13 +92,24 @@ int main(int argc, char** argv)
 
   Show();
 
-  // auto jetscape = make_shared<JetScape>("./jetscape_init.xml",10);
-  // jetscape->SetReuseHydro (true);
-  // jetscape->SetNReuseHydro (5);
+  // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
+  auto mClock = make_shared<MainClock>("SpaceTime",0,100,10.0); // JP: make consistent with reading from XML in init phase ...
+  mClock->Info();
 
-  auto jetscape = make_shared<JetScape>("./jetscape_init.xml",1);
+  auto jetscape = make_shared<JetScape>();
+  const char* mainXMLName = "../config/jetscape_main.xml";
+  const char* userXMLName = "../config/jetscape_user.xml";
+
+  jetscape->SetXMLMainFileName(mainXMLName);
+  jetscape->SetXMLUserFileName(userXMLName);
+
+  jetscape->AddMainClock(mClock);
+  jetscape->ClockInfo();
+
   jetscape->SetReuseHydro (false);
   jetscape->SetNReuseHydro (0);
+  // jetscape->SetReuseHydro (true);
+  // jetscape->SetNReuseHydro (5);
 
   // Initial conditions and hydro
   auto trento = make_shared<TrentoInitial>();
@@ -107,14 +120,6 @@ int main(int argc, char** argv)
   jetscape->Add(freestream);
   jetscape->Add(pGun);
   jetscape->Add(hydro);
-
-  // surface sampler
-  auto iSS = make_shared<iSpectraSamplerWrapper> ();
-  jetscape->Add(iSS);
-
-  // afterburner
-  auto smash = make_shared<SmashWrapper> ();
-  jetscape->Add(smash);
 
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
@@ -136,15 +141,24 @@ int main(int argc, char** argv)
   // Hadronization
   auto hadroMgr = make_shared<HadronizationManager> ();
   auto hadro = make_shared<Hadronization> ();
-  auto hadroModule = make_shared<ColoredHadronization> ();
-  hadro->Add(hadroModule);
-  // auto colorless = make_shared<ColorlessHadronization> ();
+  auto hybrid = make_shared<HybridHadronization> ();
+  hadro->Add(hybrid);
+  auto colorless = make_shared<ColorlessHadronization> ();
   // hadro->Add(colorless);
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
 
+  // surface sampler
+  auto iSS = make_shared<iSpectraSamplerWrapper>();
+  jetscape->Add(iSS);
+
+  // afterburner
+  auto smash = make_shared<SmashWrapper>();
+  jetscape->Add(smash);
+
   // Output
   auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
+  writer->SetId("Writer");
   // same as JetScapeWriterAscii but gzipped
   // auto writer= make_shared<JetScapeWriterAsciiGZ> ("test_out.dat.gz");
   // HEPMC3
@@ -153,7 +167,7 @@ int main(int argc, char** argv)
 #endif
   jetscape->Add(writer);
 
-  // Intialize all modules tasks
+  // Initialize all modules tasks
   jetscape->Init();
 
   // Run JetScape with all task/modules as specified ...
