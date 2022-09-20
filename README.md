@@ -1,4 +1,4 @@
-# JETSCAPE 3.4
+# JETSCAPE 3.5.1
 
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
@@ -22,19 +22,19 @@ To generate JETSCAPE events, you should pass an XML file specifying the settings
 ### The XML Configuration
 
 All of the JETSCAPE settings are specified by two XML files:
-- Master XML file: *you don't modify this*
+- Main XML file: *you don't modify this*
   - Contains default values for every possible module and parameter
 - User XML file: *you provide this*
   - Contains a list of which modules to run, and which default parameter values to override
 
-An example User XML file is provided at `config/jetscape_user.xml`. 
+An example User XML file is provided at `config/jetscape_user.xml`.
 You should adapt this as you like:
  - Set number of events to run
- - Set output format (`Writer` type) and filename 
+ - Set output format (`Writer` type) and filename
  - Set which modules to include (in order of execution)
- - Set any default parameter values (from Master XML file) to override
- 
-The Master XML file is located at `config/jetscape_master.xml`, and contains a list of 
+ - Set any default parameter values (from Main XML file) to override
+
+The Main XML file is located at `config/jetscape_main.xml`, and contains a list of
 the default parameter settings which will be used for all activated modules (as specified by the User XML file),
 if they are not overridden in the User XML file.
 
@@ -74,7 +74,7 @@ Several example hydro profiles can be downloaded using `examples/get_hydroSample
 
 ## Developing modules
 
-To develop a new JETSCAPE module, you should inherit from the relevant base class (InitialState, JetEnergyLoss, etc.) 
+To develop a new JETSCAPE module, you should inherit from the relevant base class (InitialState, JetEnergyLoss, etc.)
 and implement the relevant initialization and execution functions, described in detail in [The JETSCAPE framework](https://arxiv.org/abs/1903.07706)
 Section 3.3.
 
@@ -85,7 +85,7 @@ Additionally, you must register your module with the framework with the followin
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<MyClass> reg;
   ```
-- Add the following to your module .cc: 
+- Add the following to your module .cc:
   ```
   // Register the module with the base class
   RegisterJetScapeModule<MyClass> MyClass::reg("CustomModuleBlahBlah");
@@ -93,8 +93,8 @@ Additionally, you must register your module with the framework with the followin
 where `MyClass` is the name of your class, and "CustomModuleBlahBlah" is the name that should be added to the XML configuration.
 You can see any of the established modules, e.g.  `Matter`, as an example.
 
-Important Note: In the case of custom modules, you *must* start your module name with "CustomModule..." 
-in order for it to be recognized by the framework (for custom writers, you must start the name with "CustomWriter"). 
+Important Note: In the case of custom modules, you *must* start your module name with "CustomModule..."
+in order for it to be recognized by the framework (for custom writers, you must start the name with "CustomWriter").
 
 New modules should not use multiple inheritance, if avoidable.
 
@@ -108,5 +108,5 @@ configuration file, and anything else that may be relevant.
 
 ## Contributing to JETSCAPE
 
-If you would like to contribute code to JETSCAPE (new module, feature, bug fix, etc.) please open 
+If you would like to contribute code to JETSCAPE (new module, feature, bug fix, etc.) please open
 a [Pull Request](https://github.com/JETSCAPE/JETSCAPE/pulls) with your changes, or an [Issue](https://github.com/JETSCAPE/JETSCAPE/issues) describing what you intend to do. For further details, see [Tips for git management](https://github.com/JETSCAPE/JETSCAPE/wiki/Tips-for-git-management).

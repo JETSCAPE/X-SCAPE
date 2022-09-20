@@ -98,8 +98,11 @@ int main(int argc, char** argv)
   mClock->Info();
 
   auto jetscape = make_shared<JetScape>();
-  jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
-  jetscape->SetXMLUserFileName("../config/jetscape_user.xml");  // Needs to be mostly empty
+
+  const char* mainXMLName = "../config/jetscape_main.xml";
+  const char* userXMLName = "../config/jetscape_user.xml";
+  jetscape->SetXMLMainFileName(mainXMLName);
+  jetscape->SetXMLUserFileName(userXMLName);  // Needs to be mostly empty
 
   jetscape->AddMainClock(mClock);
   jetscape->ClockInfo();

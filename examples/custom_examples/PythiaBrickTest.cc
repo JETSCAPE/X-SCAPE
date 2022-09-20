@@ -143,9 +143,10 @@ int main(int argc, char** argv)
   //mClock->SetTimeRefFrameId("SpaceTime");
 
   // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
+  
   //auto mClock = make_shared<MainClock>("SpaceTime",-1,5,0.1); // JP: make consistent with reading from XML in init phase ...
   auto mClock = make_shared<MainClock>("SpaceTime",-0.1,0.1,0.1);
-
+  
   auto mModuleClock = make_shared<ModuleClock>();
   mModuleClock->SetTimeRefFrameId("SpaceTime * 2");
   auto mMilneClock = make_shared<MilneClock>();
@@ -171,7 +172,7 @@ int main(int argc, char** argv)
   // -------------
 
   auto jetscape = make_shared<JetScape>();
-  jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
+  jetscape->SetXMLMainFileName("../config/jetscape_main.xml");
   jetscape->SetXMLUserFileName("../config/jetscape_user_test.xml");
   jetscape->SetId("primary");
   jetscape->AddMainClock(mClock);
@@ -223,6 +224,7 @@ int main(int argc, char** argv)
 
   jlossmanager->SetTimeStepped(true);
   jloss->SetTimeStepped(true);
+  
   // To test for time step consistency execution settings uncomment next line ...
   //jloss->SetTimeStepped(false);
 
@@ -303,7 +305,7 @@ int main(int argc, char** argv)
 
   //printAllTasks(taskList);
 
-  // Intialize all modules tasks
+  // Initialize all modules tasks
   jetscape->Init();
 
   // Run JetScape with all task/modules as specified

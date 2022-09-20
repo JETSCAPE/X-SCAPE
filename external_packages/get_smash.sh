@@ -14,7 +14,8 @@
 ##############################################################################
 
 # 1) Download the SMASH code
-git clone --depth=1 https://github.com/smash-transport/smash.git --branch SMASH-1.8.1 smash/smash_code
+# TODO: Change branch back to main SMASH version before public XSCAPE version
+git clone --depth=1 https://github.com/smash-transport/smash.git --branch staudenmaier/mod_plist_ts smash/smash_code
 
 # 2) Compile SMASH
 cd smash/smash_code

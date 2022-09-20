@@ -102,8 +102,12 @@ int main(int argc, char** argv)
   mModuleClock->Info();
 
   auto jetscape = make_shared<JetScape>();
-  jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
-  jetscape->SetXMLUserFileName("../config/jetscape_user_test.xml");
+
+  const char* mainXMLName = "../config/jetscape_main.xml";
+  const char* userXMLName = "../config/jetscape_user_test.xml";
+  jetscape->SetXMLMainFileName(mainXMLName);
+  jetscape->SetXMLUserFileName(userXMLName);
+
   jetscape->SetId("primary");
   jetscape->AddMainClock(mClock);
   jetscape->ClockInfo();
