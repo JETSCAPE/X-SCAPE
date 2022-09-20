@@ -27,36 +27,37 @@
 [Info] | See COPYING file for details.                                |[0m
 [Info] |                                                              |[0m
 [Info] *--------------------------------------------------------------*[0m
-[Info] 156MB  [1m[31mIntialize JetScape ...[0m
-[Info] 156MB  Created JetScapeXML Instance[0m
-[Info] 156MB  Open XML Master file : jetscape_master.xml[0m
-[Info] 156MB  Open XML User file : jetscape_user.xml[0m
-[Info] 156MB  ================================================================[0m
-[Info] 156MB  nEvents = 10[0m
-[Info] 156MB  Reuse Hydro:  true [0m
-[Info] 156MB  nReuseHydro: 10[0m
-[Info] 156MB  JetScapeTaskSupport found seed 1, using individual engines with seeds created from 1[0m
-[Info] 156MB  JetScape::DetermineTaskList() -- Initial State: Added Trento module to task list.[0m
-[Info] 160MB  JetScape::DetermineTaskList() -- Hard Process: Added PythiaGun to task list.[0m
-[Info] 160MB  JetScape::DetermineTaskList() -- PreDynamics: Added NullPreDynamics to task list.[0m
-[Info] 160MB  JetScape::DetermineTaskList() -- Hydro: Added Brick to task list.[0m
-[Info] 160MB  JetScape::DetermineTaskList() -- Eloss: Added Matter to Eloss list.[0m
-[Info] 160MB  JetScape::DetermineTaskList() -- JetHadronization: Added ColorlessHadronization to task list.[0m
-[Info] 160MB  JetScape::DetermineTaskList() -- JetScapeWriterAscii (test_out.dat) added to task list.[0m
-[Info] 160MB  JetScape::DetermineTaskList() -- JetScapeWriterHepMC (test_out.hepmc) added to task list.[0m
-[Info] 160MB  ================================================================[0m
-[Info] 160MB  Found 8 Modules Initialize them ... [0m
-[Info] 160MB  Set Hydro,JetEnergylossManager and IS Pointers for SignalManager to create Signal/Slots[0m
-[Info] 160MB  Created JetScapeSignalManager Instance[0m
-[Info] 160MB  Calling JetScape InitTasks()...[0m
-[Info] 160MB  Initialize InitialState ... Trento ...[0m
-[Info] 160MB  x range for bulk evolution = [-15, 15][0m
-[Info] 160MB   Initialzie TRENTo initial condition [0m
-[Info] 160MB  Random seed used for Trento 1350755646[0m
-[Info] 161MB  TRENTO centrality table header: Pb-Pb-E-2760-X-6.40-p-0.00-k-1.20-w-0.90-d-1.20[0m
-[Info] 161MB  Hash tag for this header: 13010470827798989771[0m
-[Info] 161MB  TRENTo is generating new centrality table for this new parameter set[0m
-[Info] 161MB  It may take 10(s) to 1(min).[0m
+[Info] 155MB  [1m[31mInitialize JetScape ...[0m
+[Info] 155MB  Created JetScapeXML Instance[0m
+[Info] 155MB  Open XML Main file : jetscape_main.xml[0m
+[Info] 155MB  Open XML User file : jetscape_user.xml[0m
+[Info] 155MB  ================================================================[0m
+[Info] 155MB  nEvents = 10[0m
+[Info] 155MB  Reuse Hydro:  true [0m
+[Info] 155MB  nReuseHydro: 10[0m
+[Info] 155MB  JetScapeTaskSupport found seed 1, using individual engines with seeds created from 1[0m
+[Info] 155MB  JetScape::DetermineTaskList() -- Initial State: Added Trento module to task list.[0m
+[Info] 158MB  JetScape::DetermineTaskList() -- Hard Process: Added PythiaGun to task list.[0m
+[Info] 158MB  JetScape::DetermineTaskList() -- PreDynamics: Added NullPreDynamics to task list.[0m
+[Info] 158MB  JetScape::DetermineTaskList() -- Hydro: Added Brick to task list.[0m
+[Info] 159MB  JetScape::DetermineTaskList() -- Eloss: Added Matter to Eloss list.[0m
+[Info] 159MB  JetScape::DetermineTaskList() -- JetHadronization: Added ColorlessHadronization to task list.[0m
+[Info] 159MB  JetScape::DetermineTaskList() -- JetScapeWriterAscii (test_out.dat) added to task list.[0m
+[Info] 159MB  JetScape::DetermineTaskList() -- JetScapeWriterHepMC (test_out.hepmc) added to task list.[0m
+[Info] 159MB  ================================================================[0m
+[Info] 159MB  Created QueryHistory Instance[0m
+[Info] 159MB  Found 8 Modules Initialize them ... [0m
+[Info] 159MB  Set Hydro,JetEnergylossManager and IS Pointers for SignalManager to create Signal/Slots[0m
+[Info] 159MB  Created JetScapeSignalManager Instance[0m
+[Info] 159MB  Calling JetScape InitTasks()...[0m
+[Info] 159MB  Initialize InitialState ... Trento ...[0m
+[Info] 159MB  x range for bulk evolution = [-15, 15][0m
+[Info] 159MB   Initialzie TRENTo initial condition [0m
+[Info] 159MB  Random seed used for Trento 1350755646[0m
+[Info] 160MB  TRENTO centrality table header: Pb-Pb-E-2760-X-6.40-p-0.00-k-1.20-w-0.90-d-1.20[0m
+[Info] 160MB  Hash tag for this header: 13010470827798989771[0m
+[Info] 160MB  TRENTo is generating new centrality table for this new parameter set[0m
+[Info] 160MB  It may take 10(s) to 1(min).[0m
 # 1000 events generated
 # 2000 events generated
 # 3000 events generated
@@ -66,15 +67,15 @@
 # 7000 events generated
 # 8000 events generated
 # 9000 events generated
-[Info] 162MB  #########21.3052 11.42[0m
-[Info] 162MB  The total energy density cut for centrality = [50, 60] (%) is:[0m
-[Info] 162MB  158.738<dE/deta(eta=0)<296.143[0m
-[Info] 162MB  Pb Pb 1  --random-seed 1350755646 --cross-section 6.400000 --beam-energy 2760.000000 --reduced-thickness 0.000000 --fluctuation 1.200000 --nucleon-width 0.900000 --nucleon-min-dist 1.200000 --mean-coeff 1.000000 --std-coeff 3.000000 --skew-coeff 0.000000 --skew-type 1 --jacobian 0.800000 --quiet  --normalization 13.900000 --ncoll  --xy-max 15.000000 --xy-step 0.300000 --eta-max 0.200000 --eta-step 0.200000 --s-max 296.142663 --s-min 158.737749[0m
-[Info] 162MB  TRENTo set[0m
-[Info] 162MB  Initialize HardProcess : UninitializedPythiaGun ...[0m
-[Info] 162MB  [35mPythia Gun with FSR_on: 0[0m
-[Info] 162MB  [35mPythia Gun with 20 < pTHat < 30[0m
-[Info] 162MB  [35mUse hybrid hadronization? 0[0m
+[Info] 161MB  #########21.3052 11.42[0m
+[Info] 161MB  The total energy density cut for centrality = [50, 60] (%) is:[0m
+[Info] 161MB  158.738<dE/deta(eta=0)<296.143[0m
+[Info] 161MB  Pb Pb 1  --random-seed 1350755646 --cross-section 6.400000 --beam-energy 2760.000000 --reduced-thickness 0.000000 --fluctuation 1.200000 --nucleon-width 0.900000 --nucleon-min-dist 1.200000 --mean-coeff 1.000000 --std-coeff 3.000000 --skew-coeff 0.000000 --skew-type 1 --jacobian 0.800000 --quiet  --normalization 13.900000 --ncoll  --xy-max 15.000000 --xy-step 0.300000 --eta-max 0.200000 --eta-step 0.200000 --s-max 296.142663 --s-min 158.737749[0m
+[Info] 161MB  TRENTo set[0m
+[Info] 161MB  Initialize HardProcess : UninitializedPythiaGun ...[0m
+[Info] 161MB  [35mPythia Gun with FSR_on: 0[0m
+[Info] 161MB  [35mPythia Gun with 20 < pTHat < 30[0m
+[Info] 161MB  [35mUse hybrid hadronization? 0[0m
 
  *-------  PYTHIA Process Initialization  --------------------------*
  |                                                                  |
@@ -183,22 +184,32 @@
 
  --------  End PYTHIA Particle Data Table  -----------------------------------------------------------------------------------------
 
-[Info] 168MB  Connect HadronizationManager Signal to Energy Loss ...[0m
-[Info] 168MB  JetScape Stream Writer initialized with output file = test_out.dat[0m
-[Info] 168MB  JetScape HepMC Writer initialized with output file = test_out.hepmc[0m
-[Info] 168MB  [1m[31mRun JetScape ...[0m
-[Info] 168MB  [1m[31mNumber of Events = 10[0m
-[Info] 168MB  [1m[31mRun Event # = 0[0m
-[Info] 168MB   Exec TRENTo initial condition [0m
-[Info] 169MB   TRENTo event info: [0m
-[Info] 169MB  b	npart	ncoll	ET	(x-com, y-com) (fm)[0m
-[Info] 169MB  12.4827	37	40	167.272	(0.419844, 0.440687)[0m
-[Info] 169MB   Load TRENTo density and ncoll density to JETSCAPE memory [0m
-[Info] 169MB  20000 density elements[0m
-[Info] 170MB  10000 ncoll elements[0m
-[Info] 170MB   TRENTO event generated and loaded [0m
-[Info] 178MB  [1m[30mJetScape finished after 10 events![0m
+[Info] 166MB  Connect HadronizationManager Signal to Energy Loss ...[0m
+[Info] 166MB  JetScape Stream Writer initialized with output file = test_out.dat[0m
+[Info] 166MB  JetScape HepMC Writer initialized with output file = test_out.hepmc[0m
+[Info] 166MB  [1m[31mRun JetScape ...[0m
+[Info] 166MB  [1m[31mNumber of Events = 10[0m
+[Info] 166MB  [1m[31mRun Event # = 0[0m
+[Info] 166MB   Exec TRENTo initial condition [0m
+[Info] 166MB   TRENTo event info: [0m
+[Info] 167MB  b	npart	ncoll	ET	(x-com, y-com) (fm)[0m
+[Info] 167MB  12.4827	37	40	167.272	(0.419844, 0.440687)[0m
+[Info] 167MB   Load TRENTo density and ncoll density to JETSCAPE memory [0m
+[Info] 167MB  20000 density elements[0m
+[Info] 168MB  10000 ncoll elements[0m
+[Info] 168MB   TRENTO event generated and loaded [0m
+[Info] 171MB   Number of Hard Partons = 26[0m
+[Info] 176MB   Number of Hard Partons = 12[0m
+[Info] 176MB   Number of Hard Partons = 16[0m
+[Info] 176MB   Number of Hard Partons = 16[0m
+[Info] 176MB   Number of Hard Partons = 13[0m
+[Info] 176MB   Number of Hard Partons = 15[0m
+[Info] 176MB   Number of Hard Partons = 8[0m
+[Info] 176MB   Number of Hard Partons = 8[0m
+[Info] 176MB   Number of Hard Partons = 20[0m
+[Info] 176MB   Number of Hard Partons = 17[0m
+[Info] 176MB  [1m[30mJetScape finished after 10 events![0m
 [Info] Finished![0m
 
-CPU time: 31.357033 seconds.
-Real time: 31.000000 seconds.
+CPU time: 31.782171 seconds.
+Real time: 32.000000 seconds.

@@ -27,9 +27,9 @@
 [Info] | See COPYING file for details.                                |[0m
 [Info] |                                                              |[0m
 [Info] *--------------------------------------------------------------*[0m
-[Info] 155MB  [1m[31mIntialize JetScape ...[0m
+[Info] 155MB  [1m[31mInitialize JetScape ...[0m
 [Info] 155MB  Created JetScapeXML Instance[0m
-[Info] 155MB  Open XML Master file : jetscape_master.xml[0m
+[Info] 155MB  Open XML Main file : jetscape_main.xml[0m
 [Info] 155MB  Open XML User file : jetscape_user.xml[0m
 [Info] 155MB  ================================================================[0m
 [Info] 155MB  nEvents = 10[0m
@@ -42,6 +42,7 @@
 [Info] 159MB  JetScape::DetermineTaskList() -- JetScapeWriterAscii (test_out.dat) added to task list.[0m
 [Info] 159MB  JetScape::DetermineTaskList() -- JetScapeWriterHepMC (test_out.hepmc) added to task list.[0m
 [Info] 159MB  ================================================================[0m
+[Info] 159MB  Created QueryHistory Instance[0m
 [Info] 159MB  Found 5 Modules Initialize them ... [0m
 [Info] 159MB  Set Hydro,JetEnergylossManager and IS Pointers for SignalManager to create Signal/Slots[0m
 [Info] 159MB  Created JetScapeSignalManager Instance[0m
@@ -162,8 +163,18 @@
 [Info] 166MB  [1m[31mRun JetScape ...[0m
 [Info] 166MB  [1m[31mNumber of Events = 10[0m
 [Info] 166MB  [1m[31mRun Event # = 0[0m
+[Info] 166MB   Number of Hard Partons = 20[0m
+[Info] 170MB   Number of Hard Partons = 41[0m
+[Info] 175MB   Number of Hard Partons = 30[0m
+[Info] 175MB   Number of Hard Partons = 31[0m
+[Info] 175MB   Number of Hard Partons = 27[0m
+[Info] 175MB   Number of Hard Partons = 4[0m
+[Info] 175MB   Number of Hard Partons = 16[0m
+[Info] 175MB   Number of Hard Partons = 20[0m
+[Info] 175MB   Number of Hard Partons = 4[0m
+[Info] 175MB   Number of Hard Partons = 7[0m
 [Info] 175MB  [1m[30mJetScape finished after 10 events![0m
 [Info] Finished![0m
 
-CPU time: 0.894904 seconds.
+CPU time: 0.907138 seconds.
 Real time: 1.000000 seconds.
