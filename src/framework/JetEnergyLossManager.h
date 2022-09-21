@@ -92,8 +92,11 @@ public:
   }
 
   const bool GetUseIntialPartonShower() const {return useShower;}
-  
+
   void SetUseIntialPartonShower(bool m_Use) {useShower=m_Use;}
+
+  // The Slot method to send the vector of Hadronization module
+  void GetFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons); 
 
 private:
 

@@ -181,6 +181,13 @@ void JetEnergyLossManager::MakeCopies()
  else {JSWARN<<"JetEnergloss Module copies already made!";exit(-1);}
 }
 
+void JetEnergyLossManager::GetFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons)
+{
+  for (auto it : GetTaskList()) {
+    fPartons.push_back(dynamic_pointer_cast<JetEnergyLoss>(it)->GetShower()->GetFinalPartons());
+  }
+}
+
 void JetEnergyLossManager::Exec() {
   VERBOSE(1) << "Run JetEnergyLoss Manager ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();

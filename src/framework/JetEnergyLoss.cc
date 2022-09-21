@@ -419,7 +419,7 @@ void JetEnergyLoss::Exec() {
 
   //REMARK JP: No idea what and why code below is needed !!!!
   //           Discuss and clean up in the future !!!!
-
+  /*
   weak_ptr<HardProcess> hproc =
     JetScapeSignalManager::Instance()->GetHardProcessPointer();
 
@@ -429,6 +429,7 @@ void JetEnergyLoss::Exec() {
     // auto hp = hproc.lock();
     // if ( hp ) hp->AddParton(pShower->GetPartonAt(ipart));
   }
+  */
 
   shared_ptr<PartonPrinter> pPrinter =
     JetScapeSignalManager::Instance()->GetPartonPrinterPointer().lock();
@@ -436,11 +437,13 @@ void JetEnergyLoss::Exec() {
     pPrinter->GetFinalPartons(pShower);
   }
 
+  /*
   shared_ptr<JetEnergyLoss> pEloss =
     JetScapeSignalManager::Instance()->GetEnergyLossPointer().lock();
   if (pEloss) {
     pEloss->GetFinalPartonsForEachShower(pShower);
   }
+  */
 
   //DEBUGTHREAD<<"Task Id = "<<this_thread::get_id()<<" Finished!";
   //JetScapeTask::ExecuteTasks(); // prevent Further modules to be execute, everything done by JetEnergyLoss ... (also set the no active flag ...!?)
@@ -532,13 +535,14 @@ void JetEnergyLoss::DoFinishPerEvent()
 
   //REMARK JP: No idea what and why code below is needed !!!!
   //           Discuss and clean up in the future !!!!
-
+  /*
   for (unsigned int ipart = 0; ipart < pShower->GetNumberOfPartons();
        ipart++) {
     //   Uncomment to dump the whole parton shower into the parton container
     // auto hp = hproc.lock();
     // if ( hp ) hp->AddParton(pShower->GetPartonAt(ipart));
   }
+  */
 
   shared_ptr<PartonPrinter> pPrinter =
     JetScapeSignalManager::Instance()->GetPartonPrinterPointer().lock();
@@ -546,11 +550,13 @@ void JetEnergyLoss::DoFinishPerEvent()
     pPrinter->GetFinalPartons(pShower);
   }
 
+  /*
   shared_ptr<JetEnergyLoss> pEloss =
     JetScapeSignalManager::Instance()->GetEnergyLossPointer().lock();
   if (pEloss) {
     pEloss->GetFinalPartonsForEachShower(pShower);
   }
+  */
 }
 
 void JetEnergyLoss::CalculateTime()
@@ -770,12 +776,6 @@ void JetEnergyLoss::WriteTask(weak_ptr<JetScapeWriter> w) {
 
 void JetEnergyLoss::PrintShowerInitiatingParton() {
   //JSDEBUG<<inP->pid();
-}
-
-void JetEnergyLoss::GetFinalPartonsForEachShower(
-  shared_ptr<PartonShower> shower) {
-
-  this->final_Partons.push_back(shower.get()->GetFinalPartons());
 }
 
 } // end namespace Jetscape

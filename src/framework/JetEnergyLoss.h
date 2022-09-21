@@ -234,13 +234,6 @@ public:
 
   std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
 
-  // The Slot method to send the vector of Hadronization module
-  void SendFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons) {
-    fPartons = final_Partons;
-  }
-
-  void GetFinalPartonsForEachShower(shared_ptr<PartonShower> shower);
-
   virtual any GetHistory() {return any(pShower);}
 
   //REMARK: Quick fix to test IsrShowerPSG ... fix later!!!!
