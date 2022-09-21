@@ -40,6 +40,11 @@
     <seed>0</seed>
   </Random>
 
+  <!--Bulk Dynamics Manager -->
+  <BDM>
+    <Tc>0.250</Tc>
+  </BDM>
+  
   <!-- Inital State Module  -->
   <IS>
     <!-- x range [-grid_max_x, grid_max_x] -->
