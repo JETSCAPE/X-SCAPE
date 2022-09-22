@@ -12,6 +12,7 @@ html/*
 build*/*
 external_packages/LBT*
 external_packages/iSS*
+external_packages/3dMCGlauber*
 external_packages/music*
 external_packages/3dMCGlauber
 examples/test_hydro_files/
