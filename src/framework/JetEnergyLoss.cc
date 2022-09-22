@@ -107,7 +107,7 @@ void JetEnergyLoss::Clear() {
   if (pShower)
     pShower->clear();
 
-  this->final_Partons.clear();
+  //this->final_Partons.clear();
 
   inP = nullptr;
   pShower = nullptr;
@@ -417,19 +417,8 @@ void JetEnergyLoss::Exec() {
   pShower->PrintNodes();
   pShower->PrintEdges();
 
-  //REMARK JP: No idea what and why code below is needed !!!!
-  //           Discuss and clean up in the future !!!!
-  /*
-  weak_ptr<HardProcess> hproc =
-    JetScapeSignalManager::Instance()->GetHardProcessPointer();
-
-  for (unsigned int ipart = 0; ipart < pShower->GetNumberOfPartons();
-       ipart++) {
-    //   Uncomment to dump the whole parton shower into the parton container
-    // auto hp = hproc.lock();
-    // if ( hp ) hp->AddParton(pShower->GetPartonAt(ipart));
-  }
-  */
+  //REMARK JP: This is not how a writer/a task should be used, the issue on github
+  // --> replace with a writer ...
 
   shared_ptr<PartonPrinter> pPrinter =
     JetScapeSignalManager::Instance()->GetPartonPrinterPointer().lock();
@@ -437,16 +426,6 @@ void JetEnergyLoss::Exec() {
     pPrinter->GetFinalPartons(pShower);
   }
 
-  /*
-  shared_ptr<JetEnergyLoss> pEloss =
-    JetScapeSignalManager::Instance()->GetEnergyLossPointer().lock();
-  if (pEloss) {
-    pEloss->GetFinalPartonsForEachShower(pShower);
-  }
-  */
-
-  //DEBUGTHREAD<<"Task Id = "<<this_thread::get_id()<<" Finished!";
-  //JetScapeTask::ExecuteTasks(); // prevent Further modules to be execute, everything done by JetEnergyLoss ... (also set the no active flag ...!?)
 }
 
 // ***************************************************************
@@ -529,34 +508,15 @@ void JetEnergyLoss::DoFinishPerEvent()
   pShower->PrintNodes();
   pShower->PrintEdges();
 
-  weak_ptr<HardProcess> hproc =
-    JetScapeSignalManager::Instance()->GetHardProcessPointer();
-
-
-  //REMARK JP: No idea what and why code below is needed !!!!
-  //           Discuss and clean up in the future !!!!
-  /*
-  for (unsigned int ipart = 0; ipart < pShower->GetNumberOfPartons();
-       ipart++) {
-    //   Uncomment to dump the whole parton shower into the parton container
-    // auto hp = hproc.lock();
-    // if ( hp ) hp->AddParton(pShower->GetPartonAt(ipart));
-  }
-  */
+  //REMARK JP: This is not how a writer/a task should be used, the issue on github
+  // --> replace with a writer ...
 
   shared_ptr<PartonPrinter> pPrinter =
     JetScapeSignalManager::Instance()->GetPartonPrinterPointer().lock();
   if (pPrinter) {
     pPrinter->GetFinalPartons(pShower);
   }
-
-  /*
-  shared_ptr<JetEnergyLoss> pEloss =
-    JetScapeSignalManager::Instance()->GetEnergyLossPointer().lock();
-  if (pEloss) {
-    pEloss->GetFinalPartonsForEachShower(pShower);
-  }
-  */
+  
 }
 
 void JetEnergyLoss::CalculateTime()

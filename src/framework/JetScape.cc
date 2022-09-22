@@ -798,6 +798,7 @@ void JetScape::CheckForWriterFromXML(const char *writerName,
   }
 }
 
+// JP: Maybe better to move to the SignalManager ...
 // kind of cluncky, maybe a better way ... ?
 // Handle signal/slots in JetScape hence avoid passing pointers to sub tasks ...
 void JetScape::SetPointers() {
@@ -807,6 +808,7 @@ void JetScape::SetPointers() {
 
   bool hydro_pointer_is_set = false;
   bool bulk_pointer_is_set = false;
+
   for (auto it : GetTaskList()) {
     if (dynamic_pointer_cast<InitialState>(it)) {
       JetScapeSignalManager::Instance()->SetInitialStatePointer(
@@ -824,7 +826,7 @@ void JetScape::SetPointers() {
       JetScapeSignalManager::Instance()->SetBulkDynamicsManagerPointer(
           dynamic_pointer_cast<BulkDynamicsManager>(it));
       bulk_pointer_is_set = true;
-    } else if (dynamic_pointer_cast<JetEnergyLossManager>(it)) {
+    } else if (dynamic_pointer_cast<JetEnergyLossManager>(it) && !dynamic_pointer_cast<IsrManager>(it)) {
       JetScapeSignalManager::Instance()->SetJetEnergyLossManagerPointer(
           dynamic_pointer_cast<JetEnergyLossManager>(it));
     } else if (dynamic_pointer_cast<HardProcess>(it)) {

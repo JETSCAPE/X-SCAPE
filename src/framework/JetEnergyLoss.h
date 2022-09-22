@@ -294,8 +294,7 @@ private:
   bool edensitySignalConnected;
 
   // Vector of final state partons for each shower as a vector
-
-  vector<vector<shared_ptr<Parton>>> final_Partons;
+  //vector<vector<shared_ptr<Parton>>> final_Partons;
 };
 
 } // end namespace Jetscape
