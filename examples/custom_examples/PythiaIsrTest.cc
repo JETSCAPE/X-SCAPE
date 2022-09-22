@@ -109,7 +109,7 @@ int main(int argc, char** argv)
   auto jetscape = make_shared<JetScape>();
 
   // TAKING THE OUTPUT FOLDER FROM THE ARGS
-  const char* masterXMLName = "../config/jetscape_master.xml";
+  const char* masterXMLName = "../config/jetscape_main.xml";
   const char* userXMLName = "../config/jetscape_user_test.xml";
   char* OutputFolder = "";
   if (argc == 2)  {
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
   }
   std::cout << userXMLName << std::endl;
   
-  jetscape->SetXMLMasterFileName(masterXMLName);
+  jetscape->SetXMLMainFileName(masterXMLName);
   jetscape->SetXMLUserFileName(userXMLName);
 
   // jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");

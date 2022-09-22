@@ -107,7 +107,7 @@ int main(int argc, char** argv)
   mModuleClock->Info();
 
   auto jetscape = make_shared<JetScape>();
-  jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
+  jetscape->SetXMLMainFileName("../config/jetscape_main.xml");
   if (argc > 1) {
     jetscape->SetXMLUserFileName(argv[1]);
   } else {
