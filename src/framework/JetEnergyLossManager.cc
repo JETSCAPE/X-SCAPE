@@ -184,9 +184,8 @@ void JetEnergyLossManager::MakeCopies()
 void JetEnergyLossManager::GetFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons)
 {
   for (auto it : GetTaskList()) {
-    JSWARN << " Id = " << it->GetId();
     fPartons.push_back(dynamic_pointer_cast<JetEnergyLoss>(it)->GetShower()->GetFinalPartons());
-    if(fPartons[0].size() == 0 ){
+    if(fPartons.back().size() == 0 ){
       JSWARN << " PartonList is empy ";
     }
   }
