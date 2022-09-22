@@ -12,7 +12,7 @@
   <nEvents> 2 </nEvents>
 
   <Random>
-    <seed>0</seed>
+    <seed>2</seed>
   </Random>
   
   <outputFilename>ISRTestParticles</outputFilename>

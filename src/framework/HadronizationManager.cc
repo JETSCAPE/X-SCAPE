@@ -100,11 +100,11 @@ void HadronizationManager::Exec() {
     VERBOSE(2) << " There are already " << hadrons.size() << " hadrons";
 
     //DEBUG:
-    /*
+    
     for (auto pv : hd)
       for (auto p : pv)
-        cout<<"--> "<<p->pt()<<endl;
-    */
+        cout<<"--> "<<p->plabel()<<endl;
+   
     
     for (auto it : GetTaskList()) {
       dynamic_pointer_cast<Hadronization>(it)->AddInPartons(hd);
