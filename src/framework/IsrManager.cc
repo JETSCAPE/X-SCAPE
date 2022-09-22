@@ -110,9 +110,13 @@ void IsrManager::Exec()
 
       auto fp = ps->GetFinalPartons();
       JSINFO << BOLDYELLOW <<"# of shower initiaing partons after ISR  = "<<fp.size();
-
-      for (auto p : fp) if (hpp) hpp->AddParton(p);
-
+      // IS: ISR Partons with pstat < 0 are not sent to Matter for Final state radiation 
+      // stubs which go to Matter have pstat >= 0 
+      for (auto p : fp)
+        if (hpp && p->pstat() >= 0 ) {
+          JSWARN << "# Parton added to shower with pstat " << p->pstat() << " plabel " << p->plabel(); 
+          hpp->AddParton(p);
+        }
     }
   }
 
