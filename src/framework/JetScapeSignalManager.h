@@ -26,6 +26,7 @@
 #include "HadronizationManager.h"
 #include "Hadronization.h"
 #include "FluidDynamics.h"
+#include "BulkDynamicsManager.h"
 #include "HardProcess.h"
 #include "JetScapeWriter.h"
 #include "PreequilibriumDynamics.h"
@@ -156,6 +157,7 @@ private:
   weak_ptr<InitialState> initial_state;
   weak_ptr<PreequilibriumDynamics> pre_equilibrium;
   weak_ptr<FluidDynamics> hydro;
+  weak_ptr<BulkDynamicsManager> bulk;
   weak_ptr<JetEnergyLossManager> jloss;
   weak_ptr<HardProcess> hardp;
   weak_ptr<JetScapeWriter> writer;
