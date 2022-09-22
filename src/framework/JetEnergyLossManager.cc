@@ -186,7 +186,7 @@ void JetEnergyLossManager::GetFinalStatePartons(vector<vector<shared_ptr<Parton>
   for (auto it : GetTaskList()) {
     fPartons.push_back(dynamic_pointer_cast<JetEnergyLoss>(it)->GetShower()->GetFinalPartons());
     if(fPartons.back().size() == 0 ){
-      JSWARN << " PartonList is empy ";
+      JSWARN << " PartonList is empty ";
     }
   }
 }
