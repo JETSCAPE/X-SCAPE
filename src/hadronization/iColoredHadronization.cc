@@ -116,7 +116,7 @@ void iColoredHadronization::DoHadronization(
             << " partons in the shower number " << ishower;
     for (unsigned int ipart = 0; ipart < shower.at(ishower).size(); ++ipart) {
       
-      if(shower.at(ishower).at(ipart)->pstat() < 0 ) continue;
+      // if(shower.at(ishower).at(ipart)->pstat() < 0 ) continue;
 
       double onshellE = pow(pow(shower.at(ishower).at(ipart)->px(), 2) +
                                 pow(shower.at(ishower).at(ipart)->py(), 2) +
