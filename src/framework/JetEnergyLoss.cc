@@ -113,6 +113,12 @@ void JetEnergyLoss::Clear() {
   pShower = nullptr;
   pInShower = nullptr;
 
+  // JP: Verify not needed in copy constructor ...
+  foundchangedorig = false;
+  droplet_stat = -11;
+  miss_stat = -13;
+  neg_stat = -17;
+
   pIn.clear();
   vStartVec.clear();
 }
@@ -190,6 +196,12 @@ void JetEnergyLoss::DoShower() {
   // cerr << " ---------------------------------------------- " << endl;
   // cerr << "Start with " << *GetShowerInitiatingParton()
   //      << "  -> " << GetShowerInitiatingParton()->t() << endl;
+
+  // -----------------
+  // JP: Check if these values are reset/etc correctly in per event and per timestep,
+  // not resetting foundchangedorig = false; caused dropping first parton in second event!!!!!\
+  // -----------------
+
   /*
   bool foundchangedorig = false;
   int droplet_stat = -11;
@@ -516,7 +528,7 @@ void JetEnergyLoss::DoFinishPerEvent()
   if (pPrinter) {
     pPrinter->GetFinalPartons(pShower);
   }
-  
+
 }
 
 void JetEnergyLoss::CalculateTime()
