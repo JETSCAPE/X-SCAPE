@@ -101,9 +101,9 @@ void HadronizationManager::Exec() {
 
     //DEBUG:
     
-    for (auto pv : hd)
-      for (auto p : pv)
-        cout<<"Partons in Hadronization --> "<<p->plabel()<<endl;
+    // for (auto pv : hd)
+    //   for (auto p : pv)
+    //     cout<<"Partons in Hadronization --> "<<p->plabel()<<endl;
    
     
     for (auto it : GetTaskList()) {

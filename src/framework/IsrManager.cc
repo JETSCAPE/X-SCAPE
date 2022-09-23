@@ -114,7 +114,7 @@ void IsrManager::Exec()
       // stubs which go to Matter have pstat >= 0 
       for (auto p : fp)
         if (hpp && p->pstat() >= 0 ) {
-          JSWARN << "# Parton added to shower with pstat " << p->pstat() << " plabel " << p->plabel(); 
+          // JSWARN << "# Parton added to shower with pstat " << p->pstat() << " plabel " << p->plabel(); 
           hpp->AddParton(p);
         }
     }
