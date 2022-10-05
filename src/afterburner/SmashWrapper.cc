@@ -196,6 +196,8 @@ void SmashWrapper::FinishPerEvent() {
          << " hadrons from SMASH.";
 }
 
+
+
 void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
   JSINFO << "SMASH hadronic afterburner printout";
   auto f = w.lock();
@@ -211,6 +213,26 @@ void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
       f->Write(hadron);
     }
   }
+}
+
+std::vector<std::shared_ptr<Hadron>> SmashWrapper::GetSmashHadronList() {
+  // TODO(stdnmr) Extract conversion functionality and use same here and in smash_particles_to_JS_hadrons()
+  std::vector<std::shared_ptr<Hadron>> h_list;
+  smash::Particles *smash_particles = smash_experiment_->first_ensemble();
+
+  for (const auto &particle : *smash_particles) {
+    const int hadron_label = 0;
+    const int hadron_status = -1;
+    const int hadron_id = particle.pdgcode().get_decimal();
+    smash::FourVector p = particle.momentum(), r = particle.position();
+    const FourVector hadron_p(p.x1(), p.x2(), p.x3(), p.x0()),
+        hadron_r(r.x1(), r.x2(), r.x3(), r.x0());
+    const double hadron_mass = p.abs();
+    h_list.push_back(make_shared<Hadron>(hadron_label, hadron_id,
+                                             hadron_status, hadron_p, hadron_r,
+                                             hadron_mass));
+  }
+  return std::move(h_list)
 }
 
 void AfterburnerModus::JS_hadrons_to_smash_particles(

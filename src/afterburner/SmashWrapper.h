@@ -80,6 +80,8 @@ public:
   void smash_particles_to_JS_hadrons(const smash::Particles &smash_particles,
                                 std::vector<shared_ptr<Hadron>> &JS_hadrons);
   SmashWrapper();
+  const std::vector<std::shared_ptr<Hadron>> GetSmashHadronList();
+
   void InitTask();
   void ExecuteTask();
   void WriteTask(weak_ptr<JetScapeWriter> w);
