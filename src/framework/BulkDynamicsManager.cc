@@ -225,8 +225,10 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
   if(validHydro == false){
     std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
     for (auto it : GetTaskList()) {
-      if(dynamic_pointer_cast<BulkMediaBase>(it)){
-	dynamic_pointer_cast<BulkMediaBase>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
+      if(dynamic_pointer_cast<Afterburner>(it)){
+	       // dynamic_pointer_cast<BulkMediaBase>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
+	       dynamic_pointer_cast<Afterburner>(it)->GetCurrentHadronList();
+         // TODO(stdnmr) Calculate hydro cell info from hadrons as BDM functionality
       }
     }
     InfoWrapper(fluid_cell_info_ptr,bulk_info_ptr);
