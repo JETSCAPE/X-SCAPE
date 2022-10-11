@@ -251,6 +251,7 @@ void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell
       fluid_cell_info_ptr->pi[i][j] = bulk_info_ptr->pi[i][j];
     }
   }
+  // tmn from bulk info not converted as not present in fluid cell info
 }
 
 std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {
