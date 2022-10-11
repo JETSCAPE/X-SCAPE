@@ -99,8 +99,17 @@ std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimestepParticlizationHadro
 void Afterburner::GetBulkInfo(Jetscape::real t, Jetscape::real x,
                               Jetscape::real y, Jetscape::real z,
                               std::unique_ptr<BulkMediaInfo> &bulk_info_ptr) {
- const std::vector<Hadron> h_list = GetCurrentHadronList();
-// TODO Calculate actual T^munu or energy density from hadron list
+  bulk_info_ptr = make_unique<BulkMediaInfo>();
+  const std::vector<Hadron> h_list = GetCurrentHadronList();
+  // TODO Calculate actual T^munu or energy density from hadron list.
+  // For now just put some dummy values.
+  bulk_info_ptr->energy_density = 0.5;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      bulk_info_ptr->tmn[i][j] = 0.1;
+    }
+  }
+  // TODO Fill other media info? (What is necessary for energy loss?)
 }
 
 } // end namespace Jetscape
