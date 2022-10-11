@@ -216,7 +216,6 @@ void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
 }
 
 std::vector<Hadron> SmashWrapper::GetCurrentHadronList() const {
-  // TODO(stdnmr) Extract conversion functionality and use same here and in smash_particles_to_JS_hadrons()
   std::vector<Hadron> h_list;
   smash::Particles* smash_particles = smash_experiment_->first_ensemble();
 

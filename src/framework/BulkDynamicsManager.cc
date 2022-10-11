@@ -226,7 +226,7 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
     std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
     for (auto it : GetTaskList()) {
       if(dynamic_pointer_cast<Afterburner>(it)){
-	       dynamic_pointer_cast<Afterburner>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
+	      dynamic_pointer_cast<Afterburner>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
       }
     }
     InfoWrapper(fluid_cell_info_ptr,bulk_info_ptr);
