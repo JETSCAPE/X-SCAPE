@@ -96,7 +96,7 @@ void BulkDynamicsManager::CalculateTime()
 
   JetScapeModuleBase::CalculateTimeTasks();
 
-    VERBOSE(3) << "Size of new hadron list at end of CalculateTime in BDM (should be empty) = " << new_hadrons_for_timestep.size();
+  VERBOSE(3) << "Size of new hadron list at end of CalculateTime in BDM (should be empty) = " << new_hadrons_for_timestep.size();
 
 }
 

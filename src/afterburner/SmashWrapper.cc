@@ -171,7 +171,7 @@ smash::ParticleList SmashWrapper::convert_to_plist(const std::vector<shared_ptr<
 
 void SmashWrapper::CalculateTimeTask() {
 
-  std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimetepParticlizationHadrons();
+  std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimestepParticlizationHadrons();
   JSINFO << "SMASH got " << new_JS_hadrons.size() << " timestep partilization hadrons from BDM.";
 
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
@@ -215,7 +215,7 @@ void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
   }
 }
 
-std::vector<Hadron> SmashWrapper::GetCurrentHadronList() {
+std::vector<Hadron> SmashWrapper::GetCurrentHadronList() const {
   // TODO(stdnmr) Extract conversion functionality and use same here and in smash_particles_to_JS_hadrons()
   std::vector<Hadron> h_list;
   smash::Particles* smash_particles = smash_experiment_->first_ensemble();
