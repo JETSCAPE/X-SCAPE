@@ -80,7 +80,7 @@ public:
   void smash_particles_to_JS_hadrons(const smash::Particles &smash_particles,
                                 std::vector<shared_ptr<Hadron>> &JS_hadrons);
   SmashWrapper();
-  const std::vector<std::shared_ptr<Hadron>> GetSmashHadronList();
+  std::vector<Hadron> GetCurrentHadronList() const override;
 
   void InitTask();
   void ExecuteTask();

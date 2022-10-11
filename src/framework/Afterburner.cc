@@ -86,7 +86,7 @@ std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GatherAfterburner
   return afterburner_had_events;
 }
 
-std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimetepParticlizationHadrons() {
+std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimestepParticlizationHadrons() {
   auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
   if (!bdm) {
     JSWARN << "No BulkDynamicsManager module found . It is necessary to provide"

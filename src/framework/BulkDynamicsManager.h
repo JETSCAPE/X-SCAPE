@@ -85,8 +85,6 @@ public:
 
   void InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
 
-  GetCurrentHadronList()
-
   /** Get the new hadrons for the upcoming timesteps and clear the vector for the next timestep
    */
   std::vector<shared_ptr<Hadron>> GetNewHadronsAndClear();
