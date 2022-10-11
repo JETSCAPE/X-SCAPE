@@ -96,4 +96,11 @@ std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimestepParticlizationHadro
   return bdm->GetNewHadronsAndClear();
 }
 
+void Afterburner::GetBulkInfo(Jetscape::real t, Jetscape::real x,
+                              Jetscape::real y, Jetscape::real z,
+                              std::unique_ptr<BulkMediaInfo> &bulk_info_ptr) {
+ const std::vector<Hadron> h_list = GetCurrentHadronList();
+// TODO Calculate actual T^munu or energy density from hadron list
+}
+
 } // end namespace Jetscape

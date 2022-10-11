@@ -42,8 +42,10 @@ public:
   virtual void Init();
   virtual void Exec();
   virtual void CalculateTime();
-  virtual void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,Jetscape::real z,
-			   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){}
+
+  void GetBulkInfo(Jetscape::real t, Jetscape::real x,
+                   Jetscape::real y, Jetscape::real z,
+			             std::unique_ptr<BulkMediaInfo> &bulk_info_ptr) override;
 
   /// Get the current list of hadrons in the afterburner as Jetscape Hadrons (has to be provided by all afterburner implementations)
   virtual std::vector<Hadron> GetCurrentHadronList() const = 0;
