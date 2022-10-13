@@ -115,7 +115,7 @@ void iMATTER::Init()
     // Initialize random number distribution
     ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
 
-    Pythia8::Info info;
+    Pythia8::Info info; 
     // Get Pythia data directory //
     std::stringstream pdfpath;
     pdfpath <<  getenv("PYTHIA8DATA") << "/../pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
@@ -419,7 +419,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         // We have to do the last splitting two time step before the last step 
         // Because one time step is needed to rotate the shower and then one more for pT generation
         if (time < split_time && pIn[in].plabel() == Current_Label 
-            && t1 < - Q0 - error  && std::abs(time - GetMaxT()) > 1e-10 && (time + 2 * deltaT > GetMaxT() + rounding_error ) )
+            && t1 < - Q0 - error  && std::abs(time - GetMaxT()) > 1e-10 && (time + 2 * deltaT > GetMaxT() + rounding_error ) 
+            && false)
         {
             if(abs(pIn[in].px()) >= rounding_error || abs(pIn[in].py()) >= rounding_error ){
                 std::cout.precision(15);

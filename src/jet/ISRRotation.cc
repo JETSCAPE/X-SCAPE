@@ -223,13 +223,13 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
 
       if ((Out.plabel() == Current_Label || std::abs(Out.pid()) == cid || std::abs(Out.pid()) == bid) && Out.pstat() < 0) {
-        // JSWARN << MAGENTA << " Pushing label " << Out.plabel() << " status "
-        //        << Out.pstat() << " pid " << Out.pid()
-        //        << " to MCGlauber ";
-        // JSINFO << MAGENTA << " e " << Out.e();
-        // JSINFO << MAGENTA << " px " << Out.px();
-        // JSINFO << MAGENTA << " py " << Out.py();
-        // JSINFO << MAGENTA << " pz " << Out.pz();
+        JSWARN << MAGENTA << " Pushing label " << Out.plabel() << " status "
+               << Out.pstat() << " pid " << Out.pid()
+               << " to MCGlauber ";
+        std::cout << MAGENTA << " e " << Out.e() << std::endl;
+        JSINFO << MAGENTA << " px " << Out.px();
+        JSINFO << MAGENTA << " py " << Out.py();
+        JSINFO << MAGENTA << " pz " << Out.pz();
         if (Out.e() < 0) {
           JSWARN << "Energy to subtract is negative !";
           exit(1);
