@@ -234,16 +234,9 @@ public:
 
   std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
 
-  // The Slot method to send the vector of Hadronization module
-  void SendFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons) {
-    fPartons = final_Partons;
-  }
-
-  void GetFinalPartonsForEachShower(shared_ptr<PartonShower> shower);
-
   virtual any GetHistory() {return any(pShower);}
 
-  //REMARK: Quick fix to test IsrShowerPSG ... fix later!!!!
+  //REMARK JP: Quick fix to test IsrShowerPSG ... fix later!!!!
   void DoExecTime();
   vector<Parton> pIn;
   vector<node> vStartVec;
@@ -287,8 +280,8 @@ private:
 
   //vector<Parton> pIn;
   //vector<node> vStartVec;
-
   //bool foundchangedorig = false;
+  
   int droplet_stat = -11;
   int miss_stat = -13;
   int neg_stat = -17;
@@ -297,9 +290,6 @@ private:
   bool jetSignalConnected;
   bool edensitySignalConnected;
 
-  // Vector of final state partons for each shower as a vector
-
-  vector<vector<shared_ptr<Parton>>> final_Partons;
 };
 
 } // end namespace Jetscape
