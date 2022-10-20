@@ -100,6 +100,10 @@ New modules should not use multiple inheritance, if avoidable.
 
 Once these steps are done, one can just add the module name to the XML, and it will be automatically available to run in JETSCAPE.
 
+## More information
+
+More material on the physics behind JETSCAPE and how to use it can be found in the material of the JETSCAPE Summer Schools. The schools are a yearly event explaining the details of the approach. You can either sign-up for the next one or go through the material of the last school yourself. The material is found in the SummerSchool repositories under [the JETSCAPE organization](https://github.com/JETSCAPE).
+
 ## Troubleshooting
 
 If you encounter a problem, please report the issue [here](https://github.com/JETSCAPE/JETSCAPE/issues).
