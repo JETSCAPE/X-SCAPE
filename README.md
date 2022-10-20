@@ -100,6 +100,14 @@ New modules should not use multiple inheritance, if avoidable.
 
 Once these steps are done, one can just add the module name to the XML, and it will be automatically available to run in JETSCAPE.
 
+## Doxygen documentation
+
+An overview of the code structure and the functionality can be obtained by building the HTML doxygen documentation by running
+```
+doxygen JetScapeDoxy.conf
+```
+in the JETSCAPE directory. Open the `index.html` file in the newly-created `html` directory in your favorite browser to see the documentation.
+
 ## More information
 
 More material on the physics behind JETSCAPE and how to use it can be found in the material of the JETSCAPE Summer Schools. The schools are a yearly event explaining the details of the approach. You can either sign-up for the next one or go through the material of the last school yourself. The material is found in the SummerSchool repositories under [the JETSCAPE organization](https://github.com/JETSCAPE).
