@@ -36,8 +36,8 @@ Tips for git management are found on the corresponding [wiki page](https://githu
 
 ## Doxygen documentation
 
-An overview of the code structure and functionality can be obtained by building the HTML doxygen documentation. Run
+An overview of the code structure and functionality can be obtained by browsing the HTML doxygen documentation. Functions and variables in header files should ideally be documented with [doxygen's special code comments](https://doxygen.nl/manual/docblocks.html). Run
 ```
 doxygen JetScapeDoxy.conf
 ```
-in the JETSCAPE directory. Open the `index.html` file in the newly-created `html` directory in your favorite browser to see the documentation.
+in the JETSCAPE directory to build the HTML documentation. Open the `index.html` file in the newly-created `html` directory in your favorite browser to see the documentation.
