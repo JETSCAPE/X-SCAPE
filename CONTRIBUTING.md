@@ -33,3 +33,11 @@ Once these steps are done, one can just add the module name to the XML, and it w
 ## Git Management
 
 Tips for git management are found on the corresponding [wiki page](https://github.com/JETSCAPE/JETSCAPE/wiki/Tips-for-git-management).
+
+## Doxygen documentation
+
+An overview of the code structure and functionality can be obtained by building the HTML doxygen documentation. Run
+```
+doxygen JetScapeDoxy.conf
+```
+in the JETSCAPE directory. Open the `index.html` file in the newly-created `html` directory in your favorite browser to see the documentation.
