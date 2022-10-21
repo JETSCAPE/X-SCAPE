@@ -83,7 +83,7 @@ public:
   void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
                             std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
 
-  void InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
+  void InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr, std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
 
   /** Get the new hadrons for the upcoming timesteps and clear the vector for the next timestep
    */

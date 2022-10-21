@@ -86,7 +86,7 @@ std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GatherAfterburner
   return afterburner_had_events;
 }
 
-std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimetepParticlizationHadrons() {
+std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimestepParticlizationHadrons() {
   auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
   if (!bdm) {
     JSWARN << "No BulkDynamicsManager module found . It is necessary to provide"
@@ -94,6 +94,22 @@ std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimetepParticlizationHadron
     exit(1);
   }
   return bdm->GetNewHadronsAndClear();
+}
+
+void Afterburner::GetBulkInfo(Jetscape::real t, Jetscape::real x,
+                              Jetscape::real y, Jetscape::real z,
+                              std::unique_ptr<BulkMediaInfo> &bulk_info_ptr) {
+  bulk_info_ptr = make_unique<BulkMediaInfo>();
+  const std::vector<Hadron> h_list = GetCurrentHadronList();
+  // TODO Calculate actual T^munu or energy density from hadron list.
+  // For now just put some dummy values.
+  bulk_info_ptr->energy_density = 0.5;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      bulk_info_ptr->tmn[i][j] = 0.1;
+    }
+  }
+  // TODO Fill other media info? (What is necessary for energy loss?)
 }
 
 } // end namespace Jetscape
