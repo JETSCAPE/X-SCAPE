@@ -60,7 +60,7 @@ An example reading an ascii output file is provided:
 ./build/readerTest
 ```
 
-which reads in the generated showers does some DFS search and shows the output. You can generate an output graph format which can be easily visualized using graphViz or other tools like Gephi (GUI for free for Mac) or more adanvanced, graph-tools (Python) and many more. Furthermore, as a "closure" test, the FastJet core package (compiled in our JetScape library) is used to perform a simple jetfinding (on the "final" partons, in graph language, incoming partons in a vertex with no outgoing partons/childs), and since the "shower" is perfectly collinear the jet pT is identical to the hard process parton pT (modulo some random new partons/roots in the final state, see above).  
+which reads in the generated showers does some DFS search and shows the output. You can generate an output graph format which can be easily visualized using graphViz or other tools like Gephi (GUI for free for Mac) or more advanced, graph-tools (Python) and many more. Furthermore, as a "closure" test, the FastJet core package (compiled in our JetScape library) is used to perform a simple jetfinding (on the "final" partons, in graph language, incoming partons in a vertex with no outgoing partons/childs), and since the "shower" is perfectly collinear the jet pT is identical to the hard process parton pT (modulo some random new partons/roots in the final state, see above).  
 
 ## JETSCAPE Tunes
 
@@ -74,7 +74,7 @@ Several example hydro profiles can be downloaded using `examples/get_hydroSample
 
 ## Doxygen documentation
 
-An overview of the code structure and the functionality can be obtained by building the HTML doxygen documentation by running
+An overview of the code structure and functionality can be obtained by building the HTML doxygen documentation. Run
 ```
 doxygen JetScapeDoxy.conf
 ```
