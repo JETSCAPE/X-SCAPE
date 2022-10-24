@@ -41,10 +41,15 @@ public:
   }
   void reset_event_numbering() { event_number_ = 0; }
   int current_event_number() {return event_number_;}
-  // The converter is not static, because modus holds int variables
-  // for the number of warnings, which are used in try_create_particle,
-  // called by this function. Maybe I (oliiny) will change this design in SMASH
-  // later, but now I have to put this converter inside the AfterburnerModus.
+
+  /**
+   * Add the Jetscape (JS) hadron list to the SMASH particles
+   *
+   * The converter is not static, because modus holds int variables
+   * for the number of warnings, which are used in try_create_particle,
+   * called by this function. Maybe I (oliiny) will change this design in SMASH
+   * later, but now I have to put this converter inside the AfterburnerModus.
+   */
   void add_JS_hadrons_to_smash_particles(
       const std::vector<shared_ptr<Hadron>> &JS_hadrons,
       smash::Particles &smash_particles);
@@ -66,7 +71,7 @@ private:
 class SmashWrapper : public Afterburner {
 private:
 
-  /// Convert Jetscape hadron list to smash particle list
+  /// Convert Jetscape (JS) hadron list to smash particle list
   smash::ParticleList get_smash_plist_from_JS_hadrons(const std::vector<shared_ptr<Hadron>>& JS_hadrons);
 
   bool only_final_decays_ = false;
@@ -77,6 +82,7 @@ private:
   static RegisterJetScapeModule<SmashWrapper> reg;
 
 public:
+  /// Fill the provided Jetscape (JS) hadron list from the SMASH particles
   void fill_JS_hadrons_from_smash_particles(const smash::Particles &smash_particles,
                                             std::vector<shared_ptr<Hadron>> &JS_hadrons);
   SmashWrapper();
