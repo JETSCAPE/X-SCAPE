@@ -49,14 +49,14 @@ std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GetSoftParticliza
 
 std::vector<shared_ptr<Hadron>> Afterburner::GetFragmentationHadrons() {
   JSINFO << "Get fragmentation hadrons in Afterburner";
-  auto hardonization_mgr = JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
-  if (!hardonization_mgr) {
+  auto hadronization_mgr = JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
+  if (!hadronization_mgr) {
     JSWARN << "No hardronization module found. It is necessary to include"
-          << " fargmentation hadrons to afterburner as requested.";
+          << " fragmentation hadrons to afterburner as requested.";
     exit(1);
   }
   std::vector<shared_ptr<Hadron>> h_list;
-  hardonization_mgr->GetHadrons(h_list);
+  hadronization_mgr->GetHadrons(h_list);
   JSINFO << "Got " << h_list.size() << " fragmentation hadrons from HadronizationManager.";
   for (auto h : h_list) {
     if (h->has_no_position()) {
