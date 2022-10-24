@@ -135,7 +135,6 @@ void SmashWrapper::ExecuteTask() {
   }
 }
 
-
 void SmashWrapper::InitPerEvent() {
   if (IsTimeStepped()) {
     JSINFO << "Initalizing new time-stepped SMASH  event ...";
@@ -153,22 +152,6 @@ void SmashWrapper::InitPerEvent() {
   smash_experiment_->initialize_new_event();
 }
 
-
-smash::ParticleList SmashWrapper::convert_to_plist(const std::vector<shared_ptr<Hadron>>& JS_hadrons) {
-  // TODO Merge/generalize this to be also used in JS_hadrons_to_smash_particles()
-  smash::ParticleList new_particles;
-  for (const auto& JS_had : JS_hadrons) {
-    const FourVector p = JS_had->p_in();
-    const FourVector r = JS_had->x_in();
-    smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
-    new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
-    new_p.set_4momentum(p.t(), p.x(), p.y(), p.z());
-    new_particles.push_back(new_p);
-  }
-  return new_particles;
-}
-
-
 void SmashWrapper::CalculateTimeTask() {
 
   std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimestepParticlizationHadrons();
@@ -177,7 +160,7 @@ void SmashWrapper::CalculateTimeTask() {
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
   JSINFO << "Propgating SMASH until t = " << until_time;
   if (!only_final_decays_) {
-    smash_experiment_->run_time_evolution(until_time, convert_to_plist(new_JS_hadrons));
+    smash_experiment_->run_time_evolution(until_time, get_smash_plist_from_JS_hadrons(new_JS_hadrons));
   }
 }
 
@@ -191,13 +174,11 @@ void SmashWrapper::FinishPerEvent() {
 
   smash_experiment_->do_final_decays();
   smash_experiment_->final_output();
-  smash_particles_to_JS_hadrons(*smash_particles,
-                                modus->jetscape_hadrons_[ev_no - 1]);
+  fill_JS_hadrons_from_smash_particles(*smash_particles,
+                                       modus->jetscape_hadrons_[ev_no - 1]);
   JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
          << " hadrons from SMASH.";
 }
-
-
 
 void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
   JSINFO << "SMASH hadronic afterburner printout";
@@ -235,7 +216,20 @@ std::vector<Hadron> SmashWrapper::GetCurrentHadronList() const {
   return h_list;
 }
 
-void AfterburnerModus::JS_hadrons_to_smash_particles(
+smash::ParticleList SmashWrapper::get_smash_plist_from_JS_hadrons(const std::vector<shared_ptr<Hadron>>& JS_hadrons) {
+  smash::ParticleList new_particles;
+  for (const auto& JS_had : JS_hadrons) {
+    const FourVector p = JS_had->p_in();
+    const FourVector r = JS_had->x_in();
+    smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
+    new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
+    new_p.set_4momentum(p.t(), p.x(), p.y(), p.z());
+    new_particles.push_back(new_p);
+  }
+  return new_particles;
+}
+
+void AfterburnerModus::add_JS_hadrons_to_smash_particles(
     const std::vector<shared_ptr<Hadron>> &JS_hadrons,
     smash::Particles &smash_particles) {
   smash_particles.reset();
@@ -250,7 +244,7 @@ void AfterburnerModus::JS_hadrons_to_smash_particles(
   }
 }
 
-void SmashWrapper::smash_particles_to_JS_hadrons(
+void SmashWrapper::fill_JS_hadrons_from_smash_particles(
     const smash::Particles &smash_particles,
     std::vector<shared_ptr<Hadron>> &JS_hadrons) {
   JS_hadrons.clear();

@@ -45,14 +45,14 @@ public:
   // for the number of warnings, which are used in try_create_particle,
   // called by this function. Maybe I (oliiny) will change this design in SMASH
   // later, but now I have to put this converter inside the AfterburnerModus.
-  void JS_hadrons_to_smash_particles(
+  void add_JS_hadrons_to_smash_particles(
       const std::vector<shared_ptr<Hadron>> &JS_hadrons,
       smash::Particles &smash_particles);
 
   // This function overrides the function from ListModus.
   double initial_conditions(smash::Particles *particles,
                             const smash::ExperimentParameters &) {
-    JS_hadrons_to_smash_particles(jetscape_hadrons_[event_number_], *particles);
+    add_JS_hadrons_to_smash_particles(jetscape_hadrons_[event_number_], *particles);
     backpropagate_to_same_time(*particles);
     event_number_++;
     return start_time_;
@@ -67,7 +67,7 @@ class SmashWrapper : public Afterburner {
 private:
 
   /// Convert Jetscape hadron list to smash particle list
-  smash::ParticleList convert_to_plist(const std::vector<shared_ptr<Hadron>>& JS_hadrons);
+  smash::ParticleList get_smash_plist_from_JS_hadrons(const std::vector<shared_ptr<Hadron>>& JS_hadrons);
 
   bool only_final_decays_ = false;
   double end_time_ = -1.0;
@@ -77,8 +77,8 @@ private:
   static RegisterJetScapeModule<SmashWrapper> reg;
 
 public:
-  void smash_particles_to_JS_hadrons(const smash::Particles &smash_particles,
-                                std::vector<shared_ptr<Hadron>> &JS_hadrons);
+  void fill_JS_hadrons_from_smash_particles(const smash::Particles &smash_particles,
+                                            std::vector<shared_ptr<Hadron>> &JS_hadrons);
   SmashWrapper();
 
   void InitTask();
