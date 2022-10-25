@@ -60,7 +60,7 @@ An example reading an ascii output file is provided:
 ./build/readerTest
 ```
 
-which reads in the generated showers does some DFS search and shows the output. You can generate an output graph format which can be easily visualized using graphViz or other tools like Gephi (GUI for free for Mac) or more adanvanced, graph-tools (Python) and many more. Furthermore, as a "closure" test, the FastJet core package (compiled in our JetScape library) is used to perform a simple jetfinding (on the "final" partons, in graph language, incoming partons in a vertex with no outgoing partons/childs), and since the "shower" is perfectly collinear the jet pT is identical to the hard process parton pT (modulo some random new partons/roots in the final state, see above).  
+which reads in the generated showers does some DFS search and shows the output. You can generate an output graph format which can be easily visualized using graphViz or other tools like Gephi (GUI for free for Mac) or more advanced, graph-tools (Python) and many more. Furthermore, as a "closure" test, the FastJet core package (compiled in our JetScape library) is used to perform a simple jetfinding (on the "final" partons, in graph language, incoming partons in a vertex with no outgoing partons/childs), and since the "shower" is perfectly collinear the jet pT is identical to the hard process parton pT (modulo some random new partons/roots in the final state, see above).  
 
 ## JETSCAPE Tunes
 
@@ -72,41 +72,15 @@ Currently, there exists a pp tune [PP19](https://arxiv.org/abs/1910.05481), whic
 Tuning of Pb-Pb is ongoing.
 Several example hydro profiles can be downloaded using `examples/get_hydroSample*`.
 
-## Developing modules
+## More information
 
-To develop a new JETSCAPE module, you should inherit from the relevant base class (InitialState, JetEnergyLoss, etc.)
-and implement the relevant initialization and execution functions, described in detail in [The JETSCAPE framework](https://arxiv.org/abs/1903.07706)
-Section 3.3.
-
-Additionally, you must register your module with the framework with the following steps:
-- Add the following to your module .h:
-  ```
-  private:
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
-  static RegisterJetScapeModule<MyClass> reg;
-  ```
-- Add the following to your module .cc:
-  ```
-  // Register the module with the base class
-  RegisterJetScapeModule<MyClass> MyClass::reg("CustomModuleBlahBlah");
-  ```
-where `MyClass` is the name of your class, and "CustomModuleBlahBlah" is the name that should be added to the XML configuration.
-You can see any of the established modules, e.g.  `Matter`, as an example.
-
-Important Note: In the case of custom modules, you *must* start your module name with "CustomModule..."
-in order for it to be recognized by the framework (for custom writers, you must start the name with "CustomWriter").
-
-New modules should not use multiple inheritance, if avoidable.
-
-Once these steps are done, one can just add the module name to the XML, and it will be automatically available to run in JETSCAPE.
+More material on the physics behind JETSCAPE and how to use it can be found in the material of the JETSCAPE Summer Schools. The schools are a yearly event explaining the details of the approach. You can either sign-up for the next one or go through the material of the last school yourself. The material is found in the SummerSchool repositories under [the JETSCAPE organization](https://github.com/JETSCAPE).
 
 ## Troubleshooting
 
 If you encounter a problem, please report the issue [here](https://github.com/JETSCAPE/JETSCAPE/issues).
-Please be sure to include enough information so that we can reproduce your issue: your platform, JETSCAPE version,
-configuration file, and anything else that may be relevant.
+Please be sure to include enough information so that we can reproduce your issue: your platform, JETSCAPE version, configuration file, and anything else that may be relevant.
 
-## Contributing to JETSCAPE
+# Contributing
 
-If you would like to contribute code to JETSCAPE (new module, feature, bug fix, etc.) please open
-a [Pull Request](https://github.com/JETSCAPE/JETSCAPE/pulls) with your changes, or an [Issue](https://github.com/JETSCAPE/JETSCAPE/issues) describing what you intend to do. For further details, see [Tips for git management](https://github.com/JETSCAPE/JETSCAPE/wiki/Tips-for-git-management).
+Please see the [CONTRIBUTING](CONTRIBUTING.md) for instructions how to do contribute to the framework and development hints.
