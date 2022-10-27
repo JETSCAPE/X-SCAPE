@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -24,7 +24,7 @@
 #include "PartonShower.h"
 #include "JetScapeLogger.h"
 #include "JetScapeReader.h"
-#include "JetScapeBanner.h"
+#include "XscapeBanner.h"
 #include "fjcore.hh"
 
 #include <GTL/dfs.h>
@@ -57,19 +57,19 @@ int main(int argc, char** argv)
   //SetVerboseLevel (9 a lot of additional debug output ...)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
-  
+
   cout<<endl;
   Show();
 
   //Do some dummy jetfinding ...
   fjcore::JetDefinition jet_def(fjcore::antikt_algorithm, 0.7);
-  
+
   vector<shared_ptr<PartonShower>> mShowers;
 
   //Directly with template: provide the relevant stream
   //auto reader=make_shared<JetScapeReader<ifstream>>("test_out.dat");
   //auto reader=make_shared<JetScapeReader<igzstream>>("test_out.dat.gz");
-  
+
   // Hide Template (see class declarations in reader/JetScapeReader.h) ...
   auto reader=make_shared<JetScapeReaderAscii>("test_out.dat");
   //auto reader=make_shared<JetScapeReaderAsciiGZ>("test_out.dat.gz");
@@ -82,31 +82,31 @@ int main(int argc, char** argv)
       reader->Next();
 
       cout<<"Analyze current event = "<<reader->GetCurrentEvent()<<endl;
-      mShowers=reader->GetPartonShowers();     
+      mShowers=reader->GetPartonShowers();
 
       int finals = 0;
       for (int i=0;i<mShowers.size();i++)
 	{
 	  cout<<" Analyze parton shower = "<<i<<endl;
-	 
+
 	  mShowers[i]->PrintVertices();
-	  mShowers[i]->PrintPartons();	
+	  mShowers[i]->PrintPartons();
 
 	  finals += mShowers[i]->GetFinalPartonsForFastJet().size();
-	   
+
 	  fjcore::ClusterSequence cs(mShowers[i]->GetFinalPartonsForFastJet(), jet_def);
 
 	  vector<fjcore::PseudoJet> jets = fjcore::sorted_by_pt(cs.inclusive_jets(2));
 	  cout<<endl;
 	  cout<<jet_def.description()<<endl;
 	  // Output of found jets ...
-	  //cout<<endl;	 
-	  for (int k=0;k<jets.size();k++)	    
+	  //cout<<endl;
+	  for (int k=0;k<jets.size();k++)
 	    cout<<"Anti-kT jet "<<k<<" : "<<jets[k]<<endl;
 	  cout<<endl;
 	  cout<<"Shower initiating parton : "<<*(mShowers[i]->GetPartonAt(0))<<endl;
 	  cout<<endl;
-	  
+
 	  AnalyzeGraph(mShowers[i]);
 
 	  if (i==0)
@@ -117,24 +117,24 @@ int main(int argc, char** argv)
 	    }
 
 	  // wait for 5s
-	  //std::this_thread::sleep_for(std::chrono::milliseconds(5000));  
+	  //std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 	}
       cout << " Found " << finals << " final state partons." << endl;
       auto hadrons = reader->GetHadrons();
       cout<<"Number of hadrons is: " << hadrons.size() << endl;
-      
+
       fjcore::ClusterSequence hcs(reader->GetHadronsForFastJet(), jet_def);
       vector<fjcore::PseudoJet> hjets = fjcore::sorted_by_pt(hcs.inclusive_jets(2));
       cout<<"AT HADRONIC LEVEL " << endl;
-      for (int k=0;k<hjets.size();k++)	    
+      for (int k=0;k<hjets.size();k++)
 	cout<<"Anti-kT jet "<<k<<" : "<<hjets[k]<<endl;
 
       // for(unsigned int i=0; i<hadrons.size(); i++) {
       // 	cout<<"For Hadron Number "<<i<<" "<< hadrons[i].get()->e() << " "<< hadrons[i].get()->px()<< " "<< hadrons[i].get()->py() << " "<< hadrons[i].get()->pz()<< " "<< hadrons[i].get()->pt()<<  endl;
       // }
     }
-    
-    reader->Close(); 
+
+    reader->Close();
 }
 
 // -------------------------------------
@@ -167,7 +167,7 @@ void AnalyzeGraph(shared_ptr<PartonShower> mS)
         cout<<*itt;//<<endl;
     }
   cout<<endl;
-  
+
   dfs::roots_iterator itt3, endt3;
   cout<<"List of root nodes found in graph/shower : ";
   for (itt3 = search.roots_begin(), endt3=search.roots_end(); itt3 !=endt3; ++itt3)
@@ -183,7 +183,7 @@ void AnalyzeGraph(shared_ptr<PartonShower> mS)
 
 void Show()
 {
-  ShowJetscapeBanner();
+  ShowXscapeBanner();
   INFO_NICE;
   INFO_NICE<<"------------------------------------";
   INFO_NICE<<"| Reader Test JetScape Framework ... |";

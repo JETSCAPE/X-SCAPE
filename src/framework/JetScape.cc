@@ -18,7 +18,7 @@
 #include "JetScapeSignalManager.h"
 #include "JetEnergyLossManager.h"
 #include "FluidDynamics.h"
-#include "JetScapeBanner.h"
+#include "XscapeBanner.h"
 #include "InitialState.h"
 #include "PreequilibriumDynamics.h"
 #include "JetEnergyLoss.h"
@@ -52,7 +52,7 @@ JetScape::~JetScape() {
   //not needed, use weak_ptr in JetScapeSignalManager class (=not owning)
 }
 
-void JetScape::Show() { ShowJetscapeBanner(); }
+void JetScape::Show() { ShowXscapeBanner(); }
 
 //________________________________________________________________
 void JetScape::Init() {
