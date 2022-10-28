@@ -9,7 +9,7 @@ cmake_policy(SET CMP0022 NEW)
   set (HEADERS JetScapeWriterRoot.h JetScapeRootParton.h JetScapeRootPartonShower.h JetScapeRootVertex.h JetScapeRootEvent.h JetScapeWriterRootHepMC.h)
 
   #---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-  #include(${ROOT_USE_FILE})
+  include(${ROOT_USE_FILE})
 
    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../lib/")
    #set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
