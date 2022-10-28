@@ -19,6 +19,7 @@
 #include <iostream>
 #include <fstream>
 #define MAGENTA "\033[35m"
+// #define DEBUG_ISMAIL 1
 
 using namespace std;
 
@@ -29,10 +30,12 @@ PythiaGun::~PythiaGun() { VERBOSE(8); }
 
 void PythiaGun::InitTask() {
 
-  std::ofstream File6;
-  File6.open("Hotspots.dat",std::ofstream::out);
-  File6 << "Hotspot" << std::endl;
-  File6.close();   
+  #ifdef DEBUG_ISMAIL
+    std::ofstream File6;
+    File6.open("Hotspots.dat",std::ofstream::out);
+    File6 << "Hotspot" << std::endl;
+    File6.close();  
+  #endif 
 
   JSDEBUG << "Initialize PythiaGun";
   VERBOSE(8);
@@ -395,7 +398,6 @@ void PythiaGun::Exec() {
 
   VERBOSE(8) << GetNHardPartons();
 
-  #define DEBUG_ISMAIL 1
   #ifdef DEBUG_ISMAIL
     std::ofstream File6;
     File6.open("Hotspots.dat",std::ofstream::app);

@@ -31,7 +31,7 @@
 #include <gsl/gsl_sf_dilog.h>
 
 #define MAGENTA "\033[35m"
-#define DEBUG_ISMAIL_3 1
+// #define DEBUG_ISMAIL_3 1
 
 using namespace Jetscape;
 
@@ -150,7 +150,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             if (  std::abs(pIn[in].pid()) >= cid && std::abs(pIn[in].pid()) != 21 &&  pIn[in].plabel() < 0) { //  if it's a parton not treated by iMatter 
                 // if(pIn[in].pstat() == -1000 ){
-                File1->open(Fpath1.c_str(),std::ofstream::app);
+                #ifdef DEBUG_ISMAIL_3        
+                    File1->open(Fpath1.c_str(),std::ofstream::app);
+                #endif
                 if( pIn[in].pz() >= 0) {
                     #ifdef DEBUG_ISMAIL_3        
                         (*File1) << " CollisionPositiveMomentum HeavyQ" << std::endl;
@@ -325,7 +327,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         {
             // Save Initial parton's momentum 
             {
-                File1->open(Fpath1.c_str(),std::ofstream::app);
+                #ifdef DEBUG_ISMAIL_3
+                    File1->open(Fpath1.c_str(),std::ofstream::app);
+                #endif
                 if( pIn[in].pz() >= 0) {
                     #ifdef DEBUG_ISMAIL_3
                         (*File1) << " CollisionPositiveMomentum" << std::endl;
@@ -665,9 +669,9 @@ void iMATTER::RotateShower(Parton& pIn){
         // (*File) << "Doing rotation Current_Status = " << Current_Status << " Current_Label= "<< Current_Label << std::endl; 
         // File->close();
 
-        File1->open(Fpath1.c_str(),std::ofstream::app);
         double Direction = (pIn.pz() >= 0.0 ? 1.0:-1.0);
         #ifdef DEBUG_ISMAIL_3
+            File1->open(Fpath1.c_str(),std::ofstream::app);
             (*File1) << "# " << GetCurrentEvent() << " "
                 << time << " " 
                 << Current_Status << " " 

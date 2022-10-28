@@ -33,7 +33,7 @@
 #define MAGENTA "\033[35m"
 
 using namespace Jetscape;
-#define DEBUG_ISMAIL_2 1
+// #define DEBUG_ISMAIL_2 1
 #define INTRODUCE_PT 0
 
 
@@ -52,7 +52,8 @@ ISRRotation::~ISRRotation()
 void ISRRotation::Init()
 {
   JSINFO<<"Intialize ISRRotation ...";
-  File = new std::ofstream;
+  #ifdef DEBUG_ISMAIL_2
+  File = new std::ofstream; 
   File->open(Fpath.c_str(),std::ofstream::out);
   (*File) << "EventId z_frac x2 color anti_color max_color pid plabel status form_time t E Px Py Pz" << std::endl;
   File->close();    
@@ -65,6 +66,7 @@ void ISRRotation::Init()
   std::ofstream Fi;
   Fi.open("Energy-Subtracted.dat", std::ofstream::out);
   Fi.close();
+  #endif
 
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   if (!ini)
@@ -258,14 +260,13 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         JSWARN << MAGENTA << " Pushing label " << Out.plabel() << " status "
                << Out.pstat() << " pid " << Out.pid()
                << " to MCGlauber ";
-        std::cout << MAGENTA << " e " << Out.e() << std::endl;
-        JSINFO << MAGENTA << " px " << Out.px();
-        JSINFO << MAGENTA << " py " << Out.py();
-        JSINFO << MAGENTA << " pz " << Out.pz();
-        std::ofstream Fi;
-        Fi.open("Energy-Subtracted.dat", std::ofstream::app);
-        Fi << GetCurrentEvent() << " " << Out.e() << " " << (Out.pz() >= 0.0 ? 1 : -1) * Out.e() << std::endl;
-        Fi.close();
+        JSWARN << MAGENTA << " e " << " px " << Out.px() << " py " << Out.py()<< " pz " << Out.pz();
+        #ifdef DEBUG_ISMAIL_2
+          std::ofstream Fi;
+          Fi.open("Energy-Subtracted.dat", std::ofstream::app);
+          Fi << GetCurrentEvent() << " " << Out.e() << " " << (Out.pz() >= 0.0 ? 1 : -1) * Out.e() << std::endl;
+          Fi.close();
+        #endif
         if (Out.e() < 0) {
           JSWARN << "Energy to subtract is negative !";
           exit(1);
@@ -335,11 +336,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
                       2.0 * CollisionPositive.y() * pIn[in].py() +
                       2.0 * CollisionPositive.z() * pIn[in].pz();
         }
-
+        #ifdef DEBUG_ISMAIL_2
         (*File1) << "## " << vx << " " << vy << " " << vz << " " << std::endl;
         (*File1) << "## " << vx1 << " " << vy1 << " " << vz1 << " "
                  << std::endl;
-
+        #endif
 
         if (!(std::abs(vx - vx1) < 1e-10 && std::abs(vy - vy1) < 1e-10 &&
               std::abs(vz - vz1) < 1e-10)) {
@@ -397,7 +398,9 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         }
       }
 
+      #ifdef DEBUG_ISMAIL_2          
       File1->close();
+      #endif
     }
 
     SkipRotation:
