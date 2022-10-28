@@ -134,7 +134,7 @@ int main(int argc, char** argv)
   auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
 
   auto iMatter = make_shared<iMATTER> ();
-  double tMax = 10.0;
+  double tMax = 50.0;
   isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax); //will be moved to XML and proper Init() in IsrJet later ...
   iMatter->SetMaxT(-tMax); // Have To figure out a proper way to get this when it's moved to XML
 
