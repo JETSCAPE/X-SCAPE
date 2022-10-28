@@ -5,16 +5,16 @@ project (libJetScapeRoot)
 cmake_policy(SET CMP0042 NEW)
 cmake_policy(SET CMP0022 NEW)
 
-  set (SOURCES JetScapeWriterRoot.cxx JetScapeRootParton.cxx JetScapeRootPartonShower.cxx JetScapeRootVertex.cxx JetScapeRootEvent.cxx)
-  set (HEADERS JetScapeWriterRoot.h JetScapeRootParton.h JetScapeRootPartonShower.h JetScapeRootVertex.h JetScapeRootEvent.h)
+  set (SOURCES JetScapeWriterRoot.cxx JetScapeRootParton.cxx JetScapeRootPartonShower.cxx JetScapeRootVertex.cxx JetScapeRootEvent.cxx JetScapeWriterRootHepMC.cc)
+  set (HEADERS JetScapeWriterRoot.h JetScapeRootParton.h JetScapeRootPartonShower.h JetScapeRootVertex.h JetScapeRootEvent.h JetScapeWriterRootHepMC.h)
 
   #---Define useful ROOT functions and macros (e.g. ROOT_GENERATE_DICTIONARY)
-  include(${ROOT_USE_FILE})
+  #include(${ROOT_USE_FILE})
 
    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../lib/")
    #set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_PREFIX}/include)
    #set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_INSTALL_PREFIX}/lib)
-   set(CMAKE_INSTALL_LIBDIR "./") #../lib/")  
+   set(CMAKE_INSTALL_LIBDIR "./") #../lib/")
 
    message("ROOT_GENERATE_DICTIONARY .. ")
    include_directories(./)
@@ -24,6 +24,7 @@ cmake_policy(SET CMP0022 NEW)
 
    set (SOURCES ${SOURCES} G__JetScapeRootLibDict.cxx)
 
-   add_library(JetScapeRoot SHARED ${SOURCES} G__JetScapeRootLibDict.cxx) 
+   add_library(JetScapeRoot SHARED ${SOURCES} G__JetScapeRootLibDict.cxx)
+   add_dependencies(JetScapeRoot G__JetScapeRootLibDict)
 
-   target_link_libraries(JetScapeRoot JetScape ${ROOT_LIBRARIES} )
+   target_link_libraries(JetScapeRoot JetScape ${ROOT_LIBRARIES} -L${HEPMC_LIB_DIR} -lHepMC3 -lHepMC3rootIO)

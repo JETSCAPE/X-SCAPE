@@ -32,21 +32,21 @@ class JetScapeWriterRoot : public JetScapeWriter
 
   void Init();
   void Exec();
-  
+
   bool GetStatus() {return output_file->GetErrno();}
   void Close() {output_file->Write();output_file->Close();}
 
   void WriteInitFileXML();
   void Clear();
-  
+
   void Write(weak_ptr<PartonShower> pS);
 
   //void Write(string s) {}
   //void WriteComment(string s) {}
   //void WriteWhiteSpace(string s) {}
-  
-  void WriteEvent(); 
-      
+
+  void WriteEvent();
+
  private:
 
   std::unique_ptr<TFile> output_file; //!< Output file
@@ -58,11 +58,13 @@ class JetScapeWriterRoot : public JetScapeWriter
   // but in the other classes !???
   // What am I missing? do want to keep new/delete clean !!!!
   // To be followed up!!!
-  
+
   JetScapeRootEvent *event;
 
   // ***********************************************************
-  
+
+  ClassDef(JetScapeWriterRoot,0)
+
 };
 
 #endif

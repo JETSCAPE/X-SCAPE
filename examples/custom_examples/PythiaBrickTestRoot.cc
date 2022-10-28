@@ -28,6 +28,7 @@
 #include "JetScapeWriterHepMC.h"
 #endif
 #include "JetScapeWriterRoot.h"
+#include "JetScapeWriterRootHepMC.h"
 
 // User modules derived from jetscape framework clasess
 #include "TrentoInitial.h"
@@ -125,9 +126,15 @@ int main(int argc, char** argv)
   // Output
   //auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
   //writer->SetId("AsciiWriter"); //for task search test ...
-  auto writer= make_shared<JetScapeWriterRoot> ("test_out.root");
-  writer->SetId("RootWriter");
+  //auto writer= make_shared<JetScapeWriterRoot> ("test_out.root");
+  //writer->SetId("RootWriter");
+  auto writer= make_shared<JetScapeWriterRootHepMC> ("test_out_hepmc.root");
+  writer->SetId("hepMCRootWriter");
   jetscape->Add(writer);
+
+  auto writer2= make_shared<JetScapeWriterHepMC> ("test_out_hepmc.hepmc");
+  writer2->SetId("hepMCWriter");
+  jetscape->Add(writer2);
 
   // Initialize all modules tasks
   jetscape->Init();
