@@ -31,6 +31,7 @@
 #include <gsl/gsl_sf_dilog.h>
 
 #define MAGENTA "\033[35m"
+#define DEBUG_ISMAIL_3 1
 
 using namespace Jetscape;
 
@@ -55,26 +56,27 @@ void iMATTER::Init()
     JSINFO<<"Intialize iMATTER ...";
     // alpha_s = 0.2;
     Q0 = 1.0;
+    #ifdef DEBUG_ISMAIL_3 
+        File = new std::ofstream;
+        File->open(Fpath.c_str(),std::ofstream::out);
+        (*File) << "EventId z_frac x2 color anti_color max_color pid plabel status form_time t E Px Py Pz" << std::endl;
+        File->close();
 
-    File = new std::ofstream;
-    File->open(Fpath.c_str(),std::ofstream::out);
-    (*File) << "EventId z_frac x2 color anti_color max_color pid plabel status form_time t E Px Py Pz" << std::endl;
-    File->close();
+        File1 = new std::ofstream;
+        File1->open(Fpath1.c_str(),std::ofstream::out);
+        (*File1) << "EventId pid plabel status form_time t E Px Py Pz" << std::endl;
+        File1->close();
 
-    File1 = new std::ofstream;
-    File1->open(Fpath1.c_str(),std::ofstream::out);
-    (*File1) << "EventId pid plabel status form_time t E Px Py Pz" << std::endl;
-    File1->close();
+        File2 = new std::ofstream;
+        File2->open("Mandelstamn.dat",std::ofstream::out);
+        (*File2) << "EventId Olds Oldt Oldu News Newt Newu" << std::endl;
+        File2->close();
 
-    File2 = new std::ofstream;
-    File2->open("Mandelstamn.dat",std::ofstream::out);
-    (*File2) << "EventId Olds Oldt Oldu News Newt Newu" << std::endl;
-    File2->close();
-
-    File3 = new std::ofstream;
-    File3->open("ISR-Col.dat",std::ofstream::out);
-    (*File3) << "EventId pid plabel form_Time t E Px Py Pz" << std::endl;
-    File3->close();
+        File3 = new std::ofstream;
+        File3->open("ISR-Col.dat",std::ofstream::out);
+        (*File3) << "EventId pid plabel form_Time t E Px Py Pz" << std::endl;
+        File3->close();
+    #endif
 
     P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
@@ -150,8 +152,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 // if(pIn[in].pstat() == -1000 ){
                 File1->open(Fpath1.c_str(),std::ofstream::app);
                 if( pIn[in].pz() >= 0) {
-                    (*File1) << " CollisionPositiveMomentum HeavyQ" << std::endl;
-
+                    #ifdef DEBUG_ISMAIL_3        
+                        (*File1) << " CollisionPositiveMomentum HeavyQ" << std::endl;
+                    #endif
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
                                                 pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
@@ -160,7 +163,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 }
 
                 if( pIn[in].pz() < 0)  {
-                    (*File1) << " CollisionNegativeMomentum HeavyQ" << std::endl;
+                    #ifdef DEBUG_ISMAIL_3   
+                        (*File1) << " CollisionNegativeMomentum HeavyQ" << std::endl;
+                    #endif       
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
                                                 pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
@@ -169,18 +174,19 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
                 FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),std::abs(pIn[in].pz()), pIn[in].plabel());
 
-
-                (*File1) << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
-                        << std::endl;
-                (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
-                        << std::endl;
-                File1->close();
+                #ifdef DEBUG_ISMAIL_3
+                    (*File1) << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                            << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                            << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                            << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
+                            << std::endl;
+                    (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                            << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                            << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                            << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
+                            << std::endl;
+                    File1->close();
+                #endif
             }
 
             FinalRotation->SetParameters(LabelOfTheShower,NPartonPerShower, Current_Label);
@@ -321,8 +327,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             {
                 File1->open(Fpath1.c_str(),std::ofstream::app);
                 if( pIn[in].pz() >= 0) {
-                    (*File1) << " CollisionPositiveMomentum" << std::endl;
-
+                    #ifdef DEBUG_ISMAIL_3
+                        (*File1) << " CollisionPositiveMomentum" << std::endl;
+                    #endif
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
                                                 pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
@@ -331,24 +338,27 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 }
 
                 if( pIn[in].pz() < 0)  {
-                    (*File1) << " CollisionNegativeMomentum" << std::endl;
+                    #ifdef DEBUG_ISMAIL_3
+                        (*File1) << " CollisionNegativeMomentum" << std::endl;
+                    #endif
                     double OnShellEnergy = sqrt(pIn[in].px() * pIn[in].px() +
                                                 pIn[in].py() * pIn[in].py() +
                                                 pIn[in].pz() * pIn[in].pz() + pIn[in].restmass()*pIn[in].restmass()); 
                     ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2] = FourVector(pIn[in].px(),pIn[in].py(),pIn[in].pz(),OnShellEnergy);
                 }
-
-                (*File1) << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
-                        << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
-                        << std::endl;
-                (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
-                        << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
-                        << std::endl;
-                File1->close();
+                #ifdef DEBUG_ISMAIL_3
+                    (*File1) << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                            << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                            << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                            << ini->CollisionPositiveMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
+                            << std::endl;
+                    (*File1) << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].x() << " "
+                            << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].y() << " " 
+                            << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].z() << " " 
+                            << ini->CollisionNegativeMomentum[(-pIn[in].plabel() - 1) / 2].t() << " " 
+                            << std::endl;
+                    File1->close();
+                #endif                
             }
 
             pIn[in].set_jet_v(velocity);
@@ -384,9 +394,10 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             MomentumFractionCurrent = MomentumFractionCurrent / (1.0 - TotalMomentumFraction);
             
             Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
-            // OUTPUT To file //
-            OUTPUT(pIn[in]);
-
+            #ifdef DEBUG_ISMAIL_3
+                // OUTPUT To file //
+                OUTPUT(pIn[in]);
+            #endif
             Current_Label = pIn[in].plabel();
             if(-pIn[in].plabel() >= NPartonPerShower ){
                 JSWARN << "NHard partons: " << -pIn[in].plabel() << " allowed: " << NPartonPerShower;
@@ -420,7 +431,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         // Because one time step is needed to rotate the shower and then one more for pT generation
         if (time < split_time && pIn[in].plabel() == Current_Label 
             && t1 < - Q0 - error  && std::abs(time - GetMaxT()) > 1e-10 && (time + 2 * deltaT > GetMaxT() + rounding_error ) 
-            && false)
+            )
         {
             if(abs(pIn[in].px()) >= rounding_error || abs(pIn[in].py()) >= rounding_error ){
                 std::cout.precision(15);
@@ -428,7 +439,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 JSWARN << " Current parton not along the z-axis ";
                 JSWARN << " time = "<< time << " MaxT = "<< GetMaxT();
                 std::cout << " deltaT = "<< deltaT << " " << (time - deltaT + error) << " MaxT = " << GetMaxT()<< std::endl;
-                OUTPUT(pIn[in]);
+                #ifdef DEBUG_ISMAIL_3
+                    OUTPUT(pIn[in]);
+                #endif
                 exit(0);
             }
             
@@ -590,12 +603,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pOut[iout].set_form_time( generate_L(std::abs( 2*ParentEn/t ) ) );
 
 
-
-            // OUTPUT To file //
-            OUTPUT(pOut[pOut.size()-3]);
-            OUTPUT(pOut[pOut.size()-1]);
-            OUTPUT(pOut[pOut.size()-2]);
-
+            #ifdef DEBUG_ISMAIL_3
+                // OUTPUT To file //
+                OUTPUT(pOut[pOut.size()-3]);
+                OUTPUT(pOut[pOut.size()-1]);
+                OUTPUT(pOut[pOut.size()-2]);
+            #endif
             
 
 
@@ -654,25 +667,26 @@ void iMATTER::RotateShower(Parton& pIn){
 
         File1->open(Fpath1.c_str(),std::ofstream::app);
         double Direction = (pIn.pz() >= 0.0 ? 1.0:-1.0);
-
-        (*File1) << "# " << GetCurrentEvent() << " "
-            << time << " " 
-            << Current_Status << " " 
-            << pIn.pid() << " " 
-            << pIn.plabel() << " " 
-            << pIn.pstat() << " " 
-            << pIn.form_time() << " " 
-            << pIn.t() << " " 
-            << pIn.e() << " " 
-            << pIn.px() << " " 
-            << pIn.py() << " " 
-            << pIn.pz() << " " 
-            << std::endl; 
-        (*File1) << "# RotationVector= " << RotationVector.x() << " "
-            << RotationVector.y() << " " 
-            << RotationVector.t() << " " 
-            << " time = " << time
-            << std::endl; 
+        #ifdef DEBUG_ISMAIL_3
+            (*File1) << "# " << GetCurrentEvent() << " "
+                << time << " " 
+                << Current_Status << " " 
+                << pIn.pid() << " " 
+                << pIn.plabel() << " " 
+                << pIn.pstat() << " " 
+                << pIn.form_time() << " " 
+                << pIn.t() << " " 
+                << pIn.e() << " " 
+                << pIn.px() << " " 
+                << pIn.py() << " " 
+                << pIn.pz() << " " 
+                << std::endl; 
+            (*File1) << "# RotationVector= " << RotationVector.x() << " "
+                << RotationVector.y() << " " 
+                << RotationVector.z() << " " 
+                << " time = " << time
+                << std::endl; 
+        #endif
 
         FourVector p_Parton(pIn.px(),pIn.py(),pIn.pz(),0.0);
         Rotate(p_Parton,RotationVector,1);
@@ -684,21 +698,22 @@ void iMATTER::RotateShower(Parton& pIn){
             FinalRotation->SetLatestInitialParton(pIn.px(),pIn.py(),pIn.pz(),std::abs(pIn.pz()), pIn.plabel());
         }
 
-        
-        (*File1) << "    "
-            << GetMaxT() << " " 
-            << Current_Status << " " 
-            << pIn.pid() << " " 
-            << pIn.plabel() << " " 
-            << pIn.pstat() << " " 
-            << pIn.form_time() << " " 
-            << pIn.t() << " " 
-            << pIn.e() << " " 
-            << pIn.px() << " " 
-            << pIn.py() << " " 
-            << pIn.pz() << " " 
-            << std::endl << std::endl; 
-        File1->close();
+        #ifdef DEBUG_ISMAIL_3
+            (*File1) << "    "
+                << GetMaxT() << " " 
+                << Current_Status << " " 
+                << pIn.pid() << " " 
+                << pIn.plabel() << " " 
+                << pIn.pstat() << " " 
+                << pIn.form_time() << " " 
+                << pIn.t() << " " 
+                << pIn.e() << " " 
+                << pIn.px() << " " 
+                << pIn.py() << " " 
+                << pIn.pz() << " " 
+                << std::endl << std::endl; 
+            File1->close();
+        #endif
     }
     return;
 }
@@ -787,8 +802,10 @@ double iMATTER::invert_Forward_sudakov( double value , double min_t, double max_
     if (value <= 1./denom) {
 
         // Debug
-        (*File) << "# Inverse_Forward_sudakov (value <= denom) value = "<< value << " denom = "<< denom
-                << " abs_min_t = " << abs_min_t << " abs_max_t = " << abs_max_t << std::endl;
+        #ifdef DEBUG_ISMAIL_3
+            (*File) << "# Inverse_Forward_sudakov (value <= denom) value = "<< value << " denom = "<< denom
+                    << " abs_min_t = " << abs_min_t << " abs_max_t = " << abs_max_t << std::endl;
+        #endif
         return(min_t);
         }
     
@@ -1609,25 +1626,26 @@ double iMATTER::PDF(int pid, double z, double t){
 void iMATTER::OUTPUT(Parton P){
 
     // (*File) << "EventId z_frac x2 color anti_color max_color pid plabel status form_time t E Px Py Pz" << std::endl;
-    
-    File->open(Fpath.c_str(),std::ofstream::app);
-    (*File) << GetCurrentEvent() << " "
-         << z_frac << " "
-         << MomentumFractionCurrent << " " 
-         << P.color() << " " 
-         << P.anti_color() << " " 
-         << P.max_color() << " " 
-         << P.pid() << " " 
-         << P.plabel() << " " 
-         << P.pstat() << " " 
-         << P.form_time() << " " 
-         << P.t() << " " 
-         << P.e() << " " 
-         << P.px() << " " 
-         << P.py() << " " 
-         << P.pz() << " " 
-         << std::endl; 
-    File->close();
+    #ifdef DEBUG_ISMAIL_3
+        File->open(Fpath.c_str(),std::ofstream::app);
+        (*File) << GetCurrentEvent() << " "
+            << z_frac << " "
+            << MomentumFractionCurrent << " " 
+            << P.color() << " " 
+            << P.anti_color() << " " 
+            << P.max_color() << " " 
+            << P.pid() << " " 
+            << P.plabel() << " " 
+            << P.pstat() << " " 
+            << P.form_time() << " " 
+            << P.t() << " " 
+            << P.e() << " " 
+            << P.px() << " " 
+            << P.py() << " " 
+            << P.pz() << " " 
+            << std::endl; 
+        File->close();
+    #endif
 }
 
 

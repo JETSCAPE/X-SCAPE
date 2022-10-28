@@ -33,7 +33,8 @@
 #define MAGENTA "\033[35m"
 
 using namespace Jetscape;
-
+#define DEBUG_ISMAIL_2 1
+#define INTRODUCE_PT 0
 
 
 ISRRotation::ISRRotation():
@@ -60,6 +61,10 @@ void ISRRotation::Init()
   File6.open("pTDist.dat",std::ofstream::out);
   File6 << "# px py" << std::endl;
   File6.close();    
+
+  std::ofstream Fi;
+  Fi.open("Energy-Subtracted.dat", std::ofstream::out);
+  Fi.close();
 
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   if (!ini)
@@ -110,31 +115,38 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
   for (int in = 0; in < pIn.size();in++) /// we continue with the loop charade, even though the framework is just giving us one parton
   {
     // JSWARN << "Starting Rotation";
+
+    // Getting The posiiton of the 3DGlauber Hotspots
     if (pIn[in].pz() >= 0) {
       Hotspots = ini->Get_quarks_pos_proj_lab();
 
     } else {
       Hotspots = ini->Get_quarks_pos_targ_lab();
     }
-
-    std::ofstream *File1 = new std::ofstream,*File2 = new std::ofstream,*File3 = new std::ofstream;
-    File3->open("ISR-Col.dat", std::ofstream::app);
-    File1->open("ISR-Rotation.dat", std::ofstream::app);
-
+    #ifdef DEBUG_ISMAIL_2
+      std::ofstream *File1 = new std::ofstream,*File2 = new std::ofstream,*File3 = new std::ofstream;
+      File3->open("ISR-Col.dat", std::ofstream::app);
+      File1->open("ISR-Rotation.dat", std::ofstream::app);
+    #endif
     // NumHotspots = Hotspots.size() / 3;
     NumHotspots = 3;
     auto Out = pIn[in];
     
 
     if (true) {
-      (*File1) << "########################### " << std::endl;
-      (*File1) << "# " << time << " " << Out.pid() << " "
-               << Out.plabel() << " " << Out.pstat() << " "
-               << Out.form_time() << " " << Out.t() << " "
-               << Out.e() << " " << Out.px() << " " << Out.py()
-               << " " << Out.pz() << " " << std::endl;
+      #ifdef DEBUG_ISMAIL_2
+        (*File1) << "########################### " << std::endl;
+        (*File1) << "# " << time << " " << Out.pid() << " "
+                << Out.plabel() << " " << Out.pstat() << " "
+                << Out.form_time() << " " << Out.t() << " "
+                << Out.e() << " " << Out.px() << " " << Out.py()
+                << " " << Out.pz() << " " << std::endl;
+      #endif
+      //  if it's an initial parton we will generate pT 
       if(Out.pstat() < 1000 ){
-        // Generating final pT 
+      
+      #if(INTRODUCE_PT == 1)
+        // Generating final pT if not already done
         if(!AlreadyGeneratedPTForThisShower) {
           int Num =0;
           SampleAgain:
@@ -162,67 +174,87 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           File6 << pT[0] << " " << pT[1] << std::endl;
           File6.close();    
         }
+      #endif
         
+        // New momentum after rotating to get the pT
         FourVector p_Out(Out.px(), Out.py(),Out.pz(), Out.e());
         if(Out.plabel() == LatestPartonLabel ){
           AddRemenant(Out);
         }
-        // if(Out.plabel() == LatestPartonLabel ){
-        //   p_Out.Set(pT[0],pT[1],LatestPartonNewPz,LatestInitialParton.t());
-        // } else {
-        //   RotateVector(p_Out);
-        // }
+
+      #if(INTRODUCE_PT == 1)
         RotateVector(p_Out);
         Out.reset_momentum(p_Out);
+      #endif
 
-
-        (*File1) << "# IncludingPT " << time << " " << Out.pid() << " "
-                << Out.plabel() << " " << Out.pstat() << " "
-                << Out.form_time() << " " << Out.t() << " "
-                << Out.e() << " " << Out.px() << " " << Out.py()
-                << " " << Out.pz() << " " << std::endl;
+        #ifdef DEBUG_ISMAIL_2
+          (*File1) << "# IncludingPT " << time << " " << Out.pid() << " "
+                  << Out.plabel() << " " << Out.pstat() << " "
+                  << Out.form_time() << " " << Out.t() << " "
+                  << Out.e() << " " << Out.px() << " " << Out.py()
+                  << " " << Out.pz() << " " << std::endl;
+        #endif
       }
 
       int lab = Out.plabel();
-      if (lab < 0 && lab > -NPartonPerShower){ // Take only ISR partons to perform a shift in pT // Chooses only the inital MPI partons from Pythia who undergo the scattering
-        (*File3) << GetCurrentEvent() << " " << Out.pid() << " "
-                << Out.plabel() << " " << Out.form_time() << " "
-                << Out.t() << " " << Out.e() << " " << Out.px()
-                  << " " << Out.py() << " " << Out.pz() << std::endl;
-          // (*File3) << "EventId pid plabel form_Time t E Px Py Pz" << std::endl;
-          File3->close();
+      if (lab < 0 && lab > -NPartonPerShower){ 
+        // Take only ISR partons to perform a shift in pT 
+        // Chooses only the inital MPI partons from Pythia who undergo the scattering
+        #ifdef DEBUG_ISMAIL_2
+          (*File3) << GetCurrentEvent() << " " << Out.pid() << " "
+                  << Out.plabel() << " " << Out.form_time() << " "
+                  << Out.t() << " " << Out.e() << " " << Out.px()
+                    << " " << Out.py() << " " << Out.pz() << std::endl;
+            // (*File3) << "EventId pid plabel form_Time t E Px Py Pz" << std::endl;
+            File3->close();
+        #endif
           if (Out.pz() >= 0) {
-            (*File1) << " CollisionPositiveRotatedMomentum Pushing "
-                    << Out.plabel() << std::endl;
+            // Out.set_t(0.0);
+            #ifdef DEBUG_ISMAIL_2
+              (*File1) << " CollisionPositiveRotatedMomentum Pushing "
+                      << Out.plabel() << std::endl;
+            #endif
               double OnShellEnergy =sqrt(Out.px() * Out.px() + Out.py() * Out.py() +Out.pz() * Out.pz() +Out.restmass() * Out.restmass());
               ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) / 2] = FourVector(Out.px(), Out.py(), Out.pz(),OnShellEnergy);
 
           }
 
           if (Out.pz() < 0) {
-            (*File1) << " CollisionNegativeRotatedMomentum Pushing "
-                    << Out.plabel() << std::endl;
+              // Out.set_t(0.0);
+              #ifdef DEBUG_ISMAIL_2
+                (*File1) << " CollisionNegativeRotatedMomentum Pushing "
+                        << Out.plabel() << std::endl;
+              #endif
               double OnShellEnergy = sqrt(Out.px() * Out.px() + Out.py() * Out.py() +Out.pz() * Out.pz() +Out.restmass() * Out.restmass());
               ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) / 2] = FourVector(Out.px(), Out.py(), Out.pz(),OnShellEnergy);
           }
-
-          (*File1)
-              << ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) /2].x()<< " "
-              << ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) /2].y()<< " "
-              << ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) /2].z()<< " "
-              << ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) /2].t()<< " "
-              << "\n ";
-          (*File1)
-              << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].x()<< " "
-              << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].y()<< " "
-              << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].z()<< " "
-              << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].t()<< " "
-              << "\n ";
+          #ifdef DEBUG_ISMAIL_2
+            (*File1)
+                << ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) /2].x()<< " "
+                << ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) /2].y()<< " "
+                << ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) /2].z()<< " "
+                << ini->CollisionPositiveRotatedMomentum[(-Out.plabel() - 1) /2].t()<< " "
+                << "\n ";
+            (*File1)
+                << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].x()<< " "
+                << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].y()<< " "
+                << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].z()<< " "
+                << ini->CollisionNegativeRotatedMomentum[(-Out.plabel() - 1) /2].t()<< " "
+                << "\n ";
+          #endif
       }
 
 
 
       if ((Out.plabel() == Current_Label || std::abs(Out.pid()) == cid || std::abs(Out.pid()) == bid) && Out.pstat() < 0) {
+        // if(std::abs(Out.t())>1e-15){
+        //   //  Reset the momentum due to virtuality
+        //   double newPl = std::sqrt(Out.e() * Out.e() - Out.t() - Out.restmass() * Out.restmass());
+        //   double p_mod = std::sqrt( Out.px()*Out.px() + Out.py()*Out.py() + Out.pz()*Out.pz()) ;
+        //   newPl = newPl / p_mod;
+        //   Out.reset_momentum(newPl * Out.px(), newPl * Out.py(),
+        //                 newPl * Out.pz(), Out.e());
+        // }
         JSWARN << MAGENTA << " Pushing label " << Out.plabel() << " status "
                << Out.pstat() << " pid " << Out.pid()
                << " to MCGlauber ";
@@ -230,6 +262,10 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         JSINFO << MAGENTA << " px " << Out.px();
         JSINFO << MAGENTA << " py " << Out.py();
         JSINFO << MAGENTA << " pz " << Out.pz();
+        std::ofstream Fi;
+        Fi.open("Energy-Subtracted.dat", std::ofstream::app);
+        Fi << GetCurrentEvent() << " " << Out.e() << " " << (Out.pz() >= 0.0 ? 1 : -1) * Out.e() << std::endl;
+        Fi.close();
         if (Out.e() < 0) {
           JSWARN << "Energy to subtract is negative !";
           exit(1);
@@ -241,7 +277,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
       }
 
 
-
+      // Rotating Final state partons 
       if (pIn[in].pstat() == 1000) {
 
         FourVector p_Out(pIn[in].px(), pIn[in].py(), pIn[in].pz(), pIn[in].e());
@@ -254,8 +290,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         auto CollisionPositive1 = ini->CollisionPositiveRotatedMomentum[Index];
         auto CollisionNegative1 = ini->CollisionNegativeRotatedMomentum[Index];
 
-        if (CollisionPositive1.x() == 0 && CollisionNegative1.x() == 0 && CollisionPositive1.y() == 0 && CollisionNegative1.y() == 0 ) { // Don't perform any boost
-          File1->close();
+        if (CollisionPositive1.x() == 0 && CollisionNegative1.x() == 0 && CollisionPositive1.y() == 0 && CollisionNegative1.y() == 0 ) { 
+          // Don't perform any boost
+          #ifdef DEBUG_ISMAIL_2
+            File1->close();
+          #endif
           return;
         }
         //  else if (CollisionPositive1.x() == CollisionPositive.x() && ) { // if only positive side doesn't need rotation
@@ -264,15 +303,19 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         //   CollisionNegative1 = ini->CollisionNegativeMomentum[Index];
         // }
 
-        double EnergySum = CollisionPositive.t() + CollisionNegative.t();
-        double vx = (CollisionPositive.x() + CollisionNegative.x()) / EnergySum;
-        double vy = (CollisionPositive.y() + CollisionNegative.y()) / EnergySum;
-        double vz = (CollisionPositive.z() + CollisionNegative.z()) / EnergySum;
+        // double EnergySum = CollisionPositive.t() + CollisionNegative.t();
+        double vx = (CollisionPositive.x() + CollisionNegative.x()); // EnergySum;
+        double vy = (CollisionPositive.y() + CollisionNegative.y()); // EnergySum;
+        double vz = (CollisionPositive.z() + CollisionNegative.z()); // EnergySum;
 
-        double EnergySum1 = CollisionPositive1.t() + CollisionNegative1.t();
-        double vx1 = -(CollisionPositive1.x() + CollisionNegative1.x()) / EnergySum1;
-        double vy1 = -(CollisionPositive1.y() + CollisionNegative1.y()) / EnergySum1;
-        double vz1 = -(CollisionPositive1.z() + CollisionNegative1.z()) / EnergySum1;
+        // double EnergySum1 = CollisionPositive1.t() + CollisionNegative1.t();
+        double vx1 = -(CollisionPositive1.x() + CollisionNegative1.x()); // EnergySum1;
+        double vy1 = -(CollisionPositive1.y() + CollisionNegative1.y()); // EnergySum1;
+        double vz1 = -(CollisionPositive1.z() + CollisionNegative1.z()); // EnergySum1;
+
+        double DeltapxO2 = (vx + vx1) / 2.; 
+        double DeltapyO2 = (vy + vy1) / 2.; 
+        double DeltapzO2 = (vz + vz1) / 2.; 
 
         if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 0) {
           ini->Olds = 2.0 * CollisionPositive.t() * CollisionNegative.t() -
@@ -297,49 +340,59 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         (*File1) << "## " << vx1 << " " << vy1 << " " << vz1 << " "
                  << std::endl;
 
+
         if (!(std::abs(vx - vx1) < 1e-10 && std::abs(vy - vy1) < 1e-10 &&
               std::abs(vz - vz1) < 1e-10)) {
-          p_Out.boost(vx, vy, vz);
+          // p_Out.boost(vx, vy, vz);
+          // p_Out.boost(vx1, vy1, vz1);
+          double NewPx = pIn[in].px() - DeltapxO2;
+          double NewPy = pIn[in].py() - DeltapyO2;
+          double NewPz = pIn[in].pz() - DeltapzO2;
+          double NewE  = std::sqrt(NewPx * NewPx + NewPy * NewPy + NewPz * NewPz);
+          p_Out.Set(NewPx, NewPy, NewPz, NewE);
 
           if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 0) {
             ini->News = 2.0 * CollisionPositive1.t() * CollisionNegative1.t() -
                         2.0 * CollisionPositive1.x() * CollisionNegative1.x() -
                         2.0 * CollisionPositive1.y() * CollisionNegative1.y() -
                         2.0 * CollisionPositive1.z() * CollisionNegative1.z();
-            ini->Newt = -2.0 * CollisionPositive1.t() * pIn[in].e() +
-                        2.0 * CollisionPositive1.x() * pIn[in].px() +
-                        2.0 * CollisionPositive1.y() * pIn[in].py() +
-                        2.0 * CollisionPositive1.z() * pIn[in].pz();
+            ini->Newt = -2.0 * CollisionPositive1.t() * p_Out.t() +
+                        2.0 * CollisionPositive1.x() * p_Out.x() +
+                        2.0 * CollisionPositive1.y() * p_Out.y() +
+                        2.0 * CollisionPositive1.z() * p_Out.z();
           }
 
           if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 1) {
-            ini->Newu = -2.0 * CollisionPositive1.t() * pIn[in].e() +
-                        2.0 * CollisionPositive1.x() * pIn[in].px() +
-                        2.0 * CollisionPositive1.y() * pIn[in].py() +
-                        2.0 * CollisionPositive1.z() * pIn[in].pz();
-            File2->open("Mandelstamn.dat", std::ofstream::app);
-            (*File2) << GetCurrentEvent() << " " << ini->Olds << " "
-                     << ini->Oldt << " " << ini->Oldu << " " << ini->News << " "
-                     << ini->Newt << " " << ini->Newu << std::endl;
-            File2->close();
+            ini->Newu = -2.0 * CollisionPositive1.t() * p_Out.t() +
+                        2.0 * CollisionPositive1.x() * p_Out.x() +
+                        2.0 * CollisionPositive1.y() * p_Out.y() +
+                        2.0 * CollisionPositive1.z() * p_Out.z();
+            #ifdef DEBUG_ISMAIL_2
+              File2->open("Mandelstamn.dat", std::ofstream::app);
+              (*File2) << GetCurrentEvent() << " " << ini->Olds << " "
+                      << ini->Oldt << " " << ini->Oldu << " " << ini->News << " "
+                      << ini->Newt << " " << ini->Newu << std::endl;
+              File2->close();
+            #endif
           }
 
-          p_Out.boost(vx1, vy1, vz1);
 
           Parton Out = pIn[in];
           Out.reset_momentum(p_Out);
 
           pOut.push_back(Out);
-          auto out = pOut.size() - 1;
-          // File1->precision(16);
-          (*File1) << "# Boosted " << pOut[out].pid() << " "
-                   << pOut[out].plabel() << " " << pOut[out].pstat() << " "
-                   << pOut[out].form_time() << " " << pOut[out].t() << " "
-                   << pOut[out].e() << " " << pOut[out].px() << " "
-                   << pOut[out].py() << " " << pOut[out].pz() << " "
-                   << std::endl
-                   << std::endl;
-          File1->close();
+          #ifdef DEBUG_ISMAIL_2          
+            auto out = pOut.size() - 1;
+            // File1->precision(16);
+            (*File1) << "# Boosted " << pOut[out].pid() << " "
+                    << pOut[out].plabel() << " " << pOut[out].pstat() << " "
+                    << pOut[out].form_time() << " " << pOut[out].t() << " "
+                    << pOut[out].e() << " " << pOut[out].px() << " "
+                    << pOut[out].py() << " " << pOut[out].pz() << " "
+                    << std::endl
+                    << std::endl;
+            File1->close();
+          #endif
           return;
         }
       }

@@ -14,7 +14,6 @@
  ******************************************************************************/
 
 // Create a pythia collision at a specified point and return the two inital hard partons
-
 #include "PythiaGun.h"
 #include <sstream>
 #include <iostream>
@@ -275,8 +274,8 @@ void PythiaGun::Exec() {
           continue;
       }
       
-        // JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index() << 
-        // " Color " << particle.col() << " " << particle.acol() << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2();
+        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index() << 
+        " Color " << particle.col() << " " << particle.acol() << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2();
 
         p62.push_back(particle);
 
@@ -383,9 +382,11 @@ void PythiaGun::Exec() {
 
     }
   }
+  // Getting Number of hard partons
   int NPP = p62.size();
   max_color = max_colorPerShower * NPP;
   FourVector Zeros(0,0,0,0);
+
   ini->CollisionNegativeMomentum = std::vector<FourVector>(NPP/2,Zeros);
   ini->CollisionPositiveMomentum = std::vector<FourVector>(NPP/2,Zeros);
   ini->CollisionNegativeRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
@@ -394,21 +395,27 @@ void PythiaGun::Exec() {
 
   VERBOSE(8) << GetNHardPartons();
 
-  std::ofstream File6;
-  File6.open("Hotspots.dat",std::ofstream::app);
+  #define DEBUG_ISMAIL 1
+  #ifdef DEBUG_ISMAIL
+    std::ofstream File6;
+    File6.open("Hotspots.dat",std::ofstream::app);
 
-  auto Hotspots1 = ini->Get_quarks_pos_proj_lab();
-  auto Hotspots2 = ini->Get_quarks_pos_targ_lab();
-  for(auto &x : Hotspots1){
-    File6 << x << " ";
-  }
-    File6 << " | ";
-  for(auto &x : Hotspots2){
-    File6 << x << " ";
-  }
-  File6 <<std::endl;
+    auto Hotspots1 = ini->Get_quarks_pos_proj_lab();
+    auto Hotspots2 = ini->Get_quarks_pos_targ_lab();
+    for(auto &x : Hotspots1){
+      File6 << x << " ";
+    }
+      File6 << " | ";
+    for(auto &x : Hotspots2){
+      File6 << x << " ";
+    }
+    File6 <<std::endl;
+    File6.close();  
   File6.close();  
-
+    File6.close();  
+  File6.close();  
+    File6.close();  
+  #endif
   //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????
   
   JetScapeTask::ExecuteTasks();
