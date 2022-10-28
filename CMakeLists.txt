@@ -475,10 +475,10 @@ if ( USE_MUSIC AND USE_ISS AND USE_SMASH )
     target_link_libraries(runJetscape ${SMASH_LIBRARIES} ${MPI_LIBRARIES} ${GSL_LIBRARIES})
 endif ( USE_MUSIC AND USE_ISS AND USE_SMASH )
 
-#if (${ROOT_FOUND})
-#  add_executable(PythiaBrickTestRoot ./examples/PythiaBrickTestRoot.cc)
-#  target_link_libraries(PythiaBrickTestRoot JetScape JetScapeRoot)
-#endif(${ROOT_FOUND})
+if (${ROOT_FOUND})
+  add_executable(PythiaBrickTestRoot ./examples/custom_examples/PythiaBrickTestRoot.cc)
+  target_link_libraries(PythiaBrickTestRoot JetScape JetScapeRoot)
+endif(${ROOT_FOUND})
 
 
 # -----------------------------------------------------------
