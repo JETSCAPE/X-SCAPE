@@ -259,65 +259,6 @@ void iColoredHadronization::DoHadronization(
 
     VERBOSE(2) << "There are " << hOut.size() << " Hadrons and " << pOut.size()
                << " partons after Hadronization";
-
-  //there still may be color tag duplicates - will SegFault if color_reconnections is ever invoked.
-  //this should be fixed *here*, before pythia.next() below, if that's ever a concern.
-  //scan over list of color & anticolor tags - if we find a duplicate, set it to a new value >0, <101 (will fail for more than 100 duplicates)
-  /* std::vector<std::vector<int>> col_instances;
-  for (unsigned int i = 0; i < event.size(); ++i) {
-    bool newcol = true;
-    bool newacol = true;
-    for (int icols = 0; icols < col_instances.size(); ++icols) {
-      if (event[i].col() == col_instances[icols][0]) {
-        ++col_instances[icols][1];
-        newcol = false;
-      }
-      if (event[i].acol() == col_instances[icols][0]) {
-        ++col_instances[icols][1];
-        newacol = false;
-      }
-    }
-    if (newcol && (event[i].col() != 0)) {
-      std::vector<int> tmpcol;
-      tmpcol.push_back(event[i].col());
-      tmpcol.push_back(1);
-      col_instances.push_back(tmpcol);
-    }
-    if (newacol && (event[i].acol() != 0)) {
-      std::vector<int> tmpcol;
-      tmpcol.push_back(event[i].acol());
-      tmpcol.push_back(1);
-      col_instances.push_back(tmpcol);
-    }
-  }
-  col_instances.erase(
-      std::remove_if(col_instances.begin(), col_instances.end(),
-                     [](const std::vector<int> &val) { return val[1] <= 2; }),
-      col_instances.end());
-  int updcol = 1;
-  while (col_instances.size() > 0) {
-    int nupd = 2;
-    for ( int i = event.size() - 1; i >= 0; --i) {
-      if (col_instances[0][0] == event[i].col()) {
-        event[i].col(updcol);
-        --nupd;
-      }
-      if (col_instances[0][0] == event[i].acol()) {
-        event[i].acol(updcol);
-        --nupd;
-      }
-      if (nupd == 0) {
-        break;
-      }
-    }
-    ++updcol;
-    col_instances[0][1] -= 2;
-    col_instances.erase(
-        std::remove_if(col_instances.begin(), col_instances.end(),
-                       [](const std::vector<int> &val) { return val[1] <= 2; }),
-        col_instances.end());
-  }
- */
   
   
   pythia.next();
