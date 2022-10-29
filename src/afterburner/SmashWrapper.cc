@@ -132,7 +132,6 @@ void SmashWrapper::ExecuteTask() {
     InitPerEvent();
     CalculateTimeTask();
     FinishPerEvent();
-    smash_experiment_->increase_event_no();  // internal SMASH event counter
   }
 }
 
@@ -183,6 +182,7 @@ void SmashWrapper::FinishPerEvent() {
                                        modus->jetscape_hadrons_[ev_no - 1]);
   JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
          << " hadrons from SMASH.";
+  smash_experiment_->increase_event_no();  // internal SMASH event counter
 }
 
 void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
