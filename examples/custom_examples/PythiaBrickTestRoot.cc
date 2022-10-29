@@ -64,6 +64,54 @@ using namespace Jetscape;
 void Show();
 
 // -------------------------------------
+// QA Task Demo with ROOT Hisograms etc
+#include <Riostream.h>
+#include "TRandom.h"
+#include "TCanvas.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TH3.h"
+#include "TF1.h"
+#include "TMath.h"
+#include "TFile.h"
+#include "TString.h"
+#include "TROOT.h"
+#include "TSystem.h"
+
+class DemoQA : public JetScapeModuleBase
+{
+  public:
+
+  DemoQA() : JetScapeModuleBase() {SetId("DemoQA"); oName = "";}
+  DemoQA(string m_oName) : JetScapeModuleBase() {SetId("DemoQA"); oName = m_oName;}
+  virtual ~DemoQA() {f->cd();hPt->Write("hPt");f->ls();f->Write();f->Close();}
+
+  void Init() {f=new TFile(oName.c_str(),"RECREATE"); hPt = new TH1D("hPt","",100,0,100);}
+  void Exec() {
+    QueryHistory::Instance()->UpdateTaskMap();
+    vector<any> eLossHistories = QueryHistory::Instance()->GetHistoryFromModules("JetEnergyLoss");
+    for (auto mHist : eLossHistories)
+    {
+      auto ps = any_cast<std::shared_ptr<PartonShower>>(mHist);
+      //For demonstation purpose only ...
+      cout<<"Shower iniating parton pT = "<<ps->GetPartonAt(0)->pt()<<endl;
+
+      hPt->Fill(ps->GetPartonAt(0)->pt());
+    }
+    //cout<<hPt->GetEntries()<<endl;
+  }
+  //Bummer, finish actually not yet recursively implemented !!!
+  void Finish() {cout<<"Finish called ..."<<endl; f->cd();hPt->Write("hPt");f->ls();f->Write();f->Close();}
+
+  private:
+
+  string oName;
+  TFile *f;
+  TH1D *hPt;
+
+};
+
+// -------------------------------------
 
 int main(int argc, char** argv)
 {
@@ -80,7 +128,6 @@ int main(int argc, char** argv)
   //SetVerboseLevel (9 a lot of additional debug output ...)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
-
 
   Show();
 
@@ -136,12 +183,14 @@ int main(int argc, char** argv)
   writer2->SetId("hepMCWriter");
   jetscape->Add(writer2);
 
+  auto QATest = make_shared<DemoQA>("qa_test.root");
+  jetscape->Add(QATest);
+
   // Initialize all modules tasks
   jetscape->Init();
 
   // Run JetScape with all task/modules as specified
   jetscape->Exec();
-
   // For the future, cleanup is mostly already done in write and clear
   jetscape->Finish();
 
