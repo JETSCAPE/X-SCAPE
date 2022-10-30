@@ -30,7 +30,7 @@ set (SOURCES ${SOURCES} G__JetScapeRootLibDict.cxx)
 add_library(JetScapeRoot SHARED ${SOURCES} G__JetScapeRootLibDict.cxx)
 add_dependencies(JetScapeRoot G__JetScapeRootLibDict)
 
-target_link_libraries(JetScapeRoot JetScape ${ROOT_LIBRARIES} -L${HEPMC_LIB_DIR} -lHepMC3 -lHepMC3rootIO)
+target_link_libraries(JetScapeRoot JetScape ${ROOT_LIBRARIES})
 if(${HEPMC_FOUND})
   target_link_libraries(JetScapeRoot JetScape -L${HEPMC_LIB_DIR} -lHepMC3 -lHepMC3rootIO)
 endif()
