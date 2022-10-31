@@ -21,7 +21,7 @@
 #include "MCGlauberGenStringWrapper.h"
 #include <memory>
 
-// #define DEBUG_ISMAIL_4
+#define DEBUG_ISMAIL_4
 
 using namespace Jetscape;
 using namespace Pythia8;
@@ -184,12 +184,12 @@ void iColoredHadronization::DoHadronization(
 
       std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En = "<< En << " " << NHardScatterings <<  std::endl;
 
-      double onshellE = pow(pow(Rem.px(), 2) + pow(Rem.py(), 2) + pow(Pz, 2),0.5);
+      double onshellE = pow(pow(Rem.px() + Px, 2) + pow(Rem.py() + Py, 2) + pow(Pz, 2),0.5);
       event.append(Rem.pid(), 23,
                    Rem.color(),
                    Rem.anti_color(),
-                   Rem.px(),
-                   Rem.py(),
+                   Rem.px() + Px,
+                   Rem.py() + Py,
                    Pz, onshellE);
       #ifdef DEBUG_ISMAIL_4
       File3 << GetCurrentEvent() << " "  << Rem.pstat() << " "<< Rem.plabel() << " " << Rem.pid() << " " <<
