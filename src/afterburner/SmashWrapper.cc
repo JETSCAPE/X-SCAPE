@@ -139,6 +139,7 @@ void SmashWrapper::InitPerEvent() {
   if (IsTimeStepped()) {
     JSINFO << "Initalizing new time-stepped SMASH  event ...";
     AfterburnerModus *modus = smash_experiment_->modus();
+    // For timesteps we always only have one particlization event currently
     modus->reset_event_numbering();
     // modus->jetscape_hadrons_ = GatherAfterburnerHadrons();
     modus->jetscape_hadrons_ = TestHadronList();
@@ -154,13 +155,16 @@ void SmashWrapper::InitPerEvent() {
 
 void SmashWrapper::CalculateTimeTask() {
 
-  std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimestepParticlizationHadrons();
-  JSINFO << "SMASH got " << new_JS_hadrons.size() << " timestep partilization hadrons from BDM.";
+  // Comment in for adding new hadrons from BDM for time steps
+  // std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimestepParticlizationHadrons();
+  // JSINFO << "SMASH got " << new_JS_hadrons.size() << " timestep partilization hadrons from BDM.";
 
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
-  JSINFO << "Propgating SMASH until t = " << until_time;
+  JSINFO << "Propagating SMASH until t = " << until_time;
   if (!only_final_decays_) {
-    smash_experiment_->run_time_evolution(until_time, get_smash_plist_from_JS_hadrons(new_JS_hadrons));
+    // Comment in for adding new hadrons from BDM for time steps
+    // smash_experiment_->run_time_evolution(until_time, get_smash_plist_from_JS_hadrons(new_JS_hadrons));
+    smash_experiment_->run_time_evolution(until_time);
   }
 }
 
@@ -178,6 +182,7 @@ void SmashWrapper::FinishPerEvent() {
                                        modus->jetscape_hadrons_[ev_no - 1]);
   JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
          << " hadrons from SMASH.";
+  smash_experiment_->increase_event_no();  // internal SMASH event counter
 }
 
 void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {

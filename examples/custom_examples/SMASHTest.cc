@@ -52,7 +52,7 @@
 #undef gmn
 #undef limit
 
-#include "FreestreamMilneWrapper.h"
+#include "NullPreDynamics.h"
 #include "iSpectraSamplerWrapper.h"
 #include "TrentoInitial.h"
 #include "PGun.h"
@@ -113,12 +113,12 @@ int main(int argc, char** argv)
 
   // Initial conditions and hydro
   auto trento = make_shared<TrentoInitial>();
-  auto freestream = make_shared<FreestreamMilneWrapper> ();
+  auto null_predynamics = make_shared<NullPreDynamics> ();
   auto pGun= make_shared<PGun> ();
   auto hydro = make_shared<MpiMusic> ();
   jetscape->Add(trento);
-  jetscape->Add(freestream);
   jetscape->Add(pGun);
+  jetscape->Add(null_predynamics);
   jetscape->Add(hydro);
 
   // Energy loss
@@ -142,9 +142,9 @@ int main(int argc, char** argv)
   auto hadroMgr = make_shared<HadronizationManager> ();
   auto hadro = make_shared<Hadronization> ();
   auto hybrid = make_shared<HybridHadronization> ();
-  hadro->Add(hybrid);
+  // hadro->Add(hybrid);
   auto colorless = make_shared<ColorlessHadronization> ();
-  // hadro->Add(colorless);
+  hadro->Add(colorless);
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
 
