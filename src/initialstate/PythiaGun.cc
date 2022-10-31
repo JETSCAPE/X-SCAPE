@@ -332,7 +332,7 @@ void PythiaGun::Exec() {
 
     double initial_state_label = -1 ;
     double final_state_label = 1 ;
-  ini->pTHat.resize((p62.size()-1)/2);
+  ini->pTHat.resize((p62.size())/4);
   int hCounter = 0;
   TotalMomentumFractionPositive = 0.0;
   TotalMomentumFractionNegative = 0.0;
@@ -347,8 +347,8 @@ void PythiaGun::Exec() {
 
     // JSINFO<< MAGENTA << " at x=" << x_p.x() << ", y=" << x_p.y() << ", z=" << x_p.z() << ", t = " << x_p.t();
 
-      double label = 0;
-      double stat = 0;
+      int label = 0;
+      int stat = 0;
       
       if (particle.status()==-21 || particle.status()==-31 )
       {
@@ -363,11 +363,11 @@ void PythiaGun::Exec() {
           label = final_state_label;
           final_state_label++;
           stat = 1000; // raw final state status, must go to a final state module with virtuality generation. 
+          if( (label-1) % 2 == 0){
+            ini->pTHat[(label-1)/2] = particle.pT();
+          }
       }
 
-    if( (label-1) / 2 == 0){
-      ini->pTHat[label/2] = particle.pT();
-    }
       FourVector p_p(particle.px(),particle.py(),particle.pz(),particle.e());
       
     if (flag_useHybridHad != 1) {

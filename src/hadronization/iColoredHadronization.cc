@@ -162,19 +162,29 @@ void iColoredHadronization::DoHadronization(
 
   auto MCGsecond = std::dynamic_pointer_cast<MCGlauberGenStringWrapper> (Hard->GetTaskList()[1]);
   auto Remnants = Hard->Remnants;
+  if(2 * ini->pTHat.size() != Hard->Remnants.size()){
+    throw std::runtime_error("Not enough remnants = " + std::to_string(Hard->Remnants.size()) + " Scattering = " + std::to_string(ini->pTHat.size()));
+  }
   double NHardScatterings = double(ini->pTHat.size());
+
   for (unsigned int ipart = 0; ipart < Remnants.size(); ++ipart) {
       auto Rem = Remnants[ipart];
-      double Pz;
+      double Pz, Px, Py, En;
       if(Rem.pz() >=0){
+        En = MCGsecond->Get_Proj_Remnant()[0] / double(NHardScatterings);
+        Px = MCGsecond->Get_Proj_Remnant()[1] / double(NHardScatterings);
+        Py = MCGsecond->Get_Proj_Remnant()[2] / double(NHardScatterings);
         Pz = MCGsecond->Get_Proj_Remnant()[3] / double(NHardScatterings);
-        // Pz = 10.;
       } else {
-        // Pz = -10.;
+        En = MCGsecond->Get_Targ_Remnant()[0] / double(NHardScatterings);
+        Px = MCGsecond->Get_Targ_Remnant()[1] / double(NHardScatterings);
+        Py = MCGsecond->Get_Targ_Remnant()[2] / double(NHardScatterings);
         Pz = MCGsecond->Get_Targ_Remnant()[3] / double(NHardScatterings);
       }
 
-      double onshellE = pow(pow(Rem.px(), 2) + pow(Rem.py(), 2) +pow(Pz, 2),0.5);
+      std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En = "<< En << " " << NHardScatterings <<  std::endl;
+
+      double onshellE = pow(pow(Rem.px(), 2) + pow(Rem.py(), 2) + pow(Pz, 2),0.5);
       event.append(Rem.pid(), 23,
                    Rem.color(),
                    Rem.anti_color(),

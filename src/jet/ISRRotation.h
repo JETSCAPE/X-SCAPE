@@ -36,7 +36,7 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
    void printout_current();
    void SetLatestInitialParton(double px, double py, double pz, double E, int label);
    void ResetShower();
-   void AddRemenant(Parton &Out);
+   void AddRemenant(Parton &Out, int label);
     
    
    std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
@@ -67,9 +67,9 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
     double DisP(double pxGeV, double pyGeV);
     std::array<double,2> GeneratPT();
     std::array<double,6> RotationMatrix;
-    FourVector LatestInitialParton;
-    int LatestPartonLabel;
-    void DefineRotationMatrix();
+    FourVector LatestInitialParton_Positive,LatestInitialParton_Negative;
+    int LatestPartonLabel_Postive, LatestPartonLabel_Negative;
+    void DefineRotationMatrix(double Dir);
     void RotateVector(FourVector &ToRotate);
 
     

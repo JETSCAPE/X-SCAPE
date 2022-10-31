@@ -167,7 +167,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           (*File1) << "# Latest Parton momentum " << LatestInitialParton.x() << " "
                   << LatestInitialParton.y() << " " << LatestInitialParton.z() << " "
                   << LatestInitialParton.t() << std::endl;
-          DefineRotationMatrix();
+          DefineRotationMatrix( (Out.pz() >=0 ? 1.:-1.));
           AlreadyGeneratedPTForThisShower = true;
           (*File1) << "Generated new (px, py, new pz) : " << pT[0] << " " << pT[1] << " " << LatestPartonNewPz << std::endl;
 
@@ -180,8 +180,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         
         // New momentum after rotating to get the pT
         FourVector p_Out(Out.px(), Out.py(),Out.pz(), Out.e());
-        if(Out.plabel() == LatestPartonLabel ){
-          AddRemenant(Out);
+        if(Out.plabel() == LatestPartonLabel_Postive ){
+          AddRemenant(Out,LatestPartonLabel_Postive);
+        }
+        if(Out.plabel() == LatestPartonLabel_Negative ){
+          AddRemenant(Out,LatestPartonLabel_Negative);
         }
 
       #if(INTRODUCE_PT == 1)
@@ -474,12 +477,19 @@ std::array<double, 2> ISRRotation::GeneratPT() {
 }
 
 
-void ISRRotation::DefineRotationMatrix() {
+void ISRRotation::DefineRotationMatrix(double Dir) {
 
-    double Signb = (LatestInitialParton.z() >=0 ? 1.:-1.);
-    double px = LatestInitialParton.x() + pT[0];
-    double py = LatestInitialParton.y() + pT[1];
-    double pz = Signb * std::sqrt(LatestInitialParton.z()*LatestInitialParton.z() - px*px - py*py);
+    double Signb = Dir;
+    double px,py,pz;
+    if(Dir>=0){
+      px = LatestInitialParton_Positive.x() + pT[0];
+      py = LatestInitialParton_Positive.y() + pT[1];
+      pz = Signb * std::sqrt(LatestInitialParton_Positive.z()*LatestInitialParton_Positive.z() - px*px - py*py);
+    } else {
+      px = LatestInitialParton_Negative.x() + pT[0];
+      py = LatestInitialParton_Negative.y() + pT[1];
+      pz = Signb * std::sqrt(LatestInitialParton_Negative.z()*LatestInitialParton_Negative.z() - px*px - py*py);
+    }
     LatestPartonNewPz = pz;
     double E = sqrt(px * px + py * py + pz * pz);
     double pt = sqrt(px * px + py * py);
@@ -549,13 +559,18 @@ void ISRRotation::RotateVector(FourVector &ToRotate) {
 
 
 void ISRRotation::SetLatestInitialParton(double px, double py, double pz, double E, int Label){
-  LatestInitialParton.Set(px,py,pz,E);
-  LatestPartonLabel = Label;
+  if(pz >= 0){
+    LatestInitialParton_Positive.Set(px,py,pz,E);
+    LatestPartonLabel_Postive = Label;
+  } else {
+    LatestInitialParton_Negative.Set(px,py,pz,E);
+    LatestPartonLabel_Negative = Label;
+  }
 }
 
-void ISRRotation::AddRemenant(Parton &Out){
+void ISRRotation::AddRemenant(Parton &Out,int label){
   Parton Rem = Out;
-  Rem.set_label(LatestPartonLabel-1);
+  Rem.set_label(label-1);
   double direction = (Rem.pz() >=0 ? 1.:-1.);
   int NHardScatterings = ini->pTHat.size();
   double Pz = (Rem.pz() >=0 ? 1.0:-1.0);
