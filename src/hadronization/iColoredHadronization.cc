@@ -182,7 +182,7 @@ void iColoredHadronization::DoHadronization(
         Pz = MCGsecond->Get_Targ_Remnant()[3] / double(NHardScatterings);
       }
 
-      std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En = "<< En << " " << NHardScatterings <<  std::endl;
+      // std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En = "<< En << " " << NHardScatterings <<  std::endl;
 
       double onshellE = pow(pow(Rem.px() + Px, 2) + pow(Rem.py() + Py, 2) + pow(Pz, 2),0.5);
       event.append(Rem.pid(), 23,
