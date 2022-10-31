@@ -827,7 +827,6 @@ void JetScape::SetPointers() {
           dynamic_pointer_cast<BulkDynamicsManager>(it));
       bulk_pointer_is_set = true;
     } else if (dynamic_pointer_cast<JetEnergyLossManager>(it) && !dynamic_pointer_cast<IsrManager>(it)) {
-      std::cout << " SigSlot Module " << it->GetId() << std::endl;
       JetScapeSignalManager::Instance()->SetJetEnergyLossManagerPointer(
           dynamic_pointer_cast<JetEnergyLossManager>(it));
     } else if (dynamic_pointer_cast<HardProcess>(it)) {

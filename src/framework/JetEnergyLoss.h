@@ -89,6 +89,10 @@ public:
   // but per parton, so there is no need to check for time step consistency here.
   void CheckExec() {};
 
+  // Bypass check here since the Energloss modules are neither per event or per time_step
+  // but per parton, so there is no need to check for time step consistency here.
+  void CheckExec() {};
+
   /** Default function to perform the energy loss for partons at time "time". It should be overridden by different energy loss tasks.
       @param deltaT Step-size.
       @param time Current time.
@@ -103,7 +107,7 @@ public:
   sigslot::signal5<double, double, double, double,
                    std::unique_ptr<FluidCellInfo> &, multi_threaded_local>
       GetHydroCellSignal;
-  
+
   sigslot::signal1<double &, multi_threaded_local> GetHydroTau0Signal;
 
   /** For future development. A signal to connect the JetEnergyLoss object to the function UpdateEnergyDeposit() of the FluidDynamics class.
@@ -239,7 +243,7 @@ public:
 
   virtual any GetHistory() {return any(pShower);}
 
-  //REMARK: Quick fix to test IsrShowerPSG ... fix later!!!!
+  //REMARK JP: Quick fix to test IsrShowerPSG ... fix later!!!!
   void DoExecTime();
   vector<Parton> pIn;
   vector<node> vStartVec;
@@ -283,8 +287,8 @@ private:
 
   //vector<Parton> pIn;
   //vector<node> vStartVec;
-
   //bool foundchangedorig = false;
+  
   int droplet_stat = -11;
   int miss_stat = -13;
   int neg_stat = -17;
@@ -293,8 +297,6 @@ private:
   bool jetSignalConnected;
   bool edensitySignalConnected;
 
-  // Vector of final state partons for each shower as a vector
-  //vector<vector<shared_ptr<Parton>>> final_Partons;
 };
 
 } // end namespace Jetscape

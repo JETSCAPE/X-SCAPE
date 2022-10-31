@@ -96,7 +96,7 @@ void BulkDynamicsManager::CalculateTime()
 
   JetScapeModuleBase::CalculateTimeTasks();
 
-    VERBOSE(3) << "Size of new hadron list at end of CalculateTime in BDM (should be empty) = " << new_hadrons_for_timestep.size();
+  VERBOSE(3) << "Size of new hadron list at end of CalculateTime in BDM (should be empty) = " << new_hadrons_for_timestep.size();
 
 }
 
@@ -225,8 +225,8 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
   if(validHydro == false){
     std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
     for (auto it : GetTaskList()) {
-      if(dynamic_pointer_cast<BulkMediaBase>(it)){
-	dynamic_pointer_cast<BulkMediaBase>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
+      if(dynamic_pointer_cast<Afterburner>(it)){
+	      dynamic_pointer_cast<Afterburner>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
       }
     }
     InfoWrapper(fluid_cell_info_ptr,bulk_info_ptr);
@@ -251,6 +251,7 @@ void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell
       fluid_cell_info_ptr->pi[i][j] = bulk_info_ptr->pi[i][j];
     }
   }
+  // tmn from bulk info not converted as not present in fluid cell info
 }
 
 std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {

@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -37,8 +37,9 @@ public:
   Jetscape::real vx, vy, vz; //!< Flow velocity.
   Jetscape::real pi[4][4];   //!< Shear stress tensor [GeV/fm^3].
   Jetscape::real bulk_Pi;    //!< Bulk viscous pressure [GeV/fm^3].
+  Jetscape::real tmn[4][4];  //!< Energy momentum tensor [GeV/fm^3].
 
-  std::string origin_id; //!< string containing ID of originating bulk media.  
+  std::string origin_id; //!< string containing ID of originating bulk media.
   /** Default constructor.*/
   BulkMediaInfo();
 
@@ -69,6 +70,11 @@ inline BulkMediaInfo operator+(BulkMediaInfo a, const BulkMediaInfo &b) {
     }
   }
   a.bulk_Pi += b.bulk_Pi;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      a.tmn[i][j] += b.tmn[i][j];
+    }
+  }
   return a;
 }
 
@@ -91,6 +97,11 @@ BulkMediaInfo inline BulkMediaInfo::operator*=(Jetscape::real b) {
     }
   }
   this->bulk_Pi *= b;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      this->tmn[i][j] *= b;
+    }
+  }
   return *this;
 }
 

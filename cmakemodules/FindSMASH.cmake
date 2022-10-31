@@ -22,8 +22,19 @@ endif()
 
 message(STATUS "Looking for SMASH ...")
 
+# At the moment a macro about the system endianness is needed from within SMASH
+include(TestBigEndian)
+TEST_BIG_ENDIAN(IS_BIG_ENDIAN)
+if(IS_BIG_ENDIAN)
+   message(STATUS "Big endian architecture detected.")
+   add_definitions("-DBIG_ENDIAN_ARCHITECTURE")
+else()
+   message(STATUS "Little endian architecture detected.")
+   add_definitions("-DLITTLE_ENDIAN_ARCHITECTURE")
+endif()
+
 set(SMASH_INCLUDE_DIR
-   $ENV{SMASH_DIR}/3rdparty/Cuba-4.2
+   $ENV{SMASH_DIR}/3rdparty/Cuba-4.2.1
    $ENV{SMASH_DIR}/3rdparty/einhard
    $ENV{SMASH_DIR}/3rdparty/yaml-cpp-0.7.0/include
    $ENV{SMASH_DIR}/build/src/include

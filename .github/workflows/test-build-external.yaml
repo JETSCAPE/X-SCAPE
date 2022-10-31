@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - latessa/automatedTests
+      - latessa/movingTestsToNewRepo
   push:
     branches:
       - main
       - latessa/automatedTests
+      - latessa/movingTestsToNewRepo
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}

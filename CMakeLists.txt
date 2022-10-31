@@ -471,6 +471,23 @@ target_link_libraries(PythiaIsrTest JetScape )
 
 add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
 target_link_libraries(PythiaIsrMUSIC JetScape )
+add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
+target_link_libraries(PythiaBDMTest JetScape )
+
+add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
+target_link_libraries(PythiaNoBDMTest JetScape )
+
+add_executable(PythiaBDMTest_Hydro_Cascade ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
+target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
+
+if ( USE_SMASH )
+    add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
+    target_link_libraries(SMASHTest JetScape )
+
+    add_executable(ConcurrencyTest ./examples/custom_examples/ConcurrencyTest.cc)
+    target_link_libraries(ConcurrencyTest JetScape )
+endif (USE_SMASH )
+
 
 # executables with additional dependencies
 if ( USE_IPGlasma )

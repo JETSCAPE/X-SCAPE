@@ -150,7 +150,7 @@ int main(int argc, char** argv)
 
   //auto hydroTest = make_shared<BrickTest> ();
   //hydroTest->SetMultiThread(true);
-  //hydroTest->SetActive(false);
+  //hydroTest->SetTimeStepped(true);;
 
   //jetscape->Add(trento);
     jetscape->Add(MCG);
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
   auto jloss = make_shared<JetEnergyLoss> ();
   jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax); //will be moved to XML and proper Init() in IsrJet later ...
 
-  //Set inactive task (per event) and with main clock attached do per time step for these modules ...
+  //Do per time step for these modules with main clock attached ...
   //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get
   //time, either main clock time or if module clock attached the tranformed time via: GetModuleCurrentTime();
 

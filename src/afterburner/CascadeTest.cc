@@ -1,7 +1,7 @@
 #include "CascadeTest.h"
 #include "JetScapeLogger.h"
 #include "QueryHistory.h"
-
+#include <MakeUniqueHelper.h>
 #include <thread>
 
 using namespace Jetscape;
@@ -50,4 +50,10 @@ void CascadeTest::FinishPerEvent()
 any CascadeTest::GetHistory()
 {
   return any(hList);
+}
+void CascadeTest::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,
+		 Jetscape::real z,
+		 std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){
+  bulk_info_ptr = make_unique<BulkMediaInfo>();
+  bulk_info_ptr->temperature = 0.19;
 }

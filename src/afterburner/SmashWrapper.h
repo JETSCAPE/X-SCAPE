@@ -40,18 +40,24 @@ public:
     JSINFO << "Constructing AfterburnerModus";
   }
   void reset_event_numbering() { event_number_ = 0; }
-  // The converter is not static, because modus holds int variables
-  // for the number of warnings, which are used in try_create_particle,
-  // called by this function. Maybe I (oliiny) will change this design in SMASH
-  // later, but now I have to put this converter inside the AfterburnerModus.
-  void JS_hadrons_to_smash_particles(
+  int current_event_number() {return event_number_;}
+
+  /**
+   * Add the Jetscape (JS) hadron list to the SMASH particles
+   *
+   * The converter is not static, because modus holds int variables
+   * for the number of warnings, which are used in try_create_particle,
+   * called by this function. Maybe I (oliiny) will change this design in SMASH
+   * later, but now I have to put this converter inside the AfterburnerModus.
+   */
+  void add_JS_hadrons_to_smash_particles(
       const std::vector<shared_ptr<Hadron>> &JS_hadrons,
       smash::Particles &smash_particles);
 
   // This function overrides the function from ListModus.
   double initial_conditions(smash::Particles *particles,
                             const smash::ExperimentParameters &) {
-    JS_hadrons_to_smash_particles(jetscape_hadrons_[event_number_], *particles);
+    add_JS_hadrons_to_smash_particles(jetscape_hadrons_[event_number_], *particles);
     backpropagate_to_same_time(*particles);
     event_number_++;
     return start_time_;
@@ -64,17 +70,23 @@ private:
 
 class SmashWrapper : public Afterburner {
 private:
+
+  /// Convert Jetscape (JS) hadron list to smash particle list
+  smash::ParticleList get_smash_plist_from_JS_hadrons(const std::vector<shared_ptr<Hadron>>& JS_hadrons);
+
   bool only_final_decays_ = false;
+  double end_time_ = -1.0;
   shared_ptr<smash::Experiment<AfterburnerModus>> smash_experiment_;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<SmashWrapper> reg;
 
 public:
-  void
-  smash_particles_to_JS_hadrons(const smash::Particles &smash_particles,
-                                std::vector<shared_ptr<Hadron>> &JS_hadrons);
+  /// Fill the provided Jetscape (JS) hadron list from the SMASH particles
+  void fill_JS_hadrons_from_smash_particles(const smash::Particles &smash_particles,
+                                            std::vector<shared_ptr<Hadron>> &JS_hadrons);
   SmashWrapper();
+
   void InitTask();
   void ExecuteTask();
   void WriteTask(weak_ptr<JetScapeWriter> w);
@@ -82,6 +94,8 @@ public:
   void InitPerEvent() override;
   void CalculateTimeTask() override;
   void FinishPerEvent() override;
+
+  std::vector<Hadron> GetCurrentHadronList() const override;
 };
 
 #endif // SMASHWRAPPER_H
