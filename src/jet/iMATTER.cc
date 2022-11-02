@@ -727,19 +727,20 @@ void iMATTER::RotateShower(Parton& pIn){
 double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_t)
 {
     
-    double density_projectile=0.0;
-    double density_target=0.0;
+    // double density_projectile=0.0;
+    // double density_target=0.0;
+    // auto ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
     
-    if (!ini)
-    {
-        JSINFO << MAGENTA << "No initial state module, setting the starting location to "
-                "0. Make sure to add e.g. trento before PythiaGun.";
-    }
-    else
-    {
-        density_target = ini->Get_target_nucleon_density_lab( location.t(), location.x(), location.y(), location.z() );
-        density_projectile = ini->Get_projectile_nucleon_density_lab( location.t(), location.x(), location.y(), location.z() );
-    }
+    // if (!ini)
+    // {
+    //     JSINFO << MAGENTA << "No initial state module, setting the starting location to "
+    //             "0. Make sure to add e.g. trento before PythiaGun.";
+    // }
+    // else
+    // {
+    //     density_target = ini->Get_target_nucleon_density_lab( location.t(), location.x(), location.y(), location.z() );
+    //     density_projectile = ini->Get_projectile_nucleon_density_lab( location.t(), location.x(), location.y(), location.z() );
+    // }
     
     double r = ZeroOneDistribution(*GetMt19937Generator());
     
@@ -759,19 +760,20 @@ double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_
 double iMATTER::generate_Forward_virt(Parton p, FourVector location, double max_t)
 {
     
-    double density_projectile=0.0;
-    double density_target=0.0;
+    // double density_projectile=0.0;
+    // double density_target=0.0;
+    // auto ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
     
-    if (!ini)
-    {
-        JSINFO << MAGENTA << "No initial state module, setting the starting location to "
-                "0. Make sure to add e.g. trento before PythiaGun.";
-    }
-    else
-    {
-        density_target = ini->Get_target_nucleon_density_lab( location.t(), location.x(), location.y(), location.z() );
-        density_projectile = ini->Get_projectile_nucleon_density_lab( location.t(), location.x(), location.y(), location.z() );
-    }
+    // if (!ini)
+    // {
+    //     JSINFO << MAGENTA << "No initial state module, setting the starting location to "
+    //             "0. Make sure to add e.g. trento before PythiaGun.";
+    // }
+    // else
+    // {
+    //     density_target = ini->Get_target_nucleon_density_lab( location.t(), location.x(), location.y(), location.z() );
+    //     density_projectile = ini->Get_projectile_nucleon_density_lab( location.t(), location.x(), location.y(), location.z() );
+    // }
     
     double r = ZeroOneDistribution(*GetMt19937Generator());
     

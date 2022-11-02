@@ -570,6 +570,7 @@ void ISRRotation::SetLatestInitialParton(double px, double py, double pz, double
 }
 
 void ISRRotation::AddRemenant(Parton &Out,int label){
+  auto ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
   Parton Rem = Out;
   Rem.set_label(label-1);

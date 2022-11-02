@@ -83,7 +83,6 @@ public:
 
   virtual void FinishPerEvent();
                           
-  std::shared_ptr<InitialState> ini;
 
   // Bypass check here since the Energloss modules are neither per event or per time_step
   // but per parton, so there is no need to check for time step consistency here.
