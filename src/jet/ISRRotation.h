@@ -39,8 +39,8 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
    void AddRemenant(Parton &Out, int label);
     
    
-   std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
-   std::shared_ptr<HardProcess> Hard; // temporary pointer to Hard process   
+  //  std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
+  //  std::shared_ptr<HardProcess> Hard; // temporary pointer to Hard process   
     
  private:
     // std::shared_ptr<JetEnergyLossModule> *iMatterShower;

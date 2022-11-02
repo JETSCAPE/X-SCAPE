@@ -68,27 +68,27 @@ void ISRRotation::Init()
   Fi.close();
   #endif
 
-  ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
-  if (!ini)
-  {
+  // ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
+  // if (!ini)
+  // {
 
-    // If not vacuum case, give warning to add initial state module
-    bool in_vac = GetXMLElementInt({"Eloss", "Matter", "in_vac"});
-    if (!in_vac)
-    {
-      JSWARN << "No initial state module for ISRRotation, Please check whether you intend to "
-                "add an initial state module.";
-    }
-  }
-  else
-  {
-      JSINFO << BOLDCYAN << " Initial state module connected to i-MATTER";
-  }
-  Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
-  if(Hard)
-  {
-      JSINFO << BOLDCYAN << " Hard process module connected to i-MATTER";
-  }
+  //   // If not vacuum case, give warning to add initial state module
+  //   bool in_vac = GetXMLElementInt({"Eloss", "Matter", "in_vac"});
+  //   if (!in_vac)
+  //   {
+  //     JSWARN << "No initial state module for ISRRotation, Please check whether you intend to "
+  //               "add an initial state module.";
+  //   }
+  // }
+  // else
+  // {
+  //     JSINFO << BOLDCYAN << " Initial state module connected to i-MATTER";
+  // }
+  // Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+  // if(Hard)
+  // {
+  //     JSINFO << BOLDCYAN << " Hard process module connected to i-MATTER";
+  // }
 
   // Hadronization = JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
   // if(Hadronization)
@@ -109,6 +109,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
   double blurb; // used all the time for testing
 
+  auto ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   
   FourVector PlusZaxis(0.0,0.0,1.0,1.0);
 
@@ -569,6 +570,7 @@ void ISRRotation::SetLatestInitialParton(double px, double py, double pz, double
 }
 
 void ISRRotation::AddRemenant(Parton &Out,int label){
+  auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
   Parton Rem = Out;
   Rem.set_label(label-1);
   double direction = (Rem.pz() >=0 ? 1.:-1.);

@@ -93,27 +93,28 @@ void iMATTER::Init()
     
     
 
-    ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
-    if (!ini)
-    {
+    // ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
+    // if (!ini)
+    // {
 
-      // If not vacuum case, give warning to add initial state module
-      bool in_vac = GetXMLElementInt({"Eloss", "Matter", "in_vac"});
-      if (!in_vac)
-      {
-        JSWARN << "No initial state module for iMATTER, Please check whether you intend to "
-                  "add an initial state module.";
-      }
-    }
-    else
-    {
-        JSINFO << BOLDCYAN << " Initial state module connected to i-MATTER";
-    }
-    Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
-    if(Hard)
-    {
-        JSINFO << BOLDCYAN << " Hard process module connected to i-MATTER";
-    }
+    //   // If not vacuum case, give warning to add initial state module
+    //   bool in_vac = GetXMLElementInt({"Eloss", "Matter", "in_vac"});
+    //   if (!in_vac)
+    //   {
+    //     JSWARN << "No initial state module for iMATTER, Please check whether you intend to "
+    //               "add an initial state module.";
+    //   }
+    // }
+    // else
+    // {
+    //     JSINFO << BOLDCYAN << " Initial state module connected to i-MATTER";
+    // }
+    // Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+    // if(Hard)
+    // {
+    //     JSINFO << BOLDCYAN << " Hard process module connected to i-MATTER";
+    // }
+
     // Initialize random number distribution
     ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
 
@@ -141,7 +142,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     double blurb; // used all the time for testing
     
     FourVector PlusZaxis(0.0,0.0,1.0,1.0);
-
+    auto ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
+    auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
 
     for (int in=0; in < pIn.size(); in++) /// we continue with the loop charade, even though the framework is just giving us one parton
     {  

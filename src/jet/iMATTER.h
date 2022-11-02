@@ -38,8 +38,8 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     
    double alpha_s(double q2);
     
-   std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
-   std::shared_ptr<HardProcess> Hard; // temporary pointer to hard   
+   // std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
+   // std::shared_ptr<HardProcess> Hard; // temporary pointer to hard   
    std::shared_ptr<ISRRotation> FinalRotation; 
 
    // Log of Sudakov Without Virtuality dependence part
