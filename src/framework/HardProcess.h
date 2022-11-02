@@ -138,9 +138,9 @@ public:
   */
   int GetNHadrons() { return hd_list.size(); }
 
-  // Get max color of the current shower  
+  // Get max color of the current shower
   double GetMax_ColorPerShower() { return max_colorPerShower; }
-  void SetMax_ColorPerShower(double col) { max_colorPerShower = col; }
+  //   void SetMax_ColorPerShower(double col) { max_colorPerShower = col; }
 
   // Get max color the whole system  
   double GetMax_Color() { return max_color; }
@@ -171,7 +171,8 @@ private:
   vector<shared_ptr<Hadron>> hd_list;
   std::vector<Parton> Remnants;
     
-  int max_colorPerShower =1000, max_color, NISRShower = 0;
+  const int max_colorPerShower = 1000; 
+  int max_color, NISRShower = 0;
   double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
 
 };

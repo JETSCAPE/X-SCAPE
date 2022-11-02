@@ -334,8 +334,8 @@ void PythiaGun::Exec() {
     double final_state_label = 1 ;
   ini->pTHat.resize((p62.size())/4);
   int hCounter = 0;
-  TotalMomentumFractionPositive = 0.0;
-  TotalMomentumFractionNegative = 0.0;
+  SetTotalMomentumFractionPositive(0.0);
+  SetTotalMomentumFractionNegative(0.0);
   for (int np = 0; np < p62.size(); ++np)
   // for (int np = p62.size()-1; np >= 0 ; --np)
   {
@@ -355,8 +355,8 @@ void PythiaGun::Exec() {
           label = initial_state_label;
           initial_state_label--;
           stat = -1000; // raw initial state status, must go to an initial state module
-          if(particle.pz() >= 0.0) TotalMomentumFractionPositive += (particle.e() + particle.pz() ) / (eCM);
-          else TotalMomentumFractionNegative += (particle.e() - particle.pz() ) / (eCM);
+          if(particle.pz() >= 0.0) SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / (eCM));
+          else SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / (eCM));
       }
       if (particle.status()==-23 || particle.status()==-33)
       {
@@ -377,7 +377,7 @@ void PythiaGun::Exec() {
       auto ptn = make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
       ptn->set_color(particle.col());
       ptn->set_anti_color(particle.acol()); 
-      ptn->set_max_color(max_colorPerShower * (np + 1));
+      ptn->set_max_color(GetMax_ColorPerShower() * (np + 1));
       AddParton(ptn);
       JSINFO<< MAGENTA << "pythia id " << particle.index() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() << 
       " Color " << particle.col() << " " << particle.acol() << 
@@ -387,7 +387,7 @@ void PythiaGun::Exec() {
   }
   // Getting Number of hard partons
   int NPP = p62.size();
-  max_color = max_colorPerShower * NPP;
+  SetMax_Color(GetMax_ColorPerShower() * NPP);
   FourVector Zeros(0,0,0,0);
 
   ini->CollisionNegativeMomentum = std::vector<FourVector>(NPP/2,Zeros);

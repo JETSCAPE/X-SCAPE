@@ -376,8 +376,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             // Set x2 the current particle's momentum fraction //
             CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
             MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
-            if(pIn[in].pz() >= 0.0) TotalMomentumFraction =  Hard->TotalMomentumFractionPositive - MomentumFractionCurrent; 
-            else TotalMomentumFraction = Hard->TotalMomentumFractionNegative - MomentumFractionCurrent;
+            if(pIn[in].pz() >= 0.0) TotalMomentumFraction =  Hard->GetTotalMomentumFractionPositive() - MomentumFractionCurrent; 
+            else TotalMomentumFraction = Hard->GetTotalMomentumFractionNegative() - MomentumFractionCurrent;
             MomentumFractionCurrent = MomentumFractionCurrent / (1.0 - TotalMomentumFraction);
 
             t1 = -generate_initial_virt(pIn[in], Current_Location, max_t);
@@ -411,7 +411,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             }
 
             LabelOfTheShower = (-Current_Label - 1) / 2;
-            MAX_COLOR = -Current_Label * Hard->max_colorPerShower;
+            MAX_COLOR = -Current_Label * Hard->GetMax_ColorPerShower();
             Current_Status = NPartonPerShower;
             // JSINFO << MAGENTA << " MAX_COLOR " << MAX_COLOR;
 
@@ -574,11 +574,11 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             }
             
 
-            Hard->NISRShower += 1;
+            Hard->SetNISRShower(Hard->GetNISRShower() + 1);
             // Hard->max_color += 1;
             MAX_COLOR += 1;
             Parton Sibling(Current_Label+1, pid_Sib , 0 + Current_Status, p_Sibling, Current_Location) ;
-            Sibling.set_max_color(Hard->max_color + Hard->NISRShower * Hard->max_colorPerShower);
+            Sibling.set_max_color(Hard->GetMax_Color() + Hard->GetNISRShower() * Hard->GetMax_ColorPerShower());
             Sibling.set_color(Color_Sib);
             Sibling.set_anti_color(AntiColor_Sib);
             
