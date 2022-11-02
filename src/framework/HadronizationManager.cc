@@ -98,12 +98,6 @@ void HadronizationManager::Exec() {
     VERBOSE(2) << " There are " << hd.size()
                << " partons ready for hadronization";
     VERBOSE(2) << " There are already " << hadrons.size() << " hadrons";
-
-    //DEBUG:
-    
-    // for (auto pv : hd)
-    //   for (auto p : pv)
-    //     cout<<"Partons in Hadronization --> "<<p->plabel()<<endl;
    
     
     for (auto it : GetTaskList()) {
