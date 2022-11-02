@@ -218,8 +218,8 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   // Ignore initial state partons //
   if (pIn[0].pstat() < 0) {
-    // JSWARN << "Matter Received ISR parton with pstat =  " << pIn[0].pstat()
-    //        << " and plabel =  " << pIn[0].plabel();
+    JSWARN << "Matter Received ISR parton with pstat =  " << pIn[0].pstat()
+           << " and plabel =  " << pIn[0].plabel();
     return;
   }
 
