@@ -137,15 +137,30 @@ public:
       @return The number of hadrons.
   */
   int GetNHadrons() { return hd_list.size(); }
-  
 
-  int max_colorPerShower =1000, max_color, NISRShower = 0;
-  double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
-    std::string printer;
-    
-  std::vector<Parton> GetRemnants(){return Remnants;}
-  void PushRemnants(Parton par){ Remnants.push_back(par);}
-  
+  // Get max color of the current shower  
+  double GetMax_ColorPerShower() { return max_colorPerShower; }
+  void SetMax_ColorPerShower(double col) { max_colorPerShower = col; }
+
+  // Get max color the whole system  
+  double GetMax_Color() { return max_color; }
+  void SetMax_Color(double col) { max_color = col; }
+
+  // Get Number of ISR showers
+  double GetNISRShower() { return NISRShower; }
+  void SetNISRShower(double NISR) { NISRShower = NISR; }
+
+
+  // Get Total Momentum fraction for the Positive/Negative side 
+  double GetTotalMomentumFractionPositive(){ return TotalMomentumFractionPositive;}
+  double GetTotalMomentumFractionNegative(){ return TotalMomentumFractionNegative;}
+  void SetTotalMomentumFractionPositive(double mom){ TotalMomentumFractionPositive = mom;}
+  void SetTotalMomentumFractionNegative(double mom){ TotalMomentumFractionNegative = mom;}
+  std::string printer;
+
+  std::vector<Parton> GetRemnants() { return Remnants; }
+  void PushRemnants(Parton par) { Remnants.push_back(par); }
+
 private:
   // Think of always using unique_ptr for any vector in jetscape framework !???
   // To be discussed ...
@@ -156,6 +171,8 @@ private:
   vector<shared_ptr<Hadron>> hd_list;
   std::vector<Parton> Remnants;
     
+  int max_colorPerShower =1000, max_color, NISRShower = 0;
+  double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
 
 };
 
