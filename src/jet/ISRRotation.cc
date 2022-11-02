@@ -24,7 +24,7 @@
 //#include "helper.h"
 
 // Needed for cubature integration //
-#include <boost/math/quadrature/gauss_kronrod.hpp>
+// #include <boost/math/quadrature/gauss_kronrod.hpp>
 
 #include "FluidDynamics.h"
 
@@ -579,6 +579,6 @@ void ISRRotation::AddRemenant(Parton &Out,int label){
   Rem.set_color(Out.anti_color()); 
   Rem.set_anti_color(Out.color());
   if(Rem.pid() != 21 ) Rem.set_id(-Out.pid()); 
-  Hard->Remnants.push_back(Rem);
+  Hard->PushRemnants(Rem);
   return;
 }

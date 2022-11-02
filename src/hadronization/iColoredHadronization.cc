@@ -161,9 +161,9 @@ void iColoredHadronization::DoHadronization(
   auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
 
   auto MCGsecond = std::dynamic_pointer_cast<MCGlauberGenStringWrapper> (Hard->GetTaskList()[1]);
-  auto Remnants = Hard->Remnants;
-  if(2 * ini->pTHat.size() != Hard->Remnants.size()){
-    throw std::runtime_error("Not enough remnants = " + std::to_string(Hard->Remnants.size()) + " Scattering = " + std::to_string(ini->pTHat.size()));
+  auto Remnants = Hard->GetRemnants();
+  if(2 * ini->pTHat.size() != Remnants.size()){
+    throw std::runtime_error("Not enough remnants = " + std::to_string(Remnants.size()) + " Scattering = " + std::to_string(ini->pTHat.size()));
   }
   double NHardScatterings = double(ini->pTHat.size());
 
