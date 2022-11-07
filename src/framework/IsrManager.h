@@ -56,9 +56,10 @@ public:
   virtual void InitPerEvent();
 
   virtual void FinishPerEvent();
-
-  virtual void WriteTask(weak_ptr<JetScapeWriter> w);
   */
+  
+  virtual void WriteTask(weak_ptr<JetScapeWriter> w);
+
 
 private:
 

@@ -168,7 +168,12 @@ void PythiaGun::InitTask() {
     std::ofstream sigma_printer;
     sigma_printer.open(printer, std::ios::trunc);
 
-    
+
+}
+
+void PythiaGun::WriteTask(weak_ptr<JetScapeWriter> w) {
+  VERBOSE(8);
+  JetScapeTask::WriteTasks(w);
 }
 
 void PythiaGun::Exec() {
@@ -226,10 +231,10 @@ void PythiaGun::Exec() {
       if (!printer.empty()){
             std::ofstream sigma_printer;
             sigma_printer.open(printer, std::ios::out | std::ios::app);
-            
+
             sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
             //sigma_printer.close();
-      
+
 //      JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
     };
 
@@ -419,6 +424,6 @@ void PythiaGun::Exec() {
     File6.close();  
   #endif
   //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????
-  
+
   JetScapeTask::ExecuteTasks();
 }

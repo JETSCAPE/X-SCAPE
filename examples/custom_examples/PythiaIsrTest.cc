@@ -24,7 +24,8 @@
 #include "JetEnergyLoss.h"
 #include "JetEnergyLossManager.h"
 #include "JetScapeWriterFinalStateStream.h"
-// #include "JetScapeWriterStream.h"
+#include "JetScapeWriterStream.h"
+#include "JetScapeWriterIsrStream.h"
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
 #endif
@@ -82,7 +83,7 @@ int main(int argc, char** argv)
 
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
-  JetScapeLogger::Instance()->SetInfo(false);
+  JetScapeLogger::Instance()->SetInfo(true);
   JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
@@ -278,6 +279,10 @@ int main(int argc, char** argv)
   writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
   jetscape->Add(writer);
   jetscape->Add(writer2);
+
+  auto writerIsr= make_shared<JetScapeWriterIsrAscii> ("test_out_isr.dat");
+  writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
+  jetscape->Add(writerIsr);
 
   /*
 #ifdef USE_GZIP
