@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 
   //Matter is added but not executed, need to implement the per time step execution in JetEnergyLoss::DoShower()...
   auto matter = make_shared<Matter> ();
-  auto dummy = make_shared<DummySplit> ();
+  // auto dummy = make_shared<DummySplit> ();
   // auto lbt = make_shared<LBT> ();
   //auto martini = make_shared<Martini> ();
   //auto adscft = make_shared<AdSCFT> ();
@@ -224,7 +224,7 @@ int main(int argc, char** argv)
   jlossmanager->SetTimeRange(-tMax,tMax);
   jloss->SetTimeRange(-tMax,tMax);
   matter->SetTimeRange(-tMax,tMax);
-  dummy->SetTimeRange(-tMax,tMax);
+  // dummy->SetTimeRange(-tMax,tMax);
 
   // Note: if you use Matter, it MUST come first (to set virtuality)
   jloss->Add(matter);

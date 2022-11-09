@@ -137,7 +137,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
 
     // Get pdf from pythia and check the bounds 
     double PDF(int pid, double z, double t);
-    void RotateShower(Parton& pIn);
+    bool RotateShower(Parton& pIn);
     
  protected:
   

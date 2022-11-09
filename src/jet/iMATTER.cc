@@ -139,6 +139,8 @@ void iMATTER::Init()
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
 
+    bool IsRotated = false;
+
     double blurb; // used all the time for testing
     
     FourVector PlusZaxis(0.0,0.0,1.0,1.0);
@@ -236,13 +238,14 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         // File1->close();
 
 
-        // Rotate the parton from the earlier times step 
-        RotateShower(pIn[in]);
 
         if (pIn[in].pstat()>=0) { 
-            pOut.push_back(pIn[in]);
+            // pOut.push_back(pIn[in]);
             continue ;
         } // Only accept initial state partons
+
+        // Rotate the parton from the earlier times step 
+        IsRotated = RotateShower(pIn[in]);
 
         // JSINFO << BOLDYELLOW <<" iMATTER::DoEnergyLoss at time = "<<time;
         VERBOSESHOWER(8)<< MAGENTA << " SentInPartons Signal received : "<<deltaT<<" "<<Q2<<" "<<&pIn;
@@ -417,6 +420,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             FinalRotation->SetLatestInitialParton(pIn[in].px(),pIn[in].py(),pIn[in].pz(),pIn[in].e(),pIn[in].plabel());
             FinalRotation->ResetShower();
+            IsRotated = true;
 
         }
     
@@ -616,27 +620,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 OUTPUT(pOut[pOut.size()-2]);
             #endif
             
-
-
-
-            // std::cout << " ===================== " << std::endl;
-            // std::cout << "Direction = " << Direction << std::endl;
-            // std::cout << "t= " << t << " t1= " << t1 << " t2= " << t2 << std::endl;
-            // std::cout <<  (e + std::abs(pz)) / M_SQRT2 << " e=" << e << std::endl;
-            // std::cout << CurrentPlus << " " << SiblingPlus << " " << SiblingMinu << " " << ParentPlus << std::endl;
-            // std::cout << px << " " << py << " " << pz << " " << e << " " << pIn[in].e() << " " <<  pIn[in].t() << std::endl;
-            // std::cout << ParentPx << " " << ParentPy << " " << ParentPz << " " << ParentEn << std::endl;
-            // std::cout << SiblingPx << " " << SiblingPy << " " << SiblingPz << " " << SiblingEn << std::endl;
-
-            // std::cout << pOut[pOut.size()-3].px() << " " << pOut[pOut.size()-3].py() << " " << pOut[pOut.size()-3].pz() << " " << pOut[pOut.size()-3].e() << std::endl;
-            // std::cout << pOut[pOut.size()-1].px() << " " << pOut[pOut.size()-1].py() << " " << pOut[pOut.size()-1].pz() << " " << pOut[pOut.size()-1].e() << std::endl;
-            // std::cout << pOut[pOut.size()-2].px() << " " << pOut[pOut.size()-2].py() << " " << pOut[pOut.size()-2].pz() << " " << pOut[pOut.size()-2].e() << std::endl;
-            // std::cout << p_Parent.x() << " " << p_Parent.y() << " " << p_Parent.z() << " " << p_Parent.t() << std::endl;
-            // std::cout << Parent.px() << " " << Parent.py() << " " << Parent.pz() << " " << Parent.e() << std::endl;
-            // std::cout << " ===================== " << std::endl;
           
         }
-        else
+        else if (IsRotated)
         {
             SkipSampling:
 
@@ -665,7 +651,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
 
 
-void iMATTER::RotateShower(Parton& pIn){
+bool iMATTER::RotateShower(Parton& pIn){
     if( (pIn.pstat() + 900 == Current_Status || pIn.pstat() == Current_Status) && pIn.pstat() != -1000 ) {
         // File->open(Fpath.c_str(),std::ofstream::app);
         // (*File) << "Doing rotation Current_Status = " << Current_Status << " Current_Label= "<< Current_Label << std::endl; 
@@ -720,8 +706,9 @@ void iMATTER::RotateShower(Parton& pIn){
                 << std::endl << std::endl; 
             File1->close();
         #endif
+        return true;
     }
-    return;
+    return false;
 }
 
 double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_t)
