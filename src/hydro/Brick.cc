@@ -61,6 +61,11 @@ void Brick::InitTask() {
     bjorken_expansion_on = true;
     start_time = std::atof(brick->Attribute("start_time"));
   }
+  else {
+    if (brick->Attribute("start_time"))
+      start_time = std::atof(brick->Attribute("start_time"));}
+
+  hydro_tau_0 = start_time;
 
   //Parameter parameter_list;
   GetParameterList().hydro_input_filename = (char *)"dummy"; //*(argv+1);
