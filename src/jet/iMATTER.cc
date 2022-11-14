@@ -54,7 +54,8 @@ void iMATTER::Init()
 {
     JSINFO<<"Intialize iMATTER ...";
     // alpha_s = 0.2;
-    Q0 = 1.0;
+    Q0 = GetXMLElementDouble({"Eloss", "Matter", "Q0"});
+    vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
 
     P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
@@ -79,7 +80,6 @@ void iMATTER::Init()
     // JSINFO << "Pythia path: " << pdfpath.str() << "\n";
     pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
     
-    vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});/// use the same virtuality factor as in the final state calculation
 
     // Setup the quadrature rules for calculating the z_distribution 
     SetupIntegration();
@@ -1459,28 +1459,28 @@ double iMATTER::PDF(int pid, double z, double t){
 
 
 double iMATTER::alpha_s(double q2) {
-//   double a, L2, q24, c_nf;
+  double a, L2, q24, c_nf;
 
-//   L2 = std::pow(Lambda_QCD, 2);
+  L2 = std::pow(Lambda_QCD, 2);
 
-//   q24 = q2 / 4.0;
+  q24 = q2 / 4.0;
 
-//   c_nf = nf;
+  c_nf = nf;
 
-//   if (q24 > 4.0) {
-//     c_nf = 4;
-//   }
+  if (q24 > 4.0) {
+    c_nf = 4;
+  }
 
-//   if (q24 > 64.0) {
-//     c_nf = 5;
-//   }
+  if (q24 > 64.0) {
+    c_nf = 5;
+  }
 
-//   if (q24 > L2) {
-//     a = 12.0 * pi / (11.0 * Nc - 2.0 * c_nf) / std::log(q24 / L2);
-//   } else {
-//     JSWARN << " alpha too large ";
-//     a = 0.6;
-//   }
+  if (q24 > L2) {
+    a = 12.0 * pi / (11.0 * Nc - 2.0 * c_nf) / std::log(q24 / L2);
+  } else {
+    JSWARN << " alpha too large ";
+    a = 0.6;
+  }
 
-  return (0.25);
+  return a;
 }
