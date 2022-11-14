@@ -333,7 +333,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         // We have to do the last splitting two time step before the last step 
         // Because one time step is needed to rotate the shower and then one more for pT generation
         if (time < split_time && pIn[in].plabel() == Current_Label 
-            && t1 < - Q0 - error  && std::abs(time - GetMaxT()) > 1e-10 && (time + 2 * deltaT > GetMaxT() + rounding_error ) 
+            && t1 < - Q0 * Q0 - error  && std::abs(time - GetMaxT()) > 1e-10 && (time + 2 * deltaT > GetMaxT() + rounding_error ) 
             )
         {
             if(abs(pIn[in].px()) >= rounding_error || abs(pIn[in].py()) >= rounding_error ){
@@ -400,7 +400,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             double max_t2 = zb_frac * zb_frac * max_t / z_frac;
 
-            if(max_t <= Q0 || max_t2 <= Q0){
+            if(max_t <= Q0 * Q0 || max_t2 <= Q0 * Q0){
                 goto SkipSampling;
             }
 
@@ -575,11 +575,11 @@ double iMATTER::generate_initial_virt(Parton p, FourVector location, double max_
    // double t = -1*r*std::abs(max_t);
     // definite negative virtuality
     
-    double min_t = Q0;
+    double min_t = Q0 * Q0;
     
     
-    double t = Q0;
-    if(max_t > Q0) t = invert_Backward_sudakov(r, min_t , max_t );
+    double t = Q0 * Q0;
+    if(max_t > Q0 * Q0) t = invert_Backward_sudakov(r, min_t , max_t );
     
     
     return(t);
@@ -608,11 +608,11 @@ double iMATTER::generate_Forward_virt(Parton p, FourVector location, double max_
    // double t = -1*r*std::abs(max_t);
     // definite negative virtuality
     
-    double min_t = Q0;
+    double min_t = Q0 * Q0;
     
     
-    double t = Q0;
-    if(max_t > Q0) t = invert_Forward_sudakov(r, min_t , max_t );
+    double t = Q0 * Q0;
+    if(max_t > Q0 * Q0) t = invert_Forward_sudakov(r, min_t , max_t );
     
     
     return(t);
