@@ -152,7 +152,9 @@ template <class T> void JetScapeWriterFinalStateStream<T>::Close() {
     // NOTE: Needs consistent "\t" between all entries to simplify parsing later.
     output_file << "#" << "\t"
         << "sigmaGen\t" << GetHeader().GetSigmaGen() << "\t"
-        << "sigmaErr\t" << GetHeader().GetSigmaErr() << "\n";
+        << "sigmaErr\t" << GetHeader().GetSigmaErr() << "\t"
+        << "weight\t"   << GetHeader().GetEventWeight() << "\t"
+        << "pT-Hat\t"   << GetHeader().GetPtHat() << "\n";
     output_file.close();
 }
 
