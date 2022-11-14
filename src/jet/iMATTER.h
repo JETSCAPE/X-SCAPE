@@ -121,7 +121,6 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     int pid_Sib,pid_Par, Color_Sib = 0, Color_Par = 0, AntiColor_Sib = 0, AntiColor_Par = 0;
     std::string Fpath = "ISR-Partons.dat", Fpath1 = "ISR-Rotation.dat";
     std::ofstream *File, *File1, *File2, *File3, *File4, *File5;
-    void OUTPUT(Parton P);
 
     // Integration setup 
     static const int Nquadrature = 19; // !!! Only takes odd numbers !!! //

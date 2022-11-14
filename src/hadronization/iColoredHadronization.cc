@@ -21,7 +21,6 @@
 #include "MCGlauberGenStringWrapper.h"
 #include <memory>
 
-#define DEBUG_ISMAIL_4
 
 using namespace Jetscape;
 using namespace Pythia8;
@@ -108,12 +107,6 @@ void iColoredHadronization::DoHadronization(
   Event &event = pythia.event;
   event.reset();
   double pz = p_fake;
-  #ifdef DEBUG_ISMAIL_4
-    std::ofstream File3;
-    File3.open("ISR-FinalPartons.dat", std::ofstream::out);
-    File3 << "## &&&&&&&&&&&&&&&&&&& the number of showers are: " << shower.size()  << " time " << GetModuleCurrentTime() << std::endl;
-    File3 << "# event status label pid col acol max_col px py pz E" << std::endl;
-  #endif
   // auto Particles = shower->GetFinalPartons();
   for (unsigned int ishower = 0; ishower < shower.size(); ++ishower) {
     JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
@@ -142,20 +135,8 @@ void iColoredHadronization::DoHadronization(
                    shower.at(ishower).at(ipart)->px(),
                    shower.at(ishower).at(ipart)->py(),
                    shower.at(ishower).at(ipart)->pz(), onshellE);
-      #ifdef DEBUG_ISMAIL_4
-        File3 << GetCurrentEvent() << " " << shower.at(ishower).at(ipart)->pstat() << " "<< shower.at(ishower).at(ipart)->plabel() << " " << shower.at(ishower).at(ipart)->pid() << " " <<
-                    shower.at(ishower).at(ipart)->color()<< " " <<
-                    shower.at(ishower).at(ipart)->anti_color()<< " " <<
-                    shower.at(ishower).at(ipart)->max_color()<< " " <<
-                    shower.at(ishower).at(ipart)->px()<< " " <<
-                    shower.at(ishower).at(ipart)->py()<< " " <<
-                    shower.at(ishower).at(ipart)->pz()<< " " << onshellE << std::endl;
-      #endif
     }
   }
-  #ifdef DEBUG_ISMAIL_4
-    File3 << "# Remnants now "<< std::endl;
-  #endif
 
   auto ini  = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
@@ -191,15 +172,6 @@ void iColoredHadronization::DoHadronization(
                    Rem.px() + Px,
                    Rem.py() + Py,
                    Pz, onshellE);
-      #ifdef DEBUG_ISMAIL_4
-      File3 << GetCurrentEvent() << " "  << Rem.pstat() << " "<< Rem.plabel() << " " << Rem.pid() << " " <<
-                   Rem.color()<< " " <<
-                   Rem.anti_color()<< " " <<
-                   Rem.max_color()<< " " <<
-                   Rem.px()<< " " <<
-                   Rem.py()<< " " <<
-                   Pz << " " << onshellE << std::endl;
-      #endif
   }
 
     //first, find unpaired color and anticolor tags.
@@ -237,18 +209,6 @@ void iColoredHadronization::DoHadronization(
     }
 
 
-
-    #ifdef DEBUG_ISMAIL_4
-    File3 << "##########\n### unpaired Colors " << std::endl;
-    for(int i =0; i<cols.size();i++ ){
-      File3 << cols[i] << " ";
-    }
-    File3 << "\n### unpaired aColors " << std::endl;
-    for(int i =0; i<acols.size();i++ ){
-      File3 << acols[i] << " ";
-    }
-    File3 << "\n##########" << std::endl;
-    #endif
     if(cols.size() > 0 || acols.size() > 0){
       std::cerr << "Unpaired colors sent to Pythia" << std::endl;
       exit(1);
@@ -300,7 +260,4 @@ void iColoredHadronization::DoHadronization(
   }
 
   shower.clear();
-  #ifdef DEBUG_ISMAIL_4
-    File3.close();
-  #endif
 }

@@ -19,7 +19,6 @@
 #include <iostream>
 #include <fstream>
 #define MAGENTA "\033[35m"
-// #define DEBUG_ISMAIL 1
 
 using namespace std;
 
@@ -30,12 +29,6 @@ PythiaGun::~PythiaGun() { VERBOSE(8); }
 
 void PythiaGun::InitTask() {
 
-  #ifdef DEBUG_ISMAIL
-    std::ofstream File6;
-    File6.open("Hotspots.dat",std::ofstream::out);
-    File6 << "Hotspot" << std::endl;
-    File6.close();  
-  #endif 
 
   JSDEBUG << "Initialize PythiaGun";
   VERBOSE(8);
@@ -384,9 +377,6 @@ void PythiaGun::Exec() {
       ptn->set_anti_color(particle.acol()); 
       ptn->set_max_color(GetMax_ColorPerShower() * (np + 1));
       AddParton(ptn);
-      JSINFO<< MAGENTA << "pythia id " << particle.index() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() << 
-      " Color " << particle.col() << " " << particle.acol() << 
-      " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2() << " JS id " << label;
 
     }
   }
@@ -403,26 +393,6 @@ void PythiaGun::Exec() {
 
   VERBOSE(8) << GetNHardPartons();
 
-  #ifdef DEBUG_ISMAIL
-    std::ofstream File6;
-    File6.open("Hotspots.dat",std::ofstream::app);
-
-    auto Hotspots1 = ini->Get_quarks_pos_proj_lab();
-    auto Hotspots2 = ini->Get_quarks_pos_targ_lab();
-    for(auto &x : Hotspots1){
-      File6 << x << " ";
-    }
-      File6 << " | ";
-    for(auto &x : Hotspots2){
-      File6 << x << " ";
-    }
-    File6 <<std::endl;
-    File6.close();  
-  File6.close();  
-    File6.close();  
-  File6.close();  
-    File6.close();  
-  #endif
   //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????
 
   JetScapeTask::ExecuteTasks();
