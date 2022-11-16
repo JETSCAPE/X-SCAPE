@@ -275,7 +275,7 @@ void PythiaGun::Exec() {
           continue;
       }
       
-        JSINFO << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index() << 
+        VERBOSE(1) << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index() << 
         " Color " << particle.col() << " " << particle.acol() << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2();
 
         p62.push_back(particle);
@@ -370,7 +370,7 @@ void PythiaGun::Exec() {
       
     if (flag_useHybridHad != 1) {
         AddParton(make_shared<Parton>(label, particle.id(), stat, p_p,x_p));
-        JSINFO<< BOLDYELLOW << " Pythia particle eta = " << particle.eta() << " pz = " << particle.pz() << " pT = " << particle.pT() << " phi = "  << particle.phi();
+        VERBOSE(1) << BOLDYELLOW << " Pythia particle eta = " << particle.eta() << " pz = " << particle.pz() << " pT = " << particle.pT() << " phi = "  << particle.phi();
     } else {
       auto ptn = make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
       ptn->set_color(particle.col());

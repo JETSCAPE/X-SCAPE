@@ -77,7 +77,6 @@ void iMATTER::Init()
     // Get Pythia data directory //
     std::stringstream pdfpath;
     pdfpath <<  getenv("PYTHIA8DATA") << "/../pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
-    // JSINFO << "Pythia path: " << pdfpath.str() << "\n";
     pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
     
 
@@ -92,7 +91,7 @@ void iMATTER::Init()
 
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
-
+    
     bool IsRotated = false;
 
     double blurb; // used all the time for testing
@@ -135,13 +134,6 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         // i-MATTER only deals with initial state (note the i -> in)
         
        
-        
-        // JSINFO << " " ;
-        
-        // JSINFO << " ********************************************** " ;
-        
-        // JSINFO << " pIn.plabel = " << pIn[in].plabel() << " pIn.pstat = " << pIn[in].pstat() << " pIn.pid = " << pIn[in].pid() << " pIn.px = " << pIn[in].px() << " pIn.py = " << pIn[in].py() << " pIn.pz = " << pIn[in].pz() << " pIn.e = " << pIn[in].e() ;
-        
         if (std::isnan(pIn[in].e()) || std::isnan(pIn[in].px()) ||
         std::isnan(pIn[in].py()) || std::isnan(pIn[in].pz()) ||
         std::isnan(pIn[in].t()) || std::isnan(pIn[in].form_time()))
@@ -290,7 +282,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             
             pIn[in].set_stat(-900); // status for an unstable initial state parton moving backward in time.
         
-            JSINFO << MAGENTA << " pSTAT = -1000 leads to new virt = " << t1 << " and New formation time = " << pIn[in].form_time() ;
+            VERBOSE(1) << MAGENTA << " pSTAT = -1000 leads to new virt = " << t1 << " and New formation time = " << pIn[in].form_time() ;
 
 
 
