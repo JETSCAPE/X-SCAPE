@@ -49,16 +49,11 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
         ./get_smash.sh
 
-    - name: Download 3DGLAUBER
-      run: |
-        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
-        ./get_3dglauber.sh
-
     - name: Build Application
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
-        cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON -DUSE_3DGlauber=ON
+        cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON
         make -j2
