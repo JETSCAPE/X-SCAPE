@@ -32,7 +32,7 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
-        cmake ..
+        cmake .. -DCMAKE_CXX_STANDARD=14
         make -j2
 
     - name: Checkout TEST-EXAMPLES
