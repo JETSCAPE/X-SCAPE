@@ -50,7 +50,7 @@ jobs:
         ./get_smash.sh
 
     - name: Download 3DGLAUBER
-      RUN: |
+      run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
         ./get_3dglauber.sh
 
