@@ -112,7 +112,6 @@ int main(int argc, char** argv)
   // TAKING THE OUTPUT FOLDER FROM THE ARGS
   const char* masterXMLName = "../config/jetscape_main.xml";
   const char* userXMLName = "../config/jetscape_user_test.xml";
-  char* OutputFolder = "";
   if (argc == 2)  {
     if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
       std::cout << "Command line options:" << std::endl;
@@ -125,10 +124,7 @@ int main(int argc, char** argv)
       userXMLName = argv[1];
     }
   }
-  else if (argc == 3) {
-    userXMLName = argv[1];
-    OutputFolder = argv[2];
-  }
+
   std::cout << userXMLName << std::endl;
   
   jetscape->SetXMLMainFileName(masterXMLName);
@@ -162,7 +158,7 @@ int main(int argc, char** argv)
 //  auto iDummy = make_shared<DummySplit> ();
 
   auto iMatter = make_shared<iMATTER> ();
-  double tMax = 50.0;
+  double tMax = jetscape->GetXMLElementDouble({"Eloss", "maxT"});
   isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax); //will be moved to XML and proper Init() in IsrJet later ...
   iMatter->SetMaxT(-tMax); // Have To figure out a proper way to get this when it's moved to XML
 
@@ -269,18 +265,18 @@ int main(int argc, char** argv)
   // auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
   // writer->SetId("AsciiWriter"); //for task search test ...
   // jetscape->Add(writer);
-
+  std::string outputFilename = jetscape->GetXMLElementText({"outputFilename"});
 
   auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
   auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
-  writer->SetOutputFileName(string(OutputFolder) + string("test_out_final_state_partons.dat"));
-  writer2->SetOutputFileName(string(OutputFolder) + string("test_out_final_state_hadrons.dat"));
+  writer->SetOutputFileName(outputFilename + string("test_out_final_state_partons.dat"));
+  writer2->SetOutputFileName(outputFilename + string("test_out_final_state_hadrons.dat"));
   writer->SetId("FinalStatePartonsAscii"); //for task search test ...
   writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
   jetscape->Add(writer);
   jetscape->Add(writer2);
 
-  auto writerIsr= make_shared<JetScapeWriterIsrAscii> ("test_out_isr.dat");
+  auto writerIsr= make_shared<JetScapeWriterIsrAscii> (outputFilename + "test_out_isr.dat");
   writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
   jetscape->Add(writerIsr);
 
