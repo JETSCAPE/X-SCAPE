@@ -110,14 +110,14 @@ int main(int argc, char** argv)
   auto jetscape = make_shared<JetScape>();
 
   // TAKING THE OUTPUT FOLDER FROM THE ARGS
-  const char* masterXMLName = "../config/jetscape_main.xml";
-  const char* userXMLName = "../config/jetscape_user_test.xml";
+  std::string mainXMLName = "../config/jetscape_main.xml";
+  std::string userXMLName = "../config/jetscape_user_test.xml";
   if (argc == 2)  {
     if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
       std::cout << "Command line options:" << std::endl;
       std::cout << "    First (optional) argument: path to user XML file         ./runJetscape /path/to/user.xml" << std::endl;
-      std::cout << "    Second (optional) argument: path to master XML file      ./runJetscape /path/to/user.xml /path/to/master.xml" << std::endl;
-      std::cout << "    If no command line options are given, defaults are used: config/jetscape_user.xml config/jetscape_master.xml" << std::endl;
+      std::cout << "    Second (optional) argument: path to main XML file      ./runJetscape /path/to/user.xml /path/to/main.xml" << std::endl;
+      std::cout << "    If no command line options are given, defaults are used: config/jetscape_user.xml config/jetscape_main.xml" << std::endl;
       return -1;
     }
     else {
@@ -125,17 +125,18 @@ int main(int argc, char** argv)
     }
   }
 
-  std::cout << userXMLName << std::endl;
+  JSINFO << "Selecting main XML file: " << mainXMLName;
+  JSINFO << "Selecting user XML file: " << userXMLName;
   
-  jetscape->SetXMLMainFileName(masterXMLName);
+  jetscape->SetXMLMainFileName(mainXMLName);
   jetscape->SetXMLUserFileName(userXMLName);
 
-  // jetscape->SetXMLMasterFileName("../config/jetscape_master.xml");
-  // jetscape->SetXMLUserFileName("../config/jetscape_user_test.xml");
+  JetScapeXML::Instance()->OpenXMLMainFile(jetscape->GetXMLMainFileName());
+  JetScapeXML::Instance()->OpenXMLUserFile(jetscape->GetXMLUserFileName());
 
   jetscape->SetId("primary");
-  jetscape->AddMainClock(mClock);
-  jetscape->ClockInfo();
+  // jetscape->AddMainClock(mClock);
+  // jetscape->ClockInfo();
 
   // Initial conditions and hydro
   //auto trento = make_shared<TrentoInitial>();
@@ -269,14 +270,14 @@ int main(int argc, char** argv)
 
   auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
   auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
-  writer->SetOutputFileName(outputFilename + string("test_out_final_state_partons.dat"));
-  writer2->SetOutputFileName(outputFilename + string("test_out_final_state_hadrons.dat"));
+  writer->SetOutputFileName(outputFilename + string("_final_state_partons.dat"));
+  writer2->SetOutputFileName(outputFilename + string("_final_state_hadrons.dat"));
   writer->SetId("FinalStatePartonsAscii"); //for task search test ...
   writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
   jetscape->Add(writer);
   jetscape->Add(writer2);
 
-  auto writerIsr= make_shared<JetScapeWriterIsrAscii> (outputFilename + "test_out_isr.dat");
+  auto writerIsr= make_shared<JetScapeWriterIsrAscii> (outputFilename + "_isr.dat");
   writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
   jetscape->Add(writerIsr);
 
