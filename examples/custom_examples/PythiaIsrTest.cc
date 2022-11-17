@@ -111,18 +111,22 @@ int main(int argc, char** argv)
 
   // TAKING THE OUTPUT FOLDER FROM THE ARGS
   std::string mainXMLName = "../config/jetscape_main.xml";
-  std::string userXMLName = "../config/jetscape_user_test.xml";
+  std::string userXMLName = "../config/jetscape_user_iMATTERMCGlauber.xml";
   if (argc == 2)  {
     if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
       std::cout << "Command line options:" << std::endl;
-      std::cout << "    First (optional) argument: path to user XML file         ./runJetscape /path/to/user.xml" << std::endl;
-      std::cout << "    Second (optional) argument: path to main XML file      ./runJetscape /path/to/user.xml /path/to/main.xml" << std::endl;
+      std::cout << "    First (optional) argument: path to user XML file         ./PythiaIsrTest /path/to/user.xml" << std::endl;
+      std::cout << "    Second (optional) argument: path to main XML file      ./PythiaIsrTest /path/to/user.xml /path/to/main.xml" << std::endl;
       std::cout << "    If no command line options are given, defaults are used: config/jetscape_user.xml config/jetscape_main.xml" << std::endl;
       return -1;
     }
     else {
       userXMLName = argv[1];
     }
+  }
+  else if (argc == 3) {
+    userXMLName = argv[1];
+    mainXMLName = argv[2];
   }
 
   JSINFO << "Selecting main XML file: " << mainXMLName;
