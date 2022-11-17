@@ -304,7 +304,6 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
       return;
     }
       
-      if (pIn[i].plabel() < 0) return; // ignore initial state partons.
       if (pIn[i].time() > time) return; // ignore partons that havent formed yet.
       
       
