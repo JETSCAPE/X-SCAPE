@@ -14,8 +14,7 @@
  ******************************************************************************/
 
 // Create a pythia collision at a specified point and return the two inital hard partons
-
-#include "PythiaGun.h"
+#include "PythiaIsrGun.h"
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -24,19 +23,20 @@
 using namespace std;
 
 // Register the module with the base class
-RegisterJetScapeModule<PythiaGun> PythiaGun::reg("PythiaGun");
+RegisterJetScapeModule<PythiaIsrGun> PythiaIsrGun::reg("PythiaIsrGun");
 
-PythiaGun::~PythiaGun() { VERBOSE(8); }
+PythiaIsrGun::~PythiaIsrGun() { VERBOSE(8); }
 
-void PythiaGun::InitTask() {
+void PythiaIsrGun::InitTask() {
 
-  JSDEBUG << "Initialize PythiaGun";
+
+  JSDEBUG << "Initialize PythiaIsrGun";
   VERBOSE(8);
 
   // Show initialization at INFO level
   readString("Init:showProcesses = off");
   readString("Init:showChangedSettings = off");
-  readString("Init:showMultipartonInteractions = off");
+  readString("Init:showMultipartonInteractions = on");
   readString("Init:showChangedParticleData = off");
   if (JetScapeLogger::Instance()->GetInfo()) {
     readString("Init:showProcesses = on");
@@ -50,14 +50,29 @@ void PythiaGun::InitTask() {
   readString("Next:numberShowProcess = 0");
   readString("Next:numberShowEvent = 0");
 
-  // Standard settings
-  readString(
-      "HardQCD:all = on"); // will repeat this line in the xml for demonstration
+  // Standard settings 
+  readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
+  // readString("HardQCD:gg2gg = on");
+  // readString("HardQCD:gg2qqbar = on");
+  // readString("HardQCD:qg2qg = on");
+  // readString("HardQCD:qq2qq = on");
+  // readString("HardQCD:qqbar2gg = on");
+  // readString("HardQCD:qqbar2qqbarNew = on");
+  readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
+  readString("MultipartonInteractions:processLevel = 0"); 
+  readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
+ 
+  // readString("HardQCD:gg2ccbar = off");
+  // readString("HardQCD:qqbar2ccbar = off");
+  // readString("HardQCD:hardccbar = off");
+  // readString("HardQCD:gg2bbbar = off");
+  // readString("HardQCD:qqbar2bbbar = off");
+
   //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
   //readString("HardQCD:qqbar2ccbar = on");
   readString("HadronLevel:Decay = off");
-  readString("HadronLevel:all = off");
-  readString("PartonLevel:ISR = on");
+  readString("HadronLevel:all = on");
+  readString("PartonLevel:ISR = off");
   readString("PartonLevel:MPI = on");
   //readString("PartonLevel:FSR = on");
   readString("PromptPhoton:all=on");
@@ -85,7 +100,7 @@ void PythiaGun::InitTask() {
   pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
   pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
 
-  flag_useHybridHad = GetXMLElementInt({"Hard", "PGun", "useHybridHad"});
+  flag_useHybridHad = GetXMLElementInt({"Hard", "PythiaGun", "useHybridHad"});
 
   JSINFO << MAGENTA << "Pythia Gun with FSR_on: " << FSR_on;
   JSINFO << MAGENTA << "Pythia Gun with " << pTHatMin << " < pTHat < "
@@ -146,10 +161,15 @@ void PythiaGun::InitTask() {
     std::ofstream sigma_printer;
     sigma_printer.open(printer, std::ios::trunc);
 
-    
+
 }
 
-void PythiaGun::Exec() {
+void PythiaIsrGun::WriteTask(weak_ptr<JetScapeWriter> w) {
+  VERBOSE(8);
+  JetScapeTask::WriteTasks(w);
+}
+
+void PythiaIsrGun::Exec() {
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
   //Reading vir_factor from xml for MATTER
@@ -166,16 +186,48 @@ void PythiaGun::Exec() {
     }
   };
 
+
+    FourVector p_p;
+
+ 
+
   do {
     next();
     p62.clear();
+ 
+    std::vector<int> IndexToSkip;
+
+    for (int parid = 0; parid < event.size(); parid++) {
+      if (parid < 3)
+        continue; // 0, 1, 2: total event and beams
+      Pythia8::Particle &particle = event[parid];
+
+      if (!(particle.isGluon() ||
+            particle.isQuark())) { // Getting rid of diquark
+        if (particle.status() == -31) {
+          IndexToSkip.push_back(particle.daughter1());
+          IndexToSkip.push_back(particle.daughter2());
+          IndexToSkip.push_back(event[particle.daughter1()].mother1());
+          IndexToSkip.push_back(event[particle.daughter1()].mother2());
+        } else if (particle.status() == -33) {
+          IndexToSkip.push_back(particle.mother1());
+          IndexToSkip.push_back(particle.mother2());
+          IndexToSkip.push_back(event[particle.mother1()].daughter1());
+          IndexToSkip.push_back(event[particle.mother1()].daughter2());
+        }
+      }
+    }
+
+    for (auto &ToSkip : IndexToSkip) {
+      JSWARN << " Skipping non-parton index " << ToSkip;
+    }
       if (!printer.empty()){
             std::ofstream sigma_printer;
             sigma_printer.open(printer, std::ios::out | std::ios::app);
-            
+
             sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
             //sigma_printer.close();
-      
+
 //      JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
     };
 
@@ -185,22 +237,31 @@ void PythiaGun::Exec() {
     for (int parid = 0; parid < event.size(); parid++) {
       if (parid < 3)
         continue; // 0, 1, 2: total event and beams
+        
       Pythia8::Particle &particle = event[parid];
-
       if (!FSR_on) {
+          
+          if ( !( (particle.status() == -21) || (particle.status() == -23) || (particle.status() == -31) || (particle.status() == -33) )) continue ;
+          for(auto &ToSkip: IndexToSkip) {
+            if(ToSkip == parid){
+              goto SkipParton;
+            }
+          }
+          // if ( (particle.status() > -21)||(particle.status()<-23) ) continue ;
+
         // only accept particles after MPI
-        if (particle.status() != 62)
-          continue;
+        //if (particle.status() != 62)
+          //continue;
         // only accept gluons and quarks
         // Also accept Gammas to put into the hadron's list
-        if (fabs(particle.id()) > 5 &&
-            (particle.id() != 21 && particle.id() != 22))
-          continue;
+        //if (fabs(particle.id()) > 5 &&
+          //  (particle.id() != 21 && particle.id() != 22))
+          //continue;
 
         // reject rare cases of very soft particles that don't have enough e to get
         // reasonable virtuality
-        if (particle.pT() < 1.0 / sqrt(vir_factor))
-          continue;
+        //if (particle.pT() < 1.0 / sqrt(vir_factor))
+          //continue;
 
         //if(particle.id()==22) cout<<"########this is a photon!######" <<endl;
         // accept
@@ -213,7 +274,13 @@ void PythiaGun::Exec() {
             (particle.id() != 21 && particle.id() != 22))
           continue;
       }
-      p62.push_back(particle);
+      
+        VERBOSE(1) << MAGENTA << " particle from pythiagun id = " << particle.id() << " pz = " << particle.pz() << " px = " << particle.px() << " py = " << particle.py() << " E =  " << particle.e() <<  " status = " << particle.status() << " idex "<< particle.index() << 
+        " Color " << particle.col() << " " << particle.acol() << " Mothers " << particle.mother1() << " " << particle.mother2() << " daughter " << particle.daughter1() << " " << particle.daughter2();
+
+        p62.push_back(particle);
+
+        SkipParton:;
     }
 
     // if you want at least 2
@@ -223,7 +290,7 @@ void PythiaGun::Exec() {
 
     // Now have all candidates, sort them
     // sort by pt
-    std::sort(p62.begin(), p62.end(), greater_than_pt());
+    // std::sort(p62.begin(), p62.end(), greater_than_pt());
     // // check...
     // for (auto& p : p62 ) cout << p.pT() << endl;
 
@@ -231,74 +298,102 @@ void PythiaGun::Exec() {
 
   } while (!flag62);
 
-  double p[4], xLoc[4];
-
-  // This location should come from an initial state
-  for (int i = 0; i <= 3; i++) {
-    xLoc[i] = 0.0;
-  };
 
   // // Roll for a starting point
   // // See: https://stackoverflow.com/questions/15039688/random-generator-from-vector-with-probability-distribution-in-c
   // std::random_device device;
   // std::mt19937 engine(device()); // Seed the random number engine
 
-  if (!ini) {
-    VERBOSE(1) << "No initial state module, setting the starting location to "
-                  "0. Make sure to add e.g. trento before PythiaGun.";
-  } else {
-    double t,x, y,z;
-    ini->SampleABinaryCollisionPoint(t,x, y,z);
-    xLoc[1] = x;
-    xLoc[2] = y;
+    FourVector x_p;
+    
+  if (!ini)
+  {
+    JSINFO << BOLDYELLOW << "No initial state module, setting the starting location to "
+                  "0. Make sure to add e.g. trento before PythiaIsrGun.";
   }
-
+  else
+  {
+    double t, x, y, z;
+    bool pass = false;
+//  while (!pass)
+  //  {
+        ini->SampleABinaryCollisionPoint(t, x, y, z);
+        // JSINFO << MAGENTA << " pass at time " << t << " with x = " << x << " y = " << y << " z = " << z << "  ? " ;
+        //cin >> pass;
+    //}
+    x_p.Set(x,y,z,t);
+      ini->OutputHardCollisionPosition(t, x, y, z);
+  }
+    
   // Loop through particles
-
-  // Only top two
-  //for(int np = 0; np<2; ++np){
-
   // Accept them all
 
+    double initial_state_label = -1 ;
+    double final_state_label = 1 ;
+  ini->pTHat.resize((p62.size())/4);
   int hCounter = 0;
-  for (int np = 0; np < p62.size(); ++np) {
+  SetTotalMomentumFractionPositive(0.0);
+  SetTotalMomentumFractionNegative(0.0);
+  for (int np = 0; np < p62.size(); ++np)
+  // for (int np = p62.size()-1; np >= 0 ; --np)
+  {
     Pythia8::Particle &particle = p62.at(np);
 
-    VERBOSE(7) << "Adding particle with pid = " << particle.id()
-               << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
+    // VERBOSE(7) << "Adding particle with pid = " << particle.id()
+    //            << ", pT = " << particle.pT() << ", y = " << particle.y()
+    //            << ", phi = " << particle.phi() << ", e = " << particle.e();
 
-    VERBOSE(7) << "Adding particle with pid = " << particle.id()
-               << ", pT = " << particle.pT() << ", y = " << particle.y()
-               << ", phi = " << particle.phi() << ", e = " << particle.e();
+    // JSINFO<< MAGENTA << " at x=" << x_p.x() << ", y=" << x_p.y() << ", z=" << x_p.z() << ", t = " << x_p.t();
 
-    VERBOSE(7) << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
+      int label = 0;
+      int stat = 0;
+      
+      if (particle.status()==-21 || particle.status()==-31 )
+      {
+          label = initial_state_label;
+          initial_state_label--;
+          stat = -1000; // raw initial state status, must go to an initial state module
+          if(particle.pz() >= 0.0) SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / (eCM));
+          else SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / (eCM));
+      }
+      if (particle.status()==-23 || particle.status()==-33)
+      {
+          label = final_state_label;
+          final_state_label++;
+          stat = 1000; // raw final state status, must go to a final state module with virtuality generation. 
+          if( (label-1) % 2 == 0){
+            ini->pTHat[(label-1)/2] = particle.pT();
+          }
+      }
 
-    // if(particle.id() !=22)
-    // {
+      FourVector p_p(particle.px(),particle.py(),particle.pz(),particle.e());
+      
     if (flag_useHybridHad != 1) {
-      AddParton(make_shared<Parton>(0, particle.id(), 0, particle.pT(),
-                                    particle.y(), particle.phi(), particle.e(),
-                                    xLoc));
+        AddParton(make_shared<Parton>(label, particle.id(), stat, p_p,x_p));
+        VERBOSE(1) << BOLDYELLOW << " Pythia particle eta = " << particle.eta() << " pz = " << particle.pz() << " pT = " << particle.pT() << " phi = "  << particle.phi();
     } else {
-      auto ptn =
-          make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.y(),
-                              particle.phi(), particle.e(), xLoc);
+      auto ptn = make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
       ptn->set_color(particle.col());
-      ptn->set_anti_color(particle.acol());
-      ptn->set_max_color(1000 * (np + 1));
+      ptn->set_anti_color(particle.acol()); 
+      ptn->set_max_color(GetMax_ColorPerShower() * (np + 1));
       AddParton(ptn);
+
     }
-    //}
-    //else
-    //{
-    //          AddHadron(make_shared<Hadron>(hCounter,particle.id(),particle.status(),particle.pT(),particle.eta(),particle.phi(),particle.e(),xLoc));
-    //          hCounter++;
-    //}
   }
+  // Getting Number of hard partons
+  int NPP = p62.size();
+  SetMax_Color(GetMax_ColorPerShower() * NPP);
+  FourVector Zeros(0,0,0,0);
+
+  ini->CollisionNegativeMomentum = std::vector<FourVector>(NPP/2,Zeros);
+  ini->CollisionPositiveMomentum = std::vector<FourVector>(NPP/2,Zeros);
+  ini->CollisionNegativeRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
+  ini->CollisionPositiveRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
+  ini->ClearHardPartonMomentum();
 
   VERBOSE(8) << GetNHardPartons();
 
   //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????
-  
+
   JetScapeTask::ExecuteTasks();
 }

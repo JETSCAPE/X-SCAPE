@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -15,8 +15,8 @@
 
 // Create a pythia collision at a specified point and return the two inital hard partons
 
-#ifndef PYTHIAGUN_H
-#define PYTHIAGUN_H
+#ifndef PYTHIAISRGUN_H
+#define PYTHIAISRGUN_H
 
 #include "HardProcess.h"
 #include "JetScapeLogger.h"
@@ -24,7 +24,7 @@
 
 using namespace Jetscape;
 
-class PythiaGun : public HardProcess, public Pythia8::Pythia {
+class PythiaIsrGun : public HardProcess, public Pythia8::Pythia {
 
 private:
   double pTHatMin;
@@ -34,22 +34,24 @@ private:
   int flag_useHybridHad;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
-  static RegisterJetScapeModule<PythiaGun> reg;
+  static RegisterJetScapeModule<PythiaIsrGun> reg;
 
 public:
+  int NumberOfHardPartons;
   /** standard ctor
       @param xmlDir: Note that the environment variable PYTHIA8DATA takes precedence! So don't use it.
       @param printBanner: Suppress starting blurb. Should be set to true in production, credit where it's due
   */
-  PythiaGun(string xmlDir = "DONTUSETHIS", bool printBanner = false)
+  PythiaIsrGun(string xmlDir = "DONTUSETHIS", bool printBanner = false)
       : Pythia8::Pythia(xmlDir, printBanner), HardProcess() {
-    SetId("UninitializedPythiaGun");
+    SetId("UninitializedPythiaIsrGun");
   }
 
-  ~PythiaGun();
+  ~PythiaIsrGun();
 
   void InitTask();
   void Exec();
+  virtual void WriteTask(weak_ptr<JetScapeWriter> w);
 
   // Getters
   double GetpTHatMin() const { return pTHatMin; }
@@ -62,4 +64,4 @@ public:
   double GetEventWeight() { return info.weight(); };
 };
 
-#endif // PYTHIAGUN_H
+#endif // PYTHIAISRGUN_H

@@ -40,7 +40,7 @@
 #include "Brick.h"
 #include "BrickTest.h"
 #include "GubserHydro.h"
-#include "PythiaGun.h"
+#include "PythiaIsrGun.h"
 #include "InitialStateRadiationTest.h"
 #include "HadronizationManager.h"
 #include "Hadronization.h"
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
-  JetScapeLogger::Instance()->SetInfo(true);
+  JetScapeLogger::Instance()->SetInfo(false);
   JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
   //auto trento = make_shared<TrentoInitial>();
   //auto trento = make_shared<InitialState>();
   auto MCG = make_shared<MCGlauberWrapper>();
-  auto pythiaGun= make_shared<PythiaGun> ();
+  auto pythiaIsrGun= make_shared<PythiaIsrGun> ();
   //auto isr = make_shared<InitialStateRadiationTest> ();
   auto hydro = make_shared<Brick> ();
 
@@ -174,9 +174,9 @@ int main(int argc, char** argv)
     
   isrManager->Add(isrJloss);
 
-  pythiaGun->Add(isrManager);
-  pythiaGun->Add(MCGsecond);
-  jetscape->Add(pythiaGun);
+  pythiaIsrGun->Add(isrManager);
+  pythiaIsrGun->Add(MCGsecond);
+  jetscape->Add(pythiaIsrGun);
   //jetscape->Add(isr);
   jetscape->Add(hydro);
   //jetscape->Add(hydroTest);
@@ -314,10 +314,10 @@ int main(int argc, char** argv)
   printf ("Real time: %f seconds.\n",difftime(end,start));
 
   // Print pythia statistics
-  // pythiaGun->stat();
+  // pythiaIsrGun->stat();
 
   // // Demonstrate how to work with pythia statistics
-  // //Pythia8::Info& info = pythiaGun->info;
+  // //Pythia8::Info& info = pythiaIsrGun->info;
   // cout << " nTried    = " << info.nTried() << endl;
   // cout << " nSelected = " << info.nSelected()  << endl;
   // cout << " nAccepted = " << info.nAccepted()  << endl;
