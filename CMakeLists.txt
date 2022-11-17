@@ -474,8 +474,10 @@ target_link_libraries(FinalStatePartons JetScape )
 add_executable(PythiaBrickTest ./examples/custom_examples/PythiaBrickTest.cc)
 target_link_libraries(PythiaBrickTest JetScape )
 
-add_executable(PythiaIsrTest ./examples/custom_examples/PythiaIsrTest.cc)
-target_link_libraries(PythiaIsrTest JetScape )
+if(USE_3DGlauber)
+  add_executable(PythiaIsrTest ./examples/custom_examples/PythiaIsrTest.cc)
+  target_link_libraries(PythiaIsrTest JetScape )
+endif (USE_3DGlauber )
 
 #add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
 #target_link_libraries(PythiaIsrMUSIC JetScape )

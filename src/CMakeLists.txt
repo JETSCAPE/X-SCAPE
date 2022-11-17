@@ -75,9 +75,17 @@ endif()
 FILE(GLOB jetsources jet/*.cc)
 set (SOURCES  ${SOURCES}  ${jetsources} )
 
+if(NOT "${USE_3DGlauber}")
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/jet/iMatter.cc)
+endif()
+
 #hadronization
 FILE(GLOB hadrosources hadronization/*.cc)
 set (SOURCES  ${SOURCES}  ${hadrosources} )
+
+if(NOT "${USE_3DGlauber}")
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/hadronization/iColoredHadronization.cc)
+endif()
 
 ## Take care of options
 if(NOT "${USE_ISS}")
