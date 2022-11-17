@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     
     container:
-      image: jetscape/base:stable
+      image: jetscape/base:v1.8
       options: --user root
       
     steps:
@@ -32,7 +32,7 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
-        cmake ..
+        cmake .. -DCMAKE_CXX_STANDARD=14
         make -j2
 
     - name: Checkout TEST-EXAMPLES
