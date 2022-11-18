@@ -44,7 +44,7 @@ void MCGlauberWrapper::InitTask() {
 }
 
 void MCGlauberWrapper::Clear() {
-    Jetscape::VERBOSE(1) << "clear initial condition vectors";
+    VERBOSE(1) << "clear initial condition vectors";
     binary_collision_t_.clear();
     binary_collision_x_.clear();
     binary_collision_y_.clear();
