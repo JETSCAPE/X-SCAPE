@@ -108,6 +108,7 @@ void iColoredHadronization::DoHadronization(
   event.reset();
   double pz = p_fake;
   // auto Particles = shower->GetFinalPartons();
+  VERBOSE(2) << BOLDYELLOW << "iColored Hadronization partons ";
   for (unsigned int ishower = 0; ishower < shower.size(); ++ishower) {
     JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
             << " partons in the shower number " << ishower;
@@ -135,6 +136,12 @@ void iColoredHadronization::DoHadronization(
                    shower.at(ishower).at(ipart)->px(),
                    shower.at(ishower).at(ipart)->py(),
                    shower.at(ishower).at(ipart)->pz(), onshellE);
+
+      VERBOSE(2) << BOLDYELLOW << " pid = " << shower.at(ishower).at(ipart)->pid()
+                 << " plabel = " << shower.at(ishower).at(ipart)->plabel()
+                 << " pstat = " << shower.at(ishower).at(ipart)->pstat()
+                 << " col = " << shower.at(ishower).at(ipart)->color()
+                 << " acol = " << shower.at(ishower).at(ipart)->anti_color();
     }
   }
 
@@ -172,6 +179,11 @@ void iColoredHadronization::DoHadronization(
                    Rem.px() + Px,
                    Rem.py() + Py,
                    Pz, onshellE);
+      VERBOSE(2) << BOLDYELLOW << " pid = " << Rem.pid()
+                 << " plabel = " << Rem.plabel()
+                 << " pstat = " << Rem.pstat()
+                 << " col = " << Rem.color()
+                 << " acol = " << Rem.anti_color();
   }
 
     //first, find unpaired color and anticolor tags.
@@ -210,8 +222,11 @@ void iColoredHadronization::DoHadronization(
 
 
     if(cols.size() > 0 || acols.size() > 0){
-      std::cerr << "Unpaired colors sent to Pythia" << std::endl;
-      exit(1);
+      for(auto col : cols)
+        JSWARN << " col = " << col;
+      for(auto col : acols)
+        JSWARN << " col = " << col;
+      throw std::runtime_error("Unpaired colors sent to Pythia");
     }
 
     int pid = 0;

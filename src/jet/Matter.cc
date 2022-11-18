@@ -203,7 +203,8 @@ void Matter::Dump_pIn_info(int i, vector<Parton> &pIn) {
          << " px = " << pIn[i].p(1) << " py = " << pIn[i].p(2)
          << "  pz = " << pIn[i].p(3) << " virtuality = " << pIn[i].t()
          << " form_time in fm = " << pIn[i].form_time()
-         << " split time = " << pIn[i].form_time() + pIn[i].x_in().t();
+         << " split time = " << pIn[i].form_time() + pIn[i].x_in().t()
+         << " plabel = " << pIn[i].plabel();
 }
 
 void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
@@ -1372,6 +1373,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                                                     pow(pIn[i].jet_v().y(), 2));
 
         VERBOSE(8) << BOLDYELLOW
+                   << " v_x = "<< pIn[i].jet_v().x() << " v_y = " << pIn[i].jet_v().y() << " v_z = " << pIn[i].jet_v().z()
                    << " Jet direction w.r.t. beam: theta = " << std::acos(c_t)
                    << " phi = " << std::acos(c_p);
 
@@ -1435,11 +1437,12 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
         int iout = pOut.size() - 1;
 
         if (std::isnan(newp[1]) || std::isnan(newp[2]) || std::isnan(newp[3])) {
-          JSINFO << MAGENTA << plong << " " << s_t << " " << c_p << " "
+          JSWARN << plong << " " << s_t << " " << c_p << " "
                  << k_perp1[1];
 
-          JSINFO << MAGENTA << newp[0] << " " << newp[1] << " " << newp[2]
+          JSWARN << newp[0] << " " << newp[1] << " " << newp[2]
                  << " " << newp[3];
+          Dump_pIn_info(i,pIn);
           cin >> blurb;
         }
         pOut[iout].set_jet_v(velocity_jet); // use initial jet velocity
@@ -1503,6 +1506,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                  << k_perp1[1];
           JSINFO << MAGENTA << newp[0] << " " << newp[1] << " " << newp[2]
                  << " " << newp[3];
+          Dump_pIn_info(i,pIn);
           cin >> blurb;
         }
 

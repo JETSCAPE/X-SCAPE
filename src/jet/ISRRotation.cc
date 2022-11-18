@@ -52,6 +52,16 @@ void ISRRotation::Init()
 {
   JSINFO<<"Intialize ISRRotation ...";
 
+  P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
+  
+  P_B = P_A ; /// assuming symmetric system, rewrite for non-symmetric collision.
+
+  if (!P_A)
+  {
+      JSWARN << "Initial nucleon energy not found by iMATTER, assuming P_A = 2510 GeV" ;
+      P_A = 2510 ;
+      P_B = P_A; /// default symmetric assumption
+  }
   sP0 = 0.5 / s0 / fmToGeVinv;
   // Initialize random number distribution
   ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
@@ -126,9 +136,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         FourVector p_Out(Out.px(), Out.py(),Out.pz(), Out.e());
         if(Out.plabel() == LatestPartonLabel_Postive ){
           AddRemenant(Out,LatestPartonLabel_Postive);
+          VERBOSE(2) << "LatestPartonLabel_Postive used " << LatestPartonLabel_Postive;
         }
         if(Out.plabel() == LatestPartonLabel_Negative ){
           AddRemenant(Out,LatestPartonLabel_Negative);
+          VERBOSE(2) << "LatestPartonLabel_Negative used " << LatestPartonLabel_Negative;
         }
 
       #if(INTRODUCE_PT == 1)
@@ -160,7 +172,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         
         VERBOSE(1) << MAGENTA << " iMATTER Pushing particlelabel " << Out.plabel() << " status "
                << Out.pstat() << " pid " << Out.pid()
-               << " e " << " px " << Out.px() << " py " << Out.py()<< " pz " << Out.pz()
+               << " e " << Out.e() << " px " << Out.px() << " py " << Out.py()<< " pz " << Out.pz()
                << " to MCGlauber for subtraction ";
         if (Out.e() < 0) {
           JSWARN << "Energy to subtract is negative !";
@@ -169,6 +181,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         ini->OutputHardPartonMomentum(Out.e(), Out.px(), Out.py(),
                                       Out.pz(),
                                       (Out.pz() >= 0.0 ? 1 : -1));
+        // TotalEnergyToSubtract += Out.e();
+
+        // if(TotalEnergyToSubtract >= 2. * P_A){
+        //   throw std::runtime_error("Subtracting " + to_string(TotalEnergyToSubtract) + " from a system  with energy "+ to_string(2. * P_A));
+        // }
         
       }
 
@@ -428,6 +445,7 @@ void ISRRotation::SetLatestInitialParton(double px, double py, double pz, double
     LatestInitialParton_Negative.Set(px,py,pz,E);
     LatestPartonLabel_Negative = Label;
   }
+
 }
 
 void ISRRotation::AddRemenant(Parton &Out,int label){

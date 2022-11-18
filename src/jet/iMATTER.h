@@ -103,11 +103,12 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    
     // Rotate Parton to the Axis
     void Rotate( FourVector &ToRotate, FourVector Axis, int icc);
+    static void VERBOSE_OUTPUT(std::string st, Parton &pIn);
     
  private:
     
     int LabelOfTheShower, NPartonPerShower = 100000, MAX_COLOR;
-    const double z_min_factor = 3.; // this limits the parent momentum to be P_A/z_min_factor
+    const double z_min_factor = 1.; // this limits the parent momentum to be P_A/z_min_factor
     double TotalMomentumFraction;
     
     Parton Parent,Sibling,Current;
@@ -137,6 +138,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
     // Get pdf from pythia and check the bounds 
     double PDF(int pid, double z, double t);
     bool RotateShower(Parton& pIn);
+
     
  protected:
   

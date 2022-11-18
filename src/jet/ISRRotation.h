@@ -72,6 +72,8 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
     void DefineRotationMatrix(double Dir);
     void RotateVector(FourVector &ToRotate);
 
+    double TotalEnergyToSubtract = 0;
+
     
  protected:
   

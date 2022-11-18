@@ -334,6 +334,7 @@ void PythiaIsrGun::Exec() {
   int hCounter = 0;
   SetTotalMomentumFractionPositive(0.0);
   SetTotalMomentumFractionNegative(0.0);
+  double TotalEnergyOfInitialStatePartons = 0.0;
   for (int np = 0; np < p62.size(); ++np)
   // for (int np = p62.size()-1; np >= 0 ; --np)
   {
@@ -353,8 +354,10 @@ void PythiaIsrGun::Exec() {
           label = initial_state_label;
           initial_state_label--;
           stat = -1000; // raw initial state status, must go to an initial state module
-          if(particle.pz() >= 0.0) SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / (eCM));
-          else SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / (eCM));
+
+          TotalEnergyOfInitialStatePartons += particle.e();
+          if(particle.pz() >= 0.0) SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / ( eCM));
+          else SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / ( eCM));
       }
       if (particle.status()==-23 || particle.status()==-33)
       {
@@ -379,6 +382,15 @@ void PythiaIsrGun::Exec() {
       AddParton(ptn);
 
     }
+  }
+
+  if(GetTotalMomentumFractionNegative() >= 1.0 || GetTotalMomentumFractionPositive() >= 1.){
+
+    JSWARN << "Negative Partons Momentum Fraction "<< GetTotalMomentumFractionNegative()
+           << " Positive Partons Momentum Fraction "<< GetTotalMomentumFractionPositive()
+           << " eCM " << eCM
+           << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
+    throw std::runtime_error("Pythia Isr Gun outputs more energy in the MPI partons than eCM");
   }
   // Getting Number of hard partons
   int NPP = p62.size();

@@ -81,8 +81,7 @@ public:
 
   virtual void InitPerEvent();
 
-  virtual void FinishPerEvent();
-                          
+  virtual void FinishPerEvent();         
 
   // Bypass check here since the Energloss modules are neither per event or per time_step
   // but per parton, so there is no need to check for time step consistency here.

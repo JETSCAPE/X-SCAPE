@@ -151,7 +151,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         
 
 
-        if (pIn[in].pstat()>=0) { 
+        if (pIn[in].plabel()>=0) { 
             continue ;
         } // Only accept initial state partons
 
@@ -283,6 +283,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pIn[in].set_stat(-900); // status for an unstable initial state parton moving backward in time.
         
             VERBOSE(1) << MAGENTA << " pSTAT = -1000 leads to new virt = " << t1 << " and New formation time = " << pIn[in].form_time() ;
+            VERBOSE(1) << MAGENTA << " TotalMomentumFraction " << TotalMomentumFraction << " MomentumFractionCurrent " << MomentumFractionCurrent;
 
 
 
@@ -460,6 +461,20 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             }
             
 
+
+            double velocity_Sibling[4];
+            double velocity_Parent[4];
+            velocity_Sibling[1] = SiblingPx / SiblingEn;
+            velocity_Sibling[2] = SiblingPy / SiblingEn;
+            velocity_Sibling[3] = SiblingPz / SiblingEn;
+
+            velocity_Sibling[0] = std::sqrt(std::pow(velocity_Sibling[1], 2) + std::pow(velocity_Sibling[2], 2) + std::pow(velocity_Sibling[3], 2));
+
+            velocity_Parent[1] = ParentPx / ParentEn;
+            velocity_Parent[2] = ParentPy / ParentEn;
+            velocity_Parent[3] = ParentPz / ParentEn;
+
+            velocity_Parent[0] = std::sqrt(std::pow(velocity_Parent[1], 2) + std::pow(velocity_Parent[2], 2) + std::pow(velocity_Parent[3], 2));
             Hard->SetNISRShower(Hard->GetNISRShower() + 1);
             // Hard->max_color += 1;
             MAX_COLOR += 1;
@@ -467,11 +482,37 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             Sibling.set_max_color(Hard->GetMax_Color() + Hard->GetNISRShower() * Hard->GetMax_ColorPerShower());
             Sibling.set_color(Color_Sib);
             Sibling.set_anti_color(AntiColor_Sib);
-            
+            Sibling.set_jet_v(velocity);
+            double Position[4];
+            Position[0] = Current_Location.t();
+            Position[1] = Current_Location.x();
+            Position[2] = Current_Location.y();
+            Position[3] = Current_Location.z();
+            Sibling.set_x(Position);
+            VERBOSE_OUTPUT("Current",Current);
+            VERBOSE_OUTPUT("Sibling",Sibling);
+
+
             Parton Parent(Current_Label, pid_Par , -900 + Current_Status, p_Parent, Current_Location) ;
             Parent.set_max_color(MAX_COLOR);
             Parent.set_color(Color_Par);
             Parent.set_anti_color(AntiColor_Par);
+            Parent.set_jet_v(velocity);
+            Parent.set_x(Position);
+            VERBOSE_OUTPUT("Parent",Parent);
+
+            double NewTotMomFract = TotalMomentumFraction + ParentPlus / ( M_SQRT2 * P_A );
+            VERBOSE(2) << BOLDYELLOW << "NewTotMomFract " << NewTotMomFract;
+            if(NewTotMomFract >= 1.){
+                VERBOSE(2) << BOLDYELLOW << "Skipped iMATTER split because no energy is available in the proton eCM";
+                goto SkipSampling;
+            }
+            if(Parent.pz()>=0 ){
+                Hard->SetTotalMomentumFractionPositive(NewTotMomFract);
+            }
+            else{
+                Hard->SetTotalMomentumFractionNegative(NewTotMomFract);
+            }
 
             if (std::isnan(Sibling.e()) || std::isnan(Sibling.px()) ||
             std::isnan(Sibling.py()) || std::isnan(Sibling.pz()) ||
@@ -493,7 +534,6 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pOut[iout].set_mean_form_time();
         
             pOut[iout].set_form_time( generate_L(std::abs( 2*ParentEn/t ) ) );
-
 
           
         }
@@ -528,17 +568,33 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
 bool iMATTER::RotateShower(Parton& pIn){
     if( (pIn.pstat() + 900 == Current_Status || pIn.pstat() == Current_Status) && pIn.pstat() != -1000 ) {
-
+        VERBOSE(1) << "Rotating parton pstat = " << pIn.pstat() 
+                   << " plabel = " << pIn.plabel()
+                   << " px = " << pIn.px()
+                   << " py = " << pIn.py()
+                   << " pz = " << pIn.pz();
         double Direction = (pIn.pz() >= 0.0 ? 1.0:-1.0);
         FourVector p_Parton(pIn.px(),pIn.py(),pIn.pz(),0.0);
         Rotate(p_Parton,RotationVector,1);
         pIn.reset_p(p_Parton.x(),p_Parton.y(),Direction * p_Parton.z());
         pIn.set_stat(pIn.pstat() + 1);
+        double En = std::sqrt(p_Parton.x() * p_Parton.x() + p_Parton.y() * p_Parton.y() + p_Parton.z() * p_Parton.z());
+        double velocity[4];
+        velocity[1] =             p_Parton.x() / En;
+        velocity[2] =             p_Parton.y() / En;
+        velocity[3] = Direction * p_Parton.z() / En;
 
-        if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error ) 
+        velocity[0] = std::sqrt(std::pow(velocity[1], 2) + std::pow(velocity[2], 2) + std::pow(velocity[3], 2));
+        pIn.set_jet_v(velocity);
+        if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error && pIn.pstat() + 899 == Current_Status) 
         {
             FinalRotation->SetLatestInitialParton(pIn.px(),pIn.py(),pIn.pz(),std::abs(pIn.pz()), pIn.plabel());
         }
+        VERBOSE(1) << "After Rotation parton pstat = " << pIn.pstat() 
+                   << " plabel = " << pIn.plabel()
+                   << " px = " << pIn.px()
+                   << " py = " << pIn.py()
+                   << " pz = " << pIn.pz();
         return true;
     }
     return false;
@@ -629,7 +685,7 @@ double iMATTER::invert_Forward_sudakov( double value , double min_t, double max_
     
     if (value <= 1./denom) {
         // Debug
-        JSINFO << "# Inverse_Forward_sudakov (value <= denom) value = "<< value << " denom = "<< denom
+        VERBOSE(1) << "Inverse_Forward_sudakov (value <= denom) value = "<< value << " denom = "<< denom
                     << " abs_min_t = " << abs_min_t << " abs_max_t = " << abs_max_t;
         return(min_t);
     }
@@ -701,7 +757,9 @@ double iMATTER::invert_Backward_sudakov( double value , double min_t, double max
     double numer = Backward_Sudakov(abs_min_t,abs_max_t);
     
     if (value <= numer) {
-
+        // Debug
+        VERBOSE(1) << "Invert_Backward_sudakov (value <= numer) value = "<< value << " numer = "<< numer
+                    << " abs_min_t = " << abs_min_t << " abs_max_t = " << abs_max_t;
         return(min_t);
         }
     
@@ -1475,4 +1533,20 @@ double iMATTER::alpha_s(double q2) {
   }
 
   return a;
+}
+
+
+void iMATTER::VERBOSE_OUTPUT(std::string st, Parton &pIn){
+    VERBOSE(2) << st 
+               << " pid = " << pIn.pid()
+               << " pstat = " << pIn.pstat()
+               << " plabel = " << pIn.plabel()
+               << " t = " << pIn.t()
+               << " e = " << pIn.e()
+               << " px = " << pIn.px()
+               << " py = " << pIn.py()
+               << " pz = " << pIn.pz()
+               << " col = " << pIn.color()
+               << " acol = " << pIn.anti_color()
+               << " maxcol = " << pIn.max_color();
 }
