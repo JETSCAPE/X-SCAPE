@@ -180,12 +180,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         }
         ini->OutputHardPartonMomentum(Out.e(), Out.px(), Out.py(),
                                       Out.pz(),
-                                      (Out.pz() >= 0.0 ? 1 : -1));
-        // TotalEnergyToSubtract += Out.e();
-
-        // if(TotalEnergyToSubtract >= 2. * P_A){
-        //   throw std::runtime_error("Subtracting " + to_string(TotalEnergyToSubtract) + " from a system  with energy "+ to_string(2. * P_A));
-        // }
+                                      (Out.pz() >= 0.0 ? 1 : -1), P_A);
         
       }
 

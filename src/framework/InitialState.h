@@ -148,7 +148,7 @@ public:
                                                                double z);
 
   virtual void OutputHardPartonMomentum(double E, double px, double py, double pz,
-                                        int direction);
+                                        int direction, double P_A);
   virtual void ClearHardPartonMomentum();
                                    
 

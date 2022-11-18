@@ -44,7 +44,7 @@ void MCGlauberWrapper::InitTask() {
 }
 
 void MCGlauberWrapper::Clear() {
-    Jetscape::JSINFO << "clear initial condition vectors";
+    Jetscape::VERBOSE(1) << "clear initial condition vectors";
     binary_collision_t_.clear();
     binary_collision_x_.clear();
     binary_collision_y_.clear();
@@ -55,7 +55,7 @@ void MCGlauberWrapper::Clear() {
 
 void MCGlauberWrapper::Exec() {
     Clear();
-    Jetscape::JSINFO << "Run 3DMCGlauber to generate initial hard positions "
+    VERBOSE(1) << "Run 3DMCGlauber to generate initial hard positions "
                      << "...";
     try {
         int iparticle=0;
@@ -148,7 +148,7 @@ void MCGlauberWrapper::ClearHardPartonMomentum(){
 }
 
 void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, double pz,
-                                                int direction) {
+                                                int direction, double P_A) {
     // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
     if (direction == 1) {
         proj_parton_e_ += E;
@@ -168,6 +168,16 @@ void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, 
         // JSINFO <<  MAGENTA << " targ_parton_px_ " << targ_parton_px_;
         // JSINFO <<  MAGENTA << " targ_parton_py_ " << targ_parton_py_;
         // JSINFO <<  MAGENTA << " targ_parton_pz_ " << targ_parton_pz_;
+    }
+
+
+    VERBOSE(2) << BOLDYELLOW << " proj_parton_e_ " << proj_parton_e_ 
+                             << " proj_parton_pz_ " << proj_parton_pz_ 
+                             << " targ_parton_e_ " << targ_parton_e_ 
+                             << " targ_parton_pz_ " << targ_parton_pz_;
+
+    if(targ_parton_e_ >= 0.94 * P_A || proj_parton_e_ >= 0.94 * P_A ){
+        throw std::runtime_error("Energy to subtract from 3DMCGlauber >= 0.94 * P_A. Turn on Verbose for more info.");
     }
 
 }

@@ -37,7 +37,6 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
    void SetLatestInitialParton(double px, double py, double pz, double E, int label);
    void ResetShower();
    void AddRemenant(Parton &Out, int label);
-    
    
   //  std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
   //  std::shared_ptr<HardProcess> Hard; // temporary pointer to Hard process   
@@ -72,7 +71,6 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
     void DefineRotationMatrix(double Dir);
     void RotateVector(FourVector &ToRotate);
 
-    double TotalEnergyToSubtract = 0;
 
     
  protected:

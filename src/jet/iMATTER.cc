@@ -57,8 +57,10 @@ void iMATTER::Init()
     Q0 = GetXMLElementDouble({"Eloss", "Matter", "Q0"});
     vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
 
-    P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
+    RealP_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
+    P_A = 0.94 * P_A;
+
     P_B = P_A ; /// assuming symmetric system, rewrite for non-symmetric collision.
     
     if (!P_A)
@@ -76,7 +78,7 @@ void iMATTER::Init()
     Pythia8::Info info; 
     // Get Pythia data directory //
     std::stringstream pdfpath;
-    pdfpath <<  getenv("PYTHIA8DATA") << "/../pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
+    pdfpath <<  getenv("PYTHIA8") << "/share/pythia8/pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
     pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
     
 
@@ -354,14 +356,22 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             // Set x2 the current particle's momentum fraction //
             CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
+
+
             MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
+            
+            if(pIn[in].pz() >= 0.0) 
+                TotalMomentumFraction = Hard->GetTotalMomentumFractionPositive() - MomentumFractionCurrent; 
+            else 
+                TotalMomentumFraction = Hard->GetTotalMomentumFractionNegative() - MomentumFractionCurrent;
+
             MomentumFractionCurrent = MomentumFractionCurrent / (1.0 - TotalMomentumFraction);
 
-            // if(MomentumFractionCurrent > 1.) {
-            //     JSWARN << " Current MomentumFractionCurrent = " << MomentumFractionCurrent << " is larger than 1";
-            //     JSWARN << " P_A / z_min_factor = " << P_A;
-            //     goto SkipSampling;
-            // }
+            if(TotalMomentumFraction >= 1.) {
+                VERBOSE(2) << " Current TotalMomentumFraction = " << TotalMomentumFraction << " is larger than 1";
+                VERBOSE(2) << " P_A = " << P_A;
+                goto SkipSampling;
+            }
             Maximum_z_frac = CurrentPlus / (CurrentPlus + Q0);
 
 
@@ -501,7 +511,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             Parent.set_x(Position);
             VERBOSE_OUTPUT("Parent",Parent);
 
-            double NewTotMomFract = TotalMomentumFraction + ParentPlus / ( M_SQRT2 * P_A );
+            double NewTotMomFract = TotalMomentumFraction + ParentPlus / ( M_SQRT2 * (P_A) );
             VERBOSE(2) << BOLDYELLOW << "NewTotMomFract " << NewTotMomFract;
             if(NewTotMomFract >= 1.){
                 VERBOSE(2) << BOLDYELLOW << "Skipped iMATTER split because no energy is available in the proton eCM";

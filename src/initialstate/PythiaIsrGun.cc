@@ -356,8 +356,8 @@ void PythiaIsrGun::Exec() {
           stat = -1000; // raw initial state status, must go to an initial state module
 
           TotalEnergyOfInitialStatePartons += particle.e();
-          if(particle.pz() >= 0.0) SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / ( eCM));
-          else SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / ( eCM));
+          if(particle.pz() >= 0.0) SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / ( 0.94 * eCM));
+          else SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / ( 0.94 * eCM));
       }
       if (particle.status()==-23 || particle.status()==-33)
       {
