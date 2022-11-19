@@ -278,6 +278,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         }
       }
 
+
+      // Changing the status of the radiated stubs
+      if(pIn[in].pstat() > 0 && pIn[in].pstat() != 1000){
+        Out.set_stat(0);
+      }
     }
 
     SkipRotation:
