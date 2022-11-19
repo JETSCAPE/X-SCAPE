@@ -59,7 +59,7 @@ void iMATTER::Init()
 
     RealP_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
-    P_A = z_min_factor * RealP_A;
+    P_A = RealP_A;
 
     P_B = P_A ; /// assuming symmetric system, rewrite for non-symmetric collision.
     
@@ -70,7 +70,7 @@ void iMATTER::Init()
         P_B = P_A; /// default symmetric assumption
     }
 
-    P_A /= z_min_factor;
+    P_A *= z_min_factor;
     
     // Initialize random number distribution
     ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
