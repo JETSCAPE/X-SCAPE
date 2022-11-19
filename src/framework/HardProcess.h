@@ -156,6 +156,10 @@ public:
   double GetTotalMomentumFractionNegative(){ return TotalMomentumFractionNegative;}
   void SetTotalMomentumFractionPositive(double mom){ TotalMomentumFractionPositive = mom;}
   void SetTotalMomentumFractionNegative(double mom){ TotalMomentumFractionNegative = mom;}
+  double GetTotalMomentumPositive(){ return TotalMomentumPositive;}
+  double GetTotalMomentumNegative(){ return TotalMomentumNegative;}
+  void SetTotalMomentumPositive(double mom){ TotalMomentumPositive = mom;}
+  void SetTotalMomentumNegative(double mom){ TotalMomentumNegative = mom;}
   std::string printer;
 
   std::vector<Parton> GetRemnants() { return Remnants; }
@@ -174,6 +178,7 @@ private:
   const int max_colorPerShower = 1000; 
   int max_color, NISRShower = 0;
   double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
+  double TotalMomentumPositive, TotalMomentumNegative;
 
 };
 

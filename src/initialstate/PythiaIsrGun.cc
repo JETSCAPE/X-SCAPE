@@ -328,10 +328,12 @@ void PythiaIsrGun::Exec() {
   // Loop through particles
   // Accept them all
 
-    double initial_state_label = -1 ;
-    double final_state_label = 1 ;
+  double initial_state_label = -1 ;
+  double final_state_label = 1 ;
   ini->pTHat.resize((p62.size())/4);
   int hCounter = 0;
+  SetTotalMomentumPositive(0.0);
+  SetTotalMomentumNegative(0.0);
   SetTotalMomentumFractionPositive(0.0);
   SetTotalMomentumFractionNegative(0.0);
   double TotalEnergyOfInitialStatePartons = 0.0;
@@ -356,8 +358,14 @@ void PythiaIsrGun::Exec() {
           stat = -1000; // raw initial state status, must go to an initial state module
 
           TotalEnergyOfInitialStatePartons += particle.e();
-          if(particle.pz() >= 0.0) SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / ( 0.94 * eCM));
-          else SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / ( 0.94 * eCM));
+          if(particle.pz() >= 0.0) {
+            SetTotalMomentumPositive(GetTotalMomentumPositive() + particle.e());
+            SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / ( 0.94 * eCM));
+            }
+          else {
+            SetTotalMomentumNegative(GetTotalMomentumNegative() +particle.e());
+            SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / ( 0.94 * eCM));
+            }
       }
       if (particle.status()==-23 || particle.status()==-33)
       {
@@ -384,6 +392,10 @@ void PythiaIsrGun::Exec() {
     }
   }
 
+    VERBOSE(2) << "Negative Partons Momentum "<< GetTotalMomentumNegative()
+           << " Positive Partons Momentum "<< GetTotalMomentumPositive()
+           << " eCM " << eCM
+           << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
   if(GetTotalMomentumFractionNegative() >= 1.0 || GetTotalMomentumFractionPositive() >= 1.){
 
     JSWARN << "Negative Partons Momentum Fraction "<< GetTotalMomentumFractionNegative()

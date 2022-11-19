@@ -176,8 +176,8 @@ void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, 
                              << " targ_parton_e_ " << targ_parton_e_ 
                              << " targ_parton_pz_ " << targ_parton_pz_;
 
-    if(targ_parton_e_ >= 0.94 * P_A || proj_parton_e_ >= 0.94 * P_A ){
-        throw std::runtime_error("Energy to subtract from 3DMCGlauber >= 0.94 * P_A. Turn on Verbose for more info.");
+    if(targ_parton_e_ >= 0.95 * P_A || proj_parton_e_ >= 0.95 * P_A ){
+        throw std::runtime_error("Energy to subtract from 3DMCGlauber >= 0.95 * P_A "+std::to_string(0.95 * P_A)+". Turn on Verbose for more info.");
     }
 
 }

@@ -11,10 +11,11 @@
   <debug> off </debug>
   <remark> off </remark>
 
-  <nEvents> 10 </nEvents>
+  <nEvents> 100 </nEvents>
 
   <Random>
     <seed>1</seed>
+    <seed>13</seed>
   </Random>
   
   <outputFilename>test_out</outputFilename>
@@ -38,8 +39,8 @@
         PhaseSpace:bias2Selection = on
         PhaseSpace:bias2SelectionPow = 4
         PhaseSpace:bias2SelectionRef = 10
-        SigmaProcess:alphaSvalue = 0.15
-        MultipartonInteractions:alphaSvalue = 0.15
+        SigmaProcess:alphaSvalue = 0.13
+        MultipartonInteractions:alphaSvalue = 0.13
       </LinesToRead>
       <useHybridHad>1</useHybridHad>
     </PythiaGun>
@@ -59,7 +60,7 @@
   <Eloss>
     <maxT>50</maxT>
     <Matter> 
-      <Q0> 1.0 </Q0>
+      <Q0> 2.0 </Q0>
       <in_vac> 1 </in_vac>
       <useHybridHad>1</useHybridHad>
       <vir_factor> 0.25 </vir_factor>
