@@ -189,9 +189,10 @@ void PythiaIsrGun::Exec() {
 
     FourVector p_p;
 
- 
-
+  int NSamplings = 0;
+  ReDoSampling:
   do {
+    NSamplings++;
     next();
     p62.clear();
  
@@ -397,7 +398,9 @@ void PythiaIsrGun::Exec() {
            << " eCM " << eCM
            << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
   if(GetTotalMomentumFractionNegative() >= 1.0 || GetTotalMomentumFractionPositive() >= 1.){
-
+    if(NSamplings < 1000){
+      goto ReDoSampling;
+    }
     JSWARN << "Negative Partons Momentum Fraction "<< GetTotalMomentumFractionNegative()
            << " Positive Partons Momentum Fraction "<< GetTotalMomentumFractionPositive()
            << " eCM " << eCM
