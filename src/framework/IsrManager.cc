@@ -74,7 +74,7 @@ void IsrManager::Init()
 
 void IsrManager::Exec()
 {
-  JSINFO << "Create ISR from HardProcess partons ...";
+  VERBOSE(1) << "Create ISR from HardProcess partons ...";
   VERBOSE(1) << "Run ISR Manager via JetEnergyLossManager::Exec() ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
 

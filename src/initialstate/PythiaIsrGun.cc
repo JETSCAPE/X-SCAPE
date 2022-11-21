@@ -338,6 +338,42 @@ void PythiaIsrGun::Exec() {
   SetTotalMomentumFractionPositive(0.0);
   SetTotalMomentumFractionNegative(0.0);
   double TotalEnergyOfInitialStatePartons = 0.0;
+
+  for (int np = 0; np < p62.size(); ++np)
+  // for (int np = p62.size()-1; np >= 0 ; --np)
+  {
+    Pythia8::Particle &particle = p62.at(np);
+
+      if (particle.status()==-21 || particle.status()==-31 )
+      {
+          TotalEnergyOfInitialStatePartons += particle.e();
+          if(particle.pz() >= 0.0) {
+            SetTotalMomentumPositive(GetTotalMomentumPositive() + particle.e());
+            SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / ( 0.94 * eCM));
+            }
+          else {
+            SetTotalMomentumNegative(GetTotalMomentumNegative() +particle.e());
+            SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / ( 0.94 * eCM));
+            }
+      }
+  }
+
+  VERBOSE(2) << "Negative Partons Momentum "<< GetTotalMomentumNegative()
+          << " Positive Partons Momentum "<< GetTotalMomentumPositive()
+          << " eCM " << eCM
+          << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
+  if(GetTotalMomentumFractionNegative() >= 1.0 || GetTotalMomentumFractionPositive() >= 1.){
+    JSINFO << "Redoing Pythia Sampling Since MPI energy is larger than eCM/2.1 ";
+    if(NSamplings < 1000){
+      goto ReDoSampling;
+    }
+    JSWARN << "Negative Partons Momentum Fraction "<< GetTotalMomentumFractionNegative()
+           << " Positive Partons Momentum Fraction "<< GetTotalMomentumFractionPositive()
+           << " eCM " << eCM
+           << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
+    throw std::runtime_error("Pythia Isr Gun outputs more energy in the MPI partons than eCM");
+  }
+
   for (int np = 0; np < p62.size(); ++np)
   // for (int np = p62.size()-1; np >= 0 ; --np)
   {
@@ -358,15 +394,6 @@ void PythiaIsrGun::Exec() {
           initial_state_label--;
           stat = -1000; // raw initial state status, must go to an initial state module
 
-          TotalEnergyOfInitialStatePartons += particle.e();
-          if(particle.pz() >= 0.0) {
-            SetTotalMomentumPositive(GetTotalMomentumPositive() + particle.e());
-            SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / ( 0.94 * eCM));
-            }
-          else {
-            SetTotalMomentumNegative(GetTotalMomentumNegative() +particle.e());
-            SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / ( 0.94 * eCM));
-            }
       }
       if (particle.status()==-23 || particle.status()==-33)
       {
@@ -393,20 +420,6 @@ void PythiaIsrGun::Exec() {
     }
   }
 
-    VERBOSE(2) << "Negative Partons Momentum "<< GetTotalMomentumNegative()
-           << " Positive Partons Momentum "<< GetTotalMomentumPositive()
-           << " eCM " << eCM
-           << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
-  if(GetTotalMomentumFractionNegative() >= 1.0 || GetTotalMomentumFractionPositive() >= 1.){
-    if(NSamplings < 1000){
-      goto ReDoSampling;
-    }
-    JSWARN << "Negative Partons Momentum Fraction "<< GetTotalMomentumFractionNegative()
-           << " Positive Partons Momentum Fraction "<< GetTotalMomentumFractionPositive()
-           << " eCM " << eCM
-           << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
-    throw std::runtime_error("Pythia Isr Gun outputs more energy in the MPI partons than eCM");
-  }
   // Getting Number of hard partons
   int NPP = p62.size();
   SetMax_Color(GetMax_ColorPerShower() * NPP);

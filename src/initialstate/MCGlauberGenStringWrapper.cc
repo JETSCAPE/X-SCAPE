@@ -43,7 +43,7 @@ void MCGlauberGenStringWrapper::Init() {
 
 
 void MCGlauberGenStringWrapper::Exec() {
-    Jetscape::JSINFO << "Run 3DMCGlauber second time to generate strings for MUSIC "
+    VERBOSE(1) << "Run 3DMCGlauber second time to generate strings for MUSIC "
                      << "...";
     try {
         ini->GetHardPartonPosAndMomentumProj();

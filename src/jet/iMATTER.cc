@@ -291,7 +291,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pIn[in].set_stat(-900); // status for an unstable initial state parton moving backward in time.
         
             VERBOSE(1) << MAGENTA << " pSTAT = -1000 leads to new virt = " << t1 << " and New formation time = " << pIn[in].form_time() ;
-            VERBOSE(1) << MAGENTA << " TotalMomentumFraction " << TotalMomentumFraction << " MomentumFractionCurrent " << MomentumFractionCurrent << " TotalEnergy " << TotalMomentum;
+            VERBOSE(1) << MAGENTA << " TotalMomentumFraction " << TotalMomentumFraction << " MomentumFractionCurrent " << MomentumFractionCurrent << " TotalEnergy " << TotalMomentum + Current.e() << " Current en "<< Current.e();
 
 
 
