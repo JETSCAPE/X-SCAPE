@@ -72,6 +72,146 @@ Currently, there exists a pp tune [PP19](https://arxiv.org/abs/1910.05481), whic
 Tuning of Pb-Pb is ongoing.
 Several example hydro profiles can be downloaded using `examples/get_hydroSample*`.
 
+## X-SCAPE modules
+### 3DGlauber support 
+
+3DGlauber is a 3D initial state model. 3DGlauber generates the initial state for
+the MUSIC and can be integrated into the XETSCAPE framework. To download the lastest
+version of 3DGlauber, one can run the shell script under the external_packages folder,
+
+```bash
+    ./get_3dglauber.sh
+```
+
+To compile the 3DGlauber code together with the XETSCAPE framework, please turn
+ on the 3DGlauber support option,
+
+```bash
+    mkdir build
+    cd build
+    cmake -DUSE_3DGlauber=ON ..
+    make
+```
+
+### MUSIC support
+
+MUSIC is a (3+1)D viscous hydrodynamical code developed at McGill university.
+(Official website: http://www.physics.mcgill.ca/MUSIC)
+MUSIC can be integrated into the JETSCAPE framework. To download the lastest
+version of MUSIC, one can run the shell script under the external_packages folder,
+
+```bash
+    ./get_music.sh
+```
+
+This shell script will clone the latest version of MUSIC to external_packages folder.
+It also setup the enviroment variables for MUSIC to run. Specifically, MUSIC
+needs the folder path for the EOS tables. Please make sure the enviroment
+variable HYDROPROGRAMPATH to be set to the path for MUSIC code package.
+
+When compiling MUSIC with JETSCAPE, please turn on the MUSIC support option
+when generating the cmake configuration file,
+
+```bash
+    mkdir build
+    cd build
+    cmake -DUSE_MUSIC=ON ..
+    make
+```
+
+To run JETSCAPE with MUSIC, one needs to use MPI commands,
+
+```bash
+    mpirun -np 1 ./MUSICTest
+```
+### iSS support 
+
+iSS is a Monte Carlo sampler code after the hydrodynamics and can be integrated 
+into the XETSCAPE framework. To download the lastest
+version of iSS, one can run the shell script under the external_packages folder,
+
+```bash
+    ./get_iSS.sh
+```
+
+To compile the iSS code together with the XETSCAPE framework, please turn
+on the iSS support option,
+
+```bash
+    mkdir build
+    cd build
+    cmake -DUSE_ISS=ON ..
+    make
+```
+
+### Running JETSCAPE with CLVisc
+In order to run clvisc in jetscape, one has to download it in external\_packages/, using 
+
+```
+sh get_clvisc.sh
+```
+
+Then compile and run the framework with a XML configuration file which turns clvisc on.
+```
+cd build/
+cmake .. -DUSE_CLVISC=on
+make
+./runJetscape ../config/jetscape_clvisc.xml
+```
+If the cmake fails because OpenCL is not installed, please check it.
+OpenCL is delivered in MacOS by default. 
+If you use linux machine with Nvidia GPUs, you will need to install CUDA,
+which will provide OpenCL support.
+If you use linux machine with AMD GPUs, Intel GPUs or any CPUs,
+you will need to install AMD APP SDK.
+
+## SMASH hadronic afterburner
+
+SMASH [https://smash-transport.github.io] is a hadronic transport approach
+developed at Frankfurt University and GSI by the group of
+Prof. H. Elfner (nee Petersen).  In JetScape SMASH can
+serve as an afterburner, useful to compute soft observables.
+
+### Installing SMASH
+
+SMASH is published on github at https://github.com/smash-transport/smash.
+See SMASH Readme for libraries required by SMASH and how to install them.
+
+```
+  export EIGEN3_ROOT=<eigen install directory>/include/eigen3/
+  export GSL_ROOT_DIR=$(gsl-config --prefix)
+  export BOOST_ROOT=<boost install directory>
+  export PYTHIA8DIR=${PYTHIAINSTALLDIR}/pythia8235
+  export PYTHIA8_ROOT_DIR=${PYTHIAINSTALLDIR}/pythia8235
+
+  export JETSCAPE_DIR=${HOME}/JETSCAPE-COMP
+  export SMASH_DIR=${JETSCAPE_DIR}/external_packages/smash/smash_code
+
+  cd ${JETSCAPE_DIR}/external_packages
+  ./get_smash.sh
+```
+
+### Compiling JetScape with SMASH
+
+The usage of SMASH in JetScape as an afterburner requires hydro,
+sampler and SMASH itself. Therefore, to use it in JetScape,
+
+```bash
+    mkdir ${JETSCAPE_DIR}/build
+    cd ${JETSCAPE_DIR}/build
+    cmake -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON ..
+```
+
+To run JetScape test with SMASH:
+
+```bash
+    cd build
+    ./SMASHTest
+```
+
+Currently the iSS sampler doesn't performs resonance decays after sampling.
+For reasonable physics with SMASH these decays should be switched off.
+
 ## More information
 
 More material on the physics behind JETSCAPE and how to use it can be found in the material of the JETSCAPE Summer Schools. The schools are a yearly event explaining the details of the approach. You can either sign-up for the next one or go through the material of the last school yourself. The material is found in the SummerSchool repositories under [the JETSCAPE organization](https://github.com/JETSCAPE).
