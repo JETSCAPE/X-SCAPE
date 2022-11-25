@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) The JETSCAPE Collaboration, 2018
+ *
+ * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ *
+ * For the list of contributors see AUTHORS.
+ *
+ * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
+ *
+ * or via email to bugs.jetscape@gmail.com
+ *
+ * Distributed under the GNU General Public License 3.0 (GPLv3 or later).
+ * See COPYING for details.
+ ******************************************************************************/
+
 //
 //  iMATTER.cc
 //  
@@ -78,6 +93,9 @@ void iMATTER::Init()
     Pythia8::Info info; 
     // Get Pythia data directory //
     std::stringstream pdfpath;
+    if( getenv("PYTHIA8") == NULL){
+        throw std::runtime_error("$PYTHIA8 environment variable not set, please make sure the variable PYTHIA8 points to the pythia8 installation folder found using (export PYTHIA8=`pythia8-config --prefix`).");
+    }
     pdfpath <<  getenv("PYTHIA8") << "/share/pythia8/pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
     pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
     
