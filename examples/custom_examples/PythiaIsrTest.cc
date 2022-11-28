@@ -57,7 +57,6 @@
 #include "MCGlauberWrapper.h"
 #include "MCGlauberGenStringWrapper.h"
 
-#include "MainClock.h"
 #include "ModuleClock.h"
 
 #include "QueryHistory.h"
@@ -83,7 +82,7 @@ int main(int argc, char** argv)
 
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
-  JetScapeLogger::Instance()->SetInfo(false);
+  JetScapeLogger::Instance()->SetInfo(true);
   JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
@@ -96,16 +95,7 @@ int main(int argc, char** argv)
   // -------------
   //Test clock ...
 
-  //auto mClock = make_shared<MainClock>();
-  //mClock->SetTimeRefFrameId("SpaceTime");
 
-  // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-3,3,0.1); // JP: make consistent with reading from XML in init phase ...
-  auto mModuleClock = make_shared<ModuleClock>();
-  mModuleClock->SetTimeRefFrameId("SpaceTime * 2");
-
-  mClock->Info();
-  mModuleClock->Info();
 
   auto jetscape = make_shared<JetScape>();
 
@@ -139,8 +129,6 @@ int main(int argc, char** argv)
   JetScapeXML::Instance()->OpenXMLUserFile(jetscape->GetXMLUserFileName());
 
   jetscape->SetId("primary");
-  // jetscape->AddMainClock(mClock);
-  // jetscape->ClockInfo();
 
   // Initial conditions and hydro
   //auto trento = make_shared<TrentoInitial>();
@@ -209,9 +197,6 @@ int main(int argc, char** argv)
   auto isrPSG = make_shared<IsrShowerPSG>();
   jloss->AddPartonShowerGenerator(isrPSG);
   */
-
-  //quick and dirty to check if module clock transformation is working conceptually ...
-  //jloss->AddModuleClock(mModuleClock);
 
   //Matter is added but not executed, need to implement the per time step execution in JetEnergyLoss::DoShower()...
   auto matter = make_shared<Matter> ();
