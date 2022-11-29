@@ -22,7 +22,6 @@
 #ifndef iMATTER_H
 #define iMATTER_H
 
-#include <memory.h>
 #include "ISRRotation.h"
 #include "JetEnergyLossModule.h"
 #include "Pythia8/Pythia.h"
