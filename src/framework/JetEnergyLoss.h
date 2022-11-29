@@ -16,7 +16,6 @@
 #ifndef JETENERGYLOSS_H
 #define JETENERGYLOSS_H
 
-#include "InitialState.h"
 #include "JetScapeModuleBase.h"
 #include "FluidDynamics.h"
 #include "FluidCellInfo.h"

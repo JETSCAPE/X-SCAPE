@@ -56,8 +56,6 @@
 #include "MusicWrapper.h"
 #include "iSpectraSamplerWrapper.h"
 
-#include "MainClock.h"
-#include "ModuleClock.h"
 
 #include "QueryHistory.h"
 
@@ -92,19 +90,6 @@ int main(int argc, char** argv)
 
   Show();
 
-  // -------------
-  //Test clock ...
-
-  //auto mClock = make_shared<MainClock>();
-  //mClock->SetTimeRefFrameId("SpaceTime");
-
-  // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-3,3,0.1); // JP: make consistent with reading from XML in init phase ...
-  auto mModuleClock = make_shared<ModuleClock>();
-  mModuleClock->SetTimeRefFrameId("SpaceTime * 2");
-
-  mClock->Info();
-  mModuleClock->Info();
 
   auto jetscape = make_shared<JetScape>();
   jetscape->SetXMLMainFileName("../config/jetscape_main.xml");
@@ -115,8 +100,6 @@ int main(int argc, char** argv)
             "../config/jetscape_user_iMATTERMCGlauberMUSIC.xml");
   }
   jetscape->SetId("primary");
-  jetscape->AddMainClock(mClock);
-  jetscape->ClockInfo();
 
   // Initial conditions and hydro
   //auto trento = make_shared<TrentoInitial>();

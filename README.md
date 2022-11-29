@@ -75,16 +75,13 @@ Several example hydro profiles can be downloaded using `examples/get_hydroSample
 ## X-SCAPE modules
 ### 3DGlauber support 
 
-3DGlauber is a 3D initial state model. 3DGlauber generates the initial state for
-the MUSIC and can be integrated into the XETSCAPE framework. To download the lastest
-version of 3DGlauber, one can run the shell script under the external_packages folder,
+3DGlauber is a 3D initial state model. 3DGlauber generates the initial state for MUSIC and can be integrated into the JETSCAPE framework. To download the latest version of 3DGlauber, one can run the shell script under the external_packages folder,
 
 ```bash
     ./get_3dglauber.sh
 ```
 
-To compile the 3DGlauber code together with the XETSCAPE framework, please turn
- on the 3DGlauber support option,
+To compile the 3DGlauber code together with the JETSCAPE framework, please turn on the 3DGlauber support option,
 
 ```bash
     mkdir build
@@ -92,13 +89,18 @@ To compile the 3DGlauber code together with the XETSCAPE framework, please turn
     cmake -DUSE_3DGlauber=ON ..
     make
 ```
+### Initial State Shower using iMatter
+
+To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix`.
+
+After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`
+
 
 ### MUSIC support
 
 MUSIC is a (3+1)D viscous hydrodynamical code developed at McGill university.
 (Official website: http://www.physics.mcgill.ca/MUSIC)
-MUSIC can be integrated into the JETSCAPE framework. To download the lastest
-version of MUSIC, one can run the shell script under the external_packages folder,
+MUSIC can be integrated into the JETSCAPE framework. To download the latest version of MUSIC, one can run the shell script under the external_packages folder,
 
 ```bash
     ./get_music.sh

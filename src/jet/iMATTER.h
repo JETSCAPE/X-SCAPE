@@ -24,7 +24,6 @@
 
 #include <memory.h>
 #include "ISRRotation.h"
-#include "InitialState.h"
 #include "JetEnergyLossModule.h"
 #include "Pythia8/Pythia.h"
 #include "Matter.h"

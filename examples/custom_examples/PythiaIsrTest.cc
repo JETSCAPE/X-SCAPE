@@ -57,7 +57,6 @@
 #include "MCGlauberWrapper.h"
 #include "MCGlauberGenStringWrapper.h"
 
-#include "ModuleClock.h"
 
 #include "QueryHistory.h"
 
