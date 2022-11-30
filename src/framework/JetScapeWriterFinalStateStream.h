@@ -17,8 +17,8 @@
 // Based on JetScapeWriterStream.
 // author: Raymond Ehlers <raymond.ehlers@cern.ch>, ORNL
 
-#ifndef JETSCAPEWRITERSTREAM_H
-#define JETSCAPEWRITERSTREAM_H
+#ifndef JETSCAPEWRITERFINALSTATESTREAM_H
+#define JETSCAPEWRITERFINALSTATESTREAM_H
 
 #include <fstream>
 #include <string>
@@ -98,4 +98,4 @@ typedef JetScapeWriterFinalStateHadronsStream<ogzstream> JetScapeWriterFinalStat
 
 } // end namespace Jetscape
 
-#endif // JETSCAPEWRITERSTREAM_H
+#endif // JETSCAPEWRITERFINALSTATESTREAM_H

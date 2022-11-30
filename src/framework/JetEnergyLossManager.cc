@@ -101,9 +101,9 @@ void JetEnergyLossManager::MakeCopies()
     GetHardPartonList(hp);
     GetPartonShowerList(ps);
 
-    JSINFO<<" Number of Hard Partons = "<<hp.size();
+    VERBOSE(3) <<" Number of Hard Partons = "<<hp.size();
     if (ps.size()>0)
-      JSINFO<<" Number of Parton Showers = "<<ps.size();
+      VERBOSE(3) <<" Number of Parton Showers = "<<ps.size();
 
     // make more compact ...
 
@@ -185,6 +185,9 @@ void JetEnergyLossManager::GetFinalStatePartons(vector<vector<shared_ptr<Parton>
 {
   for (auto it : GetTaskList()) {
     fPartons.push_back(dynamic_pointer_cast<JetEnergyLoss>(it)->GetShower()->GetFinalPartons());
+    if(fPartons.back().size() == 0 ){
+      JSWARN << " PartonList is empty ";
+    }
   }
 }
 

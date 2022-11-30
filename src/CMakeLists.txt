@@ -28,6 +28,12 @@ if(NOT "${USE_IPGlasma}")
   list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/IPGlasmaWrapper.cc)
 endif()
 
+if(NOT "${USE_3DGlauber}")
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/MCGlauberWrapper.cc)
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/MCGlauberGenStringWrapper.cc)
+endif()
+
+
 #trento needs data tables
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/data_table)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/initialstate/data_table/
@@ -69,9 +75,17 @@ endif()
 FILE(GLOB jetsources jet/*.cc)
 set (SOURCES  ${SOURCES}  ${jetsources} )
 
+if(NOT "${USE_3DGlauber}")
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/jet/iMatter.cc)
+endif()
+
 #hadronization
 FILE(GLOB hadrosources hadronization/*.cc)
 set (SOURCES  ${SOURCES}  ${hadrosources} )
+
+if(NOT "${USE_3DGlauber}")
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/hadronization/iColoredHadronization.cc)
+endif()
 
 ## Take care of options
 if(NOT "${USE_ISS}")
@@ -102,6 +116,10 @@ endif()
 
 if ( USE_IPGlasma)
   target_link_libraries (JetScape ipglasma_lib)
+endif()
+
+if ( USE_3DGlauber)
+  target_link_libraries (JetScape 3dMCGlb)
 endif()
 
 if ( USE_MUSIC )

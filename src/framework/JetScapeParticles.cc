@@ -315,6 +315,7 @@ Parton &Parton::operator=(Parton &c) {
   form_time_ = c.form_time_;
   Color_ = c.Color_;
   antiColor_ = c.antiColor_;
+    jet_v_ = c.jet_v_;
   set_edgeid(c.edgeid());
   set_shower(c.shower());
 
@@ -326,6 +327,7 @@ Parton &Parton::operator=(const Parton &c) {
   form_time_ = c.form_time_;
   Color_ = c.Color_;
   antiColor_ = c.antiColor_;
+    jet_v_ = c.jet_v_;
   set_edgeid(c.edgeid());
   set_shower(c.shower());
 
@@ -338,7 +340,11 @@ void Parton::set_mean_form_time() {
 
 void Parton::set_form_time(double form_time) { form_time_ = form_time; }
 
-void Parton::initialize_form_time() { form_time_ = -0.1; }
+void Parton::initialize_form_time()
+{
+    form_time_ = -0.1;
+    if (plabel_ < 0) form_time_ = 0.1;
+}
 
 double Parton::form_time() { return (form_time_); }
 
@@ -356,22 +362,23 @@ const double Parton::t() {
   } else {
     t_parton = e() * e() - px() * px() - py() * py() - pz() * pz();
   }
-  if (t_parton < 0.0) {
-    // JSWARN << " Virtuality is negative, MATTER cannot handle these particles " << " t = " << t_parton;
-    // JSWARN << " pid = "<< pid() << " E = " << e() << " px = " << px() << " py = " << py() << " pz = " << pz() ;
-  }
+  // if (t_parton < 0.0) {
+  //   JSWARN << " Virtuality is negative, MATTER cannot handle these particles " << " t = " << t_parton;
+  //   JSWARN << " pid = "<< pid() << " E = " << e() << " px = " << px() << " py = " << py() << " pz = " << pz() ;
+  // }
   return (t_parton);
   // return (t_) ;
 }
 
+
 void Parton::set_t(double t) {
   // This function has a very specific purpose and shouldn't normally be used
   // It scales down p! So catch people trying.
-  if (form_time() >= 0.0) {
-    throw std::runtime_error(
-        "Trying to set virtuality on a normal parton. You almost certainly "
-        "don't want to do that. Please contact the developers if you do.");
-  }
+  // if (form_time() >= 0.0) {
+  //   throw std::runtime_error(
+  //       "Trying to set virtuality on a normal parton. You almost certainly "
+  //       "don't want to do that. Please contact the developers if you do.");
+  // }
 
   //  Reset the momentum due to virtuality
   double newPl = std::sqrt(e() * e() - t - restmass() * restmass());

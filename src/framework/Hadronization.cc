@@ -51,6 +51,7 @@ void Hadronization::Init() {
 
   JSINFO << "Found " << GetNumberOfTasks()
          << " Hadronization Tasks/Modules Initialize them ... ";
+  VERBOSE(2) << " Module Found is " << GetTaskList()[0]->GetId();
   JetScapeTask::InitTasks();
 }
 
@@ -58,7 +59,7 @@ void Hadronization::DoHadronize() {
   VERBOSE(2) << "Get Recombination Partons...";
 
   if (inPartons.size() > 0) {
-    VERBOSE(2) << "There are Partons ready for Recombination...";
+    VERBOSE(2) << "There are " << inPartons.size() << " Partons ready for Recombination...";
     TransformPartons(inPartons, outHadrons, outPartons);
   } else {
     VERBOSE(2) << "There is no Parton ready for Recombination...";

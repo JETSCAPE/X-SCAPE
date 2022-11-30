@@ -40,6 +40,15 @@ if (USE_FREESTREAM)
   include_directories(./external_packages/freestream-milne/src)
 endif (USE_FREESTREAM)
 
+option(USE_3DGlauber "Build tests for 3DGlauber" OFF)
+if (USE_3DGlauber)
+  message("Includes for 3DGlauber ...")
+  include_directories(./external_packages/3dMCGlauber ./external_packages/3dMCGlauber/src)
+  include_directories(./external_packages/3dMCGlauber/LHAPDF_Lib/include)
+  include_directories(./external_packages/3dMCGlauber/eps09)
+  link_directories(./external_packages/3dMCGlauber/LHAPDF_Lib/lib)
+endif (USE_3DGlauber)
+
 # CLVisc. Trun on with 'cmake -DUSE_CLVISC=ON'.
 find_package(OpenCL)
 
@@ -106,7 +115,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 ### note that APPLE also defines UNIX, hence the elseif to differentiate
 if (APPLE)
     message( STATUS "Apple : " ${CMAKE_HOST_SYSTEM})
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang") 
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-but-set-variable -Wno-parentheses -fext-numeric-literals")
@@ -114,7 +123,7 @@ if (APPLE)
 
     ## can turn off some warnings
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
-elseif(UNIX)
+elseif(UNIX) 
     message( STATUS "Linux : " ${CMAKE_HOST_SYSTEM})
     ## can turn off some warnings
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -123,7 +132,7 @@ elseif(UNIX)
 
     ## Additional options
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
-endif()
+endif()   
 
 message(STATUS "CXX_FLAGS = " ${CMAKE_CXX_FLAGS})
 #message(STATUS "LD_FLAGS = " ${CMAKE_EXE_LINKER_FLAGS})
@@ -143,7 +152,7 @@ include_directories("${CMAKE_SOURCE_DIR}/external_packages/googletest/googletest
 #############################################
 ### Installing Header and Library Files   ###
 #############################################
-## Run with, e.g., cmake -DCMAKE_INSTALL_PREFIX=~/tmp ..
+## Run with, e.g., cmake -DCMAKE_INSTALL_PREFIX=~/tmp .. 
 ## default directory is the build directory
 ## Note that trento also automatically populates a bin directory
 ## and we cannot disable this behavior
@@ -173,6 +182,7 @@ install(
   "${CMAKE_SOURCE_DIR}/external_packages/"
   "${CMAKE_SOURCE_DIR}/external_packages/ipglasma/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/iSS/src/"
+  "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/hydro_from_external_file/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/music/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/trento/src/"
@@ -220,7 +230,16 @@ install(
   ## Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
   )
 
-
+install(
+  # source directory
+  DIRECTORY
+  "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/include/"
+  DESTINATION "include" # target directory
+  FILES_MATCHING # install only matched files
+  PATTERN "*.h*" # select header files
+  ## Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
+  )
+  
 # Install lib files
 install(
   # our libraries
@@ -231,6 +250,7 @@ install(
   "${PROJECT_BINARY_DIR}/external_packages/gtl/lib/"
   "${PROJECT_BINARY_DIR}/external_packages/ipglasma/src/"
   "${PROJECT_BINARY_DIR}/external_packages/iSS/src/"
+  "${PROJECT_BINARY_DIR}/external_packages/3dMCGlauber/src/"
   "${PROJECT_BINARY_DIR}/external_packages/music/src/"
   "${PROJECT_BINARY_DIR}/external_packages/trento/src/"
   "${PROJECT_BINARY_DIR}/external_packages/clvisc_wrapper/"
@@ -355,6 +375,20 @@ if (USE_FREESTREAM)
   target_compile_definitions(JetScape PRIVATE USE_FREESTREAM)
 endif (USE_FREESTREAM)
 
+if (USE_3DGlauber)
+  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber")
+    message(FATAL_ERROR "Error: 3D-MCGlauber source has not been downloaded in external_packages by ./get_3dglauber.sh")
+  endif()  
+  if (${GSL_FOUND})
+    message("Building 3D-MCGlauber ...")
+    add_subdirectory(./external_packages/3dMCGlauber)
+  else()
+    message (FATAL_ERROR "GSL are necessary for 3dMCGlauber" )
+  endif()
+  target_compile_definitions(JetScape PRIVATE USE_3DGlauber)
+endif()
+
+
 if (USE_IPGlasma)
   if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/ipglasma")
       message(FATAL_ERROR "Error: IPGlasma source has not been downloaded in external_packages by ./get_ipglasma.sh")
@@ -371,7 +405,7 @@ endif()
 if (USE_MUSIC)
   if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/music")
     message(FATAL_ERROR "Error: MUSIC source has not been downloaded in external_packages by ./get_music.sh")
-  endif()
+  endif()  
   if (${GSL_FOUND})
     message("Building MUSIC ...")
     add_subdirectory(./external_packages/music)
@@ -440,17 +474,21 @@ target_link_libraries(FinalStatePartons JetScape )
 add_executable(PythiaBrickTest ./examples/custom_examples/PythiaBrickTest.cc)
 target_link_libraries(PythiaBrickTest JetScape )
 
-add_executable(PythiaIsrTest ./examples/custom_examples/PythiaIsrTest.cc)
-target_link_libraries(PythiaIsrTest JetScape )
+if(USE_3DGlauber)
+  add_executable(PythiaIsrTest ./examples/custom_examples/PythiaIsrTest.cc)
+  target_link_libraries(PythiaIsrTest JetScape )
+endif (USE_3DGlauber )
 
-add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
-target_link_libraries(PythiaBDMTest JetScape )
+#add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
+#target_link_libraries(PythiaIsrMUSIC JetScape )
+#add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
+#target_link_libraries(PythiaBDMTest JetScape )
 
-add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
-target_link_libraries(PythiaNoBDMTest JetScape )
+#add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
+#target_link_libraries(PythiaNoBDMTest JetScape )
 
-add_executable(PythiaBDMTest_Hydro_Cascade ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
-target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
+#add_executable(PythiaBDMTest_Hydro_Cascade ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
+#target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
 
 if ( USE_SMASH )
     add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
@@ -500,6 +538,26 @@ if (USE_FREESTREAM)
     message(FATAL_ERROR "Error: Cannot find files for freestream-milne.")
   endif()
 endif (USE_FREESTREAM)
+if (USE_3DGlauber)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/")
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/LHAPDF_Lib)
+    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/ 
+       DESTINATION ${CMAKE_BINARY_DIR}/LHAPDF_Lib)
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/eps09)
+    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/eps09/ 
+       DESTINATION ${CMAKE_BINARY_DIR}/eps09)
+    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/tables/ 
+       DESTINATION ${CMAKE_BINARY_DIR}/tables)
+#    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input 
+#        ${CMAKE_BINARY_DIR}/mcgluaber.input)
+    configure_file(${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input ${CMAKE_BINARY_DIR}/mcgluaber.input COPYONLY)
+
+
+  else()
+    message(FATAL_ERROR "Error: Cannot find files for 3dMCGlauber.")
+  endif()
+endif()
+
 if (USE_MUSIC)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/music/EOS/")
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/EOS)

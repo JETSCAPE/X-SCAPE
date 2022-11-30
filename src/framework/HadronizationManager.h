@@ -63,6 +63,7 @@ public:
   }
   const bool GetGetHadronListConnected() { return GetHadronListConnected; }
 
+
 private:
   bool GetFinalPartonListConnected;
   bool GetHadronListConnected;

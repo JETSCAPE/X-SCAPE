@@ -124,9 +124,50 @@ public:
       @return Grid point (x,y,z or eta). 
       @param idx is an integer which maps to an unique unit cell in the coordinate space (x,y,z or eta). 
    */
+   /** get the collision information of t,x,y,z from 3DMCGlauber */
   std::tuple<double, double, double> CoordFromIdx(int idx);
-  virtual void SampleABinaryCollisionPoint(double &x, double &y);
+  virtual void SampleABinaryCollisionPoint(double &t, double &x,
+                                           double &y, double &z);
+                                           
+  virtual double Get_total_nucleon_density_lab(double t, double x,
+                                               double y, double z) {
+      return 0.0;
+  }
+                                           
+  virtual double Get_target_nucleon_density_lab(double t, double x,
+                                                double y, double z) {
+      return 0.0;
+  }
+                                                
+  virtual double Get_projectile_nucleon_density_lab(double t, double x,
+                                                    double y, double z) {
+      return 0.0;
+  }
 
+  virtual void OutputHardCollisionPosition(double t, double x, double y, 
+                                                               double z);
+
+  virtual void OutputHardPartonMomentum(double E, double px, double py, double pz,
+                                        int direction, double P_A);
+  virtual void ClearHardPartonMomentum();
+                                   
+
+  virtual std::vector<double> Get_projectile_nucleon_z_lab();
+  virtual std::vector<double> Get_target_nucleon_z_lab();
+
+  virtual std::vector<double> Get_quarks_pos_proj_lab();
+  virtual std::vector<double> Get_quarks_pos_targ_lab();
+
+  virtual std::vector<double> Get_remnant_proj();
+  virtual std::vector<double> Get_remnant_targ();
+
+  virtual std::vector<double> Get_Proj_Remnant();
+  virtual std::vector<double> Get_Targ_Remnant();
+
+  virtual void GetHardPartonPosAndMomentumProj();
+  virtual void GetHardPartonPosAndMomentumTarg();
+
+  virtual void GenerateStrings();
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
    */
   inline double GetXMax() { return grid_max_x_; }
@@ -173,6 +214,10 @@ public:
     }
     return nz;
   }
+
+  std::vector<FourVector> CollisionPositiveMomentum, CollisionNegativeMomentum,CollisionPositiveRotatedMomentum, CollisionNegativeRotatedMomentum;
+  double Olds, Oldt, Oldu, News, Newt, Newu;
+  std::vector<double> pTHat;
 
 protected:
   // initial state entropy density distribution for the given grids

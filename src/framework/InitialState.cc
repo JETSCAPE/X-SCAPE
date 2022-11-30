@@ -77,7 +77,8 @@ std::tuple<double, double, double> InitialState::CoordFromIdx(int idx) {
 }
 
 
-void InitialState::SampleABinaryCollisionPoint(double &x, double &y) {
+void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
+                                               double &y, double &z) {
   if (num_of_binary_collisions_.size() == 0) {
     JSWARN << "num_of_binary_collisions is empty, setting the starting "
               "location to 0. Make sure to add e.g. trento before PythiaGun.";
@@ -88,9 +89,93 @@ void InitialState::SampleABinaryCollisionPoint(double &x, double &y) {
     // Now generate values
     auto idx = dist(*GetMt19937Generator());
     auto coord = CoordFromIdx(idx);
+    t = 0.0;
     x = std::get<0>(coord);
     y = std::get<1>(coord);
+    z = 0.0;
   }
+}
+
+void InitialState::OutputHardCollisionPosition(double t, double x, double y, 
+                                                                   double z) {}
+
+void InitialState::OutputHardPartonMomentum(double E, double px, double py, double pz,
+                                            int direction, double P_A) {}
+
+void InitialState::ClearHardPartonMomentum() {}
+
+  
+void InitialState::GetHardPartonPosAndMomentumProj() {}
+
+void InitialState::GetHardPartonPosAndMomentumTarg() {}
+
+std::vector<double> InitialState::Get_projectile_nucleon_z_lab() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 8; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_target_nucleon_z_lab() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 8; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_quarks_pos_proj_lab() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 9; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_quarks_pos_targ_lab() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 9; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_remnant_proj() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_remnant_targ() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_Proj_Remnant() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+std::vector<double> InitialState::Get_Targ_Remnant() {
+    std::vector<double> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+void InitialState::GenerateStrings() {
+  // Do whatever is needed to figure out the internal temp...
+  std::cout<<"Call the wrong GenerateStrings function..."<<std::endl;
 }
 
 } // end namespace Jetscape

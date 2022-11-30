@@ -142,9 +142,9 @@ int main(int argc, char** argv)
   auto hadroMgr = make_shared<HadronizationManager> ();
   auto hadro = make_shared<Hadronization> ();
   auto hybrid = make_shared<HybridHadronization> ();
-  // hadro->Add(hybrid);
+  hadro->Add(hybrid);
   auto colorless = make_shared<ColorlessHadronization> ();
-  hadro->Add(colorless);
+  // hadro->Add(colorless);
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
 

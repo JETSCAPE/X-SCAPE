@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<jetscape>
+
+  <vlevel> 0 </vlevel>
+  <nEvents> 1 </nEvents>
+
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+
+    <!-- Inital State Module  -->
+    <IS>
+        <MCGlauber> 
+         <ran_seed_MCGla>-1</ran_seed_MCGla>
+         <nEvents_MCGla>1</nEvents_MCGla>
+        </MCGlauber>
+    </IS>
+
+</jetscape>

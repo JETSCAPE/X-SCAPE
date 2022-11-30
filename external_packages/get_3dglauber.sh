@@ -13,9 +13,9 @@
 # See COPYING for details.
 ##############################################################################
 
+folderName="3dMCGlauber"
 # download the code package
-rm -fr iSS
-git clone https://github.com/chunshen1987/iSS iSS
-cd iSS
-git checkout tags/v1.1.1 -b v1.1.1
-rm -fr iSS/.git
+rm -fr $folderName
+git clone --depth=1 https://github.com/chunshen1987/3dMCGlauber.git --branch JETSCAPE $folderName
+cd $folderName
+./get_LHAPDF.sh

@@ -16,6 +16,7 @@
 #include "IsrManager.h"
 #include "JetScapeLogger.h"
 #include "JetScapeSignalManager.h"
+#include "JetScapeWriterIsrStream.h"
 #include "MakeUniqueHelper.h"
 #include <string>
 
@@ -73,7 +74,7 @@ void IsrManager::Init()
 
 void IsrManager::Exec()
 {
-  JSINFO << "Create ISR from HardProcess partons ...";
+  VERBOSE(1) << "Create ISR from HardProcess partons ...";
   VERBOSE(1) << "Run ISR Manager via JetEnergyLossManager::Exec() ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
 
@@ -103,22 +104,47 @@ void IsrManager::Exec()
     {
       auto ps = dynamic_pointer_cast<JetEnergyLoss>(it)->GetShower();
       //DEBUG:
-      //ps->PrintEdges(false);
+      //ps->PrintNodes(false);
 
       if (hpp)
         hpp->AddPartonShower(ps);
 
       auto fp = ps->GetFinalPartons();
       JSDEBUG<<"# of shower initiaing partons after ISR  = "<<fp.size();
-      
-      // IS: ISR Partons with pstat < 0 are not sent to Matter for Final state radiation 
-      // stubs which go to Matter have pstat >= 0 
+
+      // IS: ISR Partons with pstat < 0 are not sent to Matter for Final state radiation
+      // stubs which go to Matter have pstat >= 0
       for (auto p : fp) if (hpp && p->pstat() >= 0 ) hpp->AddParton(p);
 
     }
   }
 
   JSINFO<< "Shower initating parton list/parton showers after ISR updated in HardProcess ...";
+}
+
+void IsrManager::WriteTask(weak_ptr<JetScapeWriter> w) {
+  VERBOSE(8);
+
+  auto f = w.lock();
+  if (!f)
+    return;
+
+  if (dynamic_pointer_cast<JetScapeWriterIsrAscii>(f) || dynamic_pointer_cast<JetScapeWriterIsrAsciiGZ>(f))
+    f->WriteComment("ISR Shower(s): " + GetId());
+
+  for (auto it : GetTaskList()) {
+    if (dynamic_pointer_cast<JetEnergyLoss>(it))
+    {
+      auto ps = dynamic_pointer_cast<JetEnergyLoss>(it)->GetShower();
+      if (dynamic_pointer_cast<JetScapeWriterIsrAscii>(f))
+        dynamic_pointer_cast<JetScapeWriterIsrAscii>(f)->WriteIsr(ps);
+
+      if (dynamic_pointer_cast<JetScapeWriterIsrAsciiGZ>(f))
+        dynamic_pointer_cast<JetScapeWriterIsrAsciiGZ>(f)->WriteIsr(ps);
+
+    }
+  }
+
 }
 
 } // end namespace Jetscape

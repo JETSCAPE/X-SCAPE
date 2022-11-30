@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+
+<jetscape>
+
+  <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
+
+  <setReuseHydro> false </setReuseHydro>
+  <!-- <nReuseHydro> 10 </nReuseHydro> -->
+
+  <vlevel> 0 </vlevel>
+  <debug> off </debug>
+  <remark> off </remark>
+
+  <nEvents> 100 </nEvents>
+
+  <Random>
+    <seed>1</seed>
+    <seed>13</seed>
+  </Random>
+  
+  <outputFilename>test_out</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterFinalStatePartonsAscii> on </JetScapeWriterFinalStatePartonsAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+  <nEvents_printout>10</nEvents_printout>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <Trento> </Trento>
+  </IS>
+
+  <!-- Hard Process -->
+  <Hard>
+    <PythiaGun>
+      <pTHatMin>4</pTHatMin>
+      <pTHatMax>-1</pTHatMax>
+      <eCM>5020</eCM>
+      <LinesToRead>
+        PhaseSpace:bias2Selection = on
+        PhaseSpace:bias2SelectionPow = 4
+        PhaseSpace:bias2SelectionRef = 10
+        SigmaProcess:alphaSvalue = 0.13
+        MultipartonInteractions:alphaSvalue = 0.13
+      </LinesToRead>
+      <useHybridHad>1</useHybridHad>
+    </PythiaGun>
+  </Hard>
+
+  <!--Preequilibrium Dynamics Module -->
+  <Preequilibrium>
+    <NullPreDynamics> </NullPreDynamics>
+  </Preequilibrium>
+
+  <!-- Hydro  Module  -->
+  <!-- <Hydro>
+    <Brick bjorken_expansion_on="false" start_time="0.6"> </Brick>
+  </Hydro> -->
+
+  <!--Eloss Modules -->
+  <Eloss>
+    <maxT>50</maxT>
+    <Matter> 
+      <Q0> 2.0 </Q0>
+      <in_vac> 1 </in_vac>
+      <useHybridHad>1</useHybridHad>
+      <vir_factor> 0.25 </vir_factor>
+      <recoil_on> 0 </recoil_on>
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>
+    </Matter>
+  </Eloss>
+
+  <!-- Jet Hadronization Module -->
+  <JetHadronization>
+    <name>colorless</name>
+  </JetHadronization>
+
+</jetscape>

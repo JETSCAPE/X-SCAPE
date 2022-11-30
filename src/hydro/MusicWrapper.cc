@@ -77,6 +77,10 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     exit(1);
   }
 
+  int InitialProfile = (
+      GetXMLElementInt({"Hydro", "MUSIC", "InitialProfile"}));
+  music_hydro_ptr->set_parameter("Initial_profile", InitialProfile);
+
   int flag_shear_Tdep = (
       GetXMLElementInt({"Hydro", "MUSIC", "T_dependent_Shear_to_S_ratio"}));
   if (flag_shear_Tdep > 0) {
@@ -151,8 +155,13 @@ void MpiMusic::EvolveHydro() {
   double dz = ini->GetZStep();
   double z_max = ini->GetZMax();
   int nz = ini->GetZSize();
+
+  // need further improvement to accept multiple source term objects
+  music_hydro_ptr->generate_hydro_source_terms();
+
   if (pre_eq_ptr == nullptr) {
     JSWARN << "Missing the pre-equilibrium module ...";
+    music_hydro_ptr->initialize_hydro();
   } else {
     music_hydro_ptr->initialize_hydro_from_jetscape_preequilibrium_vectors(
         dx, dz, z_max, nz, pre_eq_ptr->e_, pre_eq_ptr->P_,

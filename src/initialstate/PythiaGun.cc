@@ -247,8 +247,8 @@ void PythiaGun::Exec() {
     VERBOSE(1) << "No initial state module, setting the starting location to "
                   "0. Make sure to add e.g. trento before PythiaGun.";
   } else {
-    double x, y;
-    ini->SampleABinaryCollisionPoint(x, y);
+    double t,x, y,z;
+    ini->SampleABinaryCollisionPoint(t,x, y,z);
     xLoc[1] = x;
     xLoc[2] = y;
   }

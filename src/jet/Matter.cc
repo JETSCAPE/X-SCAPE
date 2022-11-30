@@ -203,18 +203,20 @@ void Matter::Dump_pIn_info(int i, vector<Parton> &pIn) {
          << " px = " << pIn[i].p(1) << " py = " << pIn[i].p(2)
          << "  pz = " << pIn[i].p(3) << " virtuality = " << pIn[i].t()
          << " form_time in fm = " << pIn[i].form_time()
-         << " split time = " << pIn[i].form_time() + pIn[i].x_in().t();
+         << " split time = " << pIn[i].form_time() + pIn[i].x_in().t()
+         << " plabel = " << pIn[i].plabel();
 }
 
 void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                           vector<Parton> &pIn, vector<Parton> &pOut) {
-
+  
   if (std::isnan(pIn[0].e()) || std::isnan(pIn[0].px()) ||
       std::isnan(pIn[0].py()) || std::isnan(pIn[0].pz()) ||
       std::isnan(pIn[0].t()) || std::isnan(pIn[0].form_time())) {
     JSINFO << BOLDYELLOW << "Parton on entry busted on time step " << time;
     Dump_pIn_info(0, pIn);
   }
+  
 
   double z = 0.5;
   double blurb, zeta, tQ2;
@@ -239,15 +241,16 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   std::unique_ptr<FluidCellInfo> check_fluid_info_ptr;
 
-  VERBOSE(8) << MAGENTA << " the time in fm is " << time
-             << " The time in GeV-1 is " << Time;
-  VERBOSE(8) << MAGENTA << "pid = " << pIn[0].pid() << " E = " << pIn[0].e()
-             << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2)
-             << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t()
-             << " form_time in fm = " << pIn[0].form_time()
-             << " split time = " << pIn[0].form_time() + pIn[0].x_in().t();
-  VERBOSE(8) << " color = " << pIn[0].color()
-             << " anti-color = " << pIn[0].anti_color();
+  // JSINFO << MAGENTA << " the time in fm is " << time
+  //            << " The time in GeV-1 is " << Time;
+  // JSINFO << MAGENTA << "pid = " << pIn[0].pid()  << " status = " << pIn[0].pstat()
+  //            << " E = " << pIn[0].e()
+  //            << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2)
+  //            << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t()
+  //            << " form_time in fm = " << pIn[0].form_time()
+  //            << " split time = " << pIn[0].form_time() + pIn[0].x_in().t();
+  // VERBOSE(8) << " color = " << pIn[0].color()
+  //            << " anti-color = " << pIn[0].anti_color();
 
   unsigned int ShowerMaxColor = pIn[0].max_color();
   unsigned int CurrentMaxColor;
@@ -295,6 +298,10 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       return;
     }
+      
+      if (pIn[i].time() > time) return; // ignore partons that havent formed yet.
+      
+      
 
     VERBOSE(4) << BOLDYELLOW
                << " *  parton formation spacetime point= " << pIn[i].x_in().t()
@@ -432,7 +439,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
     // if(now_R0^2-now_Ri^2<0) print out pIn info and exit
 
     if (std::isinf(now_R0) || std::isnan(now_R0) || std::isinf(now_Rz) ||
-        std::isnan(now_Rz) || std::abs(now_Rz) > now_R0) {
+        std::isnan(now_Rz) || std::abs(now_Rz) > now_R0 + error) {
       JSINFO << BOLDYELLOW << "First instance";
       JSINFO << BOLDYELLOW << "now_R for vector is:" << now_R0 << ", " << now_Rx
              << ", " << now_Ry << ", " << now_Rz;
@@ -475,7 +482,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
            (pIn[i].form_time() > -0.1 + rounding_error))) {
         JSWARN << " parton with a negative virtuality was sent to MATTER and "
                   "will now have its virtuality reset!, press 1 and return to "
-                  "proceed... ";
+                  "proceed... pstat "<< pIn[i].pstat() << "  virt "<< pIn[i].t();
         // cin >> blurb; //remove the input to prevent an error caused by heavy quark from pythia (by Chathuranga)
       }
 
@@ -1360,6 +1367,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                                                     pow(pIn[i].jet_v().y(), 2));
 
         VERBOSE(8) << BOLDYELLOW
+                   << " v_x = "<< pIn[i].jet_v().x() << " v_y = " << pIn[i].jet_v().y() << " v_z = " << pIn[i].jet_v().z()
                    << " Jet direction w.r.t. beam: theta = " << std::acos(c_t)
                    << " phi = " << std::acos(c_p);
 
@@ -1423,11 +1431,12 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
         int iout = pOut.size() - 1;
 
         if (std::isnan(newp[1]) || std::isnan(newp[2]) || std::isnan(newp[3])) {
-          JSINFO << MAGENTA << plong << " " << s_t << " " << c_p << " "
+          JSWARN << plong << " " << s_t << " " << c_p << " "
                  << k_perp1[1];
 
-          JSINFO << MAGENTA << newp[0] << " " << newp[1] << " " << newp[2]
+          JSWARN << newp[0] << " " << newp[1] << " " << newp[2]
                  << " " << newp[3];
+          Dump_pIn_info(i,pIn);
           cin >> blurb;
         }
         pOut[iout].set_jet_v(velocity_jet); // use initial jet velocity
@@ -1491,6 +1500,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                  << k_perp1[1];
           JSINFO << MAGENTA << newp[0] << " " << newp[1] << " " << newp[2]
                  << " " << newp[3];
+          Dump_pIn_info(i,pIn);
           cin >> blurb;
         }
 

@@ -84,10 +84,13 @@ void IPGlasmaWrapper::ReadNbcList(std::string filename) {
 }
 
 
-void IPGlasmaWrapper::SampleABinaryCollisionPoint(double &x, double &y) {
+void IPGlasmaWrapper::SampleABinaryCollisionPoint(double &t, double &x, 
+                                                  double &y, double &z) {
     int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
     x = binary_collision_x_[rand_idx];
     y = binary_collision_y_[rand_idx];
+    t = 0.0;
+    z = 0.0;
 }
 
 
