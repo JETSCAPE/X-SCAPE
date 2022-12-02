@@ -19,6 +19,7 @@ endif()
 
 # for mac compliance
 cmake_policy(SET CMP0042 NEW)
+cmake_policy(SET CMP0054 NEW)
 
 # Tell cmake where to find modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmakemodules")
