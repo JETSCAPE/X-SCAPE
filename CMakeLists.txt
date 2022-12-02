@@ -549,8 +549,8 @@ if (USE_3DGlauber)
     file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/tables/
        DESTINATION ${CMAKE_BINARY_DIR}/tables)
 #    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input
-#        ${CMAKE_BINARY_DIR}/mcgluaber.input)
-    configure_file(${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input ${CMAKE_BINARY_DIR}/mcgluaber.input COPYONLY)
+#        ${CMAKE_BINARY_DIR}/mcglauber.input)
+    configure_file(${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input ${CMAKE_BINARY_DIR}/mcglauber.input COPYONLY)
 
 
   else()
