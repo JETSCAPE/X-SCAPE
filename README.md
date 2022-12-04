@@ -8,6 +8,10 @@ Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you us
 
 ## Installation
 
+When following the JETSCAPE installation instructions to install X-SCAPE, the Docker image tagged **v1.8** should be used instead of the image tagged as **stable**.
+
+Also, dependencies in Docker image **v1.8** require C++14 or greater to compile X-SCAPE.
+
 Please see the [Installation Instructions](https://github.com/JETSCAPE/JETSCAPE/wiki/Doc.Installation).
 
 ## Running JETSCAPE
