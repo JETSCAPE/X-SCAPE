@@ -96,13 +96,13 @@ void iMATTER::Init()
     std::stringstream pdfpath;
     pdfpath <<  getenv("PYTHIA8DIR") << "/share/Pythia8/pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
     // boost::filesystem::exists();
+    if( getenv("PYTHIA8DIR") == NULL){
+        throw std::runtime_error("$PYTHIA8DIR environment variable not set, please make sure the variable points to the pythia8 installation folder found using (export PYTHIA8DIR=`pythia8-config --prefix`).");
+    }
     if(!boost::filesystem::exists(pdfpath.str().c_str()))
     {
         pdfpath.clear();
         pdfpath <<  getenv("PYTHIA8DIR") << "/share/pythia8/pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
-    }
-    if( getenv("PYTHIA8DIR") == NULL){
-        throw std::runtime_error("$PYTHIA8DIR environment variable not set, please make sure the variable points to the pythia8 installation folder found using (export PYTHIA8DIR=`pythia8-config --prefix`).");
     }
     if(!boost::filesystem::exists(pdfpath.str().c_str()))
     {
