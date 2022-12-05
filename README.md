@@ -45,8 +45,6 @@ To generate JETSCAPE events, you should pass an XML file specifying the settings
 ./runJetscape ../config/jetscape_user.xml
 ```
 
-
-
 ### The XML Configuration
 
 All of the JETSCAPE settings are specified by two XML files:
