@@ -8,6 +8,32 @@ Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you us
 
 ## Installation
 
+When following the JETSCAPE installation instructions to install X-SCAPE, the Docker image tagged **v1.8** should be used instead of the image tagged as **stable**.
+
+For example, when the JETSCAPE instructions specify creating a container using the **stable** tag:
+```
+docker run -it -v ~/jetscape-docker:/home/jetscape-user --name myJetscape --user $(id -u):$(id -g) jetscape/base:stable
+ ```
+ Instead use **v1.8** when installing X-SCAPE:
+ ```
+ docker run -it -v ~/jetscape-docker:/home/jetscape-user --name myJetscape --user $(id -u):$(id -g) jetscape/base:v1.8
+ ```
+
+Also, dependencies in Docker image **v1.8** require cmake to be called specifying the language standard C++14 or greater when compiling X-SCAPE.
+
+For example, to compile X-SCAPE for the ISR run with [3DGlauber support](#3dglauber-support), run the get_3dglauber.sh script from the external_packages folder:
+```
+./get_3dglauber.sh
+```
+Then from the build folder, call cmake with the C++14 and 3DGlauber flags:
+```
+mkdir build
+cd build
+cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON
+make -j4   # Builds using 4 cores; adapt as appropriate 
+```
+
+
 Please see the [Installation Instructions](https://github.com/JETSCAPE/JETSCAPE/wiki/Doc.Installation).
 
 ## Running JETSCAPE
