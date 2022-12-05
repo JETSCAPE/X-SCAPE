@@ -101,7 +101,7 @@ void iMATTER::Init()
     }
     if(!boost::filesystem::exists(pdfpath.str().c_str()))
     {
-        pdfpath.clear();
+        pdfpath.str("");
         pdfpath <<  getenv("PYTHIA8DIR") << "/share/pythia8/pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
     }
     if(!boost::filesystem::exists(pdfpath.str().c_str()))
