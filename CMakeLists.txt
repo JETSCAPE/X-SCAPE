@@ -476,7 +476,7 @@ add_executable(PythiaBrickTest ./examples/custom_examples/PythiaBrickTest.cc)
 target_link_libraries(PythiaBrickTest JetScape )
 
 if(USE_3DGlauber)
-  add_executable(PythiaIsrTest ./examples/custom_examples/PythiaIsrTest.cc)
+  add_executable(PythiaIsrTest ./examples/PythiaIsrTest.cc)
   target_link_libraries(PythiaIsrTest JetScape )
 endif (USE_3DGlauber )
 
