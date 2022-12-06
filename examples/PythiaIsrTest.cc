@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 
   JSINFO << "Selecting main XML file: " << mainXMLName;
   JSINFO << "Selecting user XML file: " << userXMLName;
-  
+
   jetscape->SetXMLMainFileName(mainXMLName);
   jetscape->SetXMLUserFileName(userXMLName);
 
@@ -140,15 +140,15 @@ int main(int argc, char** argv)
   // Reading tMax from the xml
   double tMax = jetscape->GetXMLElementDouble({"Eloss", "maxT"});
 
-  // iMatter showers negative virtuality partons from 0 => -tMax 
-  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax); 
-  iMatter->SetMaxT(-tMax); 
+  // iMatter showers negative virtuality partons from 0 => -tMax
+  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax);
+  iMatter->SetMaxT(-tMax);
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
 
   isrJloss->AddPartonShowerGenerator(oldPSG);
   isrJloss->Add(iMatter);
-    
+
   isrManager->Add(isrJloss);
 
   pythiaIsrGun->Add(isrManager);
@@ -160,12 +160,12 @@ int main(int argc, char** argv)
   // Matter showers positive virtuality partons in forward evolution, -tMax => tMax
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
-  jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax); 
+  jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax);
   auto matter = make_shared<Matter> ();
   jlossmanager->SetTimeRange(-tMax,tMax);
   jloss->SetTimeRange(-tMax,tMax);
   matter->SetTimeRange(-tMax,tMax);
-  
+
   jloss->Add(matter);
   jlossmanager->Add(jloss);
   jetscape->Add(jlossmanager);
@@ -193,6 +193,10 @@ int main(int argc, char** argv)
   auto writerIsr= make_shared<JetScapeWriterIsrAscii> (outputFilename + "_isr.dat");
   writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
   jetscape->Add(writerIsr);
+
+  auto writerStd= make_shared<JetScapeWriterAscii> (outputFilename + ".dat");
+  writerStd->SetId("StdAsciiWriter"); //for task search test ...
+  jetscape->Add(writerStd);
 
   // Intialize all modules tasks
   jetscape->Init();

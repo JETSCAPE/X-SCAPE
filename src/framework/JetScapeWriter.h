@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -54,6 +54,7 @@ public:
   virtual void WriteWhiteSpace(string s){};
   virtual void Write(ostream *o){};
   virtual void Write(weak_ptr<Hadron> h){};
+  virtual void Write(weak_ptr<Hadron> h, int i){};
 
   /// Gets called first, before all tasks write themselves
   virtual void WriteHeaderToFile(){};
