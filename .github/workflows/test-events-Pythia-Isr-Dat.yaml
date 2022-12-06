@@ -1,4 +1,4 @@
-name: build+regression test pp
+name: build+regression test Pythia-ISR Dat Output
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ env:
 
 jobs:
   build:
-    name: pp+PbPb
+    name: Pythia-ISR-TEST Dat File
     runs-on: ubuntu-latest
     
     container:
@@ -30,13 +30,18 @@ jobs:
       uses: actions/checkout@v2
       with:
         path: ${{ github.event.repository.name }}
+
+    - name: Download 3DGlouber
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
+        ./get_3dglauber.sh
       
     - name: Build Application
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
-        cmake .. -DCMAKE_CXX_STANDARD=14
+        cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON
         make -j2
 
     - name: Checkout TEST-EXAMPLES
@@ -45,5 +50,7 @@ jobs:
         repository: JETSCAPE/TEST-EXAMPLES
         path: TEST-EXAMPLES
       
-    - name: Run pp tests
-      run: ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/runTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/config/jetscapeTestConfig.yaml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/output/latest
+    - name: Run Pythia ISR Dat File Tests
+      run: |
+        export PYTHIA8="${PYTHIA8DIR}"
+        ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/runPythiaIsrDatTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/config/jetscape_user_iMATTERMCGlauber.xml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/output/latest

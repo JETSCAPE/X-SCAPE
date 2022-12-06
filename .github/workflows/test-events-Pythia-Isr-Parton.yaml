@@ -1,4 +1,4 @@
-name: build+regression test Pythia-ISR
+name: build+regression test Pythia-ISR Parton Output
 
 on:
   pull_request:
@@ -10,14 +10,14 @@ on:
     branches:
       - main
       - XSCAPE-RC1
-      - latessa/IsrWorkflows
+      - latessa/separated-ISR-tests
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
 
 jobs:
   build:
-    name: Pythia-ISR-TEST
+    name: Pythia-ISR-TEST Parton File
     runs-on: ubuntu-latest
     
     container:
@@ -50,7 +50,7 @@ jobs:
         repository: JETSCAPE/TEST-EXAMPLES
         path: TEST-EXAMPLES
       
-    - name: Run Pythia ISR Tests
+    - name: Run Pythia ISR Parton File Tests
       run: |
         export PYTHIA8="${PYTHIA8DIR}"
-        ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/runPythiaIsrTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/config/jetscape_user_iMATTERMCGlauber.xml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/output/latest
+        ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/runPythiaIsrPartonTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/config/jetscape_user_iMATTERMCGlauber.xml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/isr/output/latest
