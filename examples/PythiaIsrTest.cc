@@ -194,9 +194,9 @@ int main(int argc, char** argv)
   writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
   jetscape->Add(writerIsr);
 
-  auto writerStd= make_shared<JetScapeWriterAscii> (outputFilename + ".dat");
-  writerStd->SetId("StdAsciiWriter"); //for task search test ...
-  jetscape->Add(writerStd);
+  //auto writerStd= make_shared<JetScapeWriterAscii> (outputFilename + ".dat");
+  //writerStd->SetId("StdAsciiWriter"); //for task search test ...
+  //jetscape->Add(writerStd);
 
   // Intialize all modules tasks
   jetscape->Init();
