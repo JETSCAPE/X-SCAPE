@@ -1,5 +1,6 @@
 # XSCAPE 1.0.1
 
+The X-ion collisions with a Statistically and Computationally Advanced Program Envelope is the enhanced project of the JETSCAPE collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions. 
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
 For a full introduction to JETSCAPE, please see [The JETSCAPE framework](https://arxiv.org/abs/1903.07706).
