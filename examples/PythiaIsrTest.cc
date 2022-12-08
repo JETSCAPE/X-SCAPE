@@ -121,7 +121,8 @@ int main(int argc, char** argv)
   // ISR Mangers Shower module
   auto isrManager = make_shared<IsrManager>();
   auto isrJloss = make_shared<IsrJet>();
-  auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
+  auto stdPSG = make_shared<PartonShowerGeneratorDefault>();
+  // minor changes to allow backward time evolution (wrt to DoShower() in JetEnergyLoss class implementation)
   auto iMatter = make_shared<iMATTER> ();
 
   // Reading tMax from the xml
@@ -133,9 +134,8 @@ int main(int argc, char** argv)
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
 
-  isrJloss->AddPartonShowerGenerator(oldPSG);
+  isrJloss->AddPartonShowerGenerator(stdPSG);
   isrJloss->Add(iMatter);
-
   isrManager->Add(isrJloss);
 
   pythiaIsrGun->Add(isrManager);
@@ -149,9 +149,6 @@ int main(int argc, char** argv)
   auto jloss = make_shared<JetEnergyLoss> ();
   jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax);
   auto matter = make_shared<Matter> ();
-  jlossmanager->SetTimeRange(-tMax,tMax);
-  jloss->SetTimeRange(-tMax,tMax);
-  matter->SetTimeRange(-tMax,tMax);
 
   jloss->Add(matter);
   jlossmanager->Add(jloss);

@@ -54,7 +54,6 @@ public:
   virtual void WriteWhiteSpace(string s){};
   virtual void Write(ostream *o){};
   virtual void Write(weak_ptr<Hadron> h){};
-  virtual void Write(weak_ptr<Hadron> h, int i){};
 
   /// Gets called first, before all tasks write themselves
   virtual void WriteHeaderToFile(){};

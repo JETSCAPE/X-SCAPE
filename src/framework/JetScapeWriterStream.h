@@ -51,7 +51,6 @@ public:
   void Write(weak_ptr<Parton> p);
   void Write(weak_ptr<Vertex> v);
   void Write(weak_ptr<Hadron> h);
-  void Write(weak_ptr<Hadron> h, int i);
   void WriteHeaderToFile();
 
   void Write(string s) { output_file << s << endl; }

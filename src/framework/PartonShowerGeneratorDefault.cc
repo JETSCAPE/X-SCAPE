@@ -29,7 +29,7 @@ namespace Jetscape {
 void PartonShowerGeneratorDefault::DoShower(JetEnergyLoss &j)
 {
   double tStart=j.GetStartT();
-  double currentTime=0;
+  double currentTime=tStart;
 
   VERBOSESHOWER(8)<<"Hard Parton from Initial Hard Process ...";
   VERBOSEPARTON(6,*j.GetShowerInitiatingParton());
@@ -64,7 +64,7 @@ void PartonShowerGeneratorDefault::DoShower(JetEnergyLoss &j)
   {
     VERBOSESHOWER(7)<<"Current time = "<<currentTime<<" with #Input "<<pIn.size();
     currentTime += j.GetDeltaT();
-    
+
     // --------------------------------------------
 
     for (int i=0;i<pIn.size();i++)

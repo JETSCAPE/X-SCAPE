@@ -166,14 +166,7 @@ void JetScapeWriterStream<T>::Write(weak_ptr<PartonShower> ps) {
 template <class T> void JetScapeWriterStream<T>::Write(weak_ptr<Hadron> h) {
   auto hh = h.lock();
   if (hh) {
-    output_file << *hh << endl;
-  }
-}
-
-template <class T> void JetScapeWriterStream<T>::Write(weak_ptr<Hadron> h, int i) {
-  auto hh = h.lock();
-  if (hh) {
-    WriteWhiteSpace("[" + to_string(i) + "] H");
+    WriteWhiteSpace("[" + to_string(hh->plabel()) + "] H");
     output_file << *hh << endl;
   }
 }
