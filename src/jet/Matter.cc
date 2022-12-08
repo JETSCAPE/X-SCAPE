@@ -438,8 +438,10 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
     // if(now_R0^2-now_Ri^2<0) print out pIn info and exit
 
+    // I.S :
+    // added the check initR0 > 0 to make sure the warning only happens for final state radiation
     if (std::isinf(now_R0) || std::isnan(now_R0) || std::isinf(now_Rz) ||
-        std::isnan(now_Rz) || std::abs(now_Rz) > now_R0 + error) {
+        std::isnan(now_Rz) || (std::abs(now_Rz) > now_R0 && initR0 > 0 )) {
       JSINFO << BOLDYELLOW << "First instance";
       JSINFO << BOLDYELLOW << "now_R for vector is:" << now_R0 << ", " << now_Rx
              << ", " << now_Ry << ", " << now_Rz;
