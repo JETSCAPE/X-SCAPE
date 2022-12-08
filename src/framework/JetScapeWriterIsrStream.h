@@ -45,7 +45,6 @@ class JetScapeWriterIsrStream : public JetScapeWriterStream<T>
     JetScapeWriterStream<T>::Write(v);
   };
   void Write(weak_ptr<Hadron> h) {};
-  void Write(weak_ptr<Hadron> h, int i){};
   //void WriteComment(string s) {};
 
  private:
