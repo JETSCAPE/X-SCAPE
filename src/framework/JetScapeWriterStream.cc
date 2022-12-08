@@ -43,7 +43,8 @@ template <class T> void JetScapeWriterStream<T>::WriteHeaderToFile() {
   VERBOSE(3) << "Run JetScapeWriterStream<T>: Write header of event # "
              << GetCurrentEvent() << " ...";
   Write(to_string(GetCurrentEvent()) + " Event");
-
+  hadronCounter = 0;
+  
   std::ostringstream oss;
   oss.str("");
   oss << GetId() << "sigmaGen " << GetHeader().GetSigmaGen();
@@ -166,8 +167,9 @@ void JetScapeWriterStream<T>::Write(weak_ptr<PartonShower> ps) {
 template <class T> void JetScapeWriterStream<T>::Write(weak_ptr<Hadron> h) {
   auto hh = h.lock();
   if (hh) {
-    WriteWhiteSpace("[" + to_string(hh->plabel()) + "] H");
+    WriteWhiteSpace("[" + to_string(hadronCounter) + "] H");
     output_file << *hh << endl;
+    hadronCounter++;
   }
 }
 

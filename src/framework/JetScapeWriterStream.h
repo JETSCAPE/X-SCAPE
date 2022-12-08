@@ -60,6 +60,7 @@ public:
 
 protected:
   T output_file; //!< Output file
+  int hadronCounter = 0;
   //int m_precision; //!< Output precision
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
