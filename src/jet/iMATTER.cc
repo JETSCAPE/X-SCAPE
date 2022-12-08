@@ -587,6 +587,10 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pOut[iout].set_mean_form_time();
         
             pOut[iout].set_form_time( generate_L(std::abs( 2*ParentEn/t ) ) );
+            
+            pOut[iout-1].set_mean_form_time();
+        
+            pOut[iout-1].set_form_time( generate_L(std::abs( 2*SiblingEn/t2 ) ) );
 
           
         }
