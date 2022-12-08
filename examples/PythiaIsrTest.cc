@@ -12,9 +12,9 @@
  * Distributed under the GNU General Public License 3.0 (GPLv3 or later).
  * See COPYING for details.
  ******************************************************************************/
-// -------------------------------------------------
-// XSCAPE Framework Clock Pythia Brick Test Program
-// -------------------------------------------------
+// ---------------------------------------------
+// ISR/small sytem Brick Test XSCAPE Framework
+// ---------------------------------------------
 
 #include <iostream>
 #include <time.h>
@@ -23,6 +23,14 @@
 #include "JetScape.h"
 #include "JetEnergyLoss.h"
 #include "JetEnergyLossManager.h"
+#include "HadronizationManager.h"
+#include "Hadronization.h"
+#include "IsrManager.h"
+#include "IsrJet.h"
+#include "PartonShowerGeneratorDefault.h"
+#include "IsrShowerPSG.h"
+
+// Various output writer includes ...
 #include "JetScapeWriterFinalStateStream.h"
 #include "JetScapeWriterStream.h"
 #include "JetScapeWriterIsrStream.h"
@@ -30,41 +38,19 @@
 #include "JetScapeWriterHepMC.h"
 #endif
 
-
-// User modules derived from jetscape framework clasess
-#include "TrentoInitial.h"
-#include "AdSCFT.h"
+// User modules derived from jetscape framework clasess ...
 #include "Matter.h"
-#include "LBT.h"
-#include "Martini.h"
 #include "Brick.h"
-#include "BrickTest.h"
-#include "GubserHydro.h"
 #include "PythiaIsrGun.h"
-#include "InitialStateRadiationTest.h"
-#include "HadronizationManager.h"
-#include "Hadronization.h"
 #include "iColoredHadronization.h"
-#include "ColoredHadronization.h"
-#include "ColorlessHadronization.h"
-#include "CascadeTest.h"
-#include "IsrManager.h"
-#include "DummySplit.h"
 #include "iMATTER.h"
-#include "PartonShowerGeneratorDefault.h"
-#include "IsrJet.h"
-#include "IsrShowerPSG.h"
 #include "MCGlauberWrapper.h"
 #include "MCGlauberGenStringWrapper.h"
-
-
-#include "QueryHistory.h"
 
 #include <chrono>
 #include <thread>
 
 using namespace std;
-
 using namespace Jetscape;
 
 // Forward declaration
@@ -87,7 +73,6 @@ int main(int argc, char** argv)
   //SetVerboseLevel (9 a lot of additional debug output ...)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
-
 
   Show();
 
@@ -121,6 +106,8 @@ int main(int argc, char** argv)
 
   JetScapeXML::Instance()->OpenXMLMainFile(jetscape->GetXMLMainFileName());
   JetScapeXML::Instance()->OpenXMLUserFile(jetscape->GetXMLUserFileName());
+
+  INFO_NICE;
 
   jetscape->SetId("primary");
 
@@ -170,7 +157,6 @@ int main(int argc, char** argv)
   jlossmanager->Add(jloss);
   jetscape->Add(jlossmanager);
 
-
   // Hadronization Module which uses the colors of partons from ISR to FSR
   auto hadroMgr = make_shared<HadronizationManager> ();
   auto hadro = make_shared<Hadronization> ();
@@ -179,6 +165,7 @@ int main(int argc, char** argv)
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
 
+  // Output writer and filename setup from command line ...
   std::string outputFilename = jetscape->GetXMLElementText({"outputFilename"});
 
   auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
@@ -194,9 +181,19 @@ int main(int argc, char** argv)
   writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
   jetscape->Add(writerIsr);
 
-  //auto writerStd= make_shared<JetScapeWriterAscii> (outputFilename + ".dat");
-  //writerStd->SetId("StdAsciiWriter"); //for task search test ...
-  //jetscape->Add(writerStd);
+  // Additional output writer examples ...
+  // For HepmC output in ROOT format see PythiaBrickTestRoot.cc custom example.
+  /*
+  auto writerStd= make_shared<JetScapeWriterAscii> (outputFilename + ".dat");
+  writerStd->SetId("StdAsciiWriter"); //for task search test ...
+  jetscape->Add(writerStd);
+
+  #ifdef USE_HEPMC
+  auto writerHepMC= make_shared<JetScapeWriterHepMC> (outputFilename + ".hepmc");
+  writerHepMC->SetId("hepMCWriter");
+  jetscape->Add(writerHepMC);
+  #endif
+  */
 
   // Intialize all modules tasks
   jetscape->Init();
@@ -215,7 +212,6 @@ int main(int argc, char** argv)
   printf ("CPU time: %f seconds.\n",((float)t)/CLOCKS_PER_SEC);
   printf ("Real time: %f seconds.\n",difftime(end,start));
 
-
   return 0;
 }
 
@@ -223,8 +219,8 @@ int main(int argc, char** argv)
 
 void Show()
 {
-  INFO_NICE<<"-------------------------------------------";
-  INFO_NICE<<"| Clock Brick Test XSCAPE Framework ...   |";
-  INFO_NICE<<"-------------------------------------------";
+  INFO_NICE<<"-----------------------------------------------";
+  INFO_NICE<<"| ISR/small sytem Brick Test XSCAPE Framework |";
+  INFO_NICE<<"-----------------------------------------------";
   INFO_NICE;
 }
