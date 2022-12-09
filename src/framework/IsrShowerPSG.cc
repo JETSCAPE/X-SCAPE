@@ -83,7 +83,8 @@ void IsrShowerPSG::DoExecTime(JetEnergyLoss &j)
     //cout<<endl;
   }
 
-  j.DoExecTime();
+  // JP: Check if here not added an extra deltaT
+  j.DoExecTime(j.GetModuleCurrentTime(),j.GetModuleDeltaT());
 
   j.pIn.clear(); j.vStartVec.clear();
 
