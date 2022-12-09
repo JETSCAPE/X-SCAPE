@@ -133,7 +133,7 @@ void JetEnergyLoss::Init() {
   maxT = GetXMLElementDouble({"Eloss", "maxT"});
 
   if (GetActive())
-    JSINFO << "Eloss shower with deltaT = " << deltaT << " startT = "<<GetStartT() << " and maxT = " << maxT;
+    JSINFO << "Eloss shower with deltaT = " << deltaT << " and maxT = " << maxT;
   else
     JSINFO << "Eloss shower via Main Clock ...";
 
