@@ -96,16 +96,6 @@ void IsrShowerPSG::DoInitPerEvent(JetEnergyLoss &j)
 
   j.foundchangedorig = true;
 
-  //debug:
-  /*
-  auto pS=j.GetShower();
-  pS->SaveAsGV("isr_"+std::to_string(j.GetMyTaskNumber())+".gv");
-  */
-  //cout<<"IsrShowerPSG::DoInitPerEvent(JetEnergyLoss &j)"<<endl;
-  //pS->PrintNodes(false);
-  //pS->PrintEdges(false);
-  //cout<<this<<endl;
-
 }
 
 // for debug ...
