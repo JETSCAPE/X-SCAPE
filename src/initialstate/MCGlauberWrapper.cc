@@ -34,13 +34,13 @@ MCGlauberWrapper::MCGlauberWrapper() {
 
 
 void MCGlauberWrapper::InitTask() {
-        parameter_list_.read_in_parameters_from_file("mcgluaber.input");
+        parameter_list_.read_in_parameters_from_file("mcglauber.input");
         //int ran_seed = parameter_list_.get_seed();
         auto ran_seed = (*GetMt19937Generator())();
         auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
 
         mc_gen_ = std::shared_ptr<MCGlb::EventGenerator>(
-                  new MCGlb::EventGenerator("mcgluaber.input", ran_seed));
+                  new MCGlb::EventGenerator("mcglauber.input", ran_seed));
 }
 
 void MCGlauberWrapper::Clear() {

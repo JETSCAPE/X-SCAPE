@@ -89,9 +89,11 @@ protected:
   static RegisterJetScapeModule<JetScapeWriterFinalStateHadronsStream<ogzstream>> regHadronGZ;
 };
 
+typedef JetScapeWriterFinalStateStream<ofstream> JetScapeWriterFinalStateStreamAscii;
 typedef JetScapeWriterFinalStatePartonsStream<ofstream> JetScapeWriterFinalStatePartonsAscii;
 typedef JetScapeWriterFinalStateHadronsStream<ofstream> JetScapeWriterFinalStateHadronsAscii;
 #ifdef USE_GZIP
+typedef JetScapeWriterFinalStateStream<ogzstream> JetScapeWriterFinalStateStreamAsciiGZ;
 typedef JetScapeWriterFinalStatePartonsStream<ogzstream> JetScapeWriterFinalStatePartonsAsciiGZ;
 typedef JetScapeWriterFinalStateHadronsStream<ogzstream> JetScapeWriterFinalStateHadronsAsciiGZ;
 #endif

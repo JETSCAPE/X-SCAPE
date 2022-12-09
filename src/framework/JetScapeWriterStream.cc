@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -43,7 +43,8 @@ template <class T> void JetScapeWriterStream<T>::WriteHeaderToFile() {
   VERBOSE(3) << "Run JetScapeWriterStream<T>: Write header of event # "
              << GetCurrentEvent() << " ...";
   Write(to_string(GetCurrentEvent()) + " Event");
-
+  hadronCounter = 0;
+  
   std::ostringstream oss;
   oss.str("");
   oss << GetId() << "sigmaGen " << GetHeader().GetSigmaGen();
@@ -166,7 +167,9 @@ void JetScapeWriterStream<T>::Write(weak_ptr<PartonShower> ps) {
 template <class T> void JetScapeWriterStream<T>::Write(weak_ptr<Hadron> h) {
   auto hh = h.lock();
   if (hh) {
+    WriteWhiteSpace("[" + to_string(hadronCounter) + "] H");
     output_file << *hh << endl;
+    hadronCounter++;
   }
 }
 

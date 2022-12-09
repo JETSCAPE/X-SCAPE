@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.6.4)
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 
 project( googletest-distribution )
 

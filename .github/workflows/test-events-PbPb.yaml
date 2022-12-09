@@ -4,12 +4,13 @@ on:
   pull_request:
     branches:
       - main
-      - dockerImage
+      - XSCAPE-RC1
 
   push:
     branches:
       - main
-      - dockerImage
+      - XSCAPE-RC1
+      - latessa/separated-ISR-tests
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}

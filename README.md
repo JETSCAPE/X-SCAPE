@@ -1,5 +1,6 @@
-# JETSCAPE 3.5.1
+# XSCAPE 1.0.1
 
+The X-ion collisions with a Statistically and Computationally Advanced Program Envelope is the enhanced project of the JETSCAPE collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions. 
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
 For a full introduction to JETSCAPE, please see [The JETSCAPE framework](https://arxiv.org/abs/1903.07706).
@@ -7,6 +8,32 @@ For a full introduction to JETSCAPE, please see [The JETSCAPE framework](https:/
 Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you use this package for scientific work.
 
 ## Installation
+
+When following the JETSCAPE installation instructions to install X-SCAPE, the Docker image tagged **v1.8** should be used instead of the image tagged as **stable**.
+
+For example, when the JETSCAPE instructions specify creating a container using the **stable** tag:
+```
+docker run -it -v ~/jetscape-docker:/home/jetscape-user --name myJetscape --user $(id -u):$(id -g) jetscape/base:stable
+ ```
+ Instead use **v1.8** when installing X-SCAPE:
+ ```
+ docker run -it -v ~/jetscape-docker:/home/jetscape-user --name myJetscape --user $(id -u):$(id -g) jetscape/base:v1.8
+ ```
+
+Also, dependencies in Docker image **v1.8** require cmake to be called specifying the language standard C++14 or greater when compiling X-SCAPE.
+
+For example, to compile X-SCAPE for the ISR run with [3DGlauber support](#3dglauber-support), run the get_3dglauber.sh script from the external_packages folder:
+```
+./get_3dglauber.sh
+```
+Then from the build folder, call cmake with the C++14 and 3DGlauber flags:
+```
+mkdir build
+cd build
+cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON
+make -j4   # Builds using 4 cores; adapt as appropriate 
+```
+
 
 Please see the [Installation Instructions](https://github.com/JETSCAPE/JETSCAPE/wiki/Doc.Installation).
 

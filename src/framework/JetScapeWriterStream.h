@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -60,6 +60,7 @@ public:
 
 protected:
   T output_file; //!< Output file
+  int hadronCounter = 0;
   //int m_precision; //!< Output precision
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.

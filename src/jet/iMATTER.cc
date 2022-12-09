@@ -33,6 +33,7 @@
 #include "Pythia8/Pythia.h"
 #include "tinyxml2.h"
 #include <iostream>
+#include <boost/filesystem.hpp>
 
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
@@ -93,10 +94,20 @@ void iMATTER::Init()
     Pythia8::Info info; 
     // Get Pythia data directory //
     std::stringstream pdfpath;
-    if( getenv("PYTHIA8") == NULL){
-        throw std::runtime_error("$PYTHIA8 environment variable not set, please make sure the variable PYTHIA8 points to the pythia8 installation folder found using (export PYTHIA8=`pythia8-config --prefix`).");
+    pdfpath <<  getenv("PYTHIA8DIR") << "/share/Pythia8/pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
+    // boost::filesystem::exists();
+    if( getenv("PYTHIA8DIR") == NULL){
+        throw std::runtime_error("$PYTHIA8DIR environment variable not set, please make sure the variable points to the pythia8 installation folder found using (export PYTHIA8DIR=`pythia8-config --prefix`).");
     }
-    pdfpath <<  getenv("PYTHIA8") << "/share/pythia8/pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
+    if(!boost::filesystem::exists(pdfpath.str().c_str()))
+    {
+        pdfpath.str("");
+        pdfpath <<  getenv("PYTHIA8DIR") << "/share/pythia8/pdfdata"; // usually PYTHIA8DATA leads to xmldoc but need pdfdata
+    }
+    if(!boost::filesystem::exists(pdfpath.str().c_str()))
+    {
+        throw std::runtime_error("iMatter cannot find the pdfdata folder of pythia. Tried looking in " + pdfpath.str());
+    }
     pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
     
 
@@ -576,6 +587,10 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             pOut[iout].set_mean_form_time();
         
             pOut[iout].set_form_time( generate_L(std::abs( 2*ParentEn/t ) ) );
+            
+            pOut[iout-1].set_mean_form_time();
+        
+            pOut[iout-1].set_form_time( generate_L(std::abs( 2*SiblingEn/t2 ) ) );
 
           
         }
