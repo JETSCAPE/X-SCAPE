@@ -5,7 +5,7 @@ cmake_policy(SET CMP0042 NEW)
 
 message("Compiler and Linker flags ...")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O -fPIC -pipe -Wall -g -Wno-unused-variable -Wno-unused-private-field -Wno-reorder -Wno-logical-op-parentheses")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O -fPIC -pipe -Wall -g -Wno-unused-variable -Wno-reorder -Wno-maybe-uninitialized")
 
 if(LINUX) 
     message( STATUS "Linux : " ${CMAKE_HOST_SYSTEM})
@@ -15,7 +15,7 @@ endif()
 if (APPLE)
     message( STATUS "Apple : " ${CMAKE_HOST_SYSTEM})
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined -std=c++11 -stdlib=libc++")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined -std=c++11 -stdlib=libc++ -Wno-unused-private-field -Wno-logical-op-parentheses")
     elseif()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-builtin-macro-redefined -std=c++11")
     endif()
