@@ -164,7 +164,7 @@ version of iSS, one can run the shell script under the external_packages folder,
     ./get_iSS.sh
 ```
 
-To compile the iSS code together with the XETSCAPE framework, please turn
+To compile the iSS code together with the JETSCAPE framework, please turn
 on the iSS support option,
 
 ```bash
