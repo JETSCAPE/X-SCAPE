@@ -1,4 +1,4 @@
-# XSCAPE 0.9
+# XSCAPE 0.9.1
 
 The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (XSCAPE) is the enhanced (and 2nd) project of the JETSCAPE collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions. The new framework allows for novel functionality such as the ability of the main simulation clock to go backwards and forwards, to deal systematically with initial state and final state evolution. It allows for multiple bulk event generators to run concurrently while exchanging information via a new Bulk Dynamics Manager. The XSCAPE framework can be run using the new functionality or in JETSCAPE mode allowing for full backwards compatibility. New modules can also run in a hybrid fashion, choosing to use or not use the new clock functionality.
 
