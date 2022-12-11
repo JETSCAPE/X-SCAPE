@@ -157,7 +157,7 @@ To run JETSCAPE with MUSIC, one needs to use MPI commands,
 ### iSS support 
 
 iSS is a Monte Carlo sampler code after the hydrodynamics and can be integrated 
-into the XETSCAPE framework. To download the lastest
+into the JETSCAPE framework. To download the lastest
 version of iSS, one can run the shell script under the external_packages folder,
 
 ```bash
