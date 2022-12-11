@@ -34,7 +34,7 @@ cd build
 cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON
 make -j4   # Builds using 4 cores; adapt as appropriate
 ```
-
+If installing X-SCAPE with SMASH, the [get_smash.sh](https://github.com/JETSCAPE/X-SCAPE-COMP/blob/main/external_packages/get_smash.sh) script will clone an [alternate branch](https://github.com/smash-transport/smash/tree/staudenmaier/mod_plist_ts) of SMASH currently required for use with X-SCAPE.  A future release of SMASH will bring X-SCAPE support to SMASH's main branch.
 
 Please see the [Installation Instructions](https://github.com/JETSCAPE/JETSCAPE/wiki/Doc.Installation).
 
