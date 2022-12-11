@@ -1,6 +1,7 @@
-# XSCAPE 1.0.1
+# XSCAPE 0.9
 
-The X-ion collisions with a Statistically and Computationally Advanced Program Envelope is the enhanced project of the JETSCAPE collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions. 
+The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (XSCAPE) is the enhanced (and 2nd) project of the JETSCAPE collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions. The new framework allows for novel functionality such as the ability of the main simulation clock to go backwards and forwards, to deal systematically with initial state and final state evolution. It allows for multiple bulk event generators to run concurrently while exchanging information via a new Bulk Dynamics Manager. The XSCAPE framework can be run using the new functionality or in JETSCAPE mode allowing for full backwards compatibility. New modules can also run in a hybrid fashion, choosing to use or not use the new clock functionality.
+
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
 For a full introduction to JETSCAPE, please see [The JETSCAPE framework](https://arxiv.org/abs/1903.07706).
@@ -31,7 +32,7 @@ Then from the build folder, call cmake with the C++14 and 3DGlauber flags:
 mkdir build
 cd build
 cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON
-make -j4   # Builds using 4 cores; adapt as appropriate 
+make -j4   # Builds using 4 cores; adapt as appropriate
 ```
 
 
@@ -100,7 +101,7 @@ Tuning of Pb-Pb is ongoing.
 Several example hydro profiles can be downloaded using `examples/get_hydroSample*`.
 
 ## X-SCAPE modules
-### 3DGlauber support 
+### 3DGlauber support
 
 3DGlauber is a 3D initial state model. 3DGlauber generates the initial state for MUSIC and can be integrated into the JETSCAPE framework. To download the latest version of 3DGlauber, one can run the shell script under the external_packages folder,
 
@@ -153,17 +154,17 @@ To run JETSCAPE with MUSIC, one needs to use MPI commands,
 ```bash
     mpirun -np 1 ./MUSICTest
 ```
-### iSS support 
+### iSS support
 
-iSS is a Monte Carlo sampler code after the hydrodynamics and can be integrated 
-into the XETSCAPE framework. To download the lastest
+iSS is a Monte Carlo sampler code after the hydrodynamics and can be integrated
+into the JETSCAPE framework. To download the lastest
 version of iSS, one can run the shell script under the external_packages folder,
 
 ```bash
     ./get_iSS.sh
 ```
 
-To compile the iSS code together with the XETSCAPE framework, please turn
+To compile the iSS code together with the JETSCAPE framework, please turn
 on the iSS support option,
 
 ```bash
@@ -174,7 +175,7 @@ on the iSS support option,
 ```
 
 ### Running JETSCAPE with CLVisc
-In order to run clvisc in jetscape, one has to download it in external\_packages/, using 
+In order to run clvisc in JETSCAPE, one has to download it in external\_packages/, using
 
 ```
 sh get_clvisc.sh
@@ -188,7 +189,7 @@ make
 ./runJetscape ../config/jetscape_clvisc.xml
 ```
 If the cmake fails because OpenCL is not installed, please check it.
-OpenCL is delivered in MacOS by default. 
+OpenCL is delivered in MacOS by default.
 If you use linux machine with Nvidia GPUs, you will need to install CUDA,
 which will provide OpenCL support.
 If you use linux machine with AMD GPUs, Intel GPUs or any CPUs,
@@ -222,8 +223,8 @@ See SMASH Readme for libraries required by SMASH and how to install them.
 
 ### Compiling JetScape with SMASH
 
-The usage of SMASH in JetScape as an afterburner requires hydro,
-sampler and SMASH itself. Therefore, to use it in JetScape,
+The usage of SMASH in JETSCAPE as an afterburner requires hydro,
+sampler and SMASH itself. Therefore, to use it in JETSCAPE,
 
 ```bash
     mkdir ${JETSCAPE_DIR}/build
