@@ -4,13 +4,13 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-RC1
+      - XSCAPE-RC1-Updates
 
   push:
     branches:
       - main
       - XSCAPE-RC1
-      - latessa/separated-ISR-tests
+      - XSCAPE-RC1-Updates
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
