@@ -83,7 +83,8 @@ void IsrShowerPSG::DoExecTime(JetEnergyLoss &j)
     //cout<<endl;
   }
 
-  j.DoExecTime();
+  // JP: Check if here not added an extra deltaT
+  j.DoExecTime(j.GetModuleCurrentTime(),j.GetModuleDeltaT());
 
   j.pIn.clear(); j.vStartVec.clear();
 
@@ -95,16 +96,6 @@ void IsrShowerPSG::DoInitPerEvent(JetEnergyLoss &j)
   VERBOSE(2);
 
   j.foundchangedorig = true;
-
-  //debug:
-  /*
-  auto pS=j.GetShower();
-  pS->SaveAsGV("isr_"+std::to_string(j.GetMyTaskNumber())+".gv");
-  */
-  //cout<<"IsrShowerPSG::DoInitPerEvent(JetEnergyLoss &j)"<<endl;
-  //pS->PrintNodes(false);
-  //pS->PrintEdges(false);
-  //cout<<this<<endl;
 
 }
 

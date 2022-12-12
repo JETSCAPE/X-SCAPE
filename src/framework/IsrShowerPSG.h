@@ -9,7 +9,7 @@
 #ifndef ISRSHOWERPSG_H
 #define ISRSHOWERPSG_H
 
-#include "PartonShowerGenerator.h"
+#include "PartonShowerGeneratorDefault.h"
 #include "PartonShower.h"
 #include <GTL/edge.h>
 
@@ -17,22 +17,19 @@ namespace Jetscape {
 
 class JetEnergyLoss;
 
-class IsrShowerPSG : public PartonShowerGenerator
+class IsrShowerPSG : public PartonShowerGeneratorDefault
 {
  public:
 
-  IsrShowerPSG() : PartonShowerGenerator() {}
+  IsrShowerPSG() : PartonShowerGeneratorDefault() {}
   virtual ~IsrShowerPSG() {};
 
   virtual void DoCalculateTime(JetEnergyLoss &j);
   virtual void DoExecTime(JetEnergyLoss &j);
   virtual void DoInitPerEvent(JetEnergyLoss &j);
-  //virtual void DoFinishPerEvent(JetEnergyLoss &j);
+  //virtual void DoFinishPerEvent(JetEnergyLoss &j); //DEBUG only ...
 
  private:
-
-   //shared_ptr<PartonShower> pS = nullptr;
-   //if use pointers or anything, proper copy has to be made of the PSG!!!
 
    void GetFinalEdgesForTime(shared_ptr<PartonShower> pS, double t, vector<edge> &vE);
    void GetFinalPartonsForTime(shared_ptr<PartonShower> pS, double t, vector<std::shared_ptr<Parton>> &vP);

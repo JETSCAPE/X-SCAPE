@@ -52,6 +52,11 @@ void IsrJet::Init()
   JSINFO << "Found " << GetNumberOfTasks()
          << " ISR Tasks/Modules Initialize them ... ";
 
+   if (GetActive())
+     JSINFO << "ISR shower with deltaT = " << GetDeltaT() << " startT = "<<GetStartT() << " and maxT = " << GetMaxT();
+   else
+     JSINFO << "ISR shower via Main Clock ...";
+
   JetScapeTask::InitTasks();
 }
 

@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - XSCAPE-RC1
+      - XSCAPE-RC1-Updates
 
 env:
   PULL_NUMBER: ${{ github.event.number }}
