@@ -1,6 +1,6 @@
 # XSCAPE 0.9.1
 
-The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (XSCAPE) is the enhanced (and 2nd) project of the JETSCAPE collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions. The new framework allows for novel functionality such as the ability of the main simulation clock to go backwards and forwards, to deal systematically with initial state and final state evolution. It allows for multiple bulk event generators to run concurrently while exchanging information via a new Bulk Dynamics Manager. The XSCAPE framework can be run using the new functionality or in JETSCAPE mode allowing for full backwards compatibility. New modules can also run in a hybrid fashion, choosing to use or not use the new clock functionality.
+The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (XSCAPE) is the enhanced (and 2nd) project of the JETSCAPE collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions. The new framework allows for novel functionality such as the ability of the main simulation clock to go backwards and forwards, to deal systematically with initial state and final state evolution. It allows for multiple bulk event generators to run concurrently while exchanging information via a new Bulk Dynamics Manager. The XSCAPE framework can be run using the new functionality or in JETSCAPE mode allowing for full backwards compatibility. New modules can also run in a hybrid fashion, choosing to use or not use the new clock functionality. More documentation of the new X-SCAPE framework capabilities will be provided in the near future. For now, test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory (for example in `PythiaBDMTest_Hydro_Cascade.cc`).
 
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
@@ -24,11 +24,11 @@ docker run -it -v ~/jetscape-docker:/home/jetscape-user --name myJetscape --user
 Also, dependencies in Docker image **v1.8** require cmake to be called specifying the language standard C++14 or greater when compiling X-SCAPE.
 
 For example, to compile X-SCAPE for the ISR run with [3DGlauber support](#3dglauber-support), run the get_3dglauber.sh script from the external_packages folder:
-```
+```bash
 ./get_3dglauber.sh
 ```
 Then from the build folder, call cmake with the C++14 and 3DGlauber flags:
-```
+```bash
 mkdir build
 cd build
 cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON
@@ -38,12 +38,19 @@ If installing X-SCAPE with SMASH, the [get_smash.sh](https://github.com/JETSCAPE
 
 Please see the [Installation Instructions](https://github.com/JETSCAPE/JETSCAPE/wiki/Doc.Installation).
 
-## Running JETSCAPE
+## Running X-SCAPE/JETSCAPE
 
-The main executable to generate JETSCAPE events is `runJetscape`, located in the `build/` directory.
-To generate JETSCAPE events, you should pass an XML file specifying the settings with which you would like to run:
+Running the new X-SCAPE module(s) (see below) is currently not supported vi the XML configuration (will be included in X-SCAPE 1.x). The small system physics (via 3d Glauber and iMatter ISR shower) provides its own executable:
 
+```bash
+./PythiaIsrTest
 ```
+
+More test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory.
+
+X-SCAPE is fully backwards compatible, so the main executable to generate JETSCAPE events is `runJetscape` located in the `build/` directory works and contains the same functionalities and features than the latest JETSCAPE release. To generate JETSCAPE events, you should pass an XML file specifying the settings with which you would like to run:
+
+```bash
 ./runJetscape ../config/jetscape_user.xml
 ```
 
@@ -67,14 +74,14 @@ the default parameter settings which will be used for all activated modules (as 
 if they are not overridden in the User XML file.
 
 You can pass the path to your user XML file as a command-line argument to the `runJetscape` executable:
-```
+```bash
 ./runJetscape /path/to/my/user_config.xml
 ```
 
 ## JETSCAPE Output
 
 JETSCAPE output can be generated in Ascii, gzipped Ascii, or HepMC format,
-and contains a full list of particles and the parton shower history.
+(for HepMC format in ROOT see `examples/custom_examples/PythiaBrickTestRoot.cc`) and contains a full list of particles and the parton shower history.
 You must specify which format you would like to activate in your User XML file.
 
 ### Analysis of JETSCAPE Output
@@ -93,14 +100,14 @@ which reads in the generated showers does some DFS search and shows the output. 
 ## JETSCAPE Tunes
 
 Currently, there exists a pp tune [PP19](https://arxiv.org/abs/1910.05481), which can be run by:
-```
+```bash
 ./runJetscape ../config/jetscape_user_PP19.xml
 ```
 
 Tuning of Pb-Pb is ongoing.
 Several example hydro profiles can be downloaded using `examples/get_hydroSample*`.
 
-## X-SCAPE modules
+## X-SCAPE modules (New)
 ### 3DGlauber support
 
 3DGlauber is a 3D initial state model. 3DGlauber generates the initial state for MUSIC and can be integrated into the JETSCAPE framework. To download the latest version of 3DGlauber, one can run the shell script under the external_packages folder,
@@ -114,15 +121,19 @@ To compile the 3DGlauber code together with the JETSCAPE framework, please turn 
 ```bash
     mkdir build
     cd build
-    cmake -DUSE_3DGlauber=ON ..
-    make
+    cmake -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON ..
+    make -j4
 ```
 ### Initial State Shower using iMatter
 
 To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix`.
 
-After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`
+After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` (in the build directory) to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`
 
+
+## JETSCAPE modules
+
+Since X-SCAPE is fully backwards compatible, all JETSCAPE modules can be used in X-SCAPE utilizing the JETSCAPE like per-event execution. Additional functions have to be implemented to extend towards per-time-step execution (normally achieved by refactoring the per-event code) using the new clock feature, allowing full concurrent running of all physics modules. More details will be provided in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### MUSIC support
 
@@ -177,12 +188,12 @@ on the iSS support option,
 ### Running JETSCAPE with CLVisc
 In order to run clvisc in JETSCAPE, one has to download it in external\_packages/, using
 
-```
+```bash
 sh get_clvisc.sh
 ```
 
 Then compile and run the framework with a XML configuration file which turns clvisc on.
-```
+```bash
 cd build/
 cmake .. -DUSE_CLVISC=on
 make
@@ -207,7 +218,7 @@ serve as an afterburner, useful to compute soft observables.
 SMASH is published on github at https://github.com/smash-transport/smash.
 See SMASH Readme for libraries required by SMASH and how to install them.
 
-```
+```bash
   export EIGEN3_ROOT=<eigen install directory>/include/eigen3/
   export GSL_ROOT_DIR=$(gsl-config --prefix)
   export BOOST_ROOT=<boost install directory>
