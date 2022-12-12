@@ -485,14 +485,11 @@ if(USE_3DGlauber)
   target_link_libraries(PythiaIsrTest JetScape )
 endif (USE_3DGlauber )
 
-add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
-target_link_libraries(PythiaBDMTest JetScape )
+#add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
+#target_link_libraries(PythiaBDMTest JetScape )
 
-add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
-target_link_libraries(PythiaNoBDMTest JetScape )
-
-add_executable(PythiaBDMTest_Hydro_Cascade ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
-target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
+#add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
+#target_link_libraries(PythiaNoBDMTest JetScape )
 
 if ( USE_SMASH )
     add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
