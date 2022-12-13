@@ -18,16 +18,16 @@ if(${HEPMC_FOUND})
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../lib/")
   set(CMAKE_INSTALL_LIBDIR "./")
 
-  message("ROOT_GENERATE_DICTIONARY .. ")
+  #message("ROOT_GENERATE_DICTIONARY .. ")
   include_directories(./)
   add_definitions(${ROOT_CXX_FLAGS})
 
-  ROOT_GENERATE_DICTIONARY(G__JetScapeRootLibDict ${HEADERS} LINKDEF JetScapeRootLinkDef.h)
+  #ROOT_GENERATE_DICTIONARY(G__JetScapeRootLibDict ${HEADERS} LINKDEF JetScapeRootLinkDef.h)
 
-  set (SOURCES ${SOURCES} G__JetScapeRootLibDict.cxx)
-  
-  add_library(JetScapeRoot SHARED ${SOURCES} G__JetScapeRootLibDict.cxx)
-  add_dependencies(JetScapeRoot G__JetScapeRootLibDict)
+  #set (SOURCES ${SOURCES} G__JetScapeRootLibDict.cxx)
+
+  add_library(JetScapeRoot SHARED ${SOURCES}) # G__JetScapeRootLibDict.cxx)
+  #add_dependencies(JetScapeRoot G__JetScapeRootLibDict)
 
   target_link_libraries(JetScapeRoot JetScape ${ROOT_LIBRARIES} -L${HEPMC_LIB_DIR} -lHepMC3 -lHepMC3rootIO)
 
