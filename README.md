@@ -132,7 +132,7 @@ To compile the 3DGlauber code together with the JETSCAPE framework, please turn 
 ```
 ### Initial State Shower using iMatter
 
-To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix`.
+To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix`. If you use the JETSCAPE docker container (v1.8), all environment variables, including the `$PYTHIA8` for iMatter are set properly.
 
 After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` (in the build directory) to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`
 
