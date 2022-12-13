@@ -87,7 +87,7 @@ You can pass the path to your user XML file as a command-line argument to the `r
 ## JETSCAPE Output
 
 JETSCAPE output can be generated in Ascii, gzipped Ascii, or HepMC format,
-(for HepMC format in ROOT see `examples/custom_examples/PythiaBrickTestRoot.cc`) and contains a full list of particles and the parton shower history.
+(for HepMC format in ROOT see `examples/custom_examples/PythiaBrickTestRoot.cc` and use cmake with `-DUSE_ROOT=ON`) and contains a full list of particles and the parton shower history.
 You must specify which format you would like to activate in your User XML file.
 
 ### Analysis of JETSCAPE Output
