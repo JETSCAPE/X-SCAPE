@@ -9,8 +9,8 @@ on:
   push:
     branches:
       - main
-      - XXSCAPE-0.9.1-for-public-repo
-      
+      - XSCAPE-0.9.1-for-public-repo
+
 env:
   REPO_NAME: ${{ github.event.repository.name }}
 
