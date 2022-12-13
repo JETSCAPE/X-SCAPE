@@ -4,14 +4,12 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-RC1
-      - XSCAPE-RC1-Updates
+      - XSCAPE-0.9.1-for-public-repo
 
   push:
     branches:
       - main
-      - XSCAPE-RC1
-      - XSCAPE-RC1-Updates
+      - XSCAPE-0.9.1-for-public-repo 
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -20,18 +18,18 @@ jobs:
   build:
     name: pp+PbPb
     runs-on: ubuntu-latest
-    
+
     container:
       image: jetscape/base:v1.8
       options: --user root
-      
+
     steps:
-      
+
     - name: Checkout Repository
       uses: actions/checkout@v2
       with:
         path: ${{ github.event.repository.name }}
-      
+
     - name: Build Application
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
@@ -45,6 +43,6 @@ jobs:
       with:
         repository: JETSCAPE/TEST-EXAMPLES
         path: TEST-EXAMPLES
-      
+
     - name: Run Pb-Pb tests
       run: ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/runTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/PbPb/config/jetscapeTestConfig.yaml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/PbPb/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/PbPb/output/latest

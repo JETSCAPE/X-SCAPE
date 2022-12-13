@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-      - XSCAPE-RC1
-      - XSCAPE-RC1-Updates
+      - XSCAPE-0.9.1-for-public-repo 
 
 env:
   PULL_NUMBER: ${{ github.event.number }}
@@ -15,18 +14,18 @@ jobs:
   build:
     name: Run_Plot_Test
     runs-on: ubuntu-latest
-    
+
     container:
       image: jetscape/base:v1.8
       options: --user root
-      
+
     steps:
-      
+
     - name: Checkout Repository
       uses: actions/checkout@v2
       with:
         path: ${{ github.event.repository.name }}
-      
+
     - name: Build Application
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
@@ -62,7 +61,7 @@ jobs:
         pwd
         echo "ls of archive"
         ls
-        
+
     - name: Deploy Plots
       uses: airvzxf/ftp-deployment-action@latest
       with:

@@ -4,15 +4,13 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-RC1
-      - XSCAPE-RC1-Updates
+      - XSCAPE-0.9.1-for-public-repo
 
   push:
     branches:
       - main
-      - XSCAPE-RC1
-      - XSCAPE-RC1-Updates
-
+      - XXSCAPE-0.9.1-for-public-repo
+      
 env:
   REPO_NAME: ${{ github.event.repository.name }}
 
@@ -20,13 +18,13 @@ jobs:
   build:
     name: Pythia-ISR-TEST Parton File
     runs-on: ubuntu-latest
-    
+
     container:
       image: jetscape/base:v1.8
       options: --user root
-      
+
     steps:
-      
+
     - name: Checkout Repository
       uses: actions/checkout@v2
       with:
@@ -36,7 +34,7 @@ jobs:
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
         ./get_3dglauber.sh
-      
+
     - name: Build Application
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
@@ -50,7 +48,7 @@ jobs:
       with:
         repository: JETSCAPE/TEST-EXAMPLES
         path: TEST-EXAMPLES
-      
+
     - name: Run Pythia ISR Parton File Tests
       run: |
         export PYTHIA8="${PYTHIA8DIR}"
