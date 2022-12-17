@@ -52,6 +52,8 @@
   <Hydro>
         <MUSIC>
             <InitialProfile>13</InitialProfile>
+            <output_evolution_to_file>0</output_evolution_to_file>
+            <flag_store_hydro_info_in_memory>0<flag_store_hydro_info_in_memory>
             <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
             <shear_viscosity_3_at_kink>0.12</shear_viscosity_3_at_kink>
             <temperature_dependent_bulk_viscosity>3<temperature_dependent_bulk_viscosity>

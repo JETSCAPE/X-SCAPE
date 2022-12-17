@@ -56,9 +56,11 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   // overwrite input options
   flag_output_evo_to_file = (
       GetXMLElementInt({"Hydro", "MUSIC", "output_evolution_to_file"}));
-  if (flag_output_evo_to_file == 1) {
-    music_hydro_ptr->set_parameter("output_evolution_to_file", 2);
-  }
+  music_hydro_ptr->set_parameter("output_evolution_data", flag_output_evo_to_file);
+  flag_store_hydro_info_in_memory = (
+      GetXMLElementInt({"Hydro", "MUSIC", "store_hydro_info_in_memory"}));
+  music_hydro_ptr->set_parameter("store_hydro_info_in_memory",
+                                  flag_store_hydro_info_in_memory);
   double tau_hydro = (
           GetXMLElementDouble({"Hydro", "MUSIC", "Initial_time_tau_0"}));
   music_hydro_ptr->set_parameter("Initial_time_tau_0", tau_hydro);
