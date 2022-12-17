@@ -480,8 +480,8 @@ if(USE_3DGlauber)
   target_link_libraries(PythiaIsrTest JetScape )
 endif (USE_3DGlauber )
 
-#add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
-#target_link_libraries(PythiaIsrMUSIC JetScape )
+add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
+target_link_libraries(PythiaIsrMUSIC JetScape )
 
 #add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
 #target_link_libraries(PythiaBDMTest JetScape )

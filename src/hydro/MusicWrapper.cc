@@ -85,6 +85,7 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
       GetXMLElementInt({"Hydro", "MUSIC", "T_dependent_Shear_to_S_ratio"}));
   if (flag_shear_Tdep > 0) {
     music_hydro_ptr->set_parameter("Viscosity_Flag_Yes_1_No_0", 1);
+    music_hydro_ptr->set_parameter("T_dependent_Shear_to_S_ratio", flag_shear_Tdep);
     if (flag_shear_Tdep == 3) {
       double shear_kinkT = (
         GetXMLElementDouble({"Hydro", "MUSIC", "eta_over_s_T_kink_in_GeV"}));
@@ -100,8 +101,8 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
       music_hydro_ptr->set_parameter("eta_over_s_high_T_slope_in_GeV",
                                      shear_highTslope);
       double shear_kink = (
-        GetXMLElementDouble({"Hydro", "MUSIC", "eta_over_s_at_kink"}));
-      music_hydro_ptr->set_parameter("eta_over_s_at_kink", shear_kink);
+        GetXMLElementDouble({"Hydro", "MUSIC", "shear_viscosity_3_at_kink"}));
+      music_hydro_ptr->set_parameter("shear_viscosity_3_at_kink", shear_kink);
     }
   }
 
@@ -113,8 +114,8 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
                                    flag_bulkvis);
     if (flag_bulkvis == 3) {
         double bulk_max = GetXMLElementDouble(
-              {"Hydro", "MUSIC", "zeta_over_s_max"});
-        music_hydro_ptr->set_parameter("zeta_over_s_max", bulk_max);
+              {"Hydro", "MUSIC", "bulk_viscosity_3_max"});
+        music_hydro_ptr->set_parameter("bulk_viscosity_3_max", bulk_max);
         double bulk_peakT = GetXMLElementDouble(
               {"Hydro", "MUSIC", "zeta_over_s_T_peak_in_GeV"});
         music_hydro_ptr->set_parameter("zeta_over_s_T_peak_in_GeV",

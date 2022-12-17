@@ -28,9 +28,18 @@
   <!-- Hard Process -->
   <Hard>
     <PythiaGun>
-      <pTHatMin>100</pTHatMin>
-      <pTHatMax>120</pTHatMax>
+      <pTHatMin>4</pTHatMin>
+      <pTHatMax>-1</pTHatMax>
       <eCM>5020</eCM>
+      <LinesToRead>
+        PhaseSpace:bias2Selection = on
+        PhaseSpace:bias2SelectionPow = 4
+        PhaseSpace:bias2SelectionRef = 10
+        SigmaProcess:alphaSvalue = 0.16
+        MultipartonInteractions:alphaSvalue = 0.16
+        MultipartonInteractions:pTmin = 7.0
+      </LinesToRead>
+      <useHybridHad>1</useHybridHad>
     </PythiaGun>
   </Hard>
 
@@ -43,15 +52,25 @@
   <Hydro>
         <MUSIC>
             <InitialProfile>13</InitialProfile>
-            <freezeout_temperature>0.15</freezeout_temperature>
+            <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
+            <shear_viscosity_3_at_kink>0.12</shear_viscosity_3_at_kink>
+            <temperature_dependent_bulk_viscosity>3<temperature_dependent_bulk_viscosity>
+            <bulk_viscosity_3_max>0.1</bulk_viscosity_3_max>
+            <freezeout_temperature>0.3</freezeout_temperature>
         </MUSIC>
   </Hydro>
 
   <!--Eloss Modules -->
   <Eloss>
+    <maxT>50</maxT>
     <Matter>
+      <Q0> 2.0 </Q0>
+      <in_vac> 1 </in_vac>
       <useHybridHad>1</useHybridHad>
-      <in_vac> 0 </in_vac>
+      <vir_factor> 0.25 </vir_factor>
+      <recoil_on> 0 </recoil_on>
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>
     </Matter>
   </Eloss>
 
