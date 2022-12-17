@@ -35,6 +35,7 @@ MpiMusic::MpiMusic() {
   freezeout_temperature = 0.0;
   doCooperFrye = 0;
   flag_output_evo_to_file = 0;
+  flag_store_hydro_info_in_memory = 0;
   has_source_terms = false;
   SetId("MUSIC");
   hydro_source_terms_ptr =
