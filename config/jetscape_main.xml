@@ -262,20 +262,19 @@
       <InitialProfile>13</InitialProfile>
       <Initial_time_tau_0>0.5</Initial_time_tau_0>
       <output_evolution_to_file>0</output_evolution_to_file>
-      <flag_store_hydro_info_in_memory>0</flag_store_hydro_info_in_memory>
+      <store_hydro_info_in_memory>0</store_hydro_info_in_memory>
       <shear_viscosity_eta_over_s>0.08</shear_viscosity_eta_over_s>
       <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
       <shear_viscosity_3_at_kink>0.16</shear_viscosity_3_at_kink>
-      <eta_over_s_low_T_slope_in_GeV>0.</eta_over_s_low_T_slope_in_GeV>
-      <eta_over_s_high_T_slope_in_GeV>0.</eta_over_s_high_T_slope_in_GeV>
-      <eta_over_s_at_kink>0.08</eta_over_s_at_kink>
+      <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
+      <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
       <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
       <bulk_viscosity_3_max>0.06</bulk_viscosity_3_max>
-      <zeta_over_s_T_peak_in_GeV>0.18</zeta_over_s_T_peak_in_GeV>
+      <zeta_over_s_T_peak_in_GeV>0.17</zeta_over_s_T_peak_in_GeV>
       <zeta_over_s_width_in_GeV>0.02</zeta_over_s_width_in_GeV>
-      <zeta_over_s_lambda_asymm>0.0</zeta_over_s_lambda_asymm>
+      <zeta_over_s_lambda_asymm>0.1</zeta_over_s_lambda_asymm>
       <Include_second_order_terms>1</Include_second_order_terms>
-      <freezeout_temperature>-1</freezeout_temperature>
+      <freezeout_temperature>0.3</freezeout_temperature>
       <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
     </MUSIC>
 
@@ -364,3 +363,4 @@
     </SMASH>
   </Afterburner>
 </jetscape>
+

@@ -9,7 +9,7 @@
 
   <vlevel> 4 </vlevel>
 
-  <nEvents> 1 </nEvents>
+  <nEvents> 10 </nEvents>
 
   <Random>
     <seed>1</seed>
@@ -45,9 +45,8 @@
         <MUSIC>
             <InitialProfile>13</InitialProfile>
             <output_evolution_to_file>0</output_evolution_to_file>
-            <flag_store_hydro_info_in_memory>0</flag_store_hydro_info_in_memory>
+            <store_hydro_info_in_memory>0</store_hydro_info_in_memory>
             <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
-            <shear_viscosity_3_at_kink>0.12</shear_viscosity_3_at_kink>
             <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
             <bulk_viscosity_3_max>0.1</bulk_viscosity_3_max>
             <freezeout_temperature>0.3</freezeout_temperature>
@@ -82,3 +81,4 @@
   </SoftParticlization>
 
 </jetscape>
+

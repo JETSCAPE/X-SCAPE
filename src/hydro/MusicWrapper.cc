@@ -66,8 +66,8 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
           GetXMLElementDouble({"Hydro", "MUSIC", "Initial_time_tau_0"}));
   music_hydro_ptr->set_parameter("Initial_time_tau_0", tau_hydro);
 
-  double eta_over_s =
-      GetXMLElementDouble({"Hydro", "MUSIC", "shear_viscosity_eta_over_s"});
+  double eta_over_s = (
+      GetXMLElementDouble({"Hydro", "MUSIC", "shear_viscosity_eta_over_s"}));
   if (eta_over_s > 1e-6) {
     music_hydro_ptr->set_parameter("Viscosity_Flag_Yes_1_No_0", 1);
     music_hydro_ptr->set_parameter("Include_Shear_Visc_Yes_1_No_0", 1);
@@ -91,17 +91,17 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     music_hydro_ptr->set_parameter("T_dependent_Shear_to_S_ratio", flag_shear_Tdep);
     if (flag_shear_Tdep == 3) {
       double shear_kinkT = (
-        GetXMLElementDouble({"Hydro", "MUSIC", "eta_over_s_T_kink_in_GeV"}));
-      music_hydro_ptr->set_parameter("eta_over_s_T_kink_in_GeV", shear_kinkT);
+        GetXMLElementDouble({"Hydro", "MUSIC", "shear_viscosity_3_at_kink"}));
+      music_hydro_ptr->set_parameter("shear_viscosity_3_at_kink", shear_kinkT);
       double shear_lowTslope = (
         GetXMLElementDouble({"Hydro", "MUSIC",
-                             "eta_over_s_low_T_slope_in_GeV"}));
-      music_hydro_ptr->set_parameter("eta_over_s_low_T_slope_in_GeV",
+                             "shear_viscosity_3_low_T_slope_in_GeV"}));
+      music_hydro_ptr->set_parameter("shear_viscosity_3_low_T_slope_in_GeV",
                                      shear_lowTslope);
       double shear_highTslope = (
         GetXMLElementDouble({"Hydro", "MUSIC",
-                             "eta_over_s_high_T_slope_in_GeV"}));
-      music_hydro_ptr->set_parameter("eta_over_s_high_T_slope_in_GeV",
+                             "shear_viscosity_3_high_T_slope_in_GeV"}));
+      music_hydro_ptr->set_parameter("shear_viscosity_3_high_T_slope_in_GeV",
                                      shear_highTslope);
       double shear_kink = (
         GetXMLElementDouble({"Hydro", "MUSIC", "shear_viscosity_3_at_kink"}));
