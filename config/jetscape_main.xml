@@ -259,16 +259,18 @@
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
+      <InitialProfile>13</InitialProfile>
       <Initial_time_tau_0>0.5</Initial_time_tau_0>
-      <output_evolution_to_file>1</output_evolution_to_file>
+      <output_evolution_to_file>0</output_evolution_to_file>
+      <flag_store_hydro_info_in_memory>0</flag_store_hydro_info_in_memory>
       <shear_viscosity_eta_over_s>0.08</shear_viscosity_eta_over_s>
-      <T_dependent_Shear_to_S_ratio>0</T_dependent_Shear_to_S_ratio>
-      <eta_over_s_T_kink_in_GeV>0.16</eta_over_s_T_kink_in_GeV>
+      <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
+      <shear_viscosity_3_at_kink>0.16</shear_viscosity_3_at_kink>
       <eta_over_s_low_T_slope_in_GeV>0.</eta_over_s_low_T_slope_in_GeV>
       <eta_over_s_high_T_slope_in_GeV>0.</eta_over_s_high_T_slope_in_GeV>
       <eta_over_s_at_kink>0.08</eta_over_s_at_kink>
-      <temperature_dependent_bulk_viscosity>0</temperature_dependent_bulk_viscosity>
-      <zeta_over_s_max>0</zeta_over_s_max>
+      <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
+      <bulk_viscosity_3_max>0.06</bulk_viscosity_3_max>
       <zeta_over_s_T_peak_in_GeV>0.18</zeta_over_s_T_peak_in_GeV>
       <zeta_over_s_width_in_GeV>0.02</zeta_over_s_width_in_GeV>
       <zeta_over_s_lambda_asymm>0.0</zeta_over_s_lambda_asymm>
