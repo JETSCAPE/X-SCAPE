@@ -25,6 +25,8 @@
 #include "JetEnergyLossManager.h"
 //#include "JetScapeWriterStream.h"
 #include "JetScapeWriterFinalStateStream.h"
+#include "JetScapeWriterStream.h"
+#include "JetScapeWriterIsrStream.h"
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
 #endif
@@ -92,142 +94,105 @@ int main(int argc, char** argv)
 
 
   auto jetscape = make_shared<JetScape>();
-  jetscape->SetXMLMainFileName("../config/jetscape_main.xml");
-  if (argc > 1) {
-    jetscape->SetXMLUserFileName(argv[1]);
-  } else {
-    jetscape->SetXMLUserFileName(
-            "../config/jetscape_user_iMATTERMCGlauberMUSIC.xml");
+  
+  std::string mainXMLName = "../config/jetscape_main.xml";
+  std::string userXMLName = "../config/jetscape_user_iMATTERMCGlauber.xml";
+  if (argc == 2)  {
+    if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
+      std::cout << "Command line options:" << std::endl;
+      std::cout << "    First (optional) argument: path to user XML file         ./PythiaIsrTest /path/to/user.xml" << std::endl;
+      std::cout << "    Second (optional) argument: path to main XML file      ./PythiaIsrTest /path/to/user.xml /path/to/main.xml" << std::endl;
+      std::cout << "    If no command line options are given, defaults are used: config/jetscape_user.xml config/jetscape_main.xml" << std::endl;
+      return -1;
+    }
+    else {
+      userXMLName = argv[1];
+    }
   }
+  else if (argc == 3) {
+    userXMLName = argv[1];
+    mainXMLName = argv[2];
+  }
+
+  JSINFO << "Selecting main XML file: " << mainXMLName;
+  JSINFO << "Selecting user XML file: " << userXMLName;
+
+  jetscape->SetXMLMainFileName(mainXMLName);
+  jetscape->SetXMLUserFileName(userXMLName);
+
+  JetScapeXML::Instance()->OpenXMLMainFile(jetscape->GetXMLMainFileName());
+  JetScapeXML::Instance()->OpenXMLUserFile(jetscape->GetXMLUserFileName());
+
+  INFO_NICE;
   jetscape->SetId("primary");
 
   // Initial conditions and hydro
-  //auto trento = make_shared<TrentoInitial>();
-  //auto trento = make_shared<InitialState>();
   auto MCG = make_shared<MCGlauberWrapper>();
   auto pythiaGun= make_shared<PythiaGun> ();
-  //auto isr = make_shared<InitialStateRadiationTest> ();
   auto hydro = make_shared<MpiMusic> ();
   auto iSS = make_shared<iSpectraSamplerWrapper> ();
 
   jetscape->Add(MCG);
   auto isrManager = make_shared<IsrManager>();
-  //auto isrJloss = make_shared<JetEnergyLoss> (); //to be followed up ... make isr module ... !!!!
   auto isrJloss = make_shared<IsrJet>();
   auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
 
   auto iMatter = make_shared<iMATTER> ();
-  double tMax = 50.0;
-  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax); //will be moved to XML and proper Init() in IsrJet later ...
-  iMatter->SetMaxT(-tMax); // Have To figure out a proper way to get this when it's moved to XML
+
+  // Reading tMax from the xml
+  double tMax = jetscape->GetXMLElementDouble({"Eloss", "maxT"});
+
+  // iMatter showers negative virtuality partons from 0 => -tMax
+  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax);
+  iMatter->SetMaxT(-tMax);
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
-  //REMARK: Think a bit harder about directed graph creation and time direction !!!!! Graph inversion !???
-  //make positve just for testing of iterating through a shower ...
-  //isrJloss->SetDeltaT(0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(3);
+
 
   isrJloss->AddPartonShowerGenerator(oldPSG);
-//  isrJloss->Add(iDummy);
   isrJloss->Add(iMatter);
-
   isrManager->Add(isrJloss);
 
   pythiaGun->Add(isrManager);
   pythiaGun->Add(MCGsecond);
   jetscape->Add(pythiaGun);
-  //jetscape->Add(isr);
   jetscape->Add(hydro);
   jetscape->Add(iSS);
 
   // Energy loss
+  // Matter showers positive virtuality partons in forward evolution, -tMax => tMax
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
-  jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax); //will be moved to XML and proper Init() in IsrJet later ...
-
-  //Set inactive task (per event) and with main clock attached do per time step for these modules ...
-  //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get
-  //time, either main clock time or if module clock attached the tranformed time via: GetModuleCurrentTime();
-
-  jlossmanager->SetActive(false);
-  jloss->SetActive(false);
-
-  //***************************************************************************
-  //REMARK: Ordering of graph with negative times and iteration to be fixed!!!
-  //        Invert graph ... certainly needs some more thinking ... !!!
-  //        Otherwise seems to working fine, definitely for positive times!!!
-  //***************************************************************************
-  /*
-  jlossmanager->SetUseIntialPartonShower(true);
-  jloss->SetUseIntialPartonShower(true);
-
-  auto isrPSG = make_shared<IsrShowerPSG>();
-  jloss->AddPartonShowerGenerator(isrPSG);
-  */
-
-  //quick and dirty to check if module clock transformation is working conceptually ...
-  //jloss->AddModuleClock(mModuleClock);
-
-  //Matter is added but not executed, need to implement the per time step execution in JetEnergyLoss::DoShower()...
+  jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax);
   auto matter = make_shared<Matter> ();
-  auto dummy = make_shared<DummySplit> ();
-  // auto lbt = make_shared<LBT> ();
-  //auto martini = make_shared<Martini> ();
-  //auto adscft = make_shared<AdSCFT> ();
 
-  //Has to be set now if one wants to deal with negative
-  //times in forward evolution; default is: 0 -- 100 ...
-  jlossmanager->SetTimeRange(-tMax,tMax);
-  jloss->SetTimeRange(-tMax,tMax);
-  matter->SetTimeRange(-tMax,tMax);
-  dummy->SetTimeRange(-tMax,tMax);
-
-  // Note: if you use Matter, it MUST come first (to set virtuality)
   jloss->Add(matter);
-  //jloss->Add(dummy);
-
-  // jloss->Add(lbt);  // go to 3rd party and ./get_lbtTab before adding this module
-  // jloss->Add(martini);
-  //jloss->Add(adscft);
   jlossmanager->Add(jloss);
   jetscape->Add(jlossmanager);
 
-  auto cascadeTest = make_shared<CascadeTest> ();
-  cascadeTest->SetMultiThread(true);
-  cascadeTest->SetActive(false);
-  //jetscape->Add(cascadeTest);
-
-
-  // JP: Leave out for now for testing clock(s) ... has to be updated accordingly ... (see JetEnergyLossManager as an example ...)
-  // Hadronization
-  /*
-  auto hadroMgr = make_shared<HadronizationManager> ();
-  auto hadro = make_shared<Hadronization> ();
-  //auto hadroModule = make_shared<ColoredHadronization> ();
-  //hadro->Add(hadroModule);
-  auto colorless = make_shared<ColorlessHadronization> ();
-  hadro->Add(colorless);
-  hadroMgr->Add(hadro);
-  jetscape->Add(hadroMgr);
-  */
+  // Hadronization Module which uses the colors of partons from ISR to FSR
   auto hadroMgr = make_shared<HadronizationManager> ();
   auto hadro = make_shared<Hadronization> ();
   auto hadroModule = make_shared<iColoredHadronization> ();
   hadro->Add(hadroModule);
   hadroMgr->Add(hadro);
-  // Output
-//  auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
-//  writer->SetId("AsciiWriter"); //for task search test ...
-//  jetscape->Add(writer);
-//  jetscape->Add(hadroMgr);
-  char* OutputFolder = "";
+  jetscape->Add(hadroMgr);
+
+  // Output writer and filename setup from XML ...
+  std::string outputFilename = jetscape->GetXMLElementText({"outputFilename"});
+
   auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
   auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
-  writer->SetOutputFileName(string(OutputFolder) + string("test_out_final_state_partons.dat"));
-  writer2->SetOutputFileName(string(OutputFolder) + string("test_out_final_state_hadrons.dat"));
+  writer->SetOutputFileName(outputFilename + string("_final_state_partons.dat"));
+  writer2->SetOutputFileName(outputFilename + string("_final_state_hadrons.dat"));
   writer->SetId("FinalStatePartonsAscii"); //for task search test ...
   writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
   jetscape->Add(writer);
   jetscape->Add(writer2);
+
+  auto writerIsr= make_shared<JetScapeWriterIsrAscii> (outputFilename + "_isr.dat");
+  writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
+  jetscape->Add(writerIsr);
 
 
   /*
@@ -260,17 +225,6 @@ int main(int argc, char** argv)
   printf ("CPU time: %f seconds.\n",((float)t)/CLOCKS_PER_SEC);
   printf ("Real time: %f seconds.\n",difftime(end,start));
 
-  // Print pythia statistics
-  // pythiaGun->stat();
-
-  // // Demonstrate how to work with pythia statistics
-  // //Pythia8::Info& info = pythiaGun->info;
-  // cout << " nTried    = " << info.nTried() << endl;
-  // cout << " nSelected = " << info.nSelected()  << endl;
-  // cout << " nAccepted = " << info.nAccepted()  << endl;
-  // cout << " sigmaGen  = " <<   info.sigmaGen()  << endl;
-  // cout << " sigmaErr  = " <<   info.sigmaErr()  << endl;
-
   return 0;
 }
 
@@ -279,7 +233,7 @@ int main(int argc, char** argv)
 void Show()
 {
   INFO_NICE<<"-------------------------------------------";
-  INFO_NICE<<"| Clock Brick Test XSCAPE Framework ...   |";
+  INFO_NICE<<"| ISR/small sytem MUSIC Test XSCAPE Framework |";
   INFO_NICE<<"-------------------------------------------";
   INFO_NICE;
 }
