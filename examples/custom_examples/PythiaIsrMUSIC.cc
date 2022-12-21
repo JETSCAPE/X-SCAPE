@@ -39,7 +39,7 @@
 #include "LBT.h"
 #include "Martini.h"
 #include "Brick.h"
-#include "PythiaGun.h"
+#include "PythiaIsrGun.h"
 #include "InitialStateRadiationTest.h"
 #include "HadronizationManager.h"
 #include "iColoredHadronization.h"
@@ -128,15 +128,15 @@ int main(int argc, char** argv)
 
   // Initial conditions and hydro
   auto MCG = make_shared<MCGlauberWrapper>();
-  auto pythiaGun= make_shared<PythiaGun> ();
+  auto pythiaIsrGun= make_shared<PythiaIsrGun> ();
   auto hydro = make_shared<MpiMusic> ();
   auto iSS = make_shared<iSpectraSamplerWrapper> ();
 
   jetscape->Add(MCG);
   auto isrManager = make_shared<IsrManager>();
   auto isrJloss = make_shared<IsrJet>();
-  auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
-
+  auto stdPSG = make_shared<PartonShowerGeneratorDefault>(); 
+  // minor changes to allow backward time evolution (wrt to DoShower() in JetEnergyLoss class implementation)
   auto iMatter = make_shared<iMATTER> ();
 
   // Reading tMax from the xml
@@ -148,14 +148,13 @@ int main(int argc, char** argv)
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
 
-
-  isrJloss->AddPartonShowerGenerator(oldPSG);
+  isrJloss->AddPartonShowerGenerator(stdPSG);
   isrJloss->Add(iMatter);
   isrManager->Add(isrJloss);
 
-  pythiaGun->Add(isrManager);
-  pythiaGun->Add(MCGsecond);
-  jetscape->Add(pythiaGun);
+  pythiaIsrGun->Add(isrManager);
+  pythiaIsrGun->Add(MCGsecond);
+  jetscape->Add(pythiaIsrGun);
   jetscape->Add(hydro);
   jetscape->Add(iSS);
 
