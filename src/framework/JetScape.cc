@@ -862,6 +862,7 @@ void JetScape::SetPointers() {
 
   bool hydro_pointer_is_set = false;
   bool bulk_pointer_is_set = false;
+  bool iss_pointer_is_set = false;
 
   for (auto it : GetTaskList()) {
     if (dynamic_pointer_cast<InitialState>(it)) {
@@ -892,9 +893,11 @@ void JetScape::SetPointers() {
     } else if (dynamic_pointer_cast<PartonPrinter>(it)) {
       JetScapeSignalManager::Instance()->SetPartonPrinterPointer(
           dynamic_pointer_cast<PartonPrinter>(it));
-    } else if (dynamic_pointer_cast<SoftParticlization>(it)) {
+    } else if (dynamic_pointer_cast<SoftParticlization>(it) &&
+               !iss_pointer_is_set) {
       JetScapeSignalManager::Instance()->SetSoftParticlizationPointer(
           dynamic_pointer_cast<SoftParticlization>(it));
+      iss_pointer_is_set = true;
     } else if (dynamic_pointer_cast<HadronizationManager>(it)) {
       JetScapeSignalManager::Instance()->SetHadronizationManagerPointer(
 										dynamic_pointer_cast<HadronizationManager>(it));
@@ -1130,10 +1133,12 @@ void JetScape::Exec() {
         throw std::runtime_error("Incompatible reusal settings.");
       }
       bool hydro_pointer_is_set = false;
+      bool iss_pointer_is_set = false;
       for (auto it : GetTaskList()) {
         if (!dynamic_pointer_cast<FluidDynamics>(it) &&
             !dynamic_pointer_cast<PreequilibriumDynamics>(it) &&
-            !dynamic_pointer_cast<InitialState>(it)) {
+            !dynamic_pointer_cast<InitialState>(it) &&
+            !dynamic_pointer_cast<SoftParticlization>(it)) {
           continue;
         }
 
@@ -1163,6 +1168,35 @@ void JetScape::Exec() {
           it->SetActive(false);
           if (dynamic_pointer_cast<FluidDynamics>(it)) {
             hydro_pointer_is_set = true;
+          }
+        }
+        // Do the soft hadronization only at once 
+        if (dynamic_pointer_cast<SoftParticlization>(it))
+          if(dynamic_pointer_cast<SoftParticlization>(it)->IsTimeStepped()) {
+            JSWARN << " Reusing hydro with per time stepped = true not allowed!";
+            throw std::runtime_error("Reusing hydro with per time stepped = true not allowed.");
+          }
+
+        // only deactivate the first iSS
+        if (dynamic_pointer_cast<SoftParticlization>(it) && iss_pointer_is_set) {
+          continue;
+        }
+
+        if (i % n_reuse_hydro_ == n_reuse_hydro_ - 1) {
+          JSDEBUG << " i was " << i
+                  << " i%n_reuse_hydro_ = " << i % n_reuse_hydro_
+                  << " --> ACTIVATING";
+          it->SetActive(true);
+          if (dynamic_pointer_cast<SoftParticlization>(it)) {
+            iss_pointer_is_set = true;
+          }
+        } else {
+          JSDEBUG << " i was " << i
+                  << " i%n_reuse_hydro_ = " << i % n_reuse_hydro_
+                  << " --> DE-ACTIVATING";
+          it->SetActive(false);
+          if (dynamic_pointer_cast<SoftParticlization>(it)) {
+            iss_pointer_is_set = true;
           }
         }
       }
