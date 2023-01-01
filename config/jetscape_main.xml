@@ -83,6 +83,17 @@
 
     <!-- Options to read initial conditions from saved file  -->
     <initial_profile_path>../examples/test_hydro_files</initial_profile_path>
+
+    <MCGlauber> 
+        <ran_seed_MCGla> -1 </ran_seed_MCGla>
+        <rapidity_loss_method> 4 </rapidity_loss_method>
+        <ylossParam4At2> 1.666 </ylossParam4At2>
+        <ylossParam4At4> 2.10 </ylossParam4At4>
+        <ylossParam4At6> 21.20 </ylossParam4At6>
+        <ylossParam4At10> 2.30 </ylossParam4At10>
+        <ylossParam4var> 0.555 </ylossParam4var>
+        <remnant_energy_loss_fraction> 0.5 </remnant_energy_loss_fraction>
+    </MCGlauber>
   </IS>
 
   <!-- Hard Process -->
@@ -276,6 +287,9 @@
       <Include_second_order_terms>1</Include_second_order_terms>
       <freezeout_temperature>0.3</freezeout_temperature>
       <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
+      <string_source_sigma_x>0.5</string_source_sigma_x>
+      <string_source_sigma_eta>0.5</string_source_sigma_eta>
+      <stringPreEqFlowFactor>0.13</stringPreEqFlowFactor>
     </MUSIC>
 
     <!-- CLVisc  -->

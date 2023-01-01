@@ -83,7 +83,15 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   int InitialProfile = (
       GetXMLElementInt({"Hydro", "MUSIC", "InitialProfile"}));
   music_hydro_ptr->set_parameter("Initial_profile", InitialProfile);
-
+  double string_source_sigma_x = (
+        GetXMLElementDouble({"Hydro", "MUSIC", "string_source_sigma_x"}));
+      music_hydro_ptr->set_parameter("string_source_sigma_x", string_source_sigma_x);
+  double string_source_sigma_eta = (
+        GetXMLElementDouble({"Hydro", "MUSIC", "string_source_sigma_eta"}));
+      music_hydro_ptr->set_parameter("string_source_sigma_eta", string_source_sigma_eta);
+  double stringPreEqFlowFactor = (
+        GetXMLElementDouble({"Hydro", "MUSIC", "stringPreEqFlowFactor"}));
+      music_hydro_ptr->set_parameter("stringPreEqFlowFactor", stringPreEqFlowFactor);
   int flag_shear_Tdep = (
       GetXMLElementInt({"Hydro", "MUSIC", "T_dependent_Shear_to_S_ratio"}));
   if (flag_shear_Tdep > 0) {
