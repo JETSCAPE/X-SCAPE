@@ -140,7 +140,7 @@ def generate_xml(random_seed):
            ylossvar = xscape_dict['ylossParam4var'], sigma_x = xscape_dict['string_source_sigma_x'], 
            sigma_eta = xscape_dict['string_source_sigma_eta'], preflow = xscape_dict['stringPreEqFlowFactor'],
            eta_s = xscape_dict['shear_viscosity_3_T_kink'], zeta_s = xscape_dict['bulk_viscosity_3_max'], esw = xscape_dict['esw'])
-    xml_name = "jetscape_user_iMATTERMCGlauberMUSIC_test.xml"
+    xml_name = "jetscape_user_iMATTERMCGlauberMUSIC.xml"
     with open(xml_name, 'w') as fout:
         fout.write(xml_files)
     #call(['mv', xml_name, './'])
