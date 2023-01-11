@@ -478,10 +478,9 @@ target_link_libraries(PythiaBrickTest JetScape )
 if(USE_3DGlauber)
   add_executable(PythiaIsrTest ./examples/PythiaIsrTest.cc)
   target_link_libraries(PythiaIsrTest JetScape )
+  add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
+  target_link_libraries(PythiaIsrMUSIC JetScape )
 endif (USE_3DGlauber )
-
-add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
-target_link_libraries(PythiaIsrMUSIC JetScape )
 
 #add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
 #target_link_libraries(PythiaBDMTest JetScape )
