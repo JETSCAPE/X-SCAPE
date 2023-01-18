@@ -9,7 +9,7 @@
 #include <algorithm>
 
 // *** The code to calculate the dNch/deta and dN/2pipTdpTdy *** //
-// *** from iSS binary output ***//
+// *** from X-SCAPE hard hadron output ***//
 // Copyright @  Wenbin Zhao, 2023 //
 
 using namespace std;
@@ -54,19 +54,19 @@ int main(int argc, char* argv[] )
             break;
         }
         count_event_number++;
-        fscanf(infile,"%s %s %d %s %lf %s %d %s %d %lf\n",&stemp1, &stemp2,
+        fscanf(infile,"%s %s %d %s %lf %s %d %s %d %s %lf\n",&stemp1, &stemp2,
                &event_id, &stemp2, &weight, &stemp2, &int_temp, &stemp2, 
-               &total_number_of_particles, &sigmaGen_ev);
+               &total_number_of_particles, &stemp2, &sigmaGen_ev);
         //weight_array.push_back(weight);
         weight_sum = weight_sum + weight;
         for (auto i=0; i<total_number_of_particles; i++) {
             fscanf(infile,"%d %d %d %lf %lf %lf %lf\n",&int_temp, &pid,
                    &status, &energy, &px, &py, &pz);
-            if (temp_energy == energy) {
+            /*if (temp_energy == energy) {
                 cout << " event number is too small " << endl;
                 even_loop_flag = 0;
                 break;
-            } 
+            } */
             temp_energy = energy;
             if (status == 11) continue; // don't count hydro hadrons.
             // calculate the pT-spectra
@@ -144,5 +144,4 @@ int main(int argc, char* argv[] )
                << endl;
     }
     output.close();
-
 }
