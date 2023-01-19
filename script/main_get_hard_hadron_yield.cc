@@ -9,7 +9,7 @@
 #include <algorithm>
 
 // *** The code to calculate the dNch/deta and dN/2pipTdpTdy *** //
-// *** from X-SCAPE hard hadron output ***//
+// *** from X-SCAPE hard hadrons output ***//
 // Copyright @  Wenbin Zhao, 2023 //
 
 using namespace std;
@@ -21,7 +21,7 @@ int main(int argc, char* argv[] )
     double dndptdypion[length] = {0.0}, dndptdyproton[length] = {0.0},dndptdykaon[length] = {0.0};
     double dndptdypionplus[length]={0.0}, dndptdypionmius[length]={0.0}, dndptdypion0[length] = {0.0};
     double dndptdyk0s[length]={0.0}, dndptdyLambda[length] = {0.0};
-    double dndptdetacharge[length]={0.0}, dNch_deta[length] = {0.0};
+    double dndptdetacharge[length]={0.0}, dNch_deta[length] = {0.0}, dNch_deta_fir_ev[length] = {0.0};
     int total_number_of_particles, pid, event_id, int_temp, status;
     double px, py, pz, energy, mass, dummpx, dummpy, dummpz, dummpt, weight;
     double sigmaGen, sigmaErr, pThat, sigmaGen_ev;
@@ -45,29 +45,28 @@ int main(int argc, char* argv[] )
            &stemp2);
 
     double weight_sum = 0.0;
-    double temp_energy = -10.;
     int even_loop_flag = 1;
-    int count_event_number = -1;
+    int count_event_number = 0;
     for (int iev = 0; iev < Nevent; iev ++) {
-        if (even_loop_flag == 0) {
-            cout << " End the event loop~~~ " << endl;
+        if(feof(infile)) {
+            even_loop_flag = 0;
+            cout << " End the event loop ~~~ " << endl;
             break;
         }
         count_event_number++;
-        fscanf(infile,"%s %s %d %s %lf %s %d %s %d %s %lf\n",&stemp1, &stemp2,
+        fscanf(infile,"%s %s %d %s %lf %s %d %s %d %lf\n",&stemp1, &stemp2,
                &event_id, &stemp2, &weight, &stemp2, &int_temp, &stemp2, 
-               &total_number_of_particles, &stemp2, &sigmaGen_ev);
+               &total_number_of_particles, &sigmaGen_ev);
         //weight_array.push_back(weight);
         weight_sum = weight_sum + weight;
         for (auto i=0; i<total_number_of_particles; i++) {
+            if(feof(infile)) {
+                even_loop_flag = 0;
+                cout << " End the event loop, and drop last event ~~~ " << endl;
+                break;
+            }
             fscanf(infile,"%d %d %d %lf %lf %lf %lf\n",&int_temp, &pid,
                    &status, &energy, &px, &py, &pz);
-            /*if (temp_energy == energy) {
-                cout << " event number is too small " << endl;
-                even_loop_flag = 0;
-                break;
-            } */
-            temp_energy = energy;
             if (status == 11) continue; // don't count hydro hadrons.
             // calculate the pT-spectra
             double pT = sqrt(px*px + py*py);
@@ -107,6 +106,7 @@ int main(int argc, char* argv[] )
                     double midd2 = eta_step*ieta*1.0 + eta_step + eta_low;
                     if ((sudorapidity > midd1) && (sudorapidity <= midd2)) {
                         dNch_deta[ieta] = dNch_deta[ieta] + 1.0/eta_step * weight;
+                        if (iev == 0) dNch_deta_fir_ev[ieta] = dNch_deta_fir_ev[ieta] + 1.0/eta_step * weight;
                     }
                 }
             }
@@ -116,10 +116,10 @@ int main(int argc, char* argv[] )
         fscanf(infile,"%s %s %lf %s %lf %s %lf %s %lf\n",&stemp1, &stemp2,
                        &sigmaGen, &stemp1, &sigmaErr, &stemp1, &weight,
                        &stemp1, &pThat);
-        fclose(infile);
     } else {
         sigmaGen = sigmaGen_ev;
     }
+    fclose(infile);
 
     //output the results to file
     char output_filename[128];
@@ -133,13 +133,13 @@ int main(int argc, char* argv[] )
     }
     output << " # " << "pT,  dN/2pidpTdy of " << " pion0 " << " " << " pionplus " << " " << " pionminus " << " " << " kaon_charge " << " " 
            << " p " << " " << " K0s " << " " << " Lambda;   "
-           << "eta,  dNch/deta " << " sigmaGen " << " Wight_sum " << " Nevent " << endl; 
+           << "eta,  dNch/deta " << " dNch/deta of first event " << " sigmaGen " << " Wight_sum " << " Nevent " << endl; 
     for (auto i = 0; i < length; ++i) {
         output << stepp*i*1.0+ stepp/2.0 << "  " << dndptdypion0[i]/2./M_PI << "  " << dndptdypionplus[i]/2./M_PI << "  " 
                << dndptdypionmius[i]/2./M_PI << "  " << dndptdykaon[i]/2./M_PI << "  " 
                << dndptdyproton[i]/2./M_PI << "  " << dndptdyk0s[i]/2./M_PI << "  "
                << dndptdyLambda[i]/2./M_PI << "  " << dndptdetacharge[i]/2./M_PI << "  "
-               << eta_step*i*1.0 + eta_low + eta_step/2.0 << "  " << dNch_deta[i] << "  " << sigmaGen
+               << eta_step*i*1.0 + eta_low + eta_step/2.0 << "  " << dNch_deta[i] << "  " << dNch_deta_fir_ev[i] << " " << sigmaGen
                << "  " << weight_sum << "  " << count_event_number
                << endl;
     }
