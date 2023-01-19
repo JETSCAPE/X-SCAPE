@@ -98,4 +98,8 @@ void Hadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
   }
 }
 
+void Hadronization::DeleteHadrons() {
+  outHadrons.clear();
+}
+
 } // namespace Jetscape
