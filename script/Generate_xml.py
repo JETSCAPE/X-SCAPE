@@ -31,7 +31,9 @@ xscape_dict = {
     'stringPreEqFlowFactor': 0.18,
     'shear_viscosity_3_T_kink': 0.15,
     'bulk_viscosity_3_max': 0.1,
-    'esw': 0.3
+    'esw': 0.3,
+    'seed': 0,
+    'beastMode': 1
 }
 
 def generate_xml(random_seed):
@@ -41,12 +43,12 @@ def generate_xml(random_seed):
 
   <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
 
-  <setReuseHydro> false </setReuseHydro>
-  <!-- <nReuseHydro> 10 </nReuseHydro> -->
+  <setReuseHydro> true </setReuseHydro>
+  <nReuseHydro> 1000 </nReuseHydro>
 
   <vlevel> 4 </vlevel>
 
-  <nEvents> 10 </nEvents>
+  <nEvents> 1000 </nEvents>
 
   <Random>
     <seed> {seed} </seed>
@@ -92,6 +94,7 @@ def generate_xml(random_seed):
   <Hydro>
         <MUSIC>
             <InitialProfile> {initial_mode} </InitialProfile>
+            <beastMode> {beastMode} </beastMode>
             <string_source_sigma_x> {sigma_x} </string_source_sigma_x>
             <string_source_sigma_eta> {sigma_eta} </string_source_sigma_eta>
             <stringPreEqFlowFactor> {preflow} </stringPreEqFlowFactor>
@@ -133,8 +136,9 @@ def generate_xml(random_seed):
   </SoftParticlization>
 
 </jetscape>
-'''.format(seed = random_seed, eCM = xscape_dict['eCM'], initial_mode = xscape_dict['initial_mode'], Q0 = xscape_dict['Q0'],
-           pTHatMin = xscape_dict['pTHatMin'], pTmin = xscape_dict['pTmin'], alphaSvalue = xscape_dict['alphaSvalue'], 
+'''.format(seed = random_seed, beastMode = xscape_dict['beastMode'], eCM = xscape_dict['eCM'], initial_mode = xscape_dict['initial_mode'], 
+           Q0 = xscape_dict['Q0'], pTHatMin = xscape_dict['pTHatMin'], pTmin = xscape_dict['pTmin'], 
+           alphaSvalue = xscape_dict['alphaSvalue'], 
            vir_factor = xscape_dict['vir_factor'], yloss2 = xscape_dict['ylossParam4At2'], 
            yloss4 = xscape_dict['ylossParam4At4'], yloss6 = xscape_dict['ylossParam4At6'], yloss10 = xscape_dict['ylossParam4At10'],
            ylossvar = xscape_dict['ylossParam4var'], sigma_x = xscape_dict['string_source_sigma_x'], 
@@ -173,3 +177,4 @@ if __name__=='__main__':
         update_parameters_bayesian(args.bayes_file)
         #shutil.copy(args.bayes_file, working_folder_name)
     generate_xml(args.random_seed)
+

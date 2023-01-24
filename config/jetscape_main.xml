@@ -271,6 +271,7 @@
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
       <InitialProfile>13</InitialProfile>
+      <beastMode>0</beastMode>
       <Initial_time_tau_0>0.5</Initial_time_tau_0>
       <output_evolution_to_file>0</output_evolution_to_file>
       <store_hydro_info_in_memory>0</store_hydro_info_in_memory>
