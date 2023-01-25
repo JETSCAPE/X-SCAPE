@@ -84,11 +84,13 @@ std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GatherAfterburner
   std::vector<std::vector<shared_ptr<Hadron>>> afterburner_had_events;
   afterburner_had_events = GetSoftParticlizationHadrons();
 
-  // clear Hadron_list_ in soft_particlization, otherwise the final hadron 
-  // output of the writer contains also the soft hadrons which were used as 
-  // input for SMASH
-  auto soft_particlization = JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
-  soft_particlization->Hadron_list_.clear();
+  if (GetXMLElementInt({"Afterburner", "output_only_final_state_hadrons"})) {
+    // clear Hadron_list_ in soft_particlization, otherwise the final hadron 
+    // output of the writer contains also the soft hadrons which were used as 
+    // input for SMASH
+    auto soft_particlization = JetScapeSignalManager::Instance()->GetSoftParticlizationPointer().lock();
+    soft_particlization->Hadron_list_.clear(); 
+  }
 
   if (GetXMLElementInt({"Afterburner", "include_fragmentation_hadrons"})) {
     if (afterburner_had_events.size() != 1) {
@@ -98,10 +100,12 @@ std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GatherAfterburner
     }
     std::vector<shared_ptr<Hadron>> frag_hadrons = GetFragmentationHadrons();
 
-    // empty the hadron vector in the hadronization manager to circumvent the
-    // output of these hadrons if they are implemented in the SMASH afterburner
-    auto hadronization_mgr = JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
-    hadronization_mgr->DeleteHadrons();
+    if (GetXMLElementInt({"Afterburner", "output_only_final_state_hadrons"})) {
+      // empty the hadron vector in the hadronization manager to circumvent the
+      // output of these hadrons if they are implemented in the SMASH afterburner
+      auto hadronization_mgr = JetScapeSignalManager::Instance()->GetHadronizationManagerPointer().lock();
+      hadronization_mgr->DeleteHadrons();
+    }
 
     afterburner_had_events[0].insert(afterburner_had_events[0].end(),
                                      frag_hadrons.begin(), frag_hadrons.end());
