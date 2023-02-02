@@ -6,7 +6,7 @@ The new framework allows for novel functionality such as the ability of the main
 state and final state evolution. It allows for multiple bulk event generators to run concurrently while exchanging information via a new Bulk Dynamics Manager.
 The X-SCAPE framework can be run using the new functionality or in JETSCAPE mode allowing for full backwards compatibility. New modules can also run in a hybrid fashion,
 choosing to use or not use the new clock functionality. More documentation of the new X-SCAPE framework capabilities will be provided in the near future.
-For now, test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory (for example in `PythiaBDMTest_Hydro_Cascade.cc`).
+For now, test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory (for example in `PythiaBDMTes.cc` and `PythiaBrickTest.cc`).
 
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
@@ -87,7 +87,7 @@ You can pass the path to your user XML file as a command-line argument to the `r
 ## JETSCAPE Output
 
 JETSCAPE output can be generated in Ascii, gzipped Ascii, or HepMC format,
-(for HepMC format in ROOT see `examples/custom_examples/PythiaBrickTestRoot.cc`) and contains a full list of particles and the parton shower history.
+(for HepMC format in ROOT see `examples/custom_examples/PythiaBrickTestRoot.cc` and use cmake with `-DUSE_ROOT=ON`) and contains a full list of particles and the parton shower history.
 You must specify which format you would like to activate in your User XML file.
 
 ### Analysis of JETSCAPE Output
@@ -132,7 +132,7 @@ To compile the 3DGlauber code together with the JETSCAPE framework, please turn 
 ```
 ### Initial State Shower using iMatter
 
-To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix`.
+To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix`. If you use the JETSCAPE docker container (v1.8), all environment variables, including the `$PYTHIA8` for iMatter are set properly.
 
 After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` (in the build directory) to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`
 

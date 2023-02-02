@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
   jetscape->SetXMLMainFileName(mainXMLName);
   jetscape->SetXMLUserFileName(userXMLName);
-  
+
   jetscape->SetId("primary");
   jetscape->AddMainClock(mClock);
   jetscape->ClockInfo();
@@ -130,9 +130,9 @@ int main(int argc, char** argv)
   auto matter = make_shared<Matter> ();
   //Has to be set now if one wants to deal with negative
   //times in forward evolution; default is: 0 -- 100 ...
-  jlossmanager->SetTimeRange(-20.0,20.0);
-  jloss->SetTimeRange(-20.0,20.0);
-  matter->SetTimeRange(-20.0,20.0);
+  jlossmanager->SetTimeRange(0.0,20.0);
+  jloss->SetTimeRange(0.0,20.0);
+  matter->SetTimeRange(0.0,20.0);
 
   // Note: if you use Matter, it MUST come first (to set virtuality)
   jloss->Add(matter);
@@ -140,14 +140,14 @@ int main(int argc, char** argv)
   jetscape->Add(jlossmanager);
 
   auto cascadeTest = make_shared<CascadeTest> ();
-  cascadeTest->SetMultiThread(true);
+  //cascadeTest->SetMultiThread(true);
   cascadeTest->SetTimeStepped(true);
 
   auto bulkmanager = make_shared<BulkDynamicsManager> ();
   bulkmanager->SetTimeStepped(true);  //Time-step evolution
   bulkmanager->SetTimeRange(-20.0,20.0);
   bulkmanager->Add(hydro);
-  //bulkmanager->Add(cascadeTest);
+  //bulkmanager->Add(cascadeTest); //Can not yet run more than one medium in conjuction with Eloss (BDM criteria to be implemented)
   jetscape->Add(bulkmanager);
   // Output
   auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");

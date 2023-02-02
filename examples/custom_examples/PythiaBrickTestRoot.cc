@@ -28,7 +28,6 @@
 #include "JetScapeWriterHepMC.h"
 #include "JetScapeWriterRootHepMC.h"
 #endif
-#include "JetScapeWriterRoot.h"
 
 // User modules derived from jetscape framework clasess
 #include "TrentoInitial.h"
