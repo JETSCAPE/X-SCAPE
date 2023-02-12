@@ -64,7 +64,7 @@ public:
   /** Init function for a JetScapeTask overridden by different modules/tasks.
    */
   virtual void InitTask(){};
-  
+
   /** Recursive initialization of all the subtasks of the JetScapeTask i.e.
    * calling Init() for subtasks. Subtasks are of type JetScapeTask such as
    * Pythia Gun, Trento, Energy Loss Matter and Martini etc.
@@ -81,7 +81,7 @@ public:
   /** Main execution function for a JetScapeTask overridden by different modules/tasks.
    */
   virtual void ExecuteTask();
-  
+
   /** Recursive execution of all subtasks of the JetScapeTask i.e. calling Exec()
    * for subtasks. If one wants to really make sure that no subtasks are done,
    * overwrite ExecuteTasks with empty function.
