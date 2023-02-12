@@ -35,14 +35,14 @@ BulkDynamicsManager::BulkDynamicsManager() : JetScapeModuleBase() {
 BulkDynamicsManager::~BulkDynamicsManager() {
   // Check if this is all really needed with shared_ptr ...
   JSDEBUG;
-  Clear();
+  ClearTask();
 
   if (GetNumberOfTasks() > 0)
     EraseTaskLast();
 }
 
-void BulkDynamicsManager::Clear() {
-  JSDEBUG << "BulkDynamicsManager clear() ...";
+void BulkDynamicsManager::ClearTask() {
+  JSDEBUG << "BulkDynamicsManager clearTask() ...";
 
   int n = GetNumberOfTasks();
   for (int i = 1; i < n; i++)
@@ -50,12 +50,13 @@ void BulkDynamicsManager::Clear() {
 
   // Clean Up not really working with iterators (see also above!!!) Some logic not clear for me.
   JetScapeSignalManager::Instance()->CleanUp();
-  JetScapeTask::ClearTasks();
-
 }
 
-void BulkDynamicsManager::Init() {
+void BulkDynamicsManager::InitTask() {
   JSINFO << "Intialize BulkDynamicsManager ...";
+
+  //Critical temperature to switch from hydro to something else
+  Tc = GetXMLElementDouble({"BDM", "Tc"});
 
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk dynamics Manager modules found ...";
@@ -64,14 +65,9 @@ void BulkDynamicsManager::Init() {
 
   JSINFO << "Found " << GetNumberOfTasks()
          << " Bulk Dynamics Manager Tasks/Modules Initialize them ... ";
-
-  //Critical temperature to switch from hydro to something else
-  Tc = GetXMLElementDouble({"BDM", "Tc"});
-
-  BulkDynamicsManager::InitTasks();
-
 }
-void BulkDynamicsManager::Exec() {
+
+void BulkDynamicsManager::ExecuteTask() {
   VERBOSE(1) << "Run BulkDynamicsManager Manager ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
 
@@ -79,12 +75,6 @@ void BulkDynamicsManager::Exec() {
     JSWARN << " : No valid Bulk Dynamics Manager modules found ...";
     exit(-1);
   }
-
-  JetScapeTask::ExecuteTasks();
-
-  //
-  VERBOSE(3) << " " << GetNumberOfTasks()
-             << " Bulk Dynamics Manager Tasks/Modules finished.";
 }
 
 void BulkDynamicsManager::CalculateTime()
@@ -154,7 +144,7 @@ void BulkDynamicsManager::FinishPerEvent()
   JetScapeModuleBase::FinishPerEventTasks();
 
   //JP: Quick fix, to be discussed, similar to writer, clear is only called for active tasks, so call here directly ...
-  Clear();
+  ClearTask();
 }
 
 void BulkDynamicsManager::UpdateEnergyDepositFromModules(int t, double edop){

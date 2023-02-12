@@ -39,8 +39,8 @@ public:
     disconnect_all();
   }
 
-  virtual void Init();
-  virtual void Exec();
+  virtual void Init() override;
+  virtual void ExecuteTask();
   virtual void CalculateTime();
 
   /// Fill in bulk media info for (t,x,y,z) from current hadron list (work in progress, see .cc file)

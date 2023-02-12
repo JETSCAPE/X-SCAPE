@@ -9,6 +9,7 @@
 *.*~
 .DS_Store
 .vscode
+.bash_history
 html/*
 build*/*
 external_packages/LBT*

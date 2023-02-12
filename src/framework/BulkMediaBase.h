@@ -38,8 +38,10 @@ public:
     disconnect_all();
   }
 
-  virtual void Init();
-  virtual void Exec();
+  // Override Init here as function taskes care of calling sub-tasks as well
+  void Init() override;
+
+  virtual void ExecuteTask();
   virtual void CalculateTime();
   virtual void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,Jetscape::real z,
 			   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){}

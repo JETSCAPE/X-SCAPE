@@ -22,14 +22,14 @@ using namespace std;
 namespace Jetscape {
 void Afterburner::Init() {
   // Makes sure that XML file with options and parameters is loaded
-  JetScapeModuleBase::Init();
+  JetScapeModuleBase::InitTask();
   JSINFO << "Initializing Afterburner : " << GetId() << " ...";
   InitTask();
+  InitTasks();
 }
 
-void Afterburner::Exec() {
+void Afterburner::ExecuteTask() {
   VERBOSE(2) << "Afterburner running: " << GetId() << " ...";
-  ExecuteTask();
 }
 
 void Afterburner::CalculateTime() {
