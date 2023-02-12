@@ -42,7 +42,7 @@ BulkDynamicsManager::~BulkDynamicsManager() {
 }
 
 void BulkDynamicsManager::ClearTask() {
-  JSDEBUG << "BulkDynamicsManager clearTask() ...";
+  JSDEBUG << "BulkDynamicsManager ClearTask() ...";
 
   int n = GetNumberOfTasks();
   for (int i = 1; i < n; i++)

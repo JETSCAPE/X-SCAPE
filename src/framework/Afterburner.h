@@ -38,9 +38,12 @@ public:
     VERBOSE(8);
     disconnect_all();
   }
-
+  // Override Init here as function takes care of calling sub-tasks as well
   virtual void Init() override;
+
+  // needs to be defined by afterburner modules
   virtual void ExecuteTask();
+
   virtual void CalculateTime();
 
   /// Fill in bulk media info for (t,x,y,z) from current hadron list (work in progress, see .cc file)

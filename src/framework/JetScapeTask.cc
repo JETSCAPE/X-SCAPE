@@ -43,8 +43,6 @@ void JetScapeTask::Init() {
   InitTasks();
 }
 
-/** Recursive initialization of all the subtasks of the JetScapeTask. Subtasks are also of type JetScapeTask such as Pythia Gun, Trento, Energy Loss Matter and Martini etc.
-   */
 void JetScapeTask::InitTasks() {
   VERBOSE(7) << " : # Subtasks = " << tasks.size();
 

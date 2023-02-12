@@ -49,64 +49,70 @@ class JetScapeTask {
 
 public:
   /** Default constructor to create a JetScapeTask. It sets the flag "active_exec" to true and  "id" to default string value.
-  */
+   */
   JetScapeTask();
 
   /** Default destructor for a JetScapeTask.
    */
   virtual ~JetScapeTask();
 
-  /**  A virtual function to define a default initialization function for a JetScapeTask. It can  be overridden by different modules tasks.
-  */
+  /** Initialize task itself (by calling InitTask()) and calling subtasks (via
+   * InitTasks()). Usually not overriden by modules/tasks.
+   */
   virtual void Init();
+
+  /** Init function for a JetScapeTask overridden by different modules/tasks.
+   */
   virtual void InitTask(){};
+  
+  /** Recursive initialization of all the subtasks of the JetScapeTask i.e.
+   * calling Init() for subtasks. Subtasks are of type JetScapeTask such as
+   * Pythia Gun, Trento, Energy Loss Matter and Martini etc.
+   */
   virtual void InitTasks();
 
-  /** A virtual function to define a default Exec() function for a JetScapeTask. It can be overridden by different modules/tasks.
-  */
+  /** Execute task itself (via ExecuteTask()) and call all subtasks. By default,
+   * tasks only need to define an ExecuteTask() function as the subtasks will
+   * automatically be called by this function. In special cases, this function
+   * can also be overridden and the subtasks can be called in a specific way.
+   */
   virtual void Exec();
+
+  /** Main execution function for a JetScapeTask overridden by different modules/tasks.
+   */
   virtual void ExecuteTask();
+  
+  /** Recursive execution of all subtasks of the JetScapeTask i.e. calling Exec()
+   * for subtasks. If one wants to really make sure that no subtasks are done,
+   * overwrite ExecuteTasks with empty function.
+   */
   virtual void ExecuteTasks();
 
-  /** A virtual function to define a default Finish() function for a JetScapeTask. It can  be overridden by different modules/tasks.
-   */
-  virtual void Finish();
-  virtual void FinishTask(){};
-  virtual void FinishTasks();
-
-  /** A virtual function to define a default Clear() function for a JetScapeTask. It can be overridden by different modules/tasks.
+  /** Clear task itself (via ClearTask()) and call the clear functions
+   * for all subtasks. Usually not overriden by modules/tasks
    */
   virtual void Clear();
+
+  /** Clear function for a JetScapeTask overridden by different modules/tasks.
+   */
   virtual void ClearTask(){};
+
+  /** Recursively clearing of all subtasks of a JetScapeTask.
+   */
   virtual void ClearTasks();
 
-  // Extensions for "recursive" handling ...
-  /** Recursive Execution of all the subtasks of the JetScapeTask.
+  /** Finish task itself (via FinishTask()) and call the finish functions
+   * for all subtasks. Usually not overriden by modules/tasks.
    */
+  virtual void Finish();
 
-  /** A virtual function to define a default ExecuteTask() function for a JetScapeTask. It can be overridden by different modules/tasks.
+  /** Finish function for a JetScapeTask overridden by different modules/tasks.
    */
-  
+  virtual void FinishTask(){};
 
-  /** A virtual function to define a default InitTask() function for a JetScapeTask. It can be overridden by different modules/tasks.
+  /** Recursive finalization of all the subtasks of the JetScapeTask.
    */
-
-  /** Recursive initialization of all the subtasks of the JetScapeTask. Subtasks are also of type JetScapeTask such as Pythia Gun, Trento, Energy Loss Matter and Martini etc.
-  */
-
-  // really decide and think what is the best way (workflow ...)
-  /** Recursively calls Clear() function of the subtasks of a JetScapeTask.
-   */
-
-  /** A virtual function to define a default ClearTask() function for a JetScapeTask. It can be overridden by different modules/tasks.
-   */
-
-  /** A virtual function to define a default FinishTask() function for a JetScapeTask. It can be overridden by different modules/tasks.
-   */
-
-  /** A virtual function to define a default FinishTasks() function for a JetScapeTask. It can be overridden by different modules/tasks.
-   */
-
+  virtual void FinishTasks();
 
   /** Recursively write the output information of different tasks/subtasks of a JetScapeTask into a file.
       We use "active_exec" flag to decide whether to write the output in the file or not.
