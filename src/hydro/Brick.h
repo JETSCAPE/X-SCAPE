@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -47,7 +47,7 @@ public:
                        SurfaceCellInfo *surface_list_ptr){};
 
   void InitTask();
-  //virtual void Exec();
+  //virtual void ExecuteTask();
 
   void CalculateTime();
   void ExecTime();

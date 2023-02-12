@@ -73,7 +73,7 @@ double HybridHadronization::SigBL2_calc(double SigBR2, double qm1, double qm2,
          (qm3 * (qm1 + qm2) / (qm1 + qm2 + qm3));
 }
 
-void HybridHadronization::Init() {
+void HybridHadronization::InitTask() {
 
   tinyxml2::XMLElement *hadronization = GetXMLElement({"JetHadronization"});
 
