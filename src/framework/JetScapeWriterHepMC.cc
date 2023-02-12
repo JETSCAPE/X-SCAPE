@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -19,25 +19,25 @@
  * We will follow Pythia's example of preserving as much of the internal status code as possible
  * Specifically:
  - beam particles. We don't have those, yet. If they ever become part of initial
-   state moduls, those module writers MUST set the status to 4, all we do here 
-   is respect that code (for the future). 
+   state moduls, those module writers MUST set the status to 4, all we do here
+   is respect that code (for the future).
    However, this particle won't be a parton, so we only check that for hadrons.
    In practice, this will probably require a revamp of the graph structure, both
    in the framework and in here. Then, probably also use GenEvent::add_beam_particle()
- - decayed particle. We don't have those either yet, but it's a feature that may 
+ - decayed particle. We don't have those either yet, but it's a feature that may
    come pretty soon.
-   Here, we use that exclusively to mean decayed unstable hadrons, 
-   e.g. K0S -> pi pi 
-   In this case, the module that produced the hadron list MUST ensure to set the 
+   Here, we use that exclusively to mean decayed unstable hadrons,
+   e.g. K0S -> pi pi
+   In this case, the module that produced the hadron list MUST ensure to set the
    status of K0s to 2. The pions are final particles, see below.
  - Final hadrons will all be forced to status 1
  - Partons: By default, we will accept and use any code provided by the framework
             within 11<=status<=200 and use the absolute value.
-   Parton exceptions: 
-            1) If the code is not HepMC-legal (|status|<11 or >200, often 0), 
+   Parton exceptions:
+            1) If the code is not HepMC-legal (|status|<11 or >200, often 0),
                we assign 12 to most and 11 to the final partons before hadronization
                (to mimic the 1, 2 scheme)
-            2) If there are NO hadrons in the event, we assume the user would like to treat 
+            2) If there are NO hadrons in the event, we assume the user would like to treat
                the final partons (like 11 from above) as final particles and assign 1
  ******************************************************************************/
 
@@ -100,7 +100,7 @@ void JetScapeWriterHepMC::WriteHeaderToFile() {
 
 void JetScapeWriterHepMC::WriteEvent() {
   VERBOSE(1) << "Run JetScapeWriterHepMC: Write event # " << GetCurrentEvent();
-  
+
   // Have collected all vertices now.
   // Add all vertices to the event
   for (auto v : vertices){
@@ -284,7 +284,7 @@ void JetScapeWriterHepMC::Write(weak_ptr<PartonShower> ps) {
         v->add_particle_out(hepout);
       }
     }
-    
+
     vertices.push_back(v);
   }
 }
@@ -326,14 +326,14 @@ void JetScapeWriterHepMC::Write(weak_ptr<Hadron> h) {
   hadronizationvertex->add_particle_out(hepmc);
 }
 
-void JetScapeWriterHepMC::Init() {
+void JetScapeWriterHepMC::InitTask() {
   if (GetActive()) {
     JSINFO << "JetScape HepMC Writer initialized with output file = "
            << GetOutputFileName();
   }
 }
 
-void JetScapeWriterHepMC::Exec() {
+void JetScapeWriterHepMC::ExecuteTask() {
   // Nothing to do
 }
 } // end namespace Jetscape

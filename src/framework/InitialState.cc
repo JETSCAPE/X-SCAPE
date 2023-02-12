@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -22,7 +22,7 @@ namespace Jetscape {
 InitialState::~InitialState() {}
 
 void InitialState::Init() {
-  JetScapeModuleBase::Init();
+  JetScapeModuleBase::InitTask();
 
   JSINFO << "Initialize InitialState ... " << GetId() << " ...";
 
@@ -36,15 +36,14 @@ void InitialState::Init() {
          << grid_max_x_ << "]";
 
   InitTask();
-
-  JetScapeTask::InitTasks();
+  InitTasks();
 }
 
-void InitialState::Exec() {
+void InitialState::ExecuteTask() {
   // Do whatever is needed to figure out the internal temp...
 }
 
-void InitialState::Clear() {}
+void InitialState::ClearTask() {}
 
 void InitialState::Write(weak_ptr<JetScapeWriter> w) {
   //Write out the original vertex so the writer can keep track of it...

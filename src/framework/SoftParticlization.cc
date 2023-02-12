@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -31,7 +31,7 @@ SoftParticlization::~SoftParticlization() {
 }
 
 void SoftParticlization::Init() {
-  JetScapeModuleBase::Init();
+  JetScapeModuleBase::InitTask();
   JSINFO << "Initialize Soft particlization module ... " << GetId() << " ...";
 
   boost_invariance = check_boost_invariance();
@@ -39,11 +39,12 @@ void SoftParticlization::Init() {
   JSINFO << "boost invariance: " << boost_invariance;
 
   InitTask();
+  InitTasks();
 }
 
-void SoftParticlization::Exec() {}
+void SoftParticlization::ExecuteTask() {}
 
-void SoftParticlization::Clear() {
+void SoftParticlization::ClearTask() {
   for (unsigned i = 0; i < Hadron_list_.size(); i++) {
     Hadron_list_.at(i).clear();
   }

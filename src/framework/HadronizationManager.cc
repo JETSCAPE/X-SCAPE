@@ -37,14 +37,14 @@ HadronizationManager::HadronizationManager() {
 }
 
 HadronizationManager::~HadronizationManager() {
-  Clear();
+  ClearTask();
 
   // The tasks are hadronization modules
   if (GetNumberOfTasks() > 0)
     EraseTaskLast();
 }
 
-void HadronizationManager::Clear() {
+void HadronizationManager::ClearTask() {
   JSDEBUG << "Hadronization task List ...";
 
   hd.clear();
@@ -54,7 +54,6 @@ void HadronizationManager::Clear() {
     EraseTaskLast();
 
   JetScapeSignalManager::Instance()->CleanUp();
-  JetScapeTask::ClearTasks();
   VERBOSE(8) << hd.size();
 }
 

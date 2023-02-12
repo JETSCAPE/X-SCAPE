@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -36,18 +36,16 @@ public:
   ~InitialState();
 
   /** Reads the input parameters from the XML file under the tag  <IS>. Calls InitTask(); This explicit call of InitTask() can be used for actual initialization of modules such as @a Trento if attached as a @a polymorphic class. It also initializes the tasks within the current module.
-      @sa Read about @a polymorphism in C++.
+      @sa Read about @a polymorphism in C++. Override Init (not InitTask) here as sub-tasks are called as well.
    */
-  virtual void Init();
-
-  /** Default Exec() function. It can be overridden by other tasks.
+  void Init() override;
+  
+  /** Default ExecuteTask() function. It can be overridden by other tasks.
       After this is run, GetNumBinaryCollisions and GetEntropyDensityDistribution should return sensible values.
    */
-  virtual void Exec();
+  virtual void ExecuteTask();
 
-  /** Default Clear() function. It can be overridden by other tasks.
-   */
-  virtual void Clear();
+  virtual void ClearTask();
 
   /** Default Write() function. It can be overridden by other tasks.
       @param w A pointer to the JetScapeWriter class.
@@ -75,10 +73,10 @@ public:
   virtual double GetTotalEntropy() { return -1; };
 
   // one can set range by hand if not read from xml file
-  /** Sets the range of the coordinates (xmax, ymax, zmax). 
+  /** Sets the range of the coordinates (xmax, ymax, zmax).
       @param xmax Maximum value of the coordinate x in the nuclear density profile.
       @param ymax Maximum value of the coordinate y in the nuclear density profile.
-      @param zmax Maxium value of the spatial rapidity ( if (tau,x,y,eta) system), or maximum value of the coordinate z (if in (t,x,y,z) system) in the nuclear density profile.  
+      @param zmax Maxium value of the spatial rapidity ( if (tau,x,y,eta) system), or maximum value of the coordinate z (if in (t,x,y,z) system) in the nuclear density profile.
    */
   inline void SetRanges(double xmax, double ymax, double zmax) {
     grid_max_x_ = xmax;
@@ -121,8 +119,8 @@ public:
   void SetEventId(int event_id_in) { event_id_ = event_id_in; }
 
   /** compute 3d coordinates (x, y, z) given the 1D index in vector
-      @return Grid point (x,y,z or eta). 
-      @param idx is an integer which maps to an unique unit cell in the coordinate space (x,y,z or eta). 
+      @return Grid point (x,y,z or eta).
+      @param idx is an integer which maps to an unique unit cell in the coordinate space (x,y,z or eta).
    */
    /** get the collision information of t,x,y,z from 3DMCGlauber */
   std::tuple<double, double, double> CoordFromIdx(int idx);
@@ -174,16 +172,16 @@ public:
   /** @return The step-size "dx" used to discretize the nuclear profile of a nucleus in x-direction.
    */
   inline double GetXStep() { return grid_step_x_; }
-  /** @return The maximum value of coordinate "y" in the nuclear profile of a nucleus.                       
+  /** @return The maximum value of coordinate "y" in the nuclear profile of a nucleus.
   */
   inline double GetYMax() { return grid_max_y_; }
-  /** @return The step-size "dy" used to discretize the nuclear profile of a nucleus in y-direction. 
+  /** @return The step-size "dy" used to discretize the nuclear profile of a nucleus in y-direction.
   */
   inline double GetYStep() { return grid_step_y_; }
-  /** @return The maximum value of coordinate "z or eta" in the nuclear profile of a nucleus.                          
+  /** @return The maximum value of coordinate "z or eta" in the nuclear profile of a nucleus.
   */
   inline double GetZMax() { return grid_max_z_; }
-  /** @return The step-size "dz" used to discretize the nuclear profile of a nucleus in z or eta direction.              
+  /** @return The step-size "dz" used to discretize the nuclear profile of a nucleus in z or eta direction.
   */
   inline double GetZStep() { return grid_step_z_; }
 
@@ -249,8 +247,8 @@ protected:
   //inline std::vector<double> GetNumOfBinaryCollisions() {return num_of_binary_collisions_;};
 
   // compute 3d coordinates (x, y, z) given the 1D index in vector
-  /** @return Grid point (x,y,z or eta). 
-      @param idx is an integer which maps to an unique unit cell in the coordinate space (x,y,z or eta). 
+  /** @return Grid point (x,y,z or eta).
+      @param idx is an integer which maps to an unique unit cell in the coordinate space (x,y,z or eta).
    */
   //std::tuple<double, double, double> CoordFromIdx(int idx);
 

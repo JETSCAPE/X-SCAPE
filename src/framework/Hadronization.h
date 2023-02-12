@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -33,13 +33,13 @@ public:
   Hadronization();
   virtual ~Hadronization();
   virtual shared_ptr<Hadronization> Clone() const { return nullptr; }
-  virtual void Init();
-  virtual void Exec();
+  virtual void InitTask();
+  virtual void ExecuteTask();
   virtual void DoHadronization(vector<vector<shared_ptr<Parton>>> &pIn,
                                vector<shared_ptr<Hadron>> &hOut,
                                vector<shared_ptr<Parton>> &pOut){};
   virtual void WriteTask(weak_ptr<JetScapeWriter> w);
-  virtual void Clear();
+  virtual void ClearTask();
 
   void GetHadrons(vector<shared_ptr<Hadron>>& signal){signal = outHadrons;}
   sigslot::signal3<vector<vector<shared_ptr<Parton>>> &,

@@ -55,16 +55,19 @@ public:
 
   /** It reads the input parameters from a XML file under the tag <Eloss>.
       Sets the Parton class @a inP and PartonShower class @a pShower to null.
-      Also initializes the tasks attached to the JetEnergyLoss module.
   */
-  virtual void Init();
+  virtual void InitTask();
 
   /** It calls DoShower() for all shower-initiating partons.
       To avoid abuse, this can NOT be overwritten. Eloss happens on a parton-by-parton level,
-      Exec() should only be executed once per event.
+      ExecuteTask() should only be executed once per event.
    */
-  virtual void Exec() final; // prevents eloss modules from overwrting and missusing
+  virtual void ExecuteTask() final; // prevents eloss modules from overwrting and missusing
 
+  /** Prevent from executing any subtasks as everything is done by JetEnergyLoss.
+   */
+  virtual void ExecuteTasks() override {};
+  
   /** Write output information for each tasks/subtasks attached to the JetEnergyLoss module using JetScapeWriter functionality.
       @param w A pointer of type JetScapeWriter.
   */
@@ -72,7 +75,7 @@ public:
 
   /** Reset the parton shower information.
   */
-  virtual void Clear();
+  virtual void ClearTask();
 
   virtual void CalculateTime() final;
 

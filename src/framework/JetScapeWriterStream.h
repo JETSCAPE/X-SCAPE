@@ -38,8 +38,8 @@ public:
   JetScapeWriterStream<T>(string m_file_name_out);
   virtual ~JetScapeWriterStream<T>();
 
-  void Init();
-  void Exec();
+  void InitTask();
+  void ExecuteTask();
 
   bool GetStatus() { return output_file.good(); }
   void Close() { output_file.close(); }

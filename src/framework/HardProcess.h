@@ -39,17 +39,17 @@ public:
   virtual ~HardProcess();
 
   /** It reads the input parameters relevant to the hard scattering from the XML file under the name tag <Hard>. Uses JetScapeSingnalManager Instance to retrieve the Initial State Physics information. Calls InitTask(); This explicit call can be used for actual initialization of modules such as @a PythiaGun if attached as a @a polymorphic class. It also initializes the tasks within the current module.
-    @sa Read about @a polymorphism in C++.
+    @sa Read about @a polymorphism in C++. Override Init (not InitTask) here as sub-tasks are called as well.
   */
-  virtual void Init();
+  void Init() override;
 
   /** Calls JetScapeTask::ExecuteTasks() for recursive execution of tasks attached to HardProcess module. It can be overridden by the attached module.
    */
-  virtual void Exec();
+  virtual void ExecuteTask();
 
   /** Erases the hard partons stored in the vector @a hp_list of the hard process module. It can be overridden by the attached module.
   */
-  virtual void Clear();
+  virtual void ClearTask();
 
   /** It writes the output information obtained from the HardProcess Task into a file.
       @param w is a pointer of type JetScapeWrite class.
