@@ -56,7 +56,7 @@ Martini::Martini() {
 
 Martini::~Martini() { VERBOSE(8); }
 
-void Martini::Init() {
+void Martini::InitTask() {
   JSINFO << "Initialize Martini ...";
 
   double deltaT = 0.0;

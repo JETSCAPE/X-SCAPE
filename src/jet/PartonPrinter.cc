@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -34,7 +34,7 @@ PartonPrinter::PartonPrinter() {}
 
 PartonPrinter::~PartonPrinter() {}
 
-void PartonPrinter::Init() {
+void PartonPrinter::InitTask() {
   this->SetId("PartonPrinter");
     JSINFO << "Initialize PartonPrinter ...";
     string filename = GetXMLElementText({"PartonPrinter","FileName"});
@@ -42,7 +42,7 @@ void PartonPrinter::Init() {
   dist_output.open(filename,std::ios::app);
 }
 
-void PartonPrinter::Exec() {
+void PartonPrinter::ExecuteTask() {
   VERBOSE(2) << "Run PartonPrinter: print shower from event # "
              << GetCurrentEvent() << " ...";
 }
@@ -84,7 +84,7 @@ void PartonPrinter::GetFinalPartons2(shared_ptr<PartonShower> pShower) {
   }
 }
 
-void PartonPrinter::Clear() {
+void PartonPrinter::ClearTask() {
   //dist_output << " *********************************** " << endl;
   //dist_output.close();
   this->pFinals.clear();
