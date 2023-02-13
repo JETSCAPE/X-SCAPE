@@ -326,14 +326,14 @@ void JetScapeWriterRootHepMC::Write(weak_ptr<Hadron> h) {
   hadronizationvertex->add_particle_out(hepmc);
 }
 
-void JetScapeWriterRootHepMC::Init() {
+void JetScapeWriterRootHepMC::InitTask() {
   if (GetActive()) {
     JSINFO << "JetScape HepMC Writer initialized with output file = "
            << GetOutputFileName();
   }
 }
 
-void JetScapeWriterRootHepMC::Exec() {
+void JetScapeWriterRootHepMC::ExecuteTask() {
   // Nothing to do
 }
 } // end namespace Jetscape

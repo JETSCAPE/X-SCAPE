@@ -50,9 +50,9 @@ class CausalLiquefier: public Jetscape::LiquefierBase {
     CausalLiquefier();
     CausalLiquefier(double dtau, double dx, double dy , double deta);
     ~CausalLiquefier() {};
-    
-    void Init();
-    
+
+    void InitTask();
+
     void smearing_kernel(Jetscape::real tau, Jetscape::real x,
                          Jetscape::real y, Jetscape::real eta,
                          const Droplet drop_i,
