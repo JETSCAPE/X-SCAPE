@@ -41,13 +41,13 @@ public:
    */
   //void Init();
 
-  /** Default Exec() function. It can be overridden by other tasks.
+  /** Default ExecuteTask() function. It can be overridden by other tasks.
    */
-  void Exec();
+  void ExecuteTask();
 
-  /** Default Clear() function. It can be overridden by other tasks.
+  /** Default ClearTask() function. It can be overridden by other tasks.
    */
-  void Clear();
+  void ClearTask();
 
   void InitTask();
 
