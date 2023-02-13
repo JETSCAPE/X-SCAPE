@@ -19,7 +19,7 @@
  * We will follow Pythia's example of preserving as much of the internal status code as possible
  * Specifically:
  - beam particles. We don't have those, yet. If they ever become part of initial
-   state moduls, those module writers MUST set the status to 4, all we do here
+   state modules, those module writers MUST set the status to 4, all we do here
    is respect that code (for the future).
    However, this particle won't be a parton, so we only check that for hadrons.
    In practice, this will probably require a revamp of the graph structure, both

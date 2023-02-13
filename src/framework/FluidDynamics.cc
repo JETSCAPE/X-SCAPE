@@ -80,7 +80,7 @@ void FluidDynamics::ExecuteTask() {
 void FluidDynamics::ClearTask() {
   clear_up_evolution_data();
   if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
-    liquefier_ptr.lock()->Clear();
+    liquefier_ptr.lock()->ClearTask();
   }
 }
 

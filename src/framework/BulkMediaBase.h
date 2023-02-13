@@ -38,7 +38,7 @@ public:
     disconnect_all();
   }
 
-  // Override Init here as function taskes care of calling sub-tasks as well
+  // Override Init here as function takes care of calling sub-tasks as well
   void Init() override;
 
   virtual void ExecuteTask();

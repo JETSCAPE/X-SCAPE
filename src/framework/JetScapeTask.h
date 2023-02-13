@@ -215,12 +215,12 @@ public:
   int GetTaskNumber() {return my_task_number_;}
 
 private:
-  // can be made sortabele to put in correct oder or via xml file ...
+  // can be made sortable to put in correct order or via xml file ...
   vector<shared_ptr<JetScapeTask>> tasks;
   //list<shared_ptr<JetScapeTask>> tasks; // list vs vector any advantage of list?
 
-  /** Flag to set taks to be inactive. When false, task execution is
-   * decactivated i.e. their Exec() function is not run.
+  /** Flag to set tasks to be inactive. When false, task execution is
+   * deactivated i.e. their Exec() function is not run.
    */
   bool active_exec;
   bool multiThread = false;
