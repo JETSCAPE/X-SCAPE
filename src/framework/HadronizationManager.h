@@ -43,7 +43,7 @@ public:
   /** Override Exec() (and not ExecuteTask) here as function takes care of calling
    * the subtasks itself with some checks beforehand.
    */
-  virtual void Exec();
+  virtual void ExecuteTask();
 
   int GetNumSignals();
 

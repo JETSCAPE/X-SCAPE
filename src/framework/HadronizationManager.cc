@@ -78,7 +78,7 @@ void HadronizationManager::WriteTask(weak_ptr<JetScapeWriter> w) {
   JetScapeTask::WriteTasks(w);
 }
 
-void HadronizationManager::Exec() {
+void HadronizationManager::ExecuteTask() {
 
   VERBOSE(2) << "Run Hadronization Manager ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
@@ -103,7 +103,6 @@ void HadronizationManager::Exec() {
       dynamic_pointer_cast<Hadronization>(it)->AddInPartons(hd);
       dynamic_pointer_cast<Hadronization>(it)->AddInHadrons(hadrons);
     }
-    JetScapeTask::ExecuteTasks();
   } else {
     VERBOSE(2) << " There are no partons ready for recombination";
   }
