@@ -117,6 +117,7 @@ std::vector<std::vector<shared_ptr<Hadron>>> TestHadronList() {
 }
 
 void SmashWrapper::ExecuteTask() {
+  VERBOSE(2) << "SMASH afterburner running: " << GetId() << " ...";
   AfterburnerModus *modus = smash_experiment_->modus();
   // This is necessary to correctly handle indices of particle sets from hydro.
   // Every hydro event creates a new structure like jetscape_hadrons_

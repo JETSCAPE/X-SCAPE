@@ -22,7 +22,7 @@ class DummySplit : public JetEnergyLossModule<DummySplit> //, public std::enable
   DummySplit();
   virtual ~DummySplit();
 
-  void Init();
+  void InitTask();
   void DoEnergyLoss(double deltaT,double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w) {}; //funny, should not break if not not overriden !???
   

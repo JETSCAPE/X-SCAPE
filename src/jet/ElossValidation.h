@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -25,7 +25,7 @@ public:
   ElossValidate();
   virtual ~ElossValidate();
 
-  void Init();
+  void InitTask();
   void DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton> &pIn,
                     vector<Parton> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);

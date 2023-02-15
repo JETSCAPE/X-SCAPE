@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -37,7 +37,7 @@ ElossValidate::ElossValidate() {
 
 ElossValidate::~ElossValidate() { VERBOSE(8); }
 
-void ElossValidate::Init() {
+void ElossValidate::InitTask() {
   JSINFO << "Initialize ElossValidate ...";
 
   std::string s = GetXMLElementText({"Eloss", "ElossValidate", "name"});

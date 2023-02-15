@@ -102,7 +102,7 @@ JetEnergyLoss::JetEnergyLoss(const JetEnergyLoss &j) {
   }
 }
 
-void JetEnergyLoss::Clear() {
+void JetEnergyLoss::ClearTask() {
   VERBOSESHOWER(8);
   if (pShower)
     pShower->clear();
@@ -123,8 +123,8 @@ void JetEnergyLoss::Clear() {
   vStartVec.clear();
 }
 
-void JetEnergyLoss::Init() {
-  JetScapeModuleBase::Init();
+void JetEnergyLoss::InitTask() {
+  JetScapeModuleBase::InitTask();
 
   JSINFO << "Initialize JetEnergyLoss ...";
 
@@ -166,7 +166,7 @@ void JetEnergyLoss::Init() {
   JSINFO << "Found " << GetNumberOfTasks()
          << " Eloss Tasks/Modules Initialize them ... ";
 
-  JetScapeTask::InitTasks();
+  // Subtasks automatically called by framwork (s. JetScapeTask::Init)
 }
 
 void JetEnergyLoss::DoShower() {
@@ -193,7 +193,7 @@ void JetEnergyLoss::DoShower() {
 
 }
 
-void JetEnergyLoss::Exec() {
+void JetEnergyLoss::ExecuteTask() {
   VERBOSE(1) << "Run JetEnergyLoss ...";
   VERBOSE(1) << "Found " << GetNumberOfTasks()
              << " Eloss Tasks/Modules Execute them ... ";
@@ -287,7 +287,7 @@ void JetEnergyLoss::FinishPerEvent()
     GetPartonShowerGenerator()->DoFinishPerEvent(*dynamic_pointer_cast<JetEnergyLoss>(shared_from_this()));
   }
 
-  Clear();
+  ClearTask();
 }
 
 void JetEnergyLoss::DoInitPerEvent()

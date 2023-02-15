@@ -40,17 +40,17 @@ public:
   virtual ~JetEnergyLossManager();
 
   /** It initializes the tasks attached to the jet energy loss manager. It also sends a signal to connect the JetEnergyLoss object to the GetHardPartonList() function of the HardProcess class. It can be overridden by other tasks.
-      @sa JetScapeSignalManager to understand the implementation of signal slots philosophy.
+      @sa JetScapeSignalManager to understand the implementation of signal slots philosophy. Override Init (not InitTask) here as sub-tasks are called specifically.
    */
-  virtual void Init();
+  void Init() override;
 
   /** It reads the Hard Patrons list and calls CreateSignalSlots() function. Then, it executes the energy loss tasks attached with the jet energy loss manager. This function also includes the parallel computing feature. It can be overridden by other tasks.
   */
-  virtual void Exec();
+  virtual void ExecuteTask();
 
   /** It erases the tasks attached with the energy loss manager. It can be overridden by other tasks.
    */
-  virtual void Clear();
+  virtual void ClearTask();
 
   virtual void CalculateTime();
 

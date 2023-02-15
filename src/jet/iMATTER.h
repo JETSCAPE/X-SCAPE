@@ -42,7 +42,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
 
    double Q0;
 
-   void Init();
+   void InitTask();
    void DoEnergyLoss(double deltaT,double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut);
    void WriteTask(weak_ptr<JetScapeWriter> w) {}; //funny, should not break if not not overriden !???
    

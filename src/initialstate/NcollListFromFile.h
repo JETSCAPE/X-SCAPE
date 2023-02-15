@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -35,15 +35,8 @@ public:
   NcollListFromFile();
   ~NcollListFromFile();
 
-  //void Init();
-
-  /** Default Exec() function. It can be overridden by other tasks.
-   */
-  void Exec();
-
-  /** Default Clear() function. It can be overridden by other tasks.
-   */
-  void Clear();
+  void ExecuteTask();
+  void ClearTask();
 
   /** Generated number of binary collisions. */
   double GetNcoll() { return(ncoll_); };

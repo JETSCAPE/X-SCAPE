@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2020
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -28,17 +28,17 @@
 namespace Jetscape {
 
 class HadronPrinter : public JetScapeModuleBase,
-      public std::enable_shared_from_this<HadronPrinter> 
+      public std::enable_shared_from_this<HadronPrinter>
 {
 
  public:
- 
+
   HadronPrinter();
   virtual ~HadronPrinter();
-  
-  virtual void Init();
-  virtual void Exec() final;
-  virtual void Clear();
+
+  virtual void InitTask();
+  virtual void ExecuteTask() final;
+  virtual void ClearTask();
   virtual void WriteTask(weak_ptr<JetScapeWriter> w);
 
   sigslot::signal1<vector<shared_ptr<Hadron>>& > GetFinalHadronList;
@@ -47,9 +47,9 @@ class HadronPrinter : public JetScapeModuleBase,
     finalHadrons = hadrons;
     PrintFinalHadron();
   }
-  
+
   void PrintFinalHadron();
- 
+
  private:
 
   vector<shared_ptr<Hadron>> finalHadrons;

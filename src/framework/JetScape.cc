@@ -1181,13 +1181,10 @@ void JetScape::Exec() {
   }
 }
 
-void JetScape::Finish() {
+void JetScape::FinishTask() {
   JSINFO << BOLDBLACK << "JetScape finished after " << GetNumberOfEvents()
          << " events!";
   JSDEBUG << "More infos wrap up/saving to file/closing file ...";
-
-  // same as in Init() and Exec() ...
-  JetScapeTask::FinishTasks(); //dummy so far ...
 }
 
 } // end namespace Jetscape

@@ -149,7 +149,7 @@ public:
   virtual ~Martini();
 
   //main//
-  void Init();
+  void InitTask();
   void DoEnergyLoss(double deltaT, double Time, double Q2, vector<Parton> &pIn,
                     vector<Parton> &pOut);
   int DetermineProcess(double p, double T, double deltaTRest, int id);

@@ -42,7 +42,7 @@ HardProcess::~HardProcess() {
 }
 
 void HardProcess::Init() {
-  JetScapeModuleBase::Init();
+  JetScapeModuleBase::InitTask();
 
   JSINFO << "Initialize HardProcess : " << GetId() << " ...";
 
@@ -65,19 +65,17 @@ void HardProcess::Init() {
         JSINFO << BOLDYELLOW << "Extra parton info goes to " << printer ;
     }
   InitTask();
-
-  JetScapeTask::InitTasks();
+  InitTasks();
 }
 
-void HardProcess::Exec() {
+void HardProcess::ExecuteTask() {
   JSINFO << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
-  //Assume here for now that they are ISR related ...
-  JetScapeTask::ExecuteTasks();
+  // Subtasks assumed here to be ISR related ...
 }
 
-void HardProcess::Clear() {
+void HardProcess::ClearTask() {
   JSDEBUG << "Clear Hard Process : " << GetId() << " ...";
 
   hp_list.clear();
@@ -86,8 +84,6 @@ void HardProcess::Clear() {
   Remnants.clear();
 
   VERBOSE(8) << hp_list.size();
-
-  JetScapeTask::ClearTasks();
 }
 
 void HardProcess::WriteTask(weak_ptr<JetScapeWriter> w) {

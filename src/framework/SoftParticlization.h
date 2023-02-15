@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -34,9 +34,11 @@ public:
   SoftParticlization();
   ~SoftParticlization();
 
-  virtual void Init();
-  virtual void Exec();
-  virtual void Clear();
+  // Override Init (not InitTask) here as sub-tasks are called as well.
+  void Init() override;
+
+  virtual void ExecuteTask();
+  virtual void ClearTask();
 
   std::vector<std::vector<shared_ptr<Hadron>>> Hadron_list_;
 

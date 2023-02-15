@@ -62,7 +62,7 @@ ISRRotation::~ISRRotation()
   VERBOSE(8);
 }
 
-void ISRRotation::Init()
+void ISRRotation::InitTask()
 {
   JSINFO<<"Intialize ISRRotation ...";
 

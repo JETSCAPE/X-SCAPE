@@ -37,8 +37,7 @@ public:
    */
   virtual ~IsrJet();
 
-  virtual void Init();
-
+  virtual void InitTask();
 
 private:
 

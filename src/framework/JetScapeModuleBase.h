@@ -57,17 +57,18 @@ public:
   virtual ~JetScapeModuleBase();
 
   //virtual shared_ptr<JetScapeModuleBase> Clone() const {return nullptr;}
-  /** A virtual function for a default initialization of a JetScapeModuleBase. It also checks whether a XML file is loaded or not.
-  */
-  virtual void Init();
 
-  /** A virtual function to define a default Exec() function for a JetScapeModuleBase. It can be overridden by different modules/tasks.
+  /** Checks whether a XML file is loaded or not.
+  */
+  virtual void InitTask();
+
+  /** A virtual function to define a default execute function for a JetScapeModuleBase. It is overridden by different modules/tasks.
    */
-  virtual void Exec(){};
+  virtual void ExecuteTask() {};
 
   /**  A virtual function to define a default Clear() function for a JetScapeModuleBase. It can be overridden by different modules/tasks.
    */
-  virtual void Clear(){};
+  virtual void ClearTask() {};
 
   // Override execute tasks (at least for now) to keep is-time-stepped handling on module level and not include in JetScapeTask
   virtual void ExecuteTasks() override;

@@ -50,7 +50,7 @@ public:
   ~PythiaIsrGun();
 
   void InitTask();
-  void Exec();
+  void ExecuteTask();
   virtual void WriteTask(weak_ptr<JetScapeWriter> w);
 
   // Getters
