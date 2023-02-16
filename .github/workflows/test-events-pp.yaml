@@ -4,11 +4,13 @@ on:
   pull_request:
     branches:
       - main
+      - XSCAPE-RC2
       - XSCAPE-0.9.1-for-public-repo
 
   push:
     branches:
       - main
+      - XSCAPE-RC2
       - XSCAPE-0.9.1-for-public-repo 
 
 env:
