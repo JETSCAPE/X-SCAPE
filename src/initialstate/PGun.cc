@@ -53,7 +53,7 @@ void PGun::InitTask() {
   JSINFO << "Use hybrid hadronization? " << flag_useHybridHad;
 }
 
-void PGun::Exec() {
+void PGun::ExecuteTask() {
   VERBOSE(2) << "Run Hard Process : " << GetId() << " ...";
 
   double p[4], xLoc[4];
@@ -128,6 +128,4 @@ void PGun::Exec() {
   //    }
 
   VERBOSE(8) << GetNHardPartons();
-
-  JetScapeTask::ExecuteTasks();
 }

@@ -95,7 +95,7 @@ template <class T> void JetScapeWriterFinalStateStream<T>::WriteEvent() {
   particles.clear();
 }
 
-template <class T> void JetScapeWriterFinalStateStream<T>::Init() {
+template <class T> void JetScapeWriterFinalStateStream<T>::InitTask() {
   if (GetActive()) {
     // Capitalize name
     std::string name = GetName();
@@ -120,7 +120,7 @@ template <class T> void JetScapeWriterFinalStateStream<T>::Init() {
   }
 }
 
-template <class T> void JetScapeWriterFinalStateStream<T>::Exec() {
+template <class T> void JetScapeWriterFinalStateStream<T>::ExecuteTask() {
   // JSINFO<<"Run JetScapeWriterFinalStateStream<T>: Write event # "<<GetCurrentEvent()<<" ...";
 
   // if (GetActive())

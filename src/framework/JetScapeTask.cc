@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -38,19 +38,27 @@ JetScapeTask::~JetScapeTask() {
           << " and TaskNumber= " << GetMyTaskNumber();
 }
 
-void JetScapeTask::Init() { JSDEBUG; }
+void JetScapeTask::Init() {
+  InitTask();
+  InitTasks();
+}
 
-/** Recursive initialization of all the subtasks of the JetScapeTask. Subtasks are also of type JetScapeTask such as Pythia Gun, Trento, Energy Loss Matter and Martini etc.
-   */
 void JetScapeTask::InitTasks() {
   VERBOSE(7) << " : # Subtasks = " << tasks.size();
 
-  //In short ...
-  for (auto it : tasks)
+  for (auto it : tasks) {
+    JSDEBUG << "Initalizing " << it->GetId();
     it->Init();
+  }
 }
 
-void JetScapeTask::Exec() { VERBOSE(7); }
+void JetScapeTask::Exec() {
+  ExecuteTask();
+  ExecuteTasks();
+}
+
+void JetScapeTask::ExecuteTask() { VERBOSE(7); }
+
 
 void JetScapeTask::ExecuteTasks() {
   VERBOSE(7) << " : # Subtasks = " << tasks.size();
@@ -58,15 +66,38 @@ void JetScapeTask::ExecuteTasks() {
     if (it->active_exec) {
       JSDEBUG << "Executing " << it->GetId();
       it->Exec();
-	}
+	  }
   }
+}
+
+void JetScapeTask::Clear() {
+  ClearTask();
+  ClearTasks();
 }
 
 void JetScapeTask::ClearTasks() {
   VERBOSE(7) << " : # Subtasks = " << tasks.size();
-  for (auto it : tasks)
-    if (it->active_exec)
+  for (auto it : tasks) {
+    if (it->active_exec) {
+      JSDEBUG << "Clearing " << it->GetId();
       it->Clear();
+    }
+  }
+}
+
+void JetScapeTask::Finish() {
+  FinishTask();
+  FinishTasks();
+}
+
+void JetScapeTask::FinishTasks() {
+  VERBOSE(7) << " : # Subtasks = " << tasks.size();
+  for (auto it : tasks) {
+    if (it->active_exec) {
+      JSDEBUG << "Finishing " << it->GetId();
+      it->Finish();
+    }
+  }
 }
 
 void JetScapeTask::WriteTasks(weak_ptr<JetScapeWriter> w) {

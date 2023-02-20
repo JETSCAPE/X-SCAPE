@@ -44,15 +44,15 @@ public:
 
   /** It initializes the tasks attached to the bulk dynamics manager.
    */
-  virtual void Init();
+  virtual void InitTask();
 
   /**
   */
-  virtual void Exec();
+  virtual void ExecuteTask();
 
   /** It erases the tasks attached with the bulk dynamics manager. It can be overridden by other tasks.
    */
-  virtual void Clear();
+  virtual void ClearTask();
 
   virtual void CalculateTime();
 

@@ -29,7 +29,7 @@ TEST(LiquefierBaseTest, TEST_add_a_droplet_and_Clear) {
     lqf.add_a_droplet(a_drop);
     EXPECT_EQ(1, lqf.get_dropletlist_size());
 
-    lqf.Clear();
+    lqf.ClearTask();
     EXPECT_EQ(0, lqf.get_dropletlist_size());
 }
 
@@ -134,7 +134,7 @@ TEST(LiquefierBaseTest, TEST_add_hydro_source) {
     EXPECT_EQ(0, lqf.get_dropletlist_size());
     pIn.clear();
     pOut.clear();
-    lqf.Clear();
+    lqf.ClearTask();
 
     // test when pOut == pIn (hard parton)
     pIn.push_back(test2);
@@ -145,7 +145,7 @@ TEST(LiquefierBaseTest, TEST_add_hydro_source) {
     EXPECT_EQ(1, pOut.size());
     pIn.clear();
     pOut.clear();
-    lqf.Clear();
+    lqf.ClearTask();
     
     // test when pOut == pIn (soft parton)
     pIn.push_back(test1);
@@ -159,7 +159,7 @@ TEST(LiquefierBaseTest, TEST_add_hydro_source) {
     EXPECT_DOUBLE_EQ(x_test1.t(), (lqf.get_a_droplet(0).get_xmu())[0]);
     pIn.clear();
     pOut.clear();
-    lqf.Clear();
+    lqf.ClearTask();
 
     // test a negative particle
     FourVector p_test3(3.0, 0.0, 0.0, 3.0);
@@ -176,7 +176,7 @@ TEST(LiquefierBaseTest, TEST_add_hydro_source) {
     EXPECT_EQ(2, pOut.size());
     pIn.clear();
     pOut.clear();
-    lqf.Clear();
+    lqf.ClearTask();
     
     // test a negative particle and a soft particle
     pIn.push_back(test2);
@@ -191,7 +191,7 @@ TEST(LiquefierBaseTest, TEST_add_hydro_source) {
     EXPECT_EQ(3, pOut.size());
     pIn.clear();
     pOut.clear();
-    lqf.Clear();
+    lqf.ClearTask();
 
     // test a negative particle and a hard particle
     pIn.push_back(test1);
@@ -209,7 +209,7 @@ TEST(LiquefierBaseTest, TEST_add_hydro_source) {
     EXPECT_EQ(3, pOut.size());
     pIn.clear();
     pOut.clear();
-    lqf.Clear();
+    lqf.ClearTask();
 
     // test a soft particle in pIn only
     //pIn.push_back(test1);
@@ -222,5 +222,5 @@ TEST(LiquefierBaseTest, TEST_add_hydro_source) {
     //EXPECT_EQ(0, pOut.size());
     //pIn.clear();
     //pOut.clear();
-    //lqf.Clear();
+    //lqf.ClearTask();
 }

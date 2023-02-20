@@ -38,9 +38,12 @@ public:
     VERBOSE(8);
     disconnect_all();
   }
+  // Override Init here as function takes care of calling sub-tasks as well
+  virtual void Init() override;
 
-  virtual void Init();
-  virtual void Exec();
+  // needs to be defined by afterburner modules
+  virtual void ExecuteTask();
+
   virtual void CalculateTime();
 
   /// Fill in bulk media info for (t,x,y,z) from current hadron list (work in progress, see .cc file)
@@ -60,6 +63,9 @@ protected:
   std::vector<std::shared_ptr<Hadron>> GetFragmentationHadrons();
   /// Get the list of hadrons for the upcoming timestep from BulkDynamicsManager (will clear the list)
   std::vector<std::shared_ptr<Hadron>> GetTimestepParticlizationHadrons();
+
+  // rng for the Kaon-L / Kaon-S switch to K0 / Anti-K0
+  std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
 
 };
 

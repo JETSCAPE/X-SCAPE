@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -34,7 +34,7 @@ ColoredHadronization::ColoredHadronization() {
 
 ColoredHadronization::~ColoredHadronization() { VERBOSE(8); }
 
-void ColoredHadronization::Init() {
+void ColoredHadronization::InitTask() {
 
   std::string s = GetXMLElementText({"JetHadronization", "name"});
   JSDEBUG << s << " to be initializied ...";

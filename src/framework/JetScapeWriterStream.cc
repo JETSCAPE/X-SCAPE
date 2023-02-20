@@ -98,7 +98,7 @@ template <class T> void JetScapeWriterStream<T>::Write(weak_ptr<Vertex> v) {
   }
 }
 
-template <class T> void JetScapeWriterStream<T>::Init() {
+template <class T> void JetScapeWriterStream<T>::InitTask() {
   if (GetActive()) {
     JSINFO << "JetScape Stream Writer initialized with output file = "
            << GetOutputFileName();
@@ -110,7 +110,7 @@ template <class T> void JetScapeWriterStream<T>::Init() {
   }
 }
 
-template <class T> void JetScapeWriterStream<T>::Exec() {
+template <class T> void JetScapeWriterStream<T>::ExecuteTask() {
   // JSINFO<<"Run JetScapeWriterStream<T>: Write event # "<<GetCurrentEvent()<<" ...";
 
   // if (GetActive())

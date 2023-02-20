@@ -36,7 +36,7 @@ DummySplit::~DummySplit()
   VERBOSE(8);
 }
 
-void DummySplit::Init()
+void DummySplit::InitTask()
 {
   JSINFO<<"Intialize DummySplit ...";
 

@@ -26,7 +26,7 @@ public:
   iColoredHadronization();
   virtual ~iColoredHadronization();
 
-  void Init();
+  void InitTask();
   void DoHadronization(vector<vector<shared_ptr<Parton>>> &shower,
                        vector<shared_ptr<Hadron>> &hOut,
                        vector<shared_ptr<Parton>> &pOut);

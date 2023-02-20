@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -38,7 +38,7 @@ PreequilibriumDynamics::~PreequilibriumDynamics() {
 }
 
 void PreequilibriumDynamics::Init() {
-  JetScapeModuleBase::Init();
+  JetScapeModuleBase::InitTask();
 
   JSINFO << "Initialize PreequilibriumDynamics : " << GetId() << " ...";
 
@@ -55,11 +55,10 @@ void PreequilibriumDynamics::Init() {
   InitializePreequilibrium(parameter_list_);
 
   InitTask();
-
-  JetScapeTask::InitTasks();
+  InitTasks();
 }
 
-void PreequilibriumDynamics::Exec() {
+void PreequilibriumDynamics::ExecuteTask() {
   VERBOSE(2) << "Run Preequilibrium : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
@@ -69,11 +68,9 @@ void PreequilibriumDynamics::Exec() {
   }
 
   EvolvePreequilibrium();
-
-  JetScapeTask::ExecuteTasks();
 }
 
-void PreequilibriumDynamics::Clear() {
+void PreequilibriumDynamics::ClearTask() {
   e_.clear();
   P_.clear();
   utau_.clear();

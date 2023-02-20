@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -35,17 +35,28 @@ public:
   HadronizationManager();
   virtual ~HadronizationManager();
 
-  virtual void Init();
-  virtual void Exec();
-  virtual void Clear();
+  // Override Init (not InitTask) here as sub-tasks are called manually
+  virtual void Init() override;
+  virtual void ClearTask();
   virtual void WriteTask(weak_ptr<JetScapeWriter> w);
+
+  /** Override Exec() (and not ExecuteTask) here as function takes care of calling
+   * the subtasks itself with some checks beforehand.
+   */
+  virtual void ExecuteTask();
 
   int GetNumSignals();
 
   void CreateSignalSlots();
 
-		//get Hadrons from Hadronization submodules
+  //get Hadrons from Hadronization submodules
   void GetHadrons(vector<shared_ptr<Hadron>>& signal);
+
+  // deletes the hadrons from the different hadronization modules
+  // this is used in the case of hadronization hadrons in the afterburner
+  // otherwise these hadrons are printed to file and the same hadrons will be 
+  // modified in the transport and printed again
+  void DeleteHadrons();
 
   sigslot::signal1<vector<shared_ptr<Hadron>> &> GetHadronList; //get Hadrons from HardProcess NOT Hadronization submodules
 

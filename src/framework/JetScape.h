@@ -37,15 +37,21 @@ public:
    */
   virtual ~JetScape();
 
-  /** This function initializes the main task of the JetScape framework. It calls JetScapeTask::InitTaks() function to initialize the modules/tasks of a JetScapeTask.
+  /** This function initializes the main task of the JetScape framework.
+   * As it calls JetScapeTask::InitTasks() function specifcally to initialize
+   * the attached modules/tasks Init (not InitTask) is used here.
   */
-  void Init();
+  void Init() override;
 
-  /** This function execute the modules/tasks of a JetScapeTask for all the events. It also calls "GetPartons()" function to print parton shower, and  "WriteTasks()" function to store the data in the XML file.
-  */
-  void Exec();
+  /** This function executes the modules/tasks of the main JetScapeTask for all
+   * the events. It also calls "GetPartons()" function to print parton shower,
+   * and "WriteTasks()" function to store the data in the XML file.
+   * It overrides the usual Exec() (and not ExecuteTask()) as it also takes
+   * care of calling its subtasks.
+   */
+  void Exec() override;
 
-  void Finish();
+  void FinishTask() override;
 
   /** This function sets the total number of events to "m_n_events".
    */

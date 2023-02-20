@@ -145,11 +145,9 @@ void PythiaGun::InitTask() {
 
     std::ofstream sigma_printer;
     sigma_printer.open(printer, std::ios::trunc);
-
-    
 }
 
-void PythiaGun::Exec() {
+void PythiaGun::ExecuteTask() {
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
   //Reading vir_factor from xml for MATTER
@@ -298,7 +296,4 @@ void PythiaGun::Exec() {
 
   VERBOSE(8) << GetNHardPartons();
 
-  //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????
-  
-  JetScapeTask::ExecuteTasks();
 }

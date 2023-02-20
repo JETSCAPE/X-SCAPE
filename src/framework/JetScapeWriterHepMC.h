@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -46,8 +46,8 @@ public:
   };
   virtual ~JetScapeWriterHepMC();
 
-  void Init();
-  void Exec();
+  void InitTask();
+  void ExecuteTask();
 
   bool GetStatus() { return failed(); }
   void Close() { close(); }
@@ -71,8 +71,8 @@ private:
   HepMC3::GenVertexPtr hadronizationvertex;
 
   /// WriteEvent needs to know whether it should overwrite final partons status to 1
-  bool hashadrons=false; 
-  
+  bool hashadrons=false;
+
   inline HepMC3::GenVertexPtr
   castVtxToHepMC(const shared_ptr<Vertex> vtx) const {
     double x = vtx->x_in().x();

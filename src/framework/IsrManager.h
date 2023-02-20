@@ -41,10 +41,10 @@ public:
   virtual ~IsrManager();
 
 
-  virtual void Init();
+  virtual void Init() override;
 
 
-  virtual void Exec();
+  virtual void Exec() override;
 
   /*
   virtual void Clear();

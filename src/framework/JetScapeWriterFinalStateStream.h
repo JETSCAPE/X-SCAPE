@@ -41,8 +41,8 @@ public:
   JetScapeWriterFinalStateStream<T>(string m_file_name_out);
   virtual ~JetScapeWriterFinalStateStream<T>();
 
-  void Init();
-  void Exec();
+  void InitTask();
+  void ExecuteTask();
 
   virtual std::string GetName() { throw std::runtime_error("Don't use the base class"); }
   bool GetStatus() { return output_file.good(); }

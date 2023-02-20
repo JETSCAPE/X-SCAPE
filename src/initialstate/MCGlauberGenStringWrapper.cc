@@ -32,7 +32,7 @@ MCGlauberGenStringWrapper::MCGlauberGenStringWrapper() {
     event_id_ = 0;
 }
 
-void MCGlauberGenStringWrapper::Init() {
+void MCGlauberGenStringWrapper::InitTask() {
     ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
     if (!ini) {
         JSWARN << "No initialization module, "
@@ -42,7 +42,7 @@ void MCGlauberGenStringWrapper::Init() {
 }
 
 
-void MCGlauberGenStringWrapper::Exec() {
+void MCGlauberGenStringWrapper::ExecuteTask() {
     VERBOSE(1) << "Run 3DMCGlauber second time to generate strings for MUSIC "
                      << "...";
     try {

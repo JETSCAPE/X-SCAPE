@@ -19,7 +19,7 @@
 namespace Jetscape {
 
 const string JetScapeVersion = "3.5.1";
-const string XscapeVersion = "RC1";
+const string XscapeVersion = "0.9.1";
 
 } // end namespace Jetscape
 

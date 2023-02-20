@@ -34,7 +34,7 @@ CausalLiquefier::CausalLiquefier(){
     time_relax = 0.1;
     d_diff = 0.08;
     width_delta = 0.1;
-    Init();// Get values of parameters from XML
+    InitTask();// Get values of parameters from XML
     c_diff = sqrt(d_diff/time_relax);
     gamma_relax = 0.5/time_relax;
     if( c_diff > 1.0 ){
@@ -76,8 +76,8 @@ CausalLiquefier::CausalLiquefier(double dtau_in, double dx_in, double dy_in, dou
     << width_delta <<" fm";
 }
 
-void CausalLiquefier::Init(){
-    
+void CausalLiquefier::InitTask(){
+
     // Initialize parameter with values in XML
     JSINFO<<"Initialize CausalLiquefier ...";
 

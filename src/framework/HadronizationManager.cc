@@ -37,14 +37,14 @@ HadronizationManager::HadronizationManager() {
 }
 
 HadronizationManager::~HadronizationManager() {
-  Clear();
+  ClearTask();
 
   // The tasks are hadronization modules
   if (GetNumberOfTasks() > 0)
     EraseTaskLast();
 }
 
-void HadronizationManager::Clear() {
+void HadronizationManager::ClearTask() {
   JSDEBUG << "Hadronization task List ...";
 
   hd.clear();
@@ -54,7 +54,6 @@ void HadronizationManager::Clear() {
     EraseTaskLast();
 
   JetScapeSignalManager::Instance()->CleanUp();
-  JetScapeTask::ClearTasks();
   VERBOSE(8) << hd.size();
 }
 
@@ -79,7 +78,7 @@ void HadronizationManager::WriteTask(weak_ptr<JetScapeWriter> w) {
   JetScapeTask::WriteTasks(w);
 }
 
-void HadronizationManager::Exec() {
+void HadronizationManager::ExecuteTask() {
 
   VERBOSE(2) << "Run Hadronization Manager ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
@@ -104,7 +103,6 @@ void HadronizationManager::Exec() {
       dynamic_pointer_cast<Hadronization>(it)->AddInPartons(hd);
       dynamic_pointer_cast<Hadronization>(it)->AddInHadrons(hadrons);
     }
-    JetScapeTask::ExecuteTasks();
   } else {
     VERBOSE(2) << " There are no partons ready for recombination";
   }
@@ -147,6 +145,15 @@ void HadronizationManager::GetHadrons(vector<shared_ptr<Hadron>>& signal){
 		for(auto hadron : tempHadronList){
 			signal.push_back(hadron);
 		}
+	}
+}
+
+void HadronizationManager::DeleteHadrons() {
+  // foreach hadronizon object tasks
+	for(shared_ptr<JetScapeTask> it : GetTaskList()){
+		JetScapeTask *jet = it.get();
+		Hadronization *hit = (Hadronization *) jet;
+		hit->DeleteHadrons();
 	}
 }
 

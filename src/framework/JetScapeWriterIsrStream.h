@@ -33,8 +33,8 @@ class JetScapeWriterIsrStream : public JetScapeWriterStream<T>
     JetScapeWriterStream<T>(m_file_name_out){}
   virtual ~JetScapeWriterIsrStream<T>(){};
 
-  //void Init();
-  //void Exec();
+  //void InitTask();
+  //void ExecuteTask();
 
   void WriteIsr(weak_ptr<PartonShower> ps){
       JetScapeWriterStream<T>::Write(ps);}

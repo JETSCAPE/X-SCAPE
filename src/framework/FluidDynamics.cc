@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -41,7 +41,7 @@ FluidDynamics::~FluidDynamics() {
 }
 
 void FluidDynamics::Init() {
-  JetScapeModuleBase::Init();
+  JetScapeModuleBase::InitTask();
 
   JSINFO << "Initialize FluidDynamics : " << GetId() << " ...";
 
@@ -60,12 +60,12 @@ void FluidDynamics::Init() {
   }
 
   InitializeHydro(parameter_list);
-  InitTask();
 
-  JetScapeTask::InitTasks();
+  InitTask();
+  InitTasks();
 }
 
-void FluidDynamics::Exec() {
+void FluidDynamics::ExecuteTask() {
   VERBOSE(2) << "Run Hydro : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
@@ -75,13 +75,12 @@ void FluidDynamics::Exec() {
   }
 
   EvolveHydro();
-  JetScapeTask::ExecuteTasks();
 }
 
-void FluidDynamics::Clear() {
+void FluidDynamics::ClearTask() {
   clear_up_evolution_data();
   if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
-    liquefier_ptr.lock()->Clear();
+    liquefier_ptr.lock()->ClearTask();
   }
 }
 

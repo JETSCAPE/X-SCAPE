@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -28,8 +28,8 @@ NcollListFromFile::NcollListFromFile() {
 
 NcollListFromFile::~NcollListFromFile() {}
 
-void NcollListFromFile::Exec() {
-  Clear();
+void NcollListFromFile::ExecuteTask() {
+  ClearTask();
   Jetscape::JSINFO << "Read binary collision list from file ...";
   try {
     std::string initialProfilePath =
@@ -49,7 +49,7 @@ void NcollListFromFile::Exec() {
 }
 
 
-void NcollListFromFile::Clear() {
+void NcollListFromFile::ClearTask() {
   Jetscape::JSINFO << "clear initial condition vectors";
   binary_collision_x_.clear();
   binary_collision_y_.clear();

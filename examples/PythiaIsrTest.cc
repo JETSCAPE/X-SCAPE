@@ -27,7 +27,6 @@
 #include "Hadronization.h"
 #include "IsrManager.h"
 #include "IsrJet.h"
-#include "PartonShowerGeneratorDefault.h"
 #include "IsrShowerPSG.h"
 
 // Various output writer includes ...
@@ -121,8 +120,9 @@ int main(int argc, char** argv)
   // ISR Mangers Shower module
   auto isrManager = make_shared<IsrManager>();
   auto isrJloss = make_shared<IsrJet>();
-  auto stdPSG = make_shared<PartonShowerGeneratorDefault>();
+  auto isrPSG = make_shared<IsrShowerPSG>();
   // minor changes to allow backward time evolution (wrt to DoShower() in JetEnergyLoss class implementation)
+  // and implementation of per timestep execution if needed in the future ...
   auto iMatter = make_shared<iMATTER> ();
 
   // Reading tMax from the xml
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
 
-  isrJloss->AddPartonShowerGenerator(stdPSG);
+  isrJloss->AddPartonShowerGenerator(isrPSG);
   isrJloss->Add(iMatter);
   isrManager->Add(isrJloss);
 
@@ -191,7 +191,7 @@ int main(int argc, char** argv)
   jetscape->Add(writerHepMC);
   #endif
   */
-
+  
   // Intialize all modules tasks
   jetscape->Init();
 

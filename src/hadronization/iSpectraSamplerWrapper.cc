@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -100,7 +100,7 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->echo();
 }
 
-void iSpectraSamplerWrapper::Exec() {
+void iSpectraSamplerWrapper::ExecuteTask() {
   // generate symbolic links with music_input_file
   std::string music_input_file_path = GetXMLElementText(
           {"Hydro", "MUSIC", "MUSIC_input_file"});
@@ -134,7 +134,7 @@ void iSpectraSamplerWrapper::Exec() {
   PassHadronListToJetscape();
 }
 
-void iSpectraSamplerWrapper::Clear() {
+void iSpectraSamplerWrapper::ClearTask() {
   VERBOSE(2) << "Finish the particle sampling";
   iSpectraSampler_ptr_->clear();
   for (unsigned i = 0; i < Hadron_list_.size(); i++) {

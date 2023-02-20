@@ -66,7 +66,7 @@ iMATTER::~iMATTER()
   VERBOSE(8);
 }
 
-void iMATTER::Init()
+void iMATTER::InitTask()
 {
     JSINFO<<"Intialize iMATTER ...";
     // alpha_s = 0.2;

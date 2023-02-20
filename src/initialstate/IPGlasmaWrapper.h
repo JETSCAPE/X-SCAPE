@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -33,20 +33,11 @@ public:
   IPGlasmaWrapper();
   ~IPGlasmaWrapper();
 
-  /** Reads the input parameters from the XML file under the tag  <IS>. Calls InitTask(); This explicit call of InitTask() can be used for actual initialization of modules such as @a Trento if attached as a @a polymorphic class. It also initializes the tasks within the current module.
-      @sa Read about @a polymorphism in C++.
-   */
-  //void Init();
-
-  /** Default Exec() function. It can be overridden by other tasks.
-   */
-  void Exec();
-
-  /** Default Clear() function. It can be overridden by other tasks.
-   */
-  void Clear();
-
   void InitTask();
+  void ExecuteTask();
+  void ClearTask();
+
+
 
   /** Default Write() function. It can be overridden by other tasks.
       @param w A pointer to the JetScapeWriter class.

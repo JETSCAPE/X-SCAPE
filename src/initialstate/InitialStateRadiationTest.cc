@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -38,7 +38,7 @@ void InitialStateRadiationTest::InitTask() {
   cout << "Initializing InitialStateRadiationTest" << endl;;
 }
 
-void InitialStateRadiationTest::Exec() {
+void InitialStateRadiationTest::ExecuteTask() {
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
@@ -239,7 +239,7 @@ void InitialStateRadiationTest::ForwardISR() {
           pInModule.push_back(pIn[i]);
 
           // call MATTER -- add later
-          //SentInPartons(moduleDeltaT, currentTime, parton.pt(), 
+          //SentInPartons(moduleDeltaT, currentTime, parton.pt(),
           //              pInModule, pOutModule);
 
           // instead do dummy forward shower

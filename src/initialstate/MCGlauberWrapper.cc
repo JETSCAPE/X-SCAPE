@@ -73,7 +73,7 @@ void MCGlauberWrapper::InitTask() {
     mc_gen_->New_Para_pointer(ran_seed);
 }
 
-void MCGlauberWrapper::Clear() {
+void MCGlauberWrapper::ClearTask() {
     VERBOSE(1) << "clear initial condition vectors";
     binary_collision_t_.clear();
     binary_collision_x_.clear();
@@ -83,8 +83,8 @@ void MCGlauberWrapper::Clear() {
 }
 
 
-void MCGlauberWrapper::Exec() {
-    Clear();
+void MCGlauberWrapper::ExecuteTask() {
+    ClearTask();
     VERBOSE(1) << "Run 3DMCGlauber to generate initial hard positions "
                      << "...";
     try {
