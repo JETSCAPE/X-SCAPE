@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - XSCAPE-0.9.1-for-public-repo
+      - XSCAPE-RC2
 
   push:
     branches:
