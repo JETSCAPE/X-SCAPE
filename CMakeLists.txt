@@ -348,10 +348,13 @@ include_directories(./external_packages/)
 include_directories(./external_packages/gtl/include )
 include_directories(./external_packages/hydro_from_external_file )
 include_directories(./examples/ )
-if ("${ROOT_FOUND}")
-  include_directories(./src/root)
-  #add_subdirectory(./src/root)
-endif()
+
+if (USE_ROOT)
+  if ("${ROOT_FOUND}")
+    include_directories(./src/root)
+    add_subdirectory(./src/root)
+  endif()
+endif(USE_ROOT)
 
 ### include_directories will be expanded as packages are found
 
@@ -435,13 +438,6 @@ endif (USE_ISS)
 if (OPENCL_FOUND AND USE_CLVISC)
   add_subdirectory( ${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper )
 endif (OPENCL_FOUND AND USE_CLVISC)
-
-# if (USE_ROOT)
-#  if (${ROOT_FOUND})
-#          include_directories(./src/root)
-#          add_subdirectory(./src/root)
-#  endif()
-# endif(USE_ROOT)
 
 ###########################
 ### Binary location     ###
