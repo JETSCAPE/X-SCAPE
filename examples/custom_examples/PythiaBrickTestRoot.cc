@@ -134,7 +134,7 @@ int main(int argc, char** argv)
 
   auto jetscape = make_shared<JetScape>();
   jetscape->SetXMLMainFileName("../config/jetscape_main.xml");
-  jetscape->SetXMLUserFileName("../config/jetscape_user_test.xml");
+  jetscape->SetXMLUserFileName("../config/jetscape_user_root_test.xml");
   jetscape->SetId("primary");
 
   // Initial conditions and hydro
@@ -176,9 +176,8 @@ int main(int argc, char** argv)
   //auto writer= make_shared<JetScapeWriterRoot> ("test_out.root");
   //writer->SetId("RootWriter");
   #ifdef USE_HEPMC
-  auto writer1= make_shared<JetScapeWriterRootHepMC> ("test_out_hepmc.root");
-  writer1->SetId("hepMCRootWriter");
-  jetscape->Add(writer1);
+  auto hepmcwriterRoot= make_shared<JetScapeWriterRootHepMC> ("test_out_hepmc.root");
+  jetscape->Add(hepmcwriterRoot);
 
   auto writer2= make_shared<JetScapeWriterHepMC> ("test_out_hepmc.hepmc");
   writer2->SetId("hepMCWriter");
