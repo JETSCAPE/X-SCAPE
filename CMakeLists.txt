@@ -310,6 +310,7 @@ if (USE_ROOT)
   if (${ROOT_FOUND})
     #include_directories(${ROOT_INCLUDES})
     include_directories(${ROOT_INCLUDE_DIRS})
+    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DUSE_ROOT" )
     Message(STATUS "ROOT Include dir : " ${ROOT_INCLUDE_DIRS})
     Message(STATUS "ROOT Libraries : " ${ROOT_LIBRARIES})
   endif()
@@ -348,6 +349,12 @@ include_directories(./external_packages/gtl/include )
 include_directories(./external_packages/hydro_from_external_file )
 include_directories(./examples/ )
 
+if (USE_ROOT)
+  if ("${ROOT_FOUND}")
+    include_directories(./src/root)
+    #add_subdirectory(./src/root)
+  endif()
+endif(USE_ROOT)
 
 ### include_directories will be expanded as packages are found
 
@@ -432,13 +439,6 @@ if (OPENCL_FOUND AND USE_CLVISC)
   add_subdirectory( ${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper )
 endif (OPENCL_FOUND AND USE_CLVISC)
 
-if (USE_ROOT)
-  if (${ROOT_FOUND})
-          include_directories(./src/root)
-          add_subdirectory(./src/root)
-  endif()
-endif(USE_ROOT)
-
 ###########################
 ### Binary location     ###
 ###########################
@@ -515,10 +515,10 @@ if ( USE_MUSIC AND USE_ISS AND USE_SMASH )
 endif ( USE_MUSIC AND USE_ISS AND USE_SMASH )
 
 if (USE_ROOT)
-  if (${ROOT_FOUND})
-    add_executable(PythiaBrickTestRoot ./examples/custom_examples/PythiaBrickTestRoot.cc)
-    target_link_libraries(PythiaBrickTestRoot JetScape JetScapeRoot)
-  endif(${ROOT_FOUND})
+  #if (${ROOT_FOUND})
+  #  add_executable(PythiaBrickTestRoot ./examples/custom_examples/PythiaBrickTestRoot.cc)
+  #  target_link_libraries(PythiaBrickTestRoot JetScape)
+  #endif(${ROOT_FOUND})
 endif(USE_ROOT)
 
 

@@ -28,6 +28,9 @@
 
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
+  #ifdef USE_ROOT
+  #include "JetScapeWriterRootHepMC.h"
+  #endif
 #endif
 
 #include <iostream>
@@ -786,6 +789,7 @@ void JetScape::DetermineWritersFromXML() {
   std::string outputFilenameAscii = outputFilename;
   std::string outputFilenameAsciiGZ = outputFilename;
   std::string outputFilenameHepMC = outputFilename;
+  std::string outputFilenameRootHepMC = outputFilename;
   std::string outputFilenameFinalStatePartonsAscii = outputFilename;
   std::string outputFilenameFinalStateHadronsAscii = outputFilename;
 
@@ -796,6 +800,8 @@ void JetScape::DetermineWritersFromXML() {
                         outputFilenameAsciiGZ.append(".dat.gz"));
   CheckForWriterFromXML("JetScapeWriterHepMC",
                         outputFilenameHepMC.append(".hepmc"));
+  CheckForWriterFromXML("JetScapeWriterRootHepMC",
+                        outputFilenameRootHepMC.append("_hepmc.root"));
   CheckForWriterFromXML("JetScapeWriterFinalStatePartonsAscii",
                         outputFilenameFinalStatePartonsAscii.append("_final_state_partons.dat"));
   CheckForWriterFromXML("JetScapeWriterFinalStateHadronsAscii",
@@ -843,6 +849,18 @@ void JetScape::CheckForWriterFromXML(const char *writerName,
       Add(writer);
       JSINFO << "JetScape::DetermineTaskList() -- " << writerName << " ("
              << outputFilename.c_str() << ") added to task list.";
+#endif
+    }
+    else if (strcmp(writerName, "JetScapeWriterRootHepMC") == 0) {
+#ifdef USE_HEPMC
+      #ifdef USE_ROOT
+      VERBOSE(2) << "Manually creating JetScapeWriterRootHepMC (due to multiple "
+                    "inheritance)";
+      auto writer = std::make_shared<JetScapeWriterRootHepMC>(outputFilename);
+      Add(writer);
+      JSINFO << "JetScape::DetermineTaskList() -- " << writerName << " ("
+             << outputFilename.c_str() << ") added to task list.";
+      #endif
 #endif
     } else {
       VERBOSE(2) << "Writer is NOT created...";
