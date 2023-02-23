@@ -352,7 +352,7 @@ include_directories(./examples/ )
 if (USE_ROOT)
   if ("${ROOT_FOUND}")
     include_directories(./src/root)
-    add_subdirectory(./src/root)
+    #add_subdirectory(./src/root)
   endif()
 endif(USE_ROOT)
 
@@ -515,10 +515,10 @@ if ( USE_MUSIC AND USE_ISS AND USE_SMASH )
 endif ( USE_MUSIC AND USE_ISS AND USE_SMASH )
 
 if (USE_ROOT)
-  if (${ROOT_FOUND})
-    add_executable(PythiaBrickTestRoot ./examples/custom_examples/PythiaBrickTestRoot.cc)
-    target_link_libraries(PythiaBrickTestRoot JetScape JetScapeRoot)
-  endif(${ROOT_FOUND})
+  #if (${ROOT_FOUND})
+  #  add_executable(PythiaBrickTestRoot ./examples/custom_examples/PythiaBrickTestRoot.cc)
+  #  target_link_libraries(PythiaBrickTestRoot JetScape)
+  #endif(${ROOT_FOUND})
 endif(USE_ROOT)
 
 
