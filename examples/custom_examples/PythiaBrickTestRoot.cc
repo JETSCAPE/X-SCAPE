@@ -175,7 +175,11 @@ int main(int argc, char** argv)
   jetscape->Add(writer);
   //auto writer= make_shared<JetScapeWriterRoot> ("test_out.root");
   //writer->SetId("RootWriter");
+  //auto writergz= make_shared<JetScapeWriterAsciiGZ> ("test_out.dat.gz");
+  //jetscape->Add(writergz);
   #ifdef USE_HEPMC
+  //auto hepmcwriter= make_shared<JetScapeWriterHepMC> ("test_out.hepmc");
+  //jetscape->Add(hepmcwriter);
   auto hepmcwriterRoot= make_shared<JetScapeWriterRootHepMC> ("test_out_hepmc.root");
   jetscape->Add(hepmcwriterRoot);
 
