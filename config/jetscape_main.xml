@@ -27,6 +27,7 @@
   <JetScapeWriterAscii> off </JetScapeWriterAscii>
   <JetScapeWriterAsciiGZ> off </JetScapeWriterAsciiGZ>
   <JetScapeWriterHepMC> off </JetScapeWriterHepMC>
+  <JetScapeWriterRootHepMC> off </JetScapeWriterRootHepMC>
   <JetScapeWriterFinalStatePartonsAscii> off </JetScapeWriterFinalStatePartonsAscii>
   <JetScapeWriterFinalStateHadronsAscii> off </JetScapeWriterFinalStateHadronsAscii>
   <write_pthat> 0 </write_pthat>
@@ -217,7 +218,7 @@
     </FreestreamMilne>
 
     <NullPreDynamics> </NullPreDynamics>
-    
+
   </Preequilibrium>
 
 
