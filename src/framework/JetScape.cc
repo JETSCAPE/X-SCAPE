@@ -1132,12 +1132,26 @@ void JetScape::Exec() {
         JSWARN << " reuse_hydro is set, but n_reuse_hydro = " << n_reuse_hydro_;
         throw std::runtime_error("Incompatible reusal settings.");
       }
+      // Check if iMatter/ISR is used
+      bool imatter_is_used = false;
+      for (auto it : GetTaskList()) {
+        if (it->GetId() == "PythiaGun"){
+          for(auto itt : it->GetTaskList()){
+            if (itt->GetId() == "IsrManager") {
+              VERBOSE(1) << " iMatter is used with reuse_hydro,"
+                      << " so initial state is rerun for each event.";
+              imatter_is_used = true;
+              break;
+            }
+          }
+        }
+      }
       bool hydro_pointer_is_set = false;
       bool iss_pointer_is_set = false;
       for (auto it : GetTaskList()) {
         if (!dynamic_pointer_cast<FluidDynamics>(it) &&
             !dynamic_pointer_cast<PreequilibriumDynamics>(it) &&
-            //!dynamic_pointer_cast<InitialState>(it) &&
+            !dynamic_pointer_cast<InitialState>(it) &&
             !dynamic_pointer_cast<SoftParticlization>(it)) {
           continue;
         }
