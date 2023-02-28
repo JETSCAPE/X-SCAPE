@@ -13,7 +13,7 @@
  * See COPYING for details.
  ******************************************************************************/
 // -------------------------------------------------
-// XSCAPE Framework Clock Pythia Brick Test Program
+// ISR/small sytem Hydro Test XSCAPE Framework
 // -------------------------------------------------
 
 #include <iostream>
@@ -231,8 +231,8 @@ int main(int argc, char** argv)
 
 void Show()
 {
-  INFO_NICE<<"-------------------------------------------";
+  INFO_NICE<<"----------------------------------------------";
   INFO_NICE<<"| ISR/small sytem MUSIC Test XSCAPE Framework |";
-  INFO_NICE<<"-------------------------------------------";
+  INFO_NICE<<"----------------------------------------------";
   INFO_NICE;
 }

@@ -1156,6 +1156,12 @@ void JetScape::Exec() {
           continue;
         }
 
+        // IS: For ISR+3DGlauber, the initial state 3D Glauber is not used 
+        // if imatter is not used, then initial state is rerun
+        if (imatter_is_used && dynamic_pointer_cast<InitialState>(it)) {
+          continue;
+        }
+
         if (dynamic_pointer_cast<FluidDynamics>(it))
           if(dynamic_pointer_cast<FluidDynamics>(it)->IsTimeStepped()) {
             JSWARN << " Reusing hydro with per time stepped = true not allowed!";
