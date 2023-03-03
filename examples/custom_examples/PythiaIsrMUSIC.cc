@@ -23,7 +23,13 @@
 #include "JetScape.h"
 #include "JetEnergyLoss.h"
 #include "JetEnergyLossManager.h"
-//#include "JetScapeWriterStream.h"
+#include "HadronizationManager.h"
+#include "Hadronization.h"
+#include "IsrManager.h"
+#include "IsrJet.h"
+#include "IsrShowerPSG.h"
+
+// Various output writer includes ...
 #include "JetScapeWriterFinalStateStream.h"
 #include "JetScapeWriterStream.h"
 #include "JetScapeWriterIsrStream.h"
@@ -31,41 +37,22 @@
 #include "JetScapeWriterHepMC.h"
 #endif
 
-
-// User modules derived from jetscape framework clasess
-#include "TrentoInitial.h"
-#include "AdSCFT.h"
+// User modules derived from jetscape framework clasess ...
 #include "Matter.h"
-#include "LBT.h"
-#include "Martini.h"
 #include "Brick.h"
 #include "PythiaIsrGun.h"
-#include "InitialStateRadiationTest.h"
-#include "HadronizationManager.h"
 #include "iColoredHadronization.h"
-#include "Hadronization.h"
-#include "ColoredHadronization.h"
-#include "ColorlessHadronization.h"
-#include "CascadeTest.h"
-#include "IsrManager.h"
-#include "DummySplit.h"
 #include "iMATTER.h"
-#include "PartonShowerGeneratorDefault.h"
-#include "IsrJet.h"
-#include "IsrShowerPSG.h"
 #include "MCGlauberWrapper.h"
 #include "MCGlauberGenStringWrapper.h"
 #include "MusicWrapper.h"
 #include "iSpectraSamplerWrapper.h"
-
-
 #include "QueryHistory.h"
 
 #include <chrono>
 #include <thread>
 
 using namespace std;
-
 using namespace Jetscape;
 
 // Forward declaration
@@ -89,12 +76,11 @@ int main(int argc, char** argv)
   //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
 
-
   Show();
 
-
   auto jetscape = make_shared<JetScape>();
-  
+
+  // Read in XML file
   std::string mainXMLName = "../config/jetscape_main.xml";
   std::string userXMLName = "../config/jetscape_user_iMATTERMCGlauberMUSIC.xml";
   if (argc == 2)  {
@@ -124,6 +110,7 @@ int main(int argc, char** argv)
   JetScapeXML::Instance()->OpenXMLUserFile(jetscape->GetXMLUserFileName());
 
   INFO_NICE;
+
   jetscape->SetId("primary");
 
   // Initial conditions and hydro
@@ -133,10 +120,13 @@ int main(int argc, char** argv)
   auto iSS = make_shared<iSpectraSamplerWrapper> ();
 
   jetscape->Add(MCG);
+
+  // ISR Mangers Shower module
   auto isrManager = make_shared<IsrManager>();
   auto isrJloss = make_shared<IsrJet>();
-  auto stdPSG = make_shared<PartonShowerGeneratorDefault>(); 
+  auto isrPSG = make_shared<IsrShowerPSG>(); 
   // minor changes to allow backward time evolution (wrt to DoShower() in JetEnergyLoss class implementation)
+
   auto iMatter = make_shared<iMATTER> ();
 
   // Reading tMax from the xml
@@ -148,7 +138,7 @@ int main(int argc, char** argv)
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
 
-  isrJloss->AddPartonShowerGenerator(stdPSG);
+  isrJloss->AddPartonShowerGenerator(isrPSG);
   isrJloss->Add(iMatter);
   isrManager->Add(isrJloss);
 

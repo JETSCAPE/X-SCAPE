@@ -1176,6 +1176,8 @@ void JetScape::Exec() {
 
         // IS: For ISR+3DGlauber, the initial state 3D Glauber is not used 
         // if imatter is not used, then initial state is rerun
+        // This behavior must be rethaught for Au+Au 
+        // where we would expect the InitialState to be run per hydro event
         if (imatter_is_used && dynamic_pointer_cast<InitialState>(it)) {
           continue;
         }
