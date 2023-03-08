@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - XSCAPE-RC2
-      - XSCAPE-0.9.1-for-public-repo 
+      - XSCAPE-1.0-for-public-repo
 
 env:
   PULL_NUMBER: ${{ github.event.number }}
