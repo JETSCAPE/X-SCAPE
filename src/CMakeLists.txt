@@ -96,13 +96,18 @@ endif()
 FILE(GLOB readersources reader/*.cc)
 set (SOURCES  ${SOURCES}  ${readersources} )
 
+if ("${HEPMC_FOUND}")
+  if (USE_ROOT)
+    set (SOURCES ${SOURCES} root/JetScapeWriterRootHepMC.cc)
+  endif()
+endif()
 
 #######################################
 
 add_library(JetScape SHARED ${SOURCES})
 target_link_libraries(JetScape JetScapeThird GTL ${PYTHIA8_LIBRARIES} libtrento ${Boost_LIBRARIES}  ${GSL_LIBRARIES})
 
-if (${ROOT_FOUND})
+if (USE_ROOT)
   target_link_libraries(JetScape ${ROOT_LIBRARIES})
 endif()
 
@@ -112,6 +117,9 @@ endif()
 
 if ( ${HEPMC_FOUND} )
   target_link_libraries (JetScape -L${HEPMC_LIB_DIR} -lHepMC3 )
+  if (USE_ROOT)
+    target_link_libraries (JetScape ${ROOT_LIBRARIES} -L${HEPMC_LIB_DIR} -lHepMC3 -lHepMC3rootIO )
+  endif()
 endif()
 
 if ( USE_IPGlasma)

@@ -50,6 +50,26 @@ To run JETSCAPE with MUSIC, one needs to use MPI commands,
     mpirun -np 1 ./MUSICTest
 ```
 
+## iSS support
+
+iSS is a Monte Carlo sampler for particle distribution from Cooper-Frye freeze-out procedure.
+iSS hadronizes the hydrodynamic hyper-surface from MUSIC, and can be integrated into the XETSCAPE framework.
+To download the lastest version of iSS, one can run the shell script under the external_packages folder,
+
+```bash
+    ./get_iSS.sh
+```
+
+To compile the iSS code together with the XETSCAPE framework, please turn
+on the iSS support option,
+
+```bash
+    mkdir build
+    cd build
+    cmake -DUSE_ISS=ON ..
+    make
+```
+
 ## Running JETSCAPE with CLVisc
 In order to run clvisc in jetscape, one has to download it in external\_packages/, using 
 

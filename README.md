@@ -1,4 +1,4 @@
-# X-SCAPE 0.9.1
+# X-SCAPE 1.0
 
 The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (X-SCAPE) is the enhanced (and 2nd) project of the JETSCAPE
 collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions.
@@ -130,11 +130,14 @@ To compile the 3DGlauber code together with the JETSCAPE framework, please turn 
     cmake -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON ..
     make -j4
 ```
+
+For more details see [3DGlauber](https://github.com/JETSCAPE/X-SCAPE/wiki/3DGlauber,-MUSIC,-iSS-and-Initial-State-Radiation).
+
 ### Initial State Shower using iMatter
 
 To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix`. If you use the JETSCAPE docker container (v1.8), all environment variables, including the `$PYTHIA8` for iMatter are set properly.
 
-After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` (in the build directory) to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`
+After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` (in the build directory) to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`. For running 3DGlauber with Hydro (Music) please see [3DGlauber](https://github.com/JETSCAPE/X-SCAPE/wiki/3DGlauber,-MUSIC,-iSS-and-Initial-State-Radiation).
 
 
 ## JETSCAPE modules

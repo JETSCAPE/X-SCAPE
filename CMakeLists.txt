@@ -104,10 +104,10 @@ endif (USE_SMASH)
 message("Compiler and Linker flags ...")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pipe -Wall -std=c++11")
 ## can turn off some warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder -Wno-unused-variable -Wno-deprecated-copy -Wno-unused-value")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder -Wno-unused-variable -Wno-inconsistent-missing-override -Wno-unused-private-field")
 ## Then set the build type specific options. These will be automatically appended.
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -w")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 ## can turn on debugging information
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
@@ -117,7 +117,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -w")
 if (APPLE)
     message( STATUS "Apple : " ${CMAKE_HOST_SYSTEM})
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ -Wno-inconsistent-missing-override -Wno-unused-private-field -Wno-delete-non-abstract-non-virtual-dtor")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++" )
     elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-but-set-variable -Wno-parentheses -fext-numeric-literals")
     endif()
@@ -310,6 +310,7 @@ if (USE_ROOT)
   if (${ROOT_FOUND})
     #include_directories(${ROOT_INCLUDES})
     include_directories(${ROOT_INCLUDE_DIRS})
+    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DUSE_ROOT" )
     Message(STATUS "ROOT Include dir : " ${ROOT_INCLUDE_DIRS})
     Message(STATUS "ROOT Libraries : " ${ROOT_LIBRARIES})
   endif()
@@ -348,6 +349,12 @@ include_directories(./external_packages/gtl/include )
 include_directories(./external_packages/hydro_from_external_file )
 include_directories(./examples/ )
 
+if (USE_ROOT)
+  if ("${ROOT_FOUND}")
+    include_directories(./src/root)
+    #add_subdirectory(./src/root)
+  endif()
+endif(USE_ROOT)
 
 ### include_directories will be expanded as packages are found
 
@@ -432,13 +439,6 @@ if (OPENCL_FOUND AND USE_CLVISC)
   add_subdirectory( ${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper )
 endif (OPENCL_FOUND AND USE_CLVISC)
 
-if (USE_ROOT)
-  if (${ROOT_FOUND})
-          include_directories(./src/root)
-          add_subdirectory(./src/root)
-  endif()
-endif(USE_ROOT)
-
 ###########################
 ### Binary location     ###
 ###########################
@@ -477,19 +477,24 @@ target_link_libraries(FinalStateHadrons JetScape )
 add_executable(FinalStatePartons ./examples/FinalStatePartons.cc)
 target_link_libraries(FinalStatePartons JetScape )
 
-if(USE_3DGlauber)
+add_executable(PythiaBrickTest ./examples/custom_examples/PythiaBrickTest.cc)
+target_link_libraries(PythiaBrickTest JetScape )
+
+if(USE_3DGlauber AND USE_MUSIC AND USE_ISS)
   add_executable(PythiaIsrTest ./examples/PythiaIsrTest.cc)
   target_link_libraries(PythiaIsrTest JetScape )
-endif (USE_3DGlauber )
-
-#add_executable(PythiaBrickTest ./examples/custom_examples/PythiaBrickTest.cc)
-#target_link_libraries(PythiaBrickTest JetScape )
+  add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
+  target_link_libraries(PythiaIsrMUSIC JetScape )
+endif (USE_3DGlauber AND USE_MUSIC AND USE_ISS )
 
 #add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
 #target_link_libraries(PythiaBDMTest JetScape )
 
 #add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
 #target_link_libraries(PythiaNoBDMTest JetScape )
+
+#add_executable(PythiaBDMTest_Hydro_Cascade ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
+#target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
 
 if ( USE_SMASH )
     add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
@@ -515,10 +520,10 @@ if ( USE_MUSIC AND USE_ISS AND USE_SMASH )
 endif ( USE_MUSIC AND USE_ISS AND USE_SMASH )
 
 if (USE_ROOT)
-  if (${ROOT_FOUND})
-    add_executable(PythiaBrickTestRoot ./examples/custom_examples/PythiaBrickTestRoot.cc)
-    target_link_libraries(PythiaBrickTestRoot JetScape JetScapeRoot)
-  endif(${ROOT_FOUND})
+  #if (${ROOT_FOUND})
+  #  add_executable(PythiaBrickTestRoot ./examples/custom_examples/PythiaBrickTestRoot.cc)
+  #  target_link_libraries(PythiaBrickTestRoot JetScape)
+  #endif(${ROOT_FOUND})
 endif(USE_ROOT)
 
 

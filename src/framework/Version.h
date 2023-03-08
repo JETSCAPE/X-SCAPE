@@ -13,14 +13,16 @@
  * See COPYING for details.
  ******************************************************************************/
 
-#ifndef VERSION_H
-#define VERSION_H
+ #ifndef VERSION_H
+ #define VERSION_H
 
-namespace Jetscape {
+ #include <string>
 
-const string JetScapeVersion = "3.5.1";
-const string XscapeVersion = "0.9.1";
+ namespace Jetscape {
 
-} // end namespace Jetscape
+ const std::string JetScapeVersion = "3.5.4";
+ const std::string XscapeVersion = "1.0";
 
-#endif
+ } // end namespace Jetscape
+
+ #endif

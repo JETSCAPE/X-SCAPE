@@ -34,13 +34,43 @@ MCGlauberWrapper::MCGlauberWrapper() {
 
 
 void MCGlauberWrapper::InitTask() {
-        parameter_list_.read_in_parameters_from_file("mcglauber.input");
-        //int ran_seed = parameter_list_.get_seed();
-        auto ran_seed = (*GetMt19937Generator())();
-        auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
+    parameter_list_.read_in_parameters_from_file("mcglauber.input");
+    //int ran_seed = parameter_list_.get_seed();
+    auto ran_seed = (*GetMt19937Generator())();
+    auto gamma_beta = parameter_list_.get_tau_form_fluct_gamma_beta();
 
-        mc_gen_ = std::shared_ptr<MCGlb::EventGenerator>(
-                  new MCGlb::EventGenerator("mcglauber.input", ran_seed));
+    mc_gen_ = std::shared_ptr<MCGlb::EventGenerator>(
+              new MCGlb::EventGenerator("mcglauber.input", ran_seed));
+
+    // overwrite input options
+    double para_temp;
+    double roots = (
+        GetXMLElementDouble({"Hard", "PythiaGun", "eCM"}));
+    mc_gen_->set_parameter("roots", roots);
+    int rapidity_loss_method = (
+        GetXMLElementInt({"IS", "MCGlauber", "rapidity_loss_method"}));
+    mc_gen_->set_parameter("rapidity_loss_method", rapidity_loss_method);
+    para_temp = (
+        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At2"}));
+    mc_gen_->set_parameter("ylossParam4At2", para_temp);
+    para_temp = (
+        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At4"}));
+    mc_gen_->set_parameter("ylossParam4At4", para_temp);
+    para_temp = (
+        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At6"}));
+    mc_gen_->set_parameter("ylossParam4At6", para_temp);
+    para_temp = (
+        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At10"}));
+    mc_gen_->set_parameter("ylossParam4At10", para_temp);
+    para_temp = (
+        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4var"}));
+    mc_gen_->set_parameter("ylossParam4var", para_temp);
+    para_temp = (
+        GetXMLElementDouble({"IS", "MCGlauber", "remnant_energy_loss_fraction"}));
+    mc_gen_->set_parameter("remnant_energy_loss_fraction", para_temp);
+
+    // re-generate mc pointer
+    mc_gen_->New_Para_pointer(ran_seed);
 }
 
 void MCGlauberWrapper::ClearTask() {
