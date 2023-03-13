@@ -30,7 +30,7 @@ template <class T> JetScapeReader<T>::JetScapeReader():
 
 template <class T> JetScapeReader<T>::~JetScapeReader() { VERBOSE(8); }
 
-template <class T> void JetScapeReader<T>::Clear() {
+template <class T> void JetScapeReader<T>::ClearTask() {
   nodeVec.clear();
   edgeVec.clear();
   //pShower->clear();//pShower=nullptr; //check ...
@@ -104,7 +104,7 @@ template <class T> void JetScapeReader<T>::AddHadron(string s) {
 
 template <class T> void JetScapeReader<T>::Next() {
   if (currentEvent > 0)
-    Clear();
+    ClearTask();
 
   //ReadEvent(currentPos);
   string line;
@@ -212,7 +212,7 @@ vector<fjcore::PseudoJet> JetScapeReader<T>::GetHadronsForFastJet() {
   return forFJ;
 }
 
-template <class T> void JetScapeReader<T>::Init() {
+template <class T> void JetScapeReader<T>::InitTask() {
   VERBOSE(8) << "Open Input File = " << file_name_in;
   JSINFO << "Open Input File = " << file_name_in;
 

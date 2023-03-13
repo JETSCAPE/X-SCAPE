@@ -38,7 +38,7 @@ iColoredHadronization::iColoredHadronization() {
 
 iColoredHadronization::~iColoredHadronization() { VERBOSE(8); }
 
-void iColoredHadronization::Init() {
+void iColoredHadronization::InitTask() {
 
   std::string s = GetXMLElementText({"JetHadronization", "name"});
   JSDEBUG << s << " to be initializied ...";

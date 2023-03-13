@@ -28,6 +28,9 @@
 
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
+  #ifdef USE_ROOT
+  #include "JetScapeWriterRootHepMC.h"
+  #endif
 #endif
 
 #include <iostream>
@@ -786,6 +789,7 @@ void JetScape::DetermineWritersFromXML() {
   std::string outputFilenameAscii = outputFilename;
   std::string outputFilenameAsciiGZ = outputFilename;
   std::string outputFilenameHepMC = outputFilename;
+  std::string outputFilenameRootHepMC = outputFilename;
   std::string outputFilenameFinalStatePartonsAscii = outputFilename;
   std::string outputFilenameFinalStateHadronsAscii = outputFilename;
 
@@ -796,6 +800,8 @@ void JetScape::DetermineWritersFromXML() {
                         outputFilenameAsciiGZ.append(".dat.gz"));
   CheckForWriterFromXML("JetScapeWriterHepMC",
                         outputFilenameHepMC.append(".hepmc"));
+  CheckForWriterFromXML("JetScapeWriterRootHepMC",
+                        outputFilenameRootHepMC.append("_hepmc.root"));
   CheckForWriterFromXML("JetScapeWriterFinalStatePartonsAscii",
                         outputFilenameFinalStatePartonsAscii.append("_final_state_partons.dat"));
   CheckForWriterFromXML("JetScapeWriterFinalStateHadronsAscii",
@@ -844,6 +850,18 @@ void JetScape::CheckForWriterFromXML(const char *writerName,
       JSINFO << "JetScape::DetermineTaskList() -- " << writerName << " ("
              << outputFilename.c_str() << ") added to task list.";
 #endif
+    }
+    else if (strcmp(writerName, "JetScapeWriterRootHepMC") == 0) {
+#ifdef USE_HEPMC
+      #ifdef USE_ROOT
+      VERBOSE(2) << "Manually creating JetScapeWriterRootHepMC (due to multiple "
+                    "inheritance)";
+      auto writer = std::make_shared<JetScapeWriterRootHepMC>(outputFilename);
+      Add(writer);
+      JSINFO << "JetScape::DetermineTaskList() -- " << writerName << " ("
+             << outputFilename.c_str() << ") added to task list.";
+      #endif
+#endif
     } else {
       VERBOSE(2) << "Writer is NOT created...";
     }
@@ -862,6 +880,7 @@ void JetScape::SetPointers() {
 
   bool hydro_pointer_is_set = false;
   bool bulk_pointer_is_set = false;
+  bool iss_pointer_is_set = false;
 
   for (auto it : GetTaskList()) {
     if (dynamic_pointer_cast<InitialState>(it)) {
@@ -892,9 +911,11 @@ void JetScape::SetPointers() {
     } else if (dynamic_pointer_cast<PartonPrinter>(it)) {
       JetScapeSignalManager::Instance()->SetPartonPrinterPointer(
           dynamic_pointer_cast<PartonPrinter>(it));
-    } else if (dynamic_pointer_cast<SoftParticlization>(it)) {
+    } else if (dynamic_pointer_cast<SoftParticlization>(it) &&
+               !iss_pointer_is_set) {
       JetScapeSignalManager::Instance()->SetSoftParticlizationPointer(
           dynamic_pointer_cast<SoftParticlization>(it));
+      iss_pointer_is_set = true;
     } else if (dynamic_pointer_cast<HadronizationManager>(it)) {
       JetScapeSignalManager::Instance()->SetHadronizationManagerPointer(
 										dynamic_pointer_cast<HadronizationManager>(it));
@@ -1129,11 +1150,35 @@ void JetScape::Exec() {
         JSWARN << " reuse_hydro is set, but n_reuse_hydro = " << n_reuse_hydro_;
         throw std::runtime_error("Incompatible reusal settings.");
       }
+      // Check if iMatter/ISR is used
+      bool imatter_is_used = false;
+      for (auto it : GetTaskList()) {
+        if (it->GetId() == "PythiaGun"){
+          for(auto itt : it->GetTaskList()){
+            if (itt->GetId() == "IsrManager") {
+              VERBOSE(1) << " iMatter is used with reuse_hydro,"
+                      << " so initial state is rerun for each event.";
+              imatter_is_used = true;
+              break;
+            }
+          }
+        }
+      }
       bool hydro_pointer_is_set = false;
+      bool iss_pointer_is_set = false;
       for (auto it : GetTaskList()) {
         if (!dynamic_pointer_cast<FluidDynamics>(it) &&
             !dynamic_pointer_cast<PreequilibriumDynamics>(it) &&
-            !dynamic_pointer_cast<InitialState>(it)) {
+            !dynamic_pointer_cast<InitialState>(it) &&
+            !dynamic_pointer_cast<SoftParticlization>(it)) {
+          continue;
+        }
+
+        // IS: For ISR+3DGlauber, the initial state 3D Glauber is not used 
+        // if imatter is not used, then initial state is rerun
+        // This behavior must be rethaught for Au+Au 
+        // where we would expect the InitialState to be run per hydro event
+        if (imatter_is_used && dynamic_pointer_cast<InitialState>(it)) {
           continue;
         }
 
@@ -1165,6 +1210,35 @@ void JetScape::Exec() {
             hydro_pointer_is_set = true;
           }
         }
+        // Do the soft hadronization only at once 
+        if (dynamic_pointer_cast<SoftParticlization>(it))
+          if(dynamic_pointer_cast<SoftParticlization>(it)->IsTimeStepped()) {
+            JSWARN << " Reusing hydro with per time stepped = true not allowed!";
+            throw std::runtime_error("Reusing hydro with per time stepped = true not allowed.");
+          }
+
+        // only deactivate the first iSS
+        if (dynamic_pointer_cast<SoftParticlization>(it) && iss_pointer_is_set) {
+          continue;
+        }
+
+        if (i % n_reuse_hydro_ == n_reuse_hydro_ - 1) {
+          JSDEBUG << " i was " << i
+                  << " i%n_reuse_hydro_ = " << i % n_reuse_hydro_
+                  << " --> ACTIVATING";
+          it->SetActive(true);
+          if (dynamic_pointer_cast<SoftParticlization>(it)) {
+            iss_pointer_is_set = true;
+          }
+        } else {
+          JSDEBUG << " i was " << i
+                  << " i%n_reuse_hydro_ = " << i % n_reuse_hydro_
+                  << " --> DE-ACTIVATING";
+          it->SetActive(false);
+          if (dynamic_pointer_cast<SoftParticlization>(it)) {
+            iss_pointer_is_set = true;
+          }
+        }
       }
     }
 
@@ -1181,13 +1255,10 @@ void JetScape::Exec() {
   }
 }
 
-void JetScape::Finish() {
+void JetScape::FinishTask() {
   JSINFO << BOLDBLACK << "JetScape finished after " << GetNumberOfEvents()
          << " events!";
   JSDEBUG << "More infos wrap up/saving to file/closing file ...";
-
-  // same as in Init() and Exec() ...
-  JetScapeTask::FinishTasks(); //dummy so far ...
 }
 
 } // end namespace Jetscape

@@ -34,10 +34,10 @@ public:
   ~MCGlauberGenStringWrapper() {}
 
 std::shared_ptr<InitialState> ini; // temporary pointer to initial state
-  /** Default Exec() function. It can be overridden by other tasks.
+  /** Default ExecuteTask() function. It can be overridden by other tasks.
    */
-  void Exec();
-  void Init();
+  void ExecuteTask();
+  void InitTask();
   std::vector<double> Get_Proj_Remnant();
   std::vector<double> Get_Targ_Remnant();
 private:

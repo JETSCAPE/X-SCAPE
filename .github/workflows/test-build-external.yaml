@@ -4,10 +4,14 @@ on:
   pull_request:
     branches:
       - main
+      - XSCAPE-RC2
+      - XSCAPE-1.0-for-public-repo
 
   push:
     branches:
       - main
+      - XSCAPE-RC2
+      - XSCAPE-1.0-for-public-repo
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}

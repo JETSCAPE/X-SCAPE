@@ -46,8 +46,8 @@ public:
   };
   virtual ~JetScapeWriterRootHepMC();
 
-  void Init();
-  void Exec();
+  void InitTask();
+  void ExecuteTask();
 
   bool GetStatus() { return failed(); }
   void Close() { close(); }

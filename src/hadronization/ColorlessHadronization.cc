@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -44,7 +44,7 @@ ColorlessHadronization::ColorlessHadronization() {
 
 ColorlessHadronization::~ColorlessHadronization() { VERBOSE(8); }
 
-void ColorlessHadronization::Init() {
+void ColorlessHadronization::InitTask() {
   // Open output file
   //hadfile.open("CH_myhad.dat");
 
@@ -161,6 +161,9 @@ void ColorlessHadronization::DoHadronization(
           }
           if (shower_in[ishower][ipart].pstat() == 0) {
             pIn.push_back(make_shared<Parton>(shower_in[ishower][ipart]));
+          }
+          if (shower_in[ishower][ipart].pstat() == 22) {
+            pIn.push_back(make_shared<Parton>(shower_in[ishower][ipart])); //Allow photons with status code 22 to pass through Colorless hadronization.
           }
         }
         if (take_recoil && shower_in[ishower][ipart].pstat() == -1 &&

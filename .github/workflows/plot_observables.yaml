@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+      - XSCAPE-RC2
+      - XSCAPE-1.0-for-public-repo
 
 env:
   PULL_NUMBER: ${{ github.event.number }}

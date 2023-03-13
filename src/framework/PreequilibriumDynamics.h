@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -44,17 +44,16 @@ public:
   virtual ~PreequilibriumDynamics();
 
   /** Reads the input parameters from the XML file under the tag <Preequilibrium>. Uses JetScapeSingnalManager Instance to retrive the Initial State Physics information. Calls InitializeHydro(parameter_list) and InitTask(); This explicit call can be used for actual initialization of modules such as @a Brick, @a MpiMusic, or @a OSU-HYDRO if attached as a @a polymorphic class. It also initializes the tasks within the current module.
-    @sa Read about @a polymorphism in C++.
+    @sa Read about @a polymorphism in C++. Override Init (not InitTask) here as sub-tasks are called as well.
     */
-  void Init();
+  void Init() override;
 
   /** Calls EvolvePreequilibrium(); This explicit call can be used for actual execution of Preequilibrium evolution defined in the modules such as @a Brick, @a MpiMusic, or @a OSU-HYDRO if attached as a @a polymorphic class. It also execute the tasks within the current module.
     @sa Read about @a polymorphism in C++.
     */
-  void Exec();
+  void ExecuteTask();
 
-  /** Default Clear() function. It can be overridden by other tasks.*/
-  virtual void Clear();
+  void ClearTask();
 
   virtual void
   InitializePreequilibrium(PreEquilibriumParameterFile parameter_list) {}

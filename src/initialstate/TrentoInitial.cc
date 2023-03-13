@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -372,7 +372,7 @@ std::pair<double, double> TrentoInitial::GenCenTab(std::string proj,
   return std::make_pair(Etab[cL], Etab[cH]);
 }
 
-void TrentoInitial::Exec() {
+void TrentoInitial::ExecuteTask() {
   JSINFO << " Exec TRENTo initial condition ";
   TrentoGen_->run_events();
 
@@ -407,7 +407,7 @@ void TrentoInitial::Exec() {
   JSINFO << " TRENTO event generated and loaded ";
 }
 
-void TrentoInitial::Clear() {
+void TrentoInitial::ClearTask() {
   VERBOSE(2) << " : Finish creating initial condition ";
   entropy_density_distribution_.clear();
   num_of_binary_collisions_.clear();

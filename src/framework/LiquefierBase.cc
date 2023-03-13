@@ -216,7 +216,7 @@ void LiquefierBase::add_hydro_sources(std::vector<Parton> &pIn,
   }
 }
 
-void LiquefierBase::Clear() { dropletlist.clear(); }
+void LiquefierBase::ClearTask() { dropletlist.clear(); }
 
 Jetscape::real LiquefierBase::get_dropletlist_total_energy() const {
   Jetscape::real total_E = 0.0;

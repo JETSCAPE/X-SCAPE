@@ -35,7 +35,7 @@ IsrJet::~IsrJet() {
   JSDEBUG;
 }
 
-void IsrJet::Init()
+void IsrJet::InitTask()
 {
   JSINFO << "Intialize ISR Jet ..."; //via JetEnergyLossManager::Init() ...";
   JSDEBUG << " --> everything set not via XML for now ...";
@@ -57,7 +57,8 @@ void IsrJet::Init()
    else
      JSINFO << "ISR shower via Main Clock ...";
 
-  JetScapeTask::InitTasks();
+  // JetScapeTask::InitTasks();
+  // Automatically done by framework (s. JetscapeTask::Init)
 }
 
 } // end namespace Jetscape

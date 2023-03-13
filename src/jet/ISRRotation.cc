@@ -62,7 +62,7 @@ ISRRotation::~ISRRotation()
   VERBOSE(8);
 }
 
-void ISRRotation::Init()
+void ISRRotation::InitTask()
 {
   JSINFO<<"Intialize ISRRotation ...";
 
@@ -184,7 +184,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
       if ((Out.plabel() == Current_Label || std::abs(Out.pid()) == cid || std::abs(Out.pid()) == bid) && Out.pstat() < 0) {
         
-        VERBOSE(1) << MAGENTA << " iMATTER Pushing particlelabel " << Out.plabel() << " status "
+        VERBOSE(0) << MAGENTA << " iMATTER Pushing particlelabel " << Out.plabel() << " status "
                << Out.pstat() << " pid " << Out.pid()
                << " e " << Out.e() << " px " << Out.px() << " py " << Out.py()<< " pz " << Out.pz()
                << " to MCGlauber for subtraction ";

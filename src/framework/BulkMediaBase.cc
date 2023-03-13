@@ -19,18 +19,18 @@
 
 using namespace std;
 
-namespace Jetscape {  
+namespace Jetscape {
 void BulkMediaBase::Init() {
   // Makes sure that XML file with options and parameters is loaded
-  JetScapeModuleBase::Init();
+  JetScapeModuleBase::InitTask();
   JSINFO << "Initializing BulkMediaBase : " << GetId() << " ...";
 
   InitTask();
+  InitTasks();
 }
 
-void BulkMediaBase::Exec() {
+void BulkMediaBase::ExecuteTask() {
   VERBOSE(2) << "BulkMediaBase running: " << GetId() << " ...";
-  ExecuteTask();
 }
 
 void BulkMediaBase::CalculateTime() {

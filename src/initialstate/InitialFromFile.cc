@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -30,8 +30,8 @@ InitialFromFile::~InitialFromFile() {
 
 void InitialFromFile::InitTask() {}
 
-void InitialFromFile::Exec() {
-  Clear();
+void InitialFromFile::ExecuteTask() {
+  ClearTask();
   Jetscape::JSINFO << "Read initial condition from file";
   try {
 
@@ -113,7 +113,7 @@ void InitialFromFile::ReadEntropyDist() {
   status = H5Dclose(dataset);
 }
 
-void InitialFromFile::Clear() {
+void InitialFromFile::ClearTask() {
   Jetscape::JSINFO << "clear initial condition vectors";
   entropy_density_distribution_.clear();
   num_of_binary_collisions_.clear();

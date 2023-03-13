@@ -2,7 +2,7 @@
 * Copyright (c) The JETSCAPE Collaboration, 2018
 *
 * Modular, task-based framework for simulating all aspects of heavy-ion collisions
-* 
+*
 * For the list of contributors see AUTHORS.
 *
 * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -45,7 +45,7 @@ AdSCFT::AdSCFT() {
 
 AdSCFT::~AdSCFT() { VERBOSE(8); }
 
-void AdSCFT::Init() {
+void AdSCFT::InitTask() {
   JSINFO << "Initialize AdSCFT ...";
 
   std::string s = GetXMLElementText({"Eloss", "AdSCFT", "name"});
@@ -65,7 +65,6 @@ void AdSCFT::Init() {
 
   //Vac or Med
   in_vac = GetXMLElementDouble({"Eloss", "AdSCFT", "in_vac"});
-  ;
 }
 
 void AdSCFT::WriteTask(weak_ptr<JetScapeWriter> w) {
@@ -299,4 +298,4 @@ double AdSCFT::Drag(double f_dist, double deltaT, double Efs, double temp,
     return 0.;
 }
 
-void AdSCFT::Clear() {}
+void AdSCFT::ClearTask() {}

@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -84,7 +84,7 @@ LBT::LBT() {
 
 LBT::~LBT() { VERBOSE(8); }
 
-void LBT::Init() {
+void LBT::InitTask() {
   JSINFO << "Initialize LBT ...";
 
   //...Below is added by Shanshan
@@ -187,7 +187,10 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
     // Reject photons
 
     if (pIn[i].pid() == photonid) {
-      pOut.push_back(pIn[i]);
+      if(pIn[i].pstat() != 22) {
+	      pIn[i].set_stat(22); //Add status code 22 for photons that pass through LBT if it is already not assigned by one of the other JEL modules.
+              pOut.push_back(pIn[i]);
+      }
       return;
     }
 
@@ -866,7 +869,7 @@ void LBT::LBT0(int &n, double &ti) {
             }
             runKT = runAlphas/0.3;
             runLog = log(scaleMu2/6.0/pi/T/T/alphas)/fixedLog;
-        }    
+        }
 
         lam(KATTC0, RTE, PLen, T, T1, T2, E1, E2, iT1, iT2, iE1,
             iE2); //modified: use P instead
@@ -1378,7 +1381,7 @@ void LBT::LBT0(int &n, double &ti) {
           //........................................................................................................
 
           //CAT!!!
-          /*			  
+          /*
 	   */
           //for(int m=nnpp+1;m<=np0;m++) { // only put recoil parton CAT as 2, radiated gluons do not count
           //  if(CAT[i]==2) {
@@ -2389,7 +2392,7 @@ void LBT::colljet22(int CT, double temp, double qhat0ud, double v0[4],
 
     f1 = pow(xw, 3) / (exp(xw) - 1) / 1.4215;
     f2 = pow(xw, 3) / (exp(xw) + 1) / 1.2845;
- 
+
     uu = ss - tt;
 
     if (CT == 1) {

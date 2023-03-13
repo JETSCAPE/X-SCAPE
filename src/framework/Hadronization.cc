@@ -34,13 +34,13 @@ Hadronization::Hadronization() {
 
 Hadronization::~Hadronization() {}
 
-void Hadronization::Clear() {
+void Hadronization::ClearTask() {
   VERBOSESHOWER(8);
   outHadrons.clear();
 }
 
-void Hadronization::Init() {
-  JetScapeModuleBase::Init();
+void Hadronization::InitTask() {
+  JetScapeModuleBase::InitTask();
 
   // May need to read some configuration info from XML file here
 
@@ -52,7 +52,6 @@ void Hadronization::Init() {
   JSINFO << "Found " << GetNumberOfTasks()
          << " Hadronization Tasks/Modules Initialize them ... ";
   VERBOSE(2) << " Module Found is " << GetTaskList()[0]->GetId();
-  JetScapeTask::InitTasks();
 }
 
 void Hadronization::DoHadronize() {
@@ -66,7 +65,7 @@ void Hadronization::DoHadronize() {
   }
 }
 
-void Hadronization::Exec() {
+void Hadronization::ExecuteTask() {
   VERBOSE(2) << "Run Hadronization Exec...";
   VERBOSE(2) << "Found " << GetNumberOfTasks()
              << " Hadronization Tasks/Modules Execute them ... ";
@@ -96,6 +95,10 @@ void Hadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
   } else {
     f->WriteComment("There are no Hadrons");
   }
+}
+
+void Hadronization::DeleteHadrons() {
+  outHadrons.clear();
 }
 
 } // namespace Jetscape

@@ -37,13 +37,13 @@ JetEnergyLossManager::JetEnergyLossManager() : JetScapeModuleBase() {
 JetEnergyLossManager::~JetEnergyLossManager() {
   // Check if this is all really needed with shared_ptr ...
   JSDEBUG;
-  Clear();
+  ClearTask();
 
   if (GetNumberOfTasks() > 0)
     EraseTaskLast();
 }
 
-void JetEnergyLossManager::Clear() {
+void JetEnergyLossManager::ClearTask() {
   JSDEBUG << "Hard Parton List ...";
 
   hp.clear();
@@ -54,7 +54,6 @@ void JetEnergyLossManager::Clear() {
 
   // Clean Up not really working with iterators (see also above!!!) Some logic not clear for me.
   JetScapeSignalManager::Instance()->CleanUp();
-  JetScapeTask::ClearTasks();
 
   copiesMade = false;
 
@@ -191,7 +190,7 @@ void JetEnergyLossManager::GetFinalStatePartons(vector<vector<shared_ptr<Parton>
   }
 }
 
-void JetEnergyLossManager::Exec() {
+void JetEnergyLossManager::ExecuteTask() {
   VERBOSE(1) << "Run JetEnergyLoss Manager ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
 
@@ -258,12 +257,7 @@ void JetEnergyLossManager::Exec() {
   else
   */
 
-  // Standard "serial" execution for the JetEnerguLoss (+submodules) task ...
-  JetScapeTask::ExecuteTasks();
-
-  //Add acheck if the parton shower was actually created for the Modules ....
-  VERBOSE(3) << " " << GetNumberOfTasks()
-             << " Eloss Manager Tasks/Modules finished.";
+  // Add a check if the parton shower was actually created for the Modules ....
 }
 
 void JetEnergyLossManager::CalculateTime()
@@ -300,7 +294,7 @@ void JetEnergyLossManager::FinishPerEvent()
   JetScapeModuleBase::FinishPerEventTasks();
 
   //JP: Quick fix, to be discussed, similar to writer, clear is only called for active tasks, so call here directly ...
-  Clear();
+  ClearTask();
 }
 
 void JetEnergyLossManager::CreateSignalSlots() {

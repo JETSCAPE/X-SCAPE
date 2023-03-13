@@ -42,12 +42,12 @@ public:
   JetScapeReader();
   JetScapeReader(string m_file_name_in) {
     file_name_in = m_file_name_in;
-    Init();
+    InitTask();
   }
   virtual ~JetScapeReader();
 
   void Close() { inFile.close(); }
-  void Clear();
+  void ClearTask();
 
   void Next();
   bool Finished() { return inFile.eof(); }
@@ -68,7 +68,7 @@ public:
 private:
   StringTokenizer strT;
 
-  void Init();
+  void InitTask();
   void AddNode(string s);
   void AddEdge(string s);
   //void MakeGraph();

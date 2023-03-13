@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -29,7 +29,7 @@
 
 namespace Jetscape {
 
-template<class T>  
+template<class T>
 class JetScapeWriterStreamFilter : public JetScapeWriterStream<T>
 {
 
@@ -44,8 +44,8 @@ class JetScapeWriterStreamFilter : public JetScapeWriterStream<T>
 
   sigslot::signal1<vector<shared_ptr<Hadron>>& > GetHadronList;
 
-  //void Init();
-  //void Exec();
+  //void InitTask();
+  //void ExecuteTask();
   //
   //bool GetStatus() {return output_file.good();}
   //void Close() {output_file.close();}
@@ -73,11 +73,11 @@ class JetScapeWriterStreamFilter : public JetScapeWriterStream<T>
   //void Write(string s) {output_file<<s<<endl;}
   //void WriteComment(string s) {output_file<<"# "<<s<<endl;}
   //void WriteWhiteSpace(string s) {output_file<<s<<" ";}
-  //void WriteEvent(); 
+  //void WriteEvent();
 
  protected:
   unsigned char displayFilter;
- 
+
 };
 
 typedef JetScapeWriterStreamFilter<ofstream> JetScapeWriterAsciiFilter;

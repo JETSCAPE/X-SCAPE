@@ -169,7 +169,7 @@ void PythiaIsrGun::WriteTask(weak_ptr<JetScapeWriter> w) {
   JetScapeTask::WriteTasks(w);
 }
 
-void PythiaIsrGun::Exec() {
+void PythiaIsrGun::ExecuteTask() {
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
   //Reading vir_factor from xml for MATTER
@@ -435,5 +435,5 @@ void PythiaIsrGun::Exec() {
 
   //REMARK: Check why this has to be called explictly, something wrong with generic recursive execution!!????
 
-  JetScapeTask::ExecuteTasks();
+  // JetScapeTask::ExecuteTasks();
 }

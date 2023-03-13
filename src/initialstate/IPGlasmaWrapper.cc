@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -41,8 +41,8 @@ void IPGlasmaWrapper::InitTask() {
 }
 
 
-void IPGlasmaWrapper::Exec() {
-    Clear();
+void IPGlasmaWrapper::ExecuteTask() {
+    ClearTask();
     Jetscape::JSINFO << "Run IPGlasma ...";
     try {
         IPGlasma_ptr_->generateAnEvent(event_id_);
@@ -55,7 +55,7 @@ void IPGlasmaWrapper::Exec() {
 }
 
 
-void IPGlasmaWrapper::Clear() {
+void IPGlasmaWrapper::ClearTask() {
     Jetscape::JSINFO << "clear initial condition vectors";
 }
 

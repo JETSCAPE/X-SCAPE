@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -30,9 +30,9 @@ public:
   PartonPrinter();
   virtual ~PartonPrinter();
 
-  virtual void Init();
-  virtual void Exec() final;
-  virtual void Clear();
+  virtual void InitTask();
+  virtual void ExecuteTask() final;
+  virtual void ClearTask();
   std::ofstream
       dist_output; ///< the output stream where events are saved to file
 

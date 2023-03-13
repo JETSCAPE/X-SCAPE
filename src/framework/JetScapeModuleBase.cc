@@ -43,7 +43,7 @@ JetScapeModuleBase::~JetScapeModuleBase() { disconnect_all(); }
 // ---------------------------------------------------------------------------
 /** A virtual function for a default initialization of a JetScapeModuleBase. It also checks whether a XML file is loaded or not.
    */
-void JetScapeModuleBase::Init() {
+void JetScapeModuleBase::InitTask() {
   if (!JetScapeXML::Instance()->GetXMLRootMain()) {
     JSWARN << "Not a valid JetScape Main XML file or no XML file loaded!";
     exit(-1);

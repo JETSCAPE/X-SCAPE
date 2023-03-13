@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2020
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -28,7 +28,7 @@ HadronPrinter::~HadronPrinter()
 {
 }
 
-void HadronPrinter::Init()
+void HadronPrinter::InitTask()
 {
   this->SetId("Printer");
   fHadronOutfile.open("finalStateHadrons.dat");
@@ -38,15 +38,17 @@ void HadronPrinter::Init()
   //hadronPrinter->GetFinalHadronList.connect(hadro.get(), &Hadronization::GetHadrons);
 }
 
-void HadronPrinter::Exec()
+void HadronPrinter::ExecuteTask()
 {
   VERBOSE(2) <<"Run HadronPrinter: ";
   GetFinalHadronList(finalHadrons);
   PrintFinalHadron();
 }
 
-void HadronPrinter::Clear()
-  {this->finalHadrons.clear();}
+void HadronPrinter::ClearTask()
+{
+  this->finalHadrons.clear();
+}
 
 void HadronPrinter::WriteTask(weak_ptr<JetScapeWriter> w)
 {
@@ -65,8 +67,5 @@ void HadronPrinter::PrintFinalHadron(){
     fHadronOutfile << i <<"  "<< h.pid() <<"  "<< h.pstat() <<"  "<< h.e() <<"  "<< h.px() <<"  "<< h.py() <<"  "<< h.pz() <<"  "<< h.eta() <<"  "<< h.phi() << endl;
     ++i;
   }
-
 }
-} 
-
-
+}

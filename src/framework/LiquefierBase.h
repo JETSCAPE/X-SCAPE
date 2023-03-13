@@ -56,7 +56,7 @@ private:
 
 public:
   LiquefierBase();
-  ~LiquefierBase() { Clear(); }
+  ~LiquefierBase() { ClearTask(); }
 
   void add_a_droplet(Droplet droplet_in) { dropletlist.push_back(droplet_in); }
 
@@ -99,7 +99,7 @@ public:
   void get_source(Jetscape::real tau, Jetscape::real x, Jetscape::real y,
                   Jetscape::real eta, std::array<Jetscape::real, 4> &jmu) const;
 
-  virtual void Clear();
+  virtual void ClearTask();
 };
 
 }; // namespace Jetscape
