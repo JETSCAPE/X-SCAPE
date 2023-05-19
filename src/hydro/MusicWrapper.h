@@ -114,6 +114,7 @@ public:
 
   void EvolveHydroPerTimeStep(const int itau);
 
+  void PassHydroSurfaceToFramework();
   void SetHydroGridInfo();
   void PassHydroEvolutionHistoryToFramework();
 

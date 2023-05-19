@@ -24,6 +24,7 @@
 
 #include "JetScapeLogger.h"
 #include "MusicWrapper.h"
+#include "surfaceCell.h"
 
 using namespace Jetscape;
 
@@ -294,6 +295,37 @@ void MpiMusic::SetHydroGridInfo() {
   bulk_info.deta = music_hydro_ptr->get_hydro_deta();
 
   bulk_info.boost_invariant = music_hydro_ptr->is_boost_invariant();
+}
+
+void MpiMusic::PassHydroSurfaceToFramework() {
+  JSINFO << "Passing hydro surface cells to JETSCAPE ... ";
+  auto number_of_cells = music_hydro_ptr->get_number_of_surface_cells();
+  JSINFO << "total number of fluid cells: " << number_of_cells;
+  SurfaceCell surfaceCell_i;
+  for (int i = 0; i < number_of_cells; i++) {
+    SurfaceCellInfo surface_cell_info;
+    music_hydro_ptr->get_surface_cell_with_index(i, surfaceCell_i);
+    surface_cell_info.tau = surfaceCell_i.xmu[0];
+    surface_cell_info.x = surfaceCell_i.xmu[1];
+    surface_cell_info.y = surfaceCell_i.xmu[2];
+    surface_cell_info.eta = surfaceCell_i.xmu[3];
+    double u[4];
+    for (int j = 0; j < 4; j++) {
+      surface_cell_info.d3sigma_mu[j] = surfaceCell_i.d3sigma_mu[j];
+      surface_cell_info.umu[j] = surfaceCell_i.umu[j];
+    }
+    surface_cell_info.energy_density = surfaceCell_i.energy_density;
+    surface_cell_info.temperature = surfaceCell_i.temperature;
+    surface_cell_info.pressure = surfaceCell_i.pressure;
+    surface_cell_info.mu_B = surfaceCell_i.mu_B;
+    surface_cell_info.mu_Q = surfaceCell_i.mu_Q;
+    surface_cell_info.mu_S = surfaceCell_i.mu_S;
+    for (int j = 0; j < 10; j++) {
+      surface_cell_info.pi[j] = surfaceCell_i.shear_pi[j];
+    }
+    surface_cell_info.bulk_Pi = surfaceCell_i.bulk_Pi;
+    StoreSurfaceCell(surface_cell_info);
+  }
 }
 
 void MpiMusic::PassHydroEvolutionHistoryToFramework() {
