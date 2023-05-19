@@ -57,7 +57,8 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   // overwrite input options
   flag_output_evo_to_file = (
       GetXMLElementInt({"Hydro", "MUSIC", "output_evolution_to_file"}));
-  music_hydro_ptr->set_parameter("output_evolution_data", flag_output_evo_to_file);
+  music_hydro_ptr->set_parameter(
+          "output_evolution_data", flag_output_evo_to_file);
   flag_store_hydro_info_in_memory = (
       GetXMLElementInt({"Hydro", "MUSIC", "store_hydro_info_in_memory"}));
   music_hydro_ptr->set_parameter("store_hydro_info_in_memory",
@@ -90,18 +91,22 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   music_hydro_ptr->set_parameter("Initial_profile", InitialProfile);
   double string_source_sigma_x = (
         GetXMLElementDouble({"Hydro", "MUSIC", "string_source_sigma_x"}));
-      music_hydro_ptr->set_parameter("string_source_sigma_x", string_source_sigma_x);
+  music_hydro_ptr->set_parameter("string_source_sigma_x",
+                                 string_source_sigma_x);
   double string_source_sigma_eta = (
         GetXMLElementDouble({"Hydro", "MUSIC", "string_source_sigma_eta"}));
-      music_hydro_ptr->set_parameter("string_source_sigma_eta", string_source_sigma_eta);
+  music_hydro_ptr->set_parameter("string_source_sigma_eta",
+                                 string_source_sigma_eta);
   double stringPreEqFlowFactor = (
         GetXMLElementDouble({"Hydro", "MUSIC", "stringPreEqFlowFactor"}));
-      music_hydro_ptr->set_parameter("stringPreEqFlowFactor", stringPreEqFlowFactor);
+  music_hydro_ptr->set_parameter("stringPreEqFlowFactor",
+                                 stringPreEqFlowFactor);
   int flag_shear_Tdep = (
       GetXMLElementInt({"Hydro", "MUSIC", "T_dependent_Shear_to_S_ratio"}));
   if (flag_shear_Tdep > 0) {
     music_hydro_ptr->set_parameter("Viscosity_Flag_Yes_1_No_0", 1);
-    music_hydro_ptr->set_parameter("T_dependent_Shear_to_S_ratio", flag_shear_Tdep);
+    music_hydro_ptr->set_parameter("T_dependent_Shear_to_S_ratio",
+                                   flag_shear_Tdep);
     if (flag_shear_Tdep == 3) {
       double shear_kinkT = (
         GetXMLElementDouble({"Hydro", "MUSIC", "shear_viscosity_3_at_kink"}));
@@ -164,7 +169,7 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 }
 
-void MpiMusic::EvolveHydro() {
+void MpiMusic::InitializeHydroEnergyProfile() {
   VERBOSE(8);
   JSINFO << "Initialize density profiles in MUSIC ...";
   std::vector<double> entropy_density = ini->GetEntropyDensityDistribution();
@@ -188,13 +193,27 @@ void MpiMusic::EvolveHydro() {
         pre_eq_ptr->pi13_, pre_eq_ptr->pi22_, pre_eq_ptr->pi23_,
         pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
   }
-
   JSINFO << "initial density profile dx = " << dx << " fm";
   hydro_status = INITIALIZED;
   JSINFO << "number of source terms: "
          << hydro_source_terms_ptr->get_number_of_sources()
          << ", total E = " << hydro_source_terms_ptr->get_total_E_of_sources()
          << " GeV.";
+}
+
+void MpiMusic::EvolveHydroPerTimeStep(const int itau) {
+  if (hydro_status == NOT_START) {
+    InitializeHydroEnergyProfile();
+    music_hydro_ptr-> prepare_run_hydro_one_time_step();
+  }
+  music_hydro_ptr->run_hydro_one_time_step(itau);
+
+}
+
+void MpiMusic::EvolveHydro() {
+  if (hydro_status == NOT_START) {
+    InitializeHydroEnergyProfile();
+  }
 
   has_source_terms = false;
   if (hydro_source_terms_ptr->get_number_of_sources() > 0) {
