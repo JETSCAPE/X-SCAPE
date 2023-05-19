@@ -63,6 +63,7 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
       GetXMLElementInt({"Hydro", "MUSIC", "store_hydro_info_in_memory"}));
   music_hydro_ptr->set_parameter("store_hydro_info_in_memory",
                                   flag_store_hydro_info_in_memory);
+  music_hydro_ptr->set_parameter("surface_in_memory", 1);
 
   int beastMode = (
       GetXMLElementInt({"Hydro", "MUSIC", "beastMode"}));
