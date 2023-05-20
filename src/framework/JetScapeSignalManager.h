@@ -130,9 +130,10 @@ public:
   void ConnectGetFinalPartonListSignal(shared_ptr<HadronizationManager> hm);
   void ConnectTransformPartonsSignal(shared_ptr<Hadronization> h,
                                      shared_ptr<Hadronization> h2);
-	void ConnectGetFinalHadronListSignal(shared_ptr<HadronPrinter> h);
+    void ConnectGetFinalHadronListSignal(shared_ptr<HadronPrinter> h);
 
   void ConnectGetHydroHyperSurfaceSignal(shared_ptr<Hadronization> h);
+  void ConnectGetHydroHyperSurfaceSignal(shared_ptr<SoftParticlization> hSoft);
 
   void
   DisconnectSignal(){}; // to be implememted if needed maybe for Eloss ...!???

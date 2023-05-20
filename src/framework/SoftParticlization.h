@@ -25,11 +25,13 @@
 #include "JetScapeModuleBase.h"
 #include "JetClass.h"
 #include "JetScapeWriter.h"
+#include "SurfaceCellInfo.h"
 
 namespace Jetscape {
 
 class SoftParticlization : public JetScapeModuleBase {
 private:
+  bool HydroHyperSurfaceConnected_;
 public:
   SoftParticlization();
   ~SoftParticlization();
@@ -39,6 +41,17 @@ public:
 
   virtual void ExecuteTask();
   virtual void ClearTask();
+
+  sigslot::signal1<std::vector<SurfaceCellInfo> &,
+                   multi_threaded_local> GetHydroHyperSurface;
+
+  void SetGetHydroHyperSurfaceConnected(bool m_GetHydroHyperSurfaceConnected) {
+    HydroHyperSurfaceConnected_ = m_GetHydroHyperSurfaceConnected;
+  }
+
+  bool GetGetHydroHyperSurfaceConnected() const {
+    return HydroHyperSurfaceConnected_;
+  }
 
   std::vector<std::vector<shared_ptr<Hadron>>> Hadron_list_;
 

@@ -71,7 +71,7 @@ protected:
   // for large dataset, std::deque is better than std::vector.
   /** Stores the evolution history. */
   EvolutionHistory bulk_info;
-  std::vector<SurfaceCellInfo> surfaceCellVector;
+  std::vector<SurfaceCellInfo> surfaceCellVector_;
 
   std::weak_ptr<LiquefierBase> liquefier_ptr;
 
@@ -156,7 +156,11 @@ public:
   }
 
   void StoreSurfaceCell(SurfaceCellInfo &surface_cell_info) {
-    surfaceCellVector.push_back(surface_cell_info);
+    surfaceCellVector_.push_back(surface_cell_info);
+  }
+
+  void getSurfaceCellVector(std::vector<SurfaceCellInfo> & surfCellVec) {
+      surfCellVec = surfaceCellVector_;
   }
 
   void clear_up_evolution_data() { bulk_info.clear_up_evolution_data(); }
