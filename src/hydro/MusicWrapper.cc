@@ -250,11 +250,13 @@ void MpiMusic::EvolveHydro() {
     //}
   }
 
-  collect_freeze_out_surface();
+  PassHydroSurfaceToFramework();
 
-  if (hydro_status == FINISHED && doCooperFrye == 1) {
-    music_hydro_ptr->run_Cooper_Frye();
-  }
+  //collect_freeze_out_surface();
+
+  //if (hydro_status == FINISHED && doCooperFrye == 1) {
+  //  music_hydro_ptr->run_Cooper_Frye();
+  //}
 }
 
 void MpiMusic::collect_freeze_out_surface() {
