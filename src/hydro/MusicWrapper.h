@@ -112,7 +112,7 @@ public:
                           Jetscape::real z,
                           std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
 
-  void EvolveHydroPerTimeStep(const int itau);
+  void EvolveHydroUpto(const double tauEnd);
 
   void PassHydroSurfaceToFramework();
   void SetHydroGridInfo();

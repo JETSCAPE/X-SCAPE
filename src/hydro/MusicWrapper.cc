@@ -203,12 +203,12 @@ void MpiMusic::InitializeHydroEnergyProfile() {
          << " GeV.";
 }
 
-void MpiMusic::EvolveHydroPerTimeStep(const int itau) {
+void MpiMusic::EvolveHydroUpto(const double tauEnd) {
   if (hydro_status == NOT_START) {
     InitializeHydroEnergyProfile();
     music_hydro_ptr-> prepare_run_hydro_one_time_step();
   }
-  music_hydro_ptr->run_hydro_one_time_step(itau);
+  music_hydro_ptr->run_hydro_upto(tauEnd);
 
 }
 

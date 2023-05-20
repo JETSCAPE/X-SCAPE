@@ -145,6 +145,8 @@ public:
   /** Default function to evolve the hydrodynamics. It can be overridden by different modules. */
   virtual void EvolveHydro(){};
 
+  virtual void EvolveHydroUpto(const double tauEnd){};
+
   /** @return Status of the hydrodynamics (NOT_START, INITIALIZED, EVOLVING, FINISHED, ERROR). */
   int GetHydroStatus() const { return (hydro_status); }
 
