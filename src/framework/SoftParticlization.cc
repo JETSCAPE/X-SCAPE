@@ -18,10 +18,14 @@
 // -----------------------------------------
 
 #include "SoftParticlization.h"
+#include "JetScapeSignalManager.h"
 
 namespace Jetscape {
 
-SoftParticlization::SoftParticlization() { boost_invariance = false; }
+SoftParticlization::SoftParticlization() {
+    boost_invariance = false;
+    CreateSignalSlots();
+}
 
 SoftParticlization::~SoftParticlization() {
   for (unsigned i = 0; i < Hadron_list_.size(); i++) {
@@ -60,6 +64,15 @@ bool SoftParticlization::check_boost_invariance() {
     boost_invariance_flag = true;
   }
   return (boost_invariance_flag);
+}
+
+void SoftParticlization::CreateSignalSlots() {
+  for (auto it : GetTaskList()) {
+    if (!std::dynamic_pointer_cast<SoftParticlization>(it)->GetGetHydroHyperSurfaceConnected()) {
+      JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
+            std::dynamic_pointer_cast<SoftParticlization>(it));
+    }
+  }
 }
 
 } // end namespace Jetscape
