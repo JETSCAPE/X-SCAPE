@@ -70,6 +70,7 @@ bool SoftParticlization::check_boost_invariance() {
 void SoftParticlization::CreateSignalSlots() {
   for (auto it : GetTaskList()) {
     if (!std::dynamic_pointer_cast<SoftParticlization>(it)->GetGetHydroHyperSurfaceConnected()) {
+      JSINFO << "connecting sigslog for SoftPartization ...";
       JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
             std::dynamic_pointer_cast<SoftParticlization>(it));
     }

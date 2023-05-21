@@ -36,6 +36,7 @@ iSpectraSamplerWrapper::~iSpectraSamplerWrapper() {}
 void iSpectraSamplerWrapper::InitTask() {
 
   JSINFO << "Initialize a particle sampler (iSS)";
+  CreateSignalSlots();
 
   std::string input_file =
       GetXMLElementText({"SoftParticlization", "iSS", "iSS_input_file"});
