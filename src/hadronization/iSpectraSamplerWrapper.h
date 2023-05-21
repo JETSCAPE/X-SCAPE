@@ -44,6 +44,7 @@ public:
   void ClearTask();
   void WriteTask(weak_ptr<JetScapeWriter> w);
 
+  void getSurfCellVector();
   void PassHadronListToJetscape();
 };
 

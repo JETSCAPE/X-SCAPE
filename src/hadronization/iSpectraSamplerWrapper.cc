@@ -100,6 +100,46 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->echo();
 }
 
+void iSpectraSamplerWrapper::getSurfCellVector() {
+  std::vector<SurfaceCellInfo> surfVec;
+  std::vector<FO_surf> FOsurf_array;
+  GetHydroHyperSurface(surfVec);
+  for (const auto surf_i: surfVec) {
+    FO_surf iSS_surf_cell;
+    iSS_surf_cell.tau = surf_i.tau;
+    iSS_surf_cell.xpt = surf_i.x;
+    iSS_surf_cell.ypt = surf_i.y;
+    iSS_surf_cell.eta = surf_i.eta;
+    iSS_surf_cell.da0 = surf_i.d3sigma_mu[0];
+    iSS_surf_cell.da1 = surf_i.d3sigma_mu[1];
+    iSS_surf_cell.da2 = surf_i.d3sigma_mu[2];
+    iSS_surf_cell.da3 = surf_i.d3sigma_mu[3];
+    iSS_surf_cell.u0 = surf_i.umu[0];
+    iSS_surf_cell.u1 = surf_i.umu[1];
+    iSS_surf_cell.u2 = surf_i.umu[2];
+    iSS_surf_cell.u3 = surf_i.umu[3];
+    iSS_surf_cell.Edec = surf_i.energy_density;
+    iSS_surf_cell.Tdec = surf_i.temperature;
+    iSS_surf_cell.Pdec = surf_i.pressure;
+    iSS_surf_cell.muB = surf_i.mu_B;
+    iSS_surf_cell.muQ = surf_i.mu_Q;
+    iSS_surf_cell.muS = surf_i.mu_S;
+    iSS_surf_cell.pi00 = surf_i.pi[0];
+    iSS_surf_cell.pi01 = surf_i.pi[1];
+    iSS_surf_cell.pi02 = surf_i.pi[2];
+    iSS_surf_cell.pi03 = surf_i.pi[3];
+    iSS_surf_cell.pi11 = surf_i.pi[4];
+    iSS_surf_cell.pi12 = surf_i.pi[5];
+    iSS_surf_cell.pi13 = surf_i.pi[6];
+    iSS_surf_cell.pi22 = surf_i.pi[7];
+    iSS_surf_cell.pi23 = surf_i.pi[8];
+    iSS_surf_cell.pi33 = surf_i.pi[9];
+    iSS_surf_cell.bulkPi = surf_i.bulk_Pi;
+    FOsurf_array.push_back(iSS_surf_cell);
+  }
+  iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
+}
+
 void iSpectraSamplerWrapper::ExecuteTask() {
   // generate symbolic links with music_input_file
   std::string music_input_file_path = GetXMLElementText(
@@ -116,17 +156,18 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   }
   inputfile.close();
 
-  int status = iSpectraSampler_ptr_->read_in_FO_surface();
-  if (status != 0) {
-    JSWARN << "Some errors happened in reading in the hyper-surface";
-    exit(-1);
-  }
+  getSurfCellVector();
+  //int status = iSpectraSampler_ptr_->read_in_FO_surface();
+  //if (status != 0) {
+  //  JSWARN << "Some errors happened in reading in the hyper-surface";
+  //  exit(-1);
+  //}
 
   long random_seed = (*GetMt19937Generator())(); // get random seed
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
-  status = iSpectraSampler_ptr_->generate_samples();
+  int status = iSpectraSampler_ptr_->generate_samples();
   if (status != 0) {
     JSWARN << "Some errors happened in generating particle samples";
     exit(-1);
