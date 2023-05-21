@@ -161,6 +161,7 @@ public:
 
   void getSurfaceCellVector(std::vector<SurfaceCellInfo> & surfCellVec) {
       surfCellVec = surfaceCellVector_;
+      JSINFO << "Fluid out: surface vector size = " << surfCellVec.size();
   }
 
   void clear_up_evolution_data() { bulk_info.clear_up_evolution_data(); }

@@ -104,6 +104,7 @@ void iSpectraSamplerWrapper::getSurfCellVector() {
   std::vector<SurfaceCellInfo> surfVec;
   std::vector<FO_surf> FOsurf_array;
   GetHydroHyperSurface(surfVec);
+  JSINFO << "surface cell size: " << surfVec.size();
   for (const auto surf_i: surfVec) {
     FO_surf iSS_surf_cell;
     iSS_surf_cell.tau = surf_i.tau;
