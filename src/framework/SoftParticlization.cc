@@ -25,7 +25,6 @@ namespace Jetscape {
 SoftParticlization::SoftParticlization() {
     boost_invariance = false;
     HydroHyperSurfaceConnected_ = false;
-    CreateSignalSlots();
 }
 
 SoftParticlization::~SoftParticlization() {
@@ -45,6 +44,7 @@ void SoftParticlization::Init() {
 
   InitTask();
   InitTasks();
+  CreateSignalSlots();
 }
 
 void SoftParticlization::ExecuteTask() {}
