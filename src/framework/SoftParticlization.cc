@@ -44,7 +44,7 @@ void SoftParticlization::Init() {
 
   InitTask();
   InitTasks();
-  CreateSignalSlots();
+  //CreateSignalSlots();
 }
 
 void SoftParticlization::ExecuteTask() {}
@@ -65,17 +65,6 @@ bool SoftParticlization::check_boost_invariance() {
     boost_invariance_flag = true;
   }
   return (boost_invariance_flag);
-}
-
-void SoftParticlization::CreateSignalSlots() {
-  JSINFO << "check calling CreateSignalSlots() in SoftParticlization ...";
-  for (auto it : GetTaskList()) {
-    if (!std::dynamic_pointer_cast<SoftParticlization>(it)->GetGetHydroHyperSurfaceConnected()) {
-      JSINFO << "connecting sigslog for SoftPartization ...";
-      JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
-            std::dynamic_pointer_cast<SoftParticlization>(it));
-    }
-  }
 }
 
 } // end namespace Jetscape

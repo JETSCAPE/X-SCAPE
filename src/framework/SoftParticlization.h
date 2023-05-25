@@ -53,8 +53,6 @@ public:
     return HydroHyperSurfaceConnected_;
   }
 
-  void CreateSignalSlots();
-
   std::vector<std::vector<shared_ptr<Hadron>>> Hadron_list_;
 
   bool boost_invariance;
