@@ -143,7 +143,8 @@ int main(int argc, char** argv)
   // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
 
   //auto mClock = make_shared<MainClock>("SpaceTime",-1,5,0.1); // JP: make consistent with reading from XML in init phase ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-0.1,0.1,0.1);
+  //auto mClock = make_shared<MainClock>("SpaceTime",-0.1,0.1,0.1);
+  auto mClock = make_shared<MainClock>("SpaceTime", 0.5,5.0,0.1);
 
   auto mModuleClock = make_shared<ModuleClock>();
   mModuleClock->SetTimeRefFrameId("SpaceTime * 2");
