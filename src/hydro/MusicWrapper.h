@@ -96,6 +96,9 @@ public:
   MpiMusic();
   ~MpiMusic();
 
+  void CalculateTime();
+  void ExecTime();
+
   void InitializeHydro(Parameter parameter_list);
   void InitializeHydroEnergyProfile();
 

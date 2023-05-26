@@ -209,7 +209,18 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
     music_hydro_ptr-> prepare_run_hydro_one_time_step();
   }
   music_hydro_ptr->run_hydro_upto(tauEnd);
+}
 
+void MpiMusic::CalculateTime() {
+  VERBOSE(2) << "MpiMusic::CalculateTime() main Clock = "
+             << GetMainClock()->GetCurrentTime() << " fm/c ...";
+  EvolveHydroUpto(GetMainClock()->GetCurrentTime());
+}
+
+void MpiMusic::ExecTime() {
+  VERBOSE(2) << "MpiMusic::ExecTime() main Clock = "
+             << GetMainClock()->GetCurrentTime() << " fm/c ...";
+  PassHydroSurfaceToFramework();
 }
 
 void MpiMusic::EvolveHydro() {
