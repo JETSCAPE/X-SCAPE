@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+
+<jetscape>
+
+  <nEvents> 1 </nEvents>
+  <setReuseHydro> true </setReuseHydro>
+  <nReuseHydro> 5 </nReuseHydro>
+  <vlevel> 4 </vlevel>
+
+  <!-- Jetscape Writer -->
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <grid_max_x> 15 </grid_max_x>
+    <grid_max_y> 15 </grid_max_y>
+    <grid_max_z> 3 </grid_max_z>
+    <grid_step_x> 0.3 </grid_step_x>
+    <grid_step_y> 0.3 </grid_step_y>
+    <grid_step_z> 0.2 </grid_step_z>
+    <Trento>
+      <CutInputs  centrality-low='0'
+                  centrality-high='10'>
+    </CutInputs>
+    </Trento>
+  </IS>
+
+  <!-- Hard Process -->
+  <Hard>
+      <PGun>
+        <name>PGun</name>
+        <pT>100</pT>
+        <useHybridHad>0</useHybridHad>
+      </PGun>
+  </Hard>
+
+  <!--Preequilibrium Dynamics Module -->
+  <Preequilibrium>
+    <NullPreDynamics> </NullPreDynamics>
+  </Preequilibrium>
+
+  <!-- Hydro  Module 1 -->
+  <Hydro>
+    <MUSIC>
+      <name>MUSIC</name>
+      <InitialProfile>42</InitialProfile>
+    </MUSIC>
+  </Hydro>
+
+  <!--Eloss Modules -->
+  <Eloss>
+      <deltaT>0.1</deltaT>
+      <formTime> -0.1</formTime>
+      <maxT>250</maxT>
+      <mutex>ON</mutex>
+
+      <Matter>
+        <name>Matter</name>
+        <matter_on> 1 </matter_on>
+        <Q0> 2.0 </Q0>
+        <T0> 0.16 </T0>
+        <vir_factor> 0.25 </vir_factor>
+        <in_vac> 0 </in_vac>
+        <recoil_on> 1 </recoil_on>
+        <broadening_on> 0 </broadening_on>
+        <brick_med> 0 </brick_med>
+        <hydro_Tc> 0.16 </hydro_Tc>
+	<!-- Pick a qhat formula -->
+	<!-- Type=0 : HTL Formula with both alpha_s fixed  -->
+	<!-- Type=1 : HTL Formula with one running alpha_s and one fixed alpha_s  -->
+	<!-- Type=2 : Constant q-hat; qhat=qhat0   -->
+	<!-- Type=3 : qhat=qhat0*T^3  -->
+	<!-- Type=4 : qhat=qhat0*s; s=entropy density  -->
+	<QhatParametrizationType> 1 </QhatParametrizationType>
+	<qhat0> -2.0 </qhat0>  <!-- If Type=0 or 1 set qhat0 as negative  -->
+	<alphas> 0.25 </alphas>
+      </Matter>
+
+      <Lbt>
+        <name>Lbt</name>
+        <Q0> 2.0 </Q0>
+        <in_vac> 0 </in_vac>
+        <only_leading> 0 </only_leading>
+        <hydro_Tc> 0.16 </hydro_Tc>
+        <alphas> 0.25 </alphas>
+	<run_alphas>1</run_alphas>   <!-- 0 for fixed alpha_s and 1 for running alpha_s -->
+      </Lbt>
+  </Eloss>
+  
+  <!-- Jet Hadronization Module -->
+  <JetHadronization>
+    <name>colorless</name>
+    <take_recoil>1</take_recoil>
+    <eCMforHadronization>2510</eCMforHadronization>
+  </JetHadronization>
+
+  <!-- Particlization Module  -->
+  <SoftParticlization>
+    <iSS> </iSS>
+  </SoftParticlization>
+  
+</jetscape>

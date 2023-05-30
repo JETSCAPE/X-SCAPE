@@ -172,7 +172,7 @@ int main(int argc, char** argv)
 
   auto jetscape = make_shared<JetScape>();
   jetscape->SetXMLMainFileName("../config/jetscape_main.xml");
-  jetscape->SetXMLUserFileName("jetscape_user_MUSIC.xml");
+  jetscape->SetXMLUserFileName("../config/jetscape_user_MUSICMainClockTest.xml");
   jetscape->SetId("primary");
   jetscape->AddMainClock(mClock);
   jetscape->ClockInfo();
@@ -200,7 +200,7 @@ int main(int argc, char** argv)
   auto pythiaGun= make_shared<PythiaGun> ();
   auto isr = make_shared<InitialStateRadiationTest> ();
   auto hydro = make_shared<MpiMusic> ();
-  hydro->AddModuleClock(mMilneClock);
+  //hydro->AddModuleClock(mMilneClock);
   hydro->SetTimeStepped(true);
 
   //auto hydroTest = make_shared<BrickTest> ();
