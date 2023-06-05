@@ -138,7 +138,7 @@ To run JetScape test with SMASH:
 Currently the iSS sampler performs resonance decays after sampling.
 For reasonable physics with SMASH these decays should be switched off.
 
-### Installing and Compiling JETSCAPE with IP-Glasma
+### Installing and Compiling X-SCAPE with IP-Glasma
 
 The use of IP-Glasma with the current version of X-SCAPE is not fully integrated.  A workaround is provided here and applies to using the **jetscape/base:stable** Docker image.
 
