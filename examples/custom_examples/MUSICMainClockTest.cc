@@ -35,7 +35,9 @@
 #include "Matter.h"
 #include "LBT.h"
 #include "Martini.h"
+#include "NullPreDynamics.h"
 #include "MusicWrapper.h"
+#include "iSpectraSamplerWrapper.h"
 #include "PythiaGun.h"
 #include "InitialStateRadiationTest.h"
 #include "HadronizationManager.h"
@@ -195,13 +197,17 @@ int main(int argc, char** argv)
   jetscape->Add(clockTest3);
 
   // Initial conditions and hydro
-  //auto trento = make_shared<TrentoInitial>();
-  auto trento = make_shared<InitialState>();
+  auto trento = make_shared<TrentoInitial>();
   auto pythiaGun= make_shared<PythiaGun> ();
   auto isr = make_shared<InitialStateRadiationTest> ();
+  auto null_predynamics = make_shared<NullPreDynamics> ();
   auto hydro = make_shared<MpiMusic> ();
   //hydro->AddModuleClock(mMilneClock);
   hydro->SetTimeStepped(true);
+
+  // surface sampler
+  auto iSS = make_shared<iSpectraSamplerWrapper> ();
+  //iSS->SetTimeStepped(true);
 
   //auto hydroTest = make_shared<BrickTest> ();
   //hydroTest->SetMultiThread(true);
@@ -210,8 +216,10 @@ int main(int argc, char** argv)
   jetscape->Add(trento);
   jetscape->Add(pythiaGun);
   //jetscape->Add(isr);
+  jetscape->Add(null_predynamics);
   jetscape->Add(hydro);
   //jetscape->Add(hydroTest);
+  //jetscape->Add(iSS);
 
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
@@ -237,12 +245,12 @@ int main(int argc, char** argv)
   //auto adscft = make_shared<AdSCFT> ();
 
   // Note: if you use Matter, it MUST come first (to set virtuality)
-  jloss->Add(matter);
+  //jloss->Add(matter);
   // jloss->Add(lbt);  // go to 3rd party and ./get_lbtTab before adding this module
   // jloss->Add(martini);
   //jloss->Add(adscft);
-  jlossmanager->Add(jloss);
-  jetscape->Add(jlossmanager);
+  //jlossmanager->Add(jloss);
+  //jetscape->Add(jlossmanager);
 
   auto cascadeTest = make_shared<CascadeTest> ();
   cascadeTest->SetMultiThread(true);

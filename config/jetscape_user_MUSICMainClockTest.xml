@@ -3,9 +3,10 @@
 <jetscape>
 
   <nEvents> 1 </nEvents>
-  <setReuseHydro> true </setReuseHydro>
-  <nReuseHydro> 5 </nReuseHydro>
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 1 </nReuseHydro>
   <vlevel> 4 </vlevel>
+  <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
 
   <!-- Jetscape Writer -->
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
