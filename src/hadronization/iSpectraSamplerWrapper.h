@@ -46,10 +46,12 @@ public:
   void InitTask();
   void ExecuteTask();
   void ClearTask();
+  void ClearHadronList();
   void WriteTask(weak_ptr<JetScapeWriter> w);
 
   int getSurfCellVector();
   void PassHadronListToJetscape();
+  void PassHadronListToJetscapeSameEvent();
 };
 
 #endif // ISPECTRASAMPLERWRAPPER_H

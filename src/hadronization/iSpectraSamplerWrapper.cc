@@ -179,13 +179,13 @@ void iSpectraSamplerWrapper::CalculateTime() {
       JSWARN << "Some errors happened in generating particle samples";
       exit(-1);
     }
+    PassHadronListToJetscapeSameEvent();
   }
 }
 
 void iSpectraSamplerWrapper::ExecTime() {
   VERBOSE(2) << "iSS::ExecTime() main Clock = "
              << GetMainClock()->GetCurrentTime() << " fm/c ...";
-  PassHadronListToJetscape();
 }
 
 void iSpectraSamplerWrapper::ExecuteTask() {
@@ -225,13 +225,71 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   }
 }
 
-void iSpectraSamplerWrapper::ClearTask() {
-  VERBOSE(2) << "Finish the particle sampling";
-  iSpectraSampler_ptr_->clear();
+void iSpectraSamplerWrapper::ClearHadronList() {
   for (unsigned i = 0; i < Hadron_list_.size(); i++) {
     Hadron_list_.at(i).clear();
   }
   Hadron_list_.clear();
+}
+
+void iSpectraSamplerWrapper::ClearTask() {
+  VERBOSE(2) << "Finish the particle sampling";
+  iSpectraSampler_ptr_->clear();
+  ClearHadronList();
+}
+
+
+void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
+  unsigned int nev = iSpectraSampler_ptr_->get_number_of_sampled_events();
+  VERBOSE(2) << "Passing all sampled hadrons to the JETSCAPE framework";
+  VERBOSE(4) << "number of events to pass : " << nev;
+  bool hadronListExist = false;
+  if (Hadron_list_.size() != 0)
+      hadronListExist = true;
+  if (hadronListExist && Hadron_list_.size() != nev) {
+      JSWARN << "Hadron list nev is not equal!";
+      exit(1);
+  }
+  for (unsigned int iev = 0; iev < nev; iev++) {
+    std::vector<shared_ptr<Hadron>> hadrons;
+    unsigned int nparticles =
+        (iSpectraSampler_ptr_->get_number_of_particles(iev));
+    VERBOSE(4) << "event " << iev << ": number of particles = " << nparticles;
+    for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
+      iSS_Hadron current_hadron =
+          (iSpectraSampler_ptr_->get_hadron(iev, ipart));
+      int hadron_label = 0;
+      int hadron_status = 11;
+      int hadron_id = current_hadron.pid;
+      //int hadron_id = 1;   // just for testing need to be changed to the line above
+      double hadron_mass = current_hadron.mass;
+      FourVector hadron_p(current_hadron.px, current_hadron.py,
+                          current_hadron.pz, current_hadron.E);
+      FourVector hadron_x(current_hadron.x, current_hadron.y, current_hadron.z,
+                          current_hadron.t);
+
+      // create a JETSCAPE Hadron
+      if (!hadronListExist) {
+        hadrons.push_back(make_shared<Hadron>(hadron_label, hadron_id,
+                                              hadron_status, hadron_p, hadron_x,
+                                              hadron_mass));
+      } else {
+        auto jetscape_hadron = make_shared<Hadron>(
+                hadron_label, hadron_id, hadron_status,
+                hadron_p, hadron_x, hadron_mass);
+        Hadron_list_[iev].push_back(jetscape_hadron);
+      }
+    }
+    if (!hadronListExist)
+      Hadron_list_.push_back(hadrons);
+  }
+  if (nev > 0) {
+    VERBOSE(4) << "JETSCAPE received " << Hadron_list_.size() << " events.";
+    for (unsigned int iev = 0; iev < Hadron_list_.size(); iev++) {
+      VERBOSE(4) << "In event " << iev << " JETSCAPE received "
+                 << Hadron_list_.at(iev).size() << " particles.";
+    }
+  }
 }
 
 void iSpectraSamplerWrapper::PassHadronListToJetscape() {
