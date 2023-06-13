@@ -32,6 +32,7 @@ namespace Jetscape {
 class SoftParticlization : public JetScapeModuleBase {
 private:
   bool HydroHyperSurfaceConnected_;
+  bool ClearHydroHyperSurfaceConnected_;
 public:
   SoftParticlization();
   ~SoftParticlization();
@@ -44,13 +45,22 @@ public:
 
   sigslot::signal1<std::vector<SurfaceCellInfo> &,
                    multi_threaded_local> GetHydroHyperSurface;
+  sigslot::signal0<multi_threaded_local> ClearHydroHyperSurface;
 
   void SetGetHydroHyperSurfaceConnected(bool m_GetHydroHyperSurfaceConnected) {
     HydroHyperSurfaceConnected_ = m_GetHydroHyperSurfaceConnected;
   }
 
+  void SetClearHydroHyperSurfaceConnected(bool m_ClearHydroHyperSurfaceConnected) {
+    ClearHydroHyperSurfaceConnected_ = m_ClearHydroHyperSurfaceConnected;
+  }
+
   bool GetGetHydroHyperSurfaceConnected() const {
     return HydroHyperSurfaceConnected_;
+  }
+
+  bool GetClearHydroHyperSurfaceConnected() const {
+    return ClearHydroHyperSurfaceConnected_;
   }
 
   std::vector<std::vector<shared_ptr<Hadron>>> Hadron_list_;

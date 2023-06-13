@@ -207,7 +207,7 @@ int main(int argc, char** argv)
 
   // surface sampler
   auto iSS = make_shared<iSpectraSamplerWrapper> ();
-  //iSS->SetTimeStepped(true);
+  iSS->SetTimeStepped(true);
 
   //auto hydroTest = make_shared<BrickTest> ();
   //hydroTest->SetMultiThread(true);
@@ -219,7 +219,7 @@ int main(int argc, char** argv)
   jetscape->Add(null_predynamics);
   jetscape->Add(hydro);
   //jetscape->Add(hydroTest);
-  //jetscape->Add(iSS);
+  jetscape->Add(iSS);
 
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();

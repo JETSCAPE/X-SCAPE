@@ -164,6 +164,10 @@ public:
       JSINFO << "Fluid out: surface vector size = " << surfCellVec.size();
   }
 
+  void clearSurfaceCellVector() {
+      surfaceCellVector_.clear();
+  }
+
   void clear_up_evolution_data() { bulk_info.clear_up_evolution_data(); }
 
   /** @return Start time (or tau) for hydrodynamic evolution.

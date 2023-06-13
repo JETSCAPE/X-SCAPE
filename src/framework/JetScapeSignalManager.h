@@ -134,6 +134,8 @@ public:
 
   void ConnectGetHydroHyperSurfaceSignal(shared_ptr<Hadronization> h);
   void ConnectGetHydroHyperSurfaceSignal(shared_ptr<SoftParticlization> hSoft);
+  void ConnectClearHydroHyperSurfaceSignal(
+          shared_ptr<SoftParticlization> hSoft);
 
   void
   DisconnectSignal(){}; // to be implememted if needed maybe for Eloss ...!???
