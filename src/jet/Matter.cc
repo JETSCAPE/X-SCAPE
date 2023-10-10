@@ -506,7 +506,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
       double max_vir;
       if (vir_factor < 0.0)
         max_vir =
-            pIn[i].e() * pIn[i].e() - pIn[i].restmass() * pIn[i].restmass();
+            std::abs(vir_factor) * (pIn[i].e() * pIn[i].e() - pIn[i].restmass() * pIn[i].restmass());
       else
         max_vir = pT2 * vir_factor;
 
@@ -816,7 +816,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 		}*/
 
 	    //GeneralQhatFunction(int QhatParametrizationType, double Temperature, double EntropyDensity, double FixAlphas,  double Qhat0, double E, double muSquare)
-	    double muSquare= pIn[i].t(); //Virtuality of the parent; Revisit this when q-hat is virtuality dependent
+	    double muSquare= pIn[i].t(); //Virtuality of the parent; Revist this when q-hat is virtuality dependent
 	    qhatLoc= GeneralQhatFunction(QhatParametrizationType, tempLoc, sdLoc, alphas, qhat0, enerLoc, muSquare);
 
           } else { // outside the QGP medium
@@ -2175,10 +2175,10 @@ double Matter::generate_vac_t_w_M(int p_id, double M, double nu, double t0,
     }
 
     if (std::abs(p_id) == cid || std::abs(p_id) == bid)
-      exit_condition = (std::abs(diff) < s_approx) &&
+      exit_condition = (std::abs(diff) < s_approx) ||
                        (std::abs(t_hi_M0 - t_low_M0) / t_hi_M0 < s_error);
     if (p_id == gid)
-      exit_condition = (std::abs(diff) < s_approx) &&
+      exit_condition = (std::abs(diff) < s_approx) ||
                        (std::abs(t_hi_00 - t_low_00) / t_hi_00 < s_error);
     // need to think about the second statement in the gluon exit condition.
 
@@ -4103,12 +4103,13 @@ double Matter::ModifiedProbability(int QhatParametrization, double tempLoc, doub
       ModifiedAlphas = solve_alphas(qhatLoc, enerLoc, tempLoc);
       break;
 
-      //For HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
-      //Function is 1 / (1+A*pow(log(Q^2),2)+B*pow(log(Q^2),4))
+      //HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
+      //Function is 1/(1+A*pow(log(Q^2),2)+B*pow(log(Q^2),4))
     case 5:
       ModifiedAlphas = RunningAlphaS(ScaleNet)*VirtualityQhatFunction(5,  enerLoc, muSquare) ;
       break;
-      //HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat 
+
+      //HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
       //Function is int^{1}_{xB} e^{-ax} / (1+A*pow(log(Q^2),1)+B*pow(log(Q^2),2))
     case 6:
       ModifiedAlphas = RunningAlphaS(ScaleNet)*VirtualityQhatFunction(6,  enerLoc, muSquare) ;
