@@ -170,10 +170,10 @@ void PythiaGun::ExecuteTask() {
       if (!printer.empty()){
             std::ofstream sigma_printer;
             sigma_printer.open(printer, std::ios::out | std::ios::app);
-            
+
             sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
             //sigma_printer.close();
-      
+
 //      JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
     };
 
@@ -275,12 +275,13 @@ void PythiaGun::ExecuteTask() {
     // {
     if (flag_useHybridHad != 1) {
       AddParton(make_shared<Parton>(0, particle.id(), 0, particle.pT(),
-                                    particle.y(), particle.phi(), particle.e(),
-                                    xLoc));
+                                    particle.eta(), particle.phi(),
+                                    particle.e(), xLoc));
     } else {
       auto ptn =
-          make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.y(),
-                              particle.phi(), particle.e(), xLoc);
+          make_shared<Parton>(0, particle.id(), 0, particle.pT(),
+                              particle.eta(),particle.phi(),
+                              particle.e(), xLoc);
       ptn->set_color(particle.col());
       ptn->set_anti_color(particle.acol());
       ptn->set_max_color(1000 * (np + 1));
