@@ -64,12 +64,16 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->readFromFile(input_file);
 
   // overwrite some parameters
+  int echoLevel = GetXMLElementInt({"vlevel"});
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("JSechoLevel", echoLevel);
+
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("hydro_mode", hydro_mode);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("afterburner_type",
                                             afterburner_type);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("output_samples_into_files", 0);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("use_OSCAR_format", 0);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("use_gzip_format", 0);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("use_binary_format", 0);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("store_samples_in_memory", 1);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("number_of_repeated_sampling",
                                             number_of_repeated_sampling);
@@ -101,6 +105,8 @@ void iSpectraSamplerWrapper::InitTask() {
 }
 
 void iSpectraSamplerWrapper::ExecuteTask() {
+  JSINFO << "running iSS ...";
+
   // generate symbolic links with music_input_file
   std::string music_input_file_path = GetXMLElementText(
           {"Hydro", "MUSIC", "MUSIC_input_file"});
@@ -132,6 +138,7 @@ void iSpectraSamplerWrapper::ExecuteTask() {
     exit(-1);
   }
   PassHadronListToJetscape();
+  JSINFO << "iSS finished.";
 }
 
 void iSpectraSamplerWrapper::ClearTask() {

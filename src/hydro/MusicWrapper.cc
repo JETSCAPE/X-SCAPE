@@ -55,6 +55,9 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   music_hydro_ptr = std::unique_ptr<MUSIC>(new MUSIC(input_file));
 
   // overwrite input options
+  int echoLevel = GetXMLElementInt({"vlevel"});
+  music_hydro_ptr->set_parameter("JSechoLevel", echoLevel);
+  
   flag_output_evo_to_file = (
       GetXMLElementInt({"Hydro", "MUSIC", "output_evolution_to_file"}));
   music_hydro_ptr->set_parameter("output_evolution_data", flag_output_evo_to_file);
