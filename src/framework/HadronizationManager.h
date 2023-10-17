@@ -54,10 +54,13 @@ public:
 
   // deletes the hadrons from the different hadronization modules
   // this is used in the case of hadronization hadrons in the afterburner
-  // otherwise these hadrons are printed to file and the same hadrons will be 
+  // otherwise these hadrons are printed to file and the same hadrons will be
   // modified in the transport and printed again
   void DeleteHadrons();
-
+  // this function removes all positive hadrons, the negative ones are not deleted
+  // needed, when positive hadrons are given to the afterburner
+  void DeleteRealHadrons();
+  
   sigslot::signal1<vector<shared_ptr<Hadron>> &> GetHadronList; //get Hadrons from HardProcess NOT Hadronization submodules
 
   sigslot::signal1<vector<vector<shared_ptr<Parton>>> &> GetFinalPartonList;

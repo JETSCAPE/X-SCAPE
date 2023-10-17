@@ -157,4 +157,13 @@ void HadronizationManager::DeleteHadrons() {
 	}
 }
 
+void HadronizationManager::DeleteRealHadrons() {
+  // foreach hadronizon object tasks
+	for(shared_ptr<JetScapeTask> it : GetTaskList()){
+		JetScapeTask *jet = it.get();
+		Hadronization *hit = (Hadronization *) jet;
+		hit->DeleteRealHadrons();
+	}
+}
+
 } // namespace Jetscape
