@@ -24,8 +24,7 @@
 #include <math.h>
 #include <string>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
 
 using namespace Jetscape;
 
@@ -38,7 +37,7 @@ SmashWrapper::SmashWrapper() {
 
 void SmashWrapper::InitTask() {
   JSINFO << "SMASH: picking SMASH-specific configuration from xml file";
-  std::string smash_config =
+  std::string smash_config_file =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_config_file"});
   std::string smash_hadron_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_particles_file"});
@@ -183,7 +182,7 @@ void SmashWrapper::FinishPerEvent() {
                                        modus->jetscape_hadrons_[ev_no - 1]);
   JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
          << " hadrons from SMASH.";
-  smash_experiment_->increase_event_no();  // internal SMASH event counter
+  smash_experiment_->increase_event_number();  // internal SMASH event counter
 }
 
 void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
