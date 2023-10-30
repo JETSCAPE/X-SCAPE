@@ -100,12 +100,10 @@ void PythiaIsrGun::InitTask() {
   pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
   pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
 
-  flag_useHybridHad = GetXMLElementInt({"Hard", "PythiaGun", "useHybridHad"});
 
   JSINFO << MAGENTA << "Pythia Gun with FSR_on: " << FSR_on;
   JSINFO << MAGENTA << "Pythia Gun with " << pTHatMin << " < pTHat < "
          << pTHatMax;
-  JSINFO << MAGENTA << "Use hybrid hadronization? " << flag_useHybridHad;
 
   numbf.str("PhaseSpace:pTHatMin = ");
   numbf << pTHatMin;
@@ -405,19 +403,13 @@ void PythiaIsrGun::ExecuteTask() {
           }
       }
 
-      FourVector p_p(particle.px(),particle.py(),particle.pz(),particle.e());
-      
-    if (flag_useHybridHad != 1) {
-        AddParton(make_shared<Parton>(label, particle.id(), stat, p_p,x_p));
-        VERBOSE(1) << BOLDYELLOW << " Pythia particle eta = " << particle.eta() << " pz = " << particle.pz() << " pT = " << particle.pT() << " phi = "  << particle.phi();
-    } else {
-      auto ptn = make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
-      ptn->set_color(particle.col());
-      ptn->set_anti_color(particle.acol()); 
-      ptn->set_max_color(GetMax_ColorPerShower() * (np + 1));
-      AddParton(ptn);
-
-    }
+    FourVector p_p(particle.px(),particle.py(),particle.pz(),particle.e());
+    
+    auto ptn = make_shared<Parton>(label, particle.id(), stat, p_p, x_p);
+    ptn->set_color(particle.col());
+    ptn->set_anti_color(particle.acol()); 
+    ptn->set_max_color(GetMax_ColorPerShower() * (np + 1));
+    AddParton(ptn);
   }
 
   // Getting Number of hard partons
