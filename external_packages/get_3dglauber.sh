@@ -16,6 +16,7 @@
 folderName="3dMCGlauber"
 # download the code package
 rm -fr $folderName
-git clone --depth=1 https://github.com/chunshen1987/3dMCGlauber.git --branch JETSCAPE $folderName
+git clone https://github.com/chunshen1987/3dMCGlauber.git --branch JETSCAPE $folderName
 cd $folderName
+git checkout 056a6d03bf6fb097b14d82874cebf6cce2fa0e5a
 ./get_LHAPDF.sh
