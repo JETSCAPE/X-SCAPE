@@ -19,7 +19,7 @@ env:
 jobs:
   build:
     name: build for smash test
-    runs-on: ubuntu-latest`
+    runs-on: ubuntu-latest
 
     container:
       image: jetscape/base:stable
@@ -65,5 +65,3 @@ jobs:
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/build
         ./runJetscape ../config/jetscape_user_test_smash_RC1_1.xml
-
-
