@@ -47,6 +47,7 @@
     <Hydro>
         <MUSIC>
             <beastMode>1</beastMode>
+            <InitialProfile>42</InitialProfile>
             <Initial_time_tau_0>0.6</Initial_time_tau_0>
             <freezeout_temperature>0.15</freezeout_temperature>
             <shear_viscosity_eta_over_s>0.10</shear_viscosity_eta_over_s>
