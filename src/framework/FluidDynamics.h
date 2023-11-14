@@ -71,6 +71,7 @@ protected:
   // for large dataset, std::deque is better than std::vector.
   /** Stores the evolution history. */
   EvolutionHistory bulk_info;
+  std::vector<SurfaceCellInfo> surfaceCellVector_;
 
   std::weak_ptr<LiquefierBase> liquefier_ptr;
 
@@ -144,12 +145,27 @@ public:
   /** Default function to evolve the hydrodynamics. It can be overridden by different modules. */
   virtual void EvolveHydro(){};
 
+  virtual void EvolveHydroUpto(const double tauEnd){};
+
   /** @return Status of the hydrodynamics (NOT_START, INITIALIZED, EVOLVING, FINISHED, ERROR). */
   int GetHydroStatus() const { return (hydro_status); }
 
   void StoreHydroEvolutionHistory(
       std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr) {
     bulk_info.data.push_back(*fluid_cell_info_ptr);
+  }
+
+  void StoreSurfaceCell(SurfaceCellInfo &surface_cell_info) {
+    surfaceCellVector_.push_back(surface_cell_info);
+  }
+
+  void getSurfaceCellVector(std::vector<SurfaceCellInfo> & surfCellVec) {
+      surfCellVec = surfaceCellVector_;
+      JSINFO << "Fluid out: surface vector size = " << surfCellVec.size();
+  }
+
+  void clearSurfaceCellVector() {
+      surfaceCellVector_.clear();
   }
 
   void clear_up_evolution_data() { bulk_info.clear_up_evolution_data(); }
