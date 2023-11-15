@@ -14,7 +14,7 @@
 ##############################################################################
 
 folderName="music"
-commitHash="92a458ba2019338ecfcfce1ea73239d3070da928" # for xscape 1.1
+commitHash="52b0454b0a07a76f26c8138245c0b3c54d00af65" # for xscape 1.1
 # download the code package
 rm -fr $folderName
 git clone https://github.com/MUSIC-fluid/MUSIC.git --branch JETSCAPE $folderName
