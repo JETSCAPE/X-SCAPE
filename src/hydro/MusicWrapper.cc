@@ -173,6 +173,7 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     exit(1);
   }
 
+  music_hydro_ptr->check_parameters();
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 }
 
