@@ -235,7 +235,7 @@ void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
 
 void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
     shared_ptr<SoftParticlization> hSoft) {
-    if (!hSoft->GetClearHydroHyperSurfaceConnected()) {
+    if (!hSoft->GetGetHydroHyperSurfaceConnected()) {
         auto hp = GetHydroPointer().lock();
         if (hp) {
             hSoft->GetHydroHyperSurface.connect(
@@ -248,7 +248,7 @@ void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
 
 void JetScapeSignalManager::ConnectClearHydroHyperSurfaceSignal(
     shared_ptr<SoftParticlization> hSoft) {
-    if (!hSoft->GetGetHydroHyperSurfaceConnected()) {
+    if (!hSoft->GetClearHydroHyperSurfaceConnected()) {
         auto hp = GetHydroPointer().lock();
         if (hp) {
             hSoft->ClearHydroHyperSurface.connect(
