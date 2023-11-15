@@ -927,6 +927,10 @@ void JetScape::SetPointers() {
       JetScapeSignalManager::Instance()->SetSoftParticlizationPointer(
           dynamic_pointer_cast<SoftParticlization>(it));
       iss_pointer_is_set = true;
+      JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
+          dynamic_pointer_cast<SoftParticlization>(it));
+      JetScapeSignalManager::Instance()->ConnectClearHydroHyperSurfaceSignal(
+          dynamic_pointer_cast<SoftParticlization>(it));
     } else if (dynamic_pointer_cast<HadronizationManager>(it)) {
       JetScapeSignalManager::Instance()->SetHadronizationManagerPointer(
 										dynamic_pointer_cast<HadronizationManager>(it));

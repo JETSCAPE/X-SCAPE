@@ -29,7 +29,10 @@ using namespace Jetscape;
 RegisterJetScapeModule<iSpectraSamplerWrapper>
     iSpectraSamplerWrapper::reg("iSS");
 
-iSpectraSamplerWrapper::iSpectraSamplerWrapper() { SetId("iSS"); }
+iSpectraSamplerWrapper::iSpectraSamplerWrapper() {
+    SetId("iSS");
+    statusCode_ = 0;
+}
 
 iSpectraSamplerWrapper::~iSpectraSamplerWrapper() {}
 
@@ -104,6 +107,91 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->echo();
 }
 
+int iSpectraSamplerWrapper::getSurfCellVector() {
+  std::vector<SurfaceCellInfo> surfVec;
+  std::vector<FO_surf> FOsurf_array;
+  GetHydroHyperSurface(surfVec);
+  int nCells = surfVec.size();
+  JSINFO << "surface cell size: " << nCells;
+  for (const auto surf_i: surfVec) {
+    FO_surf iSS_surf_cell;
+    iSS_surf_cell.tau = surf_i.tau;
+    iSS_surf_cell.xpt = surf_i.x;
+    iSS_surf_cell.ypt = surf_i.y;
+    iSS_surf_cell.eta = surf_i.eta;
+    iSS_surf_cell.da0 = surf_i.d3sigma_mu[0];
+    iSS_surf_cell.da1 = surf_i.d3sigma_mu[1];
+    iSS_surf_cell.da2 = surf_i.d3sigma_mu[2];
+    iSS_surf_cell.da3 = surf_i.d3sigma_mu[3];
+    iSS_surf_cell.u0 = surf_i.umu[0];
+    iSS_surf_cell.u1 = surf_i.umu[1];
+    iSS_surf_cell.u2 = surf_i.umu[2];
+    iSS_surf_cell.u3 = surf_i.umu[3];
+    iSS_surf_cell.Edec = surf_i.energy_density;
+    iSS_surf_cell.Tdec = surf_i.temperature;
+    iSS_surf_cell.Pdec = surf_i.pressure;
+    iSS_surf_cell.muB = surf_i.mu_B;
+    iSS_surf_cell.muQ = surf_i.mu_Q;
+    iSS_surf_cell.muS = surf_i.mu_S;
+    iSS_surf_cell.pi00 = surf_i.pi[0];
+    iSS_surf_cell.pi01 = surf_i.pi[1];
+    iSS_surf_cell.pi02 = surf_i.pi[2];
+    iSS_surf_cell.pi03 = surf_i.pi[3];
+    iSS_surf_cell.pi11 = surf_i.pi[4];
+    iSS_surf_cell.pi12 = surf_i.pi[5];
+    iSS_surf_cell.pi13 = surf_i.pi[6];
+    iSS_surf_cell.pi22 = surf_i.pi[7];
+    iSS_surf_cell.pi23 = surf_i.pi[8];
+    iSS_surf_cell.pi33 = surf_i.pi[9];
+    iSS_surf_cell.bulkPi = surf_i.bulk_Pi;
+    FOsurf_array.push_back(iSS_surf_cell);
+  }
+  iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
+  ClearHydroHyperSurface();
+  return(nCells);
+}
+
+void iSpectraSamplerWrapper::CalculateTime() {
+  VERBOSE(2) << "iSS::CalculateTime() main Clock = "
+             << GetMainClock()->GetCurrentTime() << " fm/c ...";
+  if (statusCode_ == 0) {
+    // generate symbolic links with music_input_file
+    std::string music_input_file_path = GetXMLElementText(
+            {"Hydro", "MUSIC", "MUSIC_input_file"});
+    std::string working_path =
+        GetXMLElementText({"SoftParticlization", "iSS", "iSS_working_path"});
+    std::string music_input = working_path + "/music_input";
+    std::ifstream inputfile(music_input.c_str());
+    if (!inputfile.good()) {
+      std::ostringstream system_command;
+      system_command << "ln -s " << music_input_file_path << " "
+                     << music_input;
+      system(system_command.str().c_str());
+    }
+    inputfile.close();
+
+    long random_seed = (*GetMt19937Generator())(); // get random seed
+    iSpectraSampler_ptr_->set_random_seed(random_seed);
+    VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
+
+    statusCode_ = 1;
+  }
+  int nCells = getSurfCellVector();
+  if (nCells > 0) {
+    int status = iSpectraSampler_ptr_->generate_samples();
+    if (status != 0) {
+      JSWARN << "Some errors happened in generating particle samples";
+      exit(-1);
+    }
+    PassHadronListToJetscapeSameEvent();
+  }
+}
+
+void iSpectraSamplerWrapper::ExecTime() {
+  VERBOSE(2) << "iSS::ExecTime() main Clock = "
+             << GetMainClock()->GetCurrentTime() << " fm/c ...";
+}
+
 void iSpectraSamplerWrapper::ExecuteTask() {
   JSINFO << "running iSS ...";
 
@@ -122,32 +210,93 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   }
   inputfile.close();
 
-  int status = iSpectraSampler_ptr_->read_in_FO_surface();
-  if (status != 0) {
-    JSWARN << "Some errors happened in reading in the hyper-surface";
-    exit(-1);
-  }
+  int nCells = getSurfCellVector();
+  //int status = iSpectraSampler_ptr_->read_in_FO_surface();
+  //if (status != 0) {
+  //  JSWARN << "Some errors happened in reading in the hyper-surface";
+  //  exit(-1);
+  //}
 
   long random_seed = (*GetMt19937Generator())(); // get random seed
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
-  status = iSpectraSampler_ptr_->generate_samples();
-  if (status != 0) {
-    JSWARN << "Some errors happened in generating particle samples";
-    exit(-1);
+  if (nCells > 0) {
+    int status = iSpectraSampler_ptr_->generate_samples();
+    if (status != 0) {
+      JSWARN << "Some errors happened in generating particle samples";
+      exit(-1);
+    }
+    PassHadronListToJetscape();
   }
-  PassHadronListToJetscape();
   JSINFO << "iSS finished.";
+}
+
+void iSpectraSamplerWrapper::ClearHadronList() {
+  for (unsigned i = 0; i < Hadron_list_.size(); i++) {
+    Hadron_list_.at(i).clear();
+  }
+  Hadron_list_.clear();
 }
 
 void iSpectraSamplerWrapper::ClearTask() {
   VERBOSE(2) << "Finish the particle sampling";
   iSpectraSampler_ptr_->clear();
-  for (unsigned i = 0; i < Hadron_list_.size(); i++) {
-    Hadron_list_.at(i).clear();
+  ClearHadronList();
+}
+
+
+void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
+  unsigned int nev = iSpectraSampler_ptr_->get_number_of_sampled_events();
+  VERBOSE(2) << "Passing all sampled hadrons to the JETSCAPE framework";
+  VERBOSE(4) << "number of events to pass : " << nev;
+  bool hadronListExist = false;
+  if (Hadron_list_.size() != 0)
+      hadronListExist = true;
+  if (hadronListExist && Hadron_list_.size() != nev) {
+      JSWARN << "Hadron list nev is not equal!";
+      exit(1);
   }
-  Hadron_list_.clear();
+  for (unsigned int iev = 0; iev < nev; iev++) {
+    std::vector<shared_ptr<Hadron>> hadrons;
+    unsigned int nparticles =
+        (iSpectraSampler_ptr_->get_number_of_particles(iev));
+    VERBOSE(4) << "event " << iev << ": number of particles = " << nparticles;
+    for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
+      iSS_Hadron current_hadron =
+          (iSpectraSampler_ptr_->get_hadron(iev, ipart));
+      int hadron_label = 0;
+      int hadron_status = 11;
+      int hadron_id = current_hadron.pid;
+      //int hadron_id = 1;   // just for testing need to be changed to the line above
+      double hadron_mass = current_hadron.mass;
+      FourVector hadron_p(current_hadron.px, current_hadron.py,
+                          current_hadron.pz, current_hadron.E);
+      FourVector hadron_x(current_hadron.x, current_hadron.y, current_hadron.z,
+                          current_hadron.t);
+
+      // create a JETSCAPE Hadron
+      if (!hadronListExist) {
+        hadrons.push_back(make_shared<Hadron>(hadron_label, hadron_id,
+                                              hadron_status, hadron_p, hadron_x,
+                                              hadron_mass));
+      } else {
+        auto jetscape_hadron = make_shared<Hadron>(
+                hadron_label, hadron_id, hadron_status,
+                hadron_p, hadron_x, hadron_mass);
+        Hadron_list_[iev].push_back(jetscape_hadron);
+      }
+    }
+    if (!hadronListExist)
+      Hadron_list_.push_back(hadrons);
+  }
+  if (nev > 0) {
+    VERBOSE(4) << "JETSCAPE received " << Hadron_list_.size() << " events.";
+    for (unsigned int iev = 0; iev < Hadron_list_.size(); iev++) {
+      VERBOSE(4) << "In event " << iev << " JETSCAPE received "
+                 << Hadron_list_.at(iev).size() << " particles.";
+    }
+  }
 }
 
 void iSpectraSamplerWrapper::PassHadronListToJetscape() {
@@ -181,10 +330,12 @@ void iSpectraSamplerWrapper::PassHadronListToJetscape() {
     }
     Hadron_list_.push_back(hadrons);
   }
-  VERBOSE(4) << "JETSCAPE received " << Hadron_list_.size() << " events.";
-  for (unsigned int iev = 0; iev < Hadron_list_.size(); iev++) {
-    VERBOSE(4) << "In event " << iev << " JETSCAPE received "
-               << Hadron_list_.at(iev).size() << " particles.";
+  if (nev > 0) {
+    VERBOSE(4) << "JETSCAPE received " << Hadron_list_.size() << " events.";
+    for (unsigned int iev = 0; iev < Hadron_list_.size(); iev++) {
+      VERBOSE(4) << "In event " << iev << " JETSCAPE received "
+                 << Hadron_list_.at(iev).size() << " particles.";
+    }
   }
 }
 
