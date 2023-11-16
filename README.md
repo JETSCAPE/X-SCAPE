@@ -16,22 +16,7 @@ Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you us
 
 ## Installation
 
-Note that X-SCAPE dependencies require cmake to be called specifying the language standard C++14 or greater.
-
-For example, to compile X-SCAPE for the ISR run with [3DGlauber support](#3dglauber-support), run the get_3dglauber.sh script from the external_packages folder:
-```bash
-./get_3dglauber.sh
-```
-Then from the build folder, call cmake with the C++14 and 3DGlauber flags:
-```bash
-mkdir build
-cd build
-cmake .. -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON
-make -j4   # Builds using 4 cores; adapt as appropriate
-```
-If installing X-SCAPE with SMASH, the [get_smash.sh](https://github.com/JETSCAPE/X-SCAPE-COMP/blob/main/external_packages/get_smash.sh) script will clone an [alternate branch](https://github.com/smash-transport/smash/tree/staudenmaier/mod_plist_ts) of SMASH currently required for use with X-SCAPE.  A future release of SMASH will bring X-SCAPE support to SMASH's main branch.
-
-Please see the complete [Installation Instructions](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Installation) here.
+Please see the [Installation Instructions](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Installation) here.
 
 ## Running X-SCAPE/JETSCAPE
 
@@ -116,7 +101,7 @@ To compile the 3DGlauber code together with the JETSCAPE framework, please turn 
 ```bash
     mkdir build
     cd build
-    cmake -DCMAKE_CXX_STANDARD=14 -DUSE_3DGlauber=ON ..
+    cmake -DUSE_3DGlauber=ON ..
     make -j4
 ```
 
