@@ -101,4 +101,17 @@ void Hadronization::DeleteHadrons() {
   outHadrons.clear();
 }
 
+void Hadronization::DeleteRealHadrons() {
+  outHadrons.erase(
+    std::remove_if(
+      outHadrons.begin(),
+      outHadrons.end(),
+      [](const std::shared_ptr<Hadron>& hadron) {
+          return hadron->pstat() > 0;
+      }
+    ),
+    outHadrons.end()
+  );
+}
+
 } // namespace Jetscape

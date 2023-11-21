@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -71,11 +71,12 @@ protected:
   // for large dataset, std::deque is better than std::vector.
   /** Stores the evolution history. */
   EvolutionHistory bulk_info;
+  std::vector<SurfaceCellInfo> surfaceCellVector_;
 
   std::weak_ptr<LiquefierBase> liquefier_ptr;
 
 public:
-  /** Default constructor. task ID as "FluidDynamics",  
+  /** Default constructor. task ID as "FluidDynamics",
         eta is initialized to -99.99.
     */
   FluidDynamics();
@@ -112,7 +113,7 @@ public:
 
   /** It stores the temperature of the fluid cell at location (t or tau,x,y,z or eta) into an input variable "mT". It can be overridden by modules attached to the FluidDynamics class.
 	@param t  tau or t coordinate.
-	@param x  space x coordinate. 
+	@param x  space x coordinate.
 	@param y  space y coordinate.
 	@param z  rapidity eta or space z coordinate.
 	@param mT temperature.
@@ -122,12 +123,12 @@ public:
     mT = GetTemperature(t, x, y, z);
   }
 
-  /** It calls GetHydroInfo(t,x,y,z,fCell) to retrieve the properties of the fluid cell at location (t or tau,x,y,z or eta). It can be overridden by modules attached to the FluidDynamics class. 
+  /** It calls GetHydroInfo(t,x,y,z,fCell) to retrieve the properties of the fluid cell at location (t or tau,x,y,z or eta). It can be overridden by modules attached to the FluidDynamics class.
 	@param t  tau or t coordinate.
-	@param x  space x coordinate.      
-	@param y  space y coordinate.       
+	@param x  space x coordinate.
+	@param y  space y coordinate.
 	@param z  rapidity eta or space z coordinate.
-	@param fCell A pointer of type FluidCellInfo class.  
+	@param fCell A pointer of type FluidCellInfo class.
     */
   virtual void GetHydroCell(double t, double x, double y, double z,
                             std::unique_ptr<FluidCellInfo> &fCell) {
@@ -137,12 +138,14 @@ public:
   // currently we have no standard for passing configurations
   // pure virtual function; to be implemented by users
   // should make it easy to save evolution history to bulk_info
-  /** Default function to initialize the hydrodynamics. It can be overridden by different modules. 
+  /** Default function to initialize the hydrodynamics. It can be overridden by different modules.
 	@param parameter_list An object of the class Parameter. */
   virtual void InitializeHydro(Parameter parameter_list){};
 
   /** Default function to evolve the hydrodynamics. It can be overridden by different modules. */
   virtual void EvolveHydro(){};
+
+  virtual void EvolveHydroUpto(const double tauEnd){};
 
   /** @return Status of the hydrodynamics (NOT_START, INITIALIZED, EVOLVING, FINISHED, ERROR). */
   int GetHydroStatus() const { return (hydro_status); }
@@ -150,6 +153,19 @@ public:
   void StoreHydroEvolutionHistory(
       std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr) {
     bulk_info.data.push_back(*fluid_cell_info_ptr);
+  }
+
+  void StoreSurfaceCell(SurfaceCellInfo &surface_cell_info) {
+    surfaceCellVector_.push_back(surface_cell_info);
+  }
+
+  void getSurfaceCellVector(std::vector<SurfaceCellInfo> & surfCellVec) {
+      surfCellVec = surfaceCellVector_;
+      JSINFO << "Fluid out: surface vector size = " << surfCellVec.size();
+  }
+
+  void clearSurfaceCellVector() {
+      surfaceCellVector_.clear();
   }
 
   void clear_up_evolution_data() { bulk_info.clear_up_evolution_data(); }
@@ -169,8 +185,8 @@ public:
 
   /** Retrieves the hydro information at a given space-time point.
      * It throws a InvalidSpaceTimeRange message when
-     * (t or tau, x, y, z or eta) is out of the evolution history range. 
-     @param time Time or tau coordinate. 
+     * (t or tau, x, y, z or eta) is out of the evolution history range.
+     @param time Time or tau coordinate.
      @param x Space coordinate.
      @param y Space coordinate.
      @param z Space or eta coordinate.
@@ -218,7 +234,7 @@ public:
   /** @return Energy density at point (t or tau, x, y, z or eta)
         @param time Time or tau coordinate.
         @param x Space coordinate.
-        @param y Space coordinate. 
+        @param y Space coordinate.
         @param z Space or eta coordinate.
     */
   virtual Jetscape::real GetEnergyDensity(Jetscape::real time, Jetscape::real x,
@@ -227,7 +243,7 @@ public:
   /** @return Entropy density at point (t or tau, x, y, z or eta)
         @param time Time or tau coordinate.
         @param x Space coordinate.
-        @param y Space coordinate. 
+        @param y Space coordinate.
         @param z Space or eta coordinate.
     */
   virtual Jetscape::real GetEntropyDensity(Jetscape::real time,
@@ -297,6 +313,9 @@ public:
   virtual void UpdateEnergyDeposit(int t, double edop);
   /// slots for "jet" signals (future)
   virtual void GetEnergyDensity(int t, double &edensity) { edensity = 0.0; }
+
+  // get a reference to the bulk_info object
+  const EvolutionHistory& get_bulk_info() const { return bulk_info; }
 
 }; // end class FluidDynamics
 

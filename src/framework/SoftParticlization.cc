@@ -18,10 +18,14 @@
 // -----------------------------------------
 
 #include "SoftParticlization.h"
+#include "JetScapeSignalManager.h"
 
 namespace Jetscape {
 
-SoftParticlization::SoftParticlization() { boost_invariance = false; }
+SoftParticlization::SoftParticlization() {
+    boost_invariance = false;
+    HydroHyperSurfaceConnected_ = false;
+}
 
 SoftParticlization::~SoftParticlization() {
   for (unsigned i = 0; i < Hadron_list_.size(); i++) {
@@ -40,6 +44,7 @@ void SoftParticlization::Init() {
 
   InitTask();
   InitTasks();
+  //CreateSignalSlots();
 }
 
 void SoftParticlization::ExecuteTask() {}

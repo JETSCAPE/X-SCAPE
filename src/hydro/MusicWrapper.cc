@@ -24,6 +24,7 @@
 
 #include "JetScapeLogger.h"
 #include "MusicWrapper.h"
+#include "surfaceCell.h"
 
 using namespace Jetscape;
 
@@ -55,13 +56,18 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   music_hydro_ptr = std::unique_ptr<MUSIC>(new MUSIC(input_file));
 
   // overwrite input options
+  int echoLevel = GetXMLElementInt({"vlevel"});
+  music_hydro_ptr->set_parameter("JSechoLevel", echoLevel);
+
   flag_output_evo_to_file = (
       GetXMLElementInt({"Hydro", "MUSIC", "output_evolution_to_file"}));
-  music_hydro_ptr->set_parameter("output_evolution_data", flag_output_evo_to_file);
+  music_hydro_ptr->set_parameter(
+          "output_evolution_data", flag_output_evo_to_file);
   flag_store_hydro_info_in_memory = (
       GetXMLElementInt({"Hydro", "MUSIC", "store_hydro_info_in_memory"}));
   music_hydro_ptr->set_parameter("store_hydro_info_in_memory",
                                   flag_store_hydro_info_in_memory);
+  music_hydro_ptr->set_parameter("surface_in_memory", 1);
 
   int beastMode = (
       GetXMLElementInt({"Hydro", "MUSIC", "beastMode"}));
@@ -90,22 +96,26 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   music_hydro_ptr->set_parameter("Initial_profile", InitialProfile);
   double string_source_sigma_x = (
         GetXMLElementDouble({"Hydro", "MUSIC", "string_source_sigma_x"}));
-      music_hydro_ptr->set_parameter("string_source_sigma_x", string_source_sigma_x);
+  music_hydro_ptr->set_parameter("string_source_sigma_x",
+                                 string_source_sigma_x);
   double string_source_sigma_eta = (
         GetXMLElementDouble({"Hydro", "MUSIC", "string_source_sigma_eta"}));
-      music_hydro_ptr->set_parameter("string_source_sigma_eta", string_source_sigma_eta);
+  music_hydro_ptr->set_parameter("string_source_sigma_eta",
+                                 string_source_sigma_eta);
   double stringPreEqFlowFactor = (
         GetXMLElementDouble({"Hydro", "MUSIC", "stringPreEqFlowFactor"}));
-      music_hydro_ptr->set_parameter("stringPreEqFlowFactor", stringPreEqFlowFactor);
+  music_hydro_ptr->set_parameter("stringPreEqFlowFactor",
+                                 stringPreEqFlowFactor);
   int flag_shear_Tdep = (
       GetXMLElementInt({"Hydro", "MUSIC", "T_dependent_Shear_to_S_ratio"}));
   if (flag_shear_Tdep > 0) {
     music_hydro_ptr->set_parameter("Viscosity_Flag_Yes_1_No_0", 1);
-    music_hydro_ptr->set_parameter("T_dependent_Shear_to_S_ratio", flag_shear_Tdep);
+    music_hydro_ptr->set_parameter("T_dependent_Shear_to_S_ratio",
+                                   flag_shear_Tdep);
     if (flag_shear_Tdep == 3) {
       double shear_kinkT = (
         GetXMLElementDouble({"Hydro", "MUSIC", "shear_viscosity_3_at_kink"}));
-      music_hydro_ptr->set_parameter("shear_viscosity_3_at_kink", shear_kinkT);
+      music_hydro_ptr->set_parameter("shear_viscosity_3_T_kink_in_GeV", shear_kinkT);
       double shear_lowTslope = (
         GetXMLElementDouble({"Hydro", "MUSIC",
                              "shear_viscosity_3_low_T_slope_in_GeV"}));
@@ -134,14 +144,16 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
         music_hydro_ptr->set_parameter("bulk_viscosity_3_max", bulk_max);
         double bulk_peakT = GetXMLElementDouble(
               {"Hydro", "MUSIC", "zeta_over_s_T_peak_in_GeV"});
-        music_hydro_ptr->set_parameter("zeta_over_s_T_peak_in_GeV",
+        music_hydro_ptr->set_parameter("bulk_viscosity_3_T_peak_in_GeV",
                                        bulk_peakT);
         double bulk_width = GetXMLElementDouble(
               {"Hydro", "MUSIC", "zeta_over_s_width_in_GeV"});
-        music_hydro_ptr->set_parameter("zeta_over_s_width_in_GeV", bulk_width);
+        music_hydro_ptr->set_parameter("bulk_viscosity_3_width_in_GeV",
+                                       bulk_width);
         double bulk_asy = GetXMLElementDouble(
               {"Hydro", "MUSIC", "zeta_over_s_lambda_asymm"});
-        music_hydro_ptr->set_parameter("zeta_over_s_lambda_asymm", bulk_asy);
+        music_hydro_ptr->set_parameter("bulk_viscosity_3_lambda_asymm",
+                                       bulk_asy);
     }
   }
 
@@ -161,10 +173,11 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     exit(1);
   }
 
+  music_hydro_ptr->check_parameters();
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 }
 
-void MpiMusic::EvolveHydro() {
+void MpiMusic::InitializeHydroEnergyProfile() {
   VERBOSE(8);
   JSINFO << "Initialize density profiles in MUSIC ...";
   std::vector<double> entropy_density = ini->GetEntropyDensityDistribution();
@@ -188,13 +201,38 @@ void MpiMusic::EvolveHydro() {
         pre_eq_ptr->pi13_, pre_eq_ptr->pi22_, pre_eq_ptr->pi23_,
         pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
   }
-
   JSINFO << "initial density profile dx = " << dx << " fm";
   hydro_status = INITIALIZED;
   JSINFO << "number of source terms: "
          << hydro_source_terms_ptr->get_number_of_sources()
          << ", total E = " << hydro_source_terms_ptr->get_total_E_of_sources()
          << " GeV.";
+}
+
+void MpiMusic::EvolveHydroUpto(const double tauEnd) {
+  if (hydro_status == NOT_START) {
+    InitializeHydroEnergyProfile();
+    music_hydro_ptr-> prepare_run_hydro_one_time_step();
+  }
+  music_hydro_ptr->run_hydro_upto(tauEnd);
+}
+
+void MpiMusic::CalculateTime() {
+  VERBOSE(2) << "MpiMusic::CalculateTime() main Clock = "
+             << GetMainClock()->GetCurrentTime() << " fm/c ...";
+  EvolveHydroUpto(GetMainClock()->GetCurrentTime());
+}
+
+void MpiMusic::ExecTime() {
+  VERBOSE(2) << "MpiMusic::ExecTime() main Clock = "
+             << GetMainClock()->GetCurrentTime() << " fm/c ...";
+  PassHydroSurfaceToFramework();
+}
+
+void MpiMusic::EvolveHydro() {
+  if (hydro_status == NOT_START) {
+    InitializeHydroEnergyProfile();
+  }
 
   has_source_terms = false;
   if (hydro_source_terms_ptr->get_number_of_sources() > 0) {
@@ -229,11 +267,13 @@ void MpiMusic::EvolveHydro() {
     //}
   }
 
-  collect_freeze_out_surface();
+  PassHydroSurfaceToFramework();
 
-  if (hydro_status == FINISHED && doCooperFrye == 1) {
-    music_hydro_ptr->run_Cooper_Frye();
-  }
+  //collect_freeze_out_surface();
+
+  //if (hydro_status == FINISHED && doCooperFrye == 1) {
+  //  music_hydro_ptr->run_Cooper_Frye();
+  //}
 }
 
 void MpiMusic::collect_freeze_out_surface() {
@@ -274,6 +314,37 @@ void MpiMusic::SetHydroGridInfo() {
   bulk_info.deta = music_hydro_ptr->get_hydro_deta();
 
   bulk_info.boost_invariant = music_hydro_ptr->is_boost_invariant();
+}
+
+void MpiMusic::PassHydroSurfaceToFramework() {
+  JSINFO << "Passing hydro surface cells to JETSCAPE ... ";
+  auto number_of_cells = music_hydro_ptr->get_number_of_surface_cells();
+  JSINFO << "total number of fluid cells: " << number_of_cells;
+  SurfaceCell surfaceCell_i;
+  for (int i = 0; i < number_of_cells; i++) {
+    SurfaceCellInfo surface_cell_info;
+    music_hydro_ptr->get_surface_cell_with_index(i, surfaceCell_i);
+    surface_cell_info.tau = surfaceCell_i.xmu[0];
+    surface_cell_info.x = surfaceCell_i.xmu[1];
+    surface_cell_info.y = surfaceCell_i.xmu[2];
+    surface_cell_info.eta = surfaceCell_i.xmu[3];
+    double u[4];
+    for (int j = 0; j < 4; j++) {
+      surface_cell_info.d3sigma_mu[j] = surfaceCell_i.d3sigma_mu[j];
+      surface_cell_info.umu[j] = surfaceCell_i.umu[j];
+    }
+    surface_cell_info.energy_density = surfaceCell_i.energy_density;
+    surface_cell_info.temperature = surfaceCell_i.temperature;
+    surface_cell_info.pressure = surfaceCell_i.pressure;
+    surface_cell_info.mu_B = surfaceCell_i.mu_B;
+    surface_cell_info.mu_Q = surfaceCell_i.mu_Q;
+    surface_cell_info.mu_S = surfaceCell_i.mu_S;
+    for (int j = 0; j < 10; j++) {
+      surface_cell_info.pi[j] = surfaceCell_i.shear_pi[j];
+    }
+    surface_cell_info.bulk_Pi = surfaceCell_i.bulk_Pi;
+    StoreSurfaceCell(surface_cell_info);
+  }
 }
 
 void MpiMusic::PassHydroEvolutionHistoryToFramework() {

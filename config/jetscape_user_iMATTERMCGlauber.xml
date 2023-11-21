@@ -42,7 +42,6 @@
         SigmaProcess:alphaSvalue = 0.13
         MultipartonInteractions:alphaSvalue = 0.13
       </LinesToRead>
-      <useHybridHad>1</useHybridHad>
     </PythiaGun>
   </Hard>
 
@@ -62,7 +61,6 @@
     <Matter> 
       <Q0> 2.0 </Q0>
       <in_vac> 1 </in_vac>
-      <useHybridHad>1</useHybridHad>
       <vir_factor> 0.25 </vir_factor>
       <recoil_on> 0 </recoil_on>
       <broadening_on> 0 </broadening_on>

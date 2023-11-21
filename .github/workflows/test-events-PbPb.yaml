@@ -4,14 +4,14 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-RC2
-      - XSCAPE-1.0-for-public-repo
+      - XSCAPE-1.1-RC
+      - XSCAPE-1.1-RC_mergeMUSIC
 
   push:
     branches:
       - main
-      - XSCAPE-RC2
-      - XSCAPE-1.0-for-public-repo
+      - XSCAPE-1.1-RC
+      - XSCAPE-1.1-RC_mergeMUSIC
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -22,13 +22,13 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v1.8
+      image: jetscape/base:stable
       options: --user root
 
     steps:
 
     - name: Checkout Repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: ${{ github.event.repository.name }}
 
@@ -37,11 +37,11 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
-        cmake .. -DCMAKE_CXX_STANDARD=14
+        cmake ..
         make -j2
 
     - name: Checkout TEST-EXAMPLES
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: JETSCAPE/TEST-EXAMPLES
         path: TEST-EXAMPLES

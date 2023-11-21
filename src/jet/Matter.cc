@@ -54,7 +54,6 @@ double Matter::distFncFM[N_T][N_p1] = {{0.0}};
 Matter::Matter() {
   SetId("Matter");
   VERBOSE(8);
-  flag_useHybridHad = 0;
   qhat = 0.0;
   ehat = 0.0;
   e2hat = 0.0;
@@ -115,7 +114,6 @@ void Matter::InitTask() {
   hydro_Tc = 0.16;
   brick_length = 4.0;
   vir_factor = 1.0;
-  flag_useHybridHad = 0;
 
   double m_qhat = GetXMLElementDouble({"Eloss", "Matter", "qhat0"});
   SetQhat(m_qhat);
@@ -128,7 +126,6 @@ void Matter::InitTask() {
 
   matter_on = GetXMLElementInt({"Eloss", "Matter", "matter_on"});
   in_vac = GetXMLElementInt({"Eloss", "Matter", "in_vac"});
-  flag_useHybridHad = GetXMLElementInt({"Eloss", "Matter", "useHybridHad"});
   recoil_on = GetXMLElementInt({"Eloss", "Matter", "recoil_on"});
   broadening_on = GetXMLElementInt({"Eloss", "Matter", "broadening_on"});
   brick_med = GetXMLElementInt({"Eloss", "Matter", "brick_med"});
@@ -152,14 +149,9 @@ void Matter::InitTask() {
          << endl;
   }
 
-  if (flag_useHybridHad != 1) {
-    MaxColor = 101; // MK:recomb
-  } else {
-    MaxColor = 1;
-  }
+  MaxColor = 101; // MK:recomb
 
   JSINFO << MAGENTA << "MATTER input parameter";
-  JSINFO << MAGENTA << "use hybrid hadronization later? " << flag_useHybridHad;
   JSINFO << MAGENTA << "matter shower on: " << matter_on;
   JSINFO << MAGENTA << "in_vac: " << in_vac << "  brick_med: " << brick_med
          << "  recoil_on: " << recoil_on<<", tStart ="<<tStart;
@@ -506,7 +498,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
       double max_vir;
       if (vir_factor < 0.0)
         max_vir =
-            pIn[i].e() * pIn[i].e() - pIn[i].restmass() * pIn[i].restmass();
+            std::abs(vir_factor) * (pIn[i].e() * pIn[i].e() - pIn[i].restmass() * pIn[i].restmass());
       else
         max_vir = pT2 * vir_factor;
 
@@ -564,38 +556,9 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
       double ft = generate_L(pIn[i].mean_form_time());
       pIn[i].set_form_time(ft);
 
-      if (flag_useHybridHad != 1) {
-        unsigned int color = 0, anti_color = 0;
-        std::uniform_int_distribution<short> uni(102, 103);
-
-        if (pIn[i].pid() > 0) {
-          // color = uni(*GetMt19937Generator());
-          color = 101;
-        }
-        pIn[i].set_color(color);
-        if ((pIn[i].pid() < 0) || (pIn[i].pid() == 21)) {
-          anti_color = uni(*GetMt19937Generator());
-        }
-        pIn[i].set_anti_color(anti_color);
-
-        max_color = color;
-
-        if (anti_color > color)
-          max_color = anti_color;
-
-        min_color = color;
-
-        min_anti_color = anti_color;
-
-        pIn[i].set_max_color(max_color);
-        pIn[i].set_min_color(min_color);
-        pIn[i].set_min_anti_color(min_anti_color);
-        MaxColor = max_color;
-      } else {
-        pIn[i].set_min_color(pIn[i].color());
-        pIn[i].set_min_anti_color(pIn[i].anti_color());
-        MaxColor = pIn[i].max_color();
-      }
+      pIn[i].set_min_color(pIn[i].color());
+      pIn[i].set_min_anti_color(pIn[i].anti_color());
+      MaxColor = pIn[i].max_color();
 
       // VERBOSE OUTPUT ON INITIAL STATUS OF PARTICLE:
       VERBOSE(8);
@@ -816,7 +779,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 		}*/
 
 	    //GeneralQhatFunction(int QhatParametrizationType, double Temperature, double EntropyDensity, double FixAlphas,  double Qhat0, double E, double muSquare)
-	    double muSquare= pIn[i].t(); //Virtuality of the parent; Revisit this when q-hat is virtuality dependent
+	    double muSquare= pIn[i].t(); //Virtuality of the parent; Revist this when q-hat is virtuality dependent
 	    qhatLoc= GeneralQhatFunction(QhatParametrizationType, tempLoc, sdLoc, alphas, qhat0, enerLoc, muSquare);
 
           } else { // outside the QGP medium
@@ -2175,10 +2138,10 @@ double Matter::generate_vac_t_w_M(int p_id, double M, double nu, double t0,
     }
 
     if (std::abs(p_id) == cid || std::abs(p_id) == bid)
-      exit_condition = (std::abs(diff) < s_approx) &&
+      exit_condition = (std::abs(diff) < s_approx) ||
                        (std::abs(t_hi_M0 - t_low_M0) / t_hi_M0 < s_error);
     if (p_id == gid)
-      exit_condition = (std::abs(diff) < s_approx) &&
+      exit_condition = (std::abs(diff) < s_approx) ||
                        (std::abs(t_hi_00 - t_low_00) / t_hi_00 < s_error);
     // need to think about the second statement in the gluon exit condition.
 
@@ -4103,12 +4066,13 @@ double Matter::ModifiedProbability(int QhatParametrization, double tempLoc, doub
       ModifiedAlphas = solve_alphas(qhatLoc, enerLoc, tempLoc);
       break;
 
-      //For HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
-      //Function is 1 / (1+A*pow(log(Q^2),2)+B*pow(log(Q^2),4))
+      //HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
+      //Function is 1/(1+A*pow(log(Q^2),2)+B*pow(log(Q^2),4))
     case 5:
       ModifiedAlphas = RunningAlphaS(ScaleNet)*VirtualityQhatFunction(5,  enerLoc, muSquare) ;
       break;
-      //HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat 
+
+      //HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
       //Function is int^{1}_{xB} e^{-ax} / (1+A*pow(log(Q^2),1)+B*pow(log(Q^2),2))
     case 6:
       ModifiedAlphas = RunningAlphaS(ScaleNet)*VirtualityQhatFunction(6,  enerLoc, muSquare) ;

@@ -20,8 +20,8 @@
 
  namespace Jetscape {
 
- const std::string JetScapeVersion = "3.5.4";
- const std::string XscapeVersion = "1.0";
+ const std::string JetScapeVersion = "3.6";
+ const std::string XscapeVersion = "1.1";
 
  } // end namespace Jetscape
 
