@@ -14,8 +14,10 @@
 ##############################################################################
 
 # download the code package
+commitHash="4bc2badcd31401bcdea8be5a2efc778bdf99fc57" # for xscape 1.1
 rm -fr iSS
-git clone https://github.com/chunshen1987/iSS iSS
+git clone https://github.com/chunshen1987/iSS -b JETSCAPE iSS
 cd iSS
+git checkout $commitHash
 #git checkout tags/v1.1.1 -b v1.1.1
 rm -fr iSS/.git

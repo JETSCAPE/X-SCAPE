@@ -96,7 +96,11 @@ public:
   MpiMusic();
   ~MpiMusic();
 
+  void CalculateTime();
+  void ExecTime();
+
   void InitializeHydro(Parameter parameter_list);
+  void InitializeHydroEnergyProfile();
 
   void EvolveHydro();
   void GetHydroInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,
@@ -111,6 +115,9 @@ public:
                           Jetscape::real z,
                           std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
 
+  void EvolveHydroUpto(const double tauEnd);
+
+  void PassHydroSurfaceToFramework();
   void SetHydroGridInfo();
   void PassHydroEvolutionHistoryToFramework();
 

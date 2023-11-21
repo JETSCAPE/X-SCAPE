@@ -24,8 +24,7 @@
 #include <math.h>
 #include <string>
 
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
+#include <filesystem>
 
 using namespace Jetscape;
 
@@ -38,31 +37,32 @@ SmashWrapper::SmashWrapper() {
 
 void SmashWrapper::InitTask() {
   JSINFO << "SMASH: picking SMASH-specific configuration from xml file";
-  std::string smash_config =
+  std::string smash_config_file =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_config_file"});
   std::string smash_hadron_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_particles_file"});
   std::string smash_decays_list =
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_decaymodes_file"});
   // output path is just dummy here, because no output from SMASH is foreseen
-  boost::filesystem::path output_path("./smash_output");
+  std::filesystem::path output_path("./smash_output");
   // do not store tabulation, which is achieved by an empty tabulations path
   std::string tabulations_path("");
   const std::string smash_version(SMASH_VERSION);
 
-  auto config = smash::setup_config_and_logging(smash_config, smash_hadron_list,
+  auto config = smash::setup_config_and_logging(smash_config_file, 
+                                                smash_hadron_list,
                                                 smash_decays_list);
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
-  config["General"]["Randomseed"] = random_seed;
+  config.set_value({"General","Randomseed"}, random_seed);
   // Read in the rest of configuration
   if (IsTimeStepped()) {
     end_time_ = GetMainClock()->GetEndTime();
   } else {
     end_time_ = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
   }
-  config["General"]["End_Time"] = end_time_;
+  config.set_value({"General","End_Time"}, end_time_);
   JSINFO << "End time until which SMASH propagates is " << end_time_ << " fm/c";
   only_final_decays_ =
       GetXMLElementInt({"Afterburner", "SMASH", "only_decays"});
@@ -183,7 +183,7 @@ void SmashWrapper::FinishPerEvent() {
                                        modus->jetscape_hadrons_[ev_no - 1]);
   JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
          << " hadrons from SMASH.";
-  smash_experiment_->increase_event_no();  // internal SMASH event counter
+  smash_experiment_->increase_event_number();  // internal SMASH event counter
 }
 
 void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {

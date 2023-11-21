@@ -75,9 +75,6 @@ template <class T> void JetScapeWriterFinalStateStream<T>::WriteEvent() {
 
     auto particle = p.get();
 
-    // Skip ISR partons
-    if(particle->pstat() < 0) continue;
-
     output_file << ipart
         // << " " << particle->plabel()
         << " " << particle->pid()

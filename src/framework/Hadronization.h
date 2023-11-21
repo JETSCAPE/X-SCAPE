@@ -83,9 +83,12 @@ public:
 
   void AddInHadrons(vector<shared_ptr<Hadron>> ih) { outHadrons = ih; }
 
-  // empties the outHadrons vector, explanation why this is necessary is given 
+  // empties the outHadrons vector, explanation why this is necessary is given
   // in HadronizationManager.h
   void DeleteHadrons();
+
+  // erases the outHadrons with positive status flag
+  void DeleteRealHadrons();
 
 private:
   vector<vector<shared_ptr<Parton>>> inPartons;

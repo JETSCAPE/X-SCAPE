@@ -30,8 +30,10 @@ private:
   double pTHatMin;
   double pTHatMax;
   double eCM;
+  double vir_factor;
+  double softMomentumCutoff;
   bool FSR_on;
-  int flag_useHybridHad;
+  bool softQCD;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<PythiaGun> reg;

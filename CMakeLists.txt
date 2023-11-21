@@ -102,7 +102,7 @@ endif (USE_SMASH)
 ### Compiler & Linker Flags ###
 ###############################
 message("Compiler and Linker flags ...")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pipe -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pipe -Wall -std=c++17")
 ## can turn off some warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder -Wno-unused-variable -Wno-inconsistent-missing-override -Wno-unused-private-field")
 ## Then set the build type specific options. These will be automatically appended.
@@ -480,12 +480,19 @@ target_link_libraries(FinalStatePartons JetScape )
 add_executable(PythiaBrickTest ./examples/custom_examples/PythiaBrickTest.cc)
 target_link_libraries(PythiaBrickTest JetScape )
 
-if(USE_3DGlauber AND USE_MUSIC AND USE_ISS)
-  add_executable(PythiaIsrTest ./examples/PythiaIsrTest.cc)
-  target_link_libraries(PythiaIsrTest JetScape )
-  add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
-  target_link_libraries(PythiaIsrMUSIC JetScape )
-endif (USE_3DGlauber AND USE_MUSIC AND USE_ISS )
+
+if(USE_MUSIC AND USE_ISS)
+  add_executable(MUSICMainClockTest ./examples/custom_examples/MUSICMainClockTest.cc)
+  target_link_libraries(MUSICMainClockTest JetScape )
+  add_executable(MUSICTest ./examples/custom_examples/MUSICTest.cc)
+  target_link_libraries(MUSICTest JetScape )
+  if(USE_3DGlauber)
+    add_executable(PythiaIsrTest ./examples/PythiaIsrTest.cc)
+    target_link_libraries(PythiaIsrTest JetScape )
+    add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
+    target_link_libraries(PythiaIsrMUSIC JetScape )
+  endif (USE_3DGlauber)
+endif (USE_MUSIC AND USE_ISS )
 
 #add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
 #target_link_libraries(PythiaBDMTest JetScape )

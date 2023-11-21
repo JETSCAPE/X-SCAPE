@@ -26,9 +26,12 @@
   </Preequilibrium-->
   
   <!-- Hydro  Module  -->
-  <!--Hydro>
-    <Brick bjorken_expansion_on="false" start_time="0.6"> </Brick>
-  </Hydro-->
+  <Hydro>
+    <MUSIC>
+      <name>MUSIC</name>
+      <InitialProfile>42</InitialProfile>
+    </MUSIC>
+  </Hydro>
   
   <!--Eloss Modules -->
   <Eloss>

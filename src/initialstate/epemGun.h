@@ -15,8 +15,8 @@
 
 // Create a pythia collision at a specified point and return the two inital hard partons
 
-#ifndef PYTHIAISRGUN_H
-#define PYTHIAISRGUN_H
+#ifndef EPEMGUN_H
+#define EPEMGUN_H
 
 #include "HardProcess.h"
 #include "JetScapeLogger.h"
@@ -24,43 +24,47 @@
 
 using namespace Jetscape;
 
-class PythiaIsrGun : public HardProcess, public Pythia8::Pythia {
+class epemGun : public HardProcess, public Pythia8::Pythia {
 
 private:
-  double pTHatMin;
-  double pTHatMax;
+  //double pTHatMin;
+  //double pTHatMax;
   double eCM;
-  bool FSR_on;
+  //bool FSR_on;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
-  static RegisterJetScapeModule<PythiaIsrGun> reg;
+  static RegisterJetScapeModule<epemGun> reg;
+
+  double sud_val_QG_w_M(double M, double h0, double h1, double h2, double E1);
+  double sud_z_QG_w_M(double M, double cg, double cg1, double E2);
+  double alpha_s(double q2);
+
+protected:
+  std::uniform_real_distribution<double> ZeroOneDistribution;
 
 public:
-  int NumberOfHardPartons;
   /** standard ctor
       @param xmlDir: Note that the environment variable PYTHIA8DATA takes precedence! So don't use it.
       @param printBanner: Suppress starting blurb. Should be set to true in production, credit where it's due
   */
-  PythiaIsrGun(string xmlDir = "DONTUSETHIS", bool printBanner = false)
+  epemGun(string xmlDir = "DONTUSETHIS", bool printBanner = false)
       : Pythia8::Pythia(xmlDir, printBanner), HardProcess() {
-    SetId("UninitializedPythiaIsrGun");
+    SetId("UninitializedepemGun");
   }
 
-  ~PythiaIsrGun();
+  ~epemGun();
 
   void InitTask();
-  void ExecuteTask();
-  virtual void WriteTask(weak_ptr<JetScapeWriter> w);
+  void Exec();
 
   // Getters
-  double GetpTHatMin() const { return pTHatMin; }
-  double GetpTHatMax() const { return pTHatMax; }
+  //double GetpTHatMin() const { return pTHatMin; }
+  //double GetpTHatMax() const { return pTHatMax; }
 
   // Cross-section information in mb and event weight.
   double GetSigmaGen() { return info.sigmaGen(); };
   double GetSigmaErr() { return info.sigmaErr(); };
-  double GetPtHat() { return info.pTHat(); };
   double GetEventWeight() { return info.weight(); };
 };
 
-#endif // PYTHIAISRGUN_H
+#endif // EPEMGUN_H

@@ -1,5 +1,6 @@
 # Build from the official docker python base image, based on Debian
-FROM debian:stable 
+FROM ubuntu:focal
+ARG DEBIAN_FRONTEND=noninteractive
 
 # Install pre-reqs (commented ones are already in base image)
 RUN apt update && apt install -y \
@@ -28,6 +29,7 @@ tclsh \
 tcl-dev \
 libxft-dev \
 libxext-dev \
+libfftw3-3 \
 #zlib1g-dev \
 && rm -rf /var/lib/apt/lists/*
 
@@ -72,22 +74,22 @@ RUN mkdir -p ${ROOTSYS} && mkdir -p ${HOME}/root && cd ${HOME}/root \
 && make -j8 install \
 && rm -r ${HOME}/root
 
-# Install HepMC 3.2.5
-RUN curl -SL http://hepmc.web.cern.ch/hepmc/releases/HepMC3-3.2.5.tar.gz | tar -xvzC /usr/local \
+# Install HepMC 3.2.6
+RUN curl -SL http://hepmc.web.cern.ch/hepmc/releases/HepMC3-3.2.6.tar.gz | tar -xvzC /usr/local \
 && cd /usr/local \
 && mkdir hepmc3-build \
 && cd hepmc3-build \
-&& cmake ../HepMC3-3.2.5 -DCMAKE_INSTALL_PREFIX=/usr/local -DHEPMC3_ENABLE_ROOTIO=ON -DROOT_DIR=${ROOTSYS} -DHEPMC3_BUILD_EXAMPLES=ON \
+&& cmake ../HepMC3-3.2.6 -DCMAKE_INSTALL_PREFIX=/usr/local -DHEPMC3_ENABLE_ROOTIO=ON -DROOT_DIR=${ROOTSYS} -DHEPMC3_BUILD_EXAMPLES=ON \
 && make -j8 install \
 && rm -r /usr/local/hepmc3-build
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
 
-# Install Pythia8 with HepMC3-3.2.5 (that is needed by SMASH)
-ARG pythiaV="8307"
+# Install Pythia8 with HepMC3-3.2.6 (that is needed by SMASH)
+ARG pythiaV="8309"
 RUN curl -SLk http://pythia.org/download/pythia83/pythia${pythiaV}.tgz \
 | tar -xvzC /usr/local \
 && cd /usr/local/pythia${pythiaV} \
-&& ./configure --enable-shared --prefix=/usr/local/ --with-hepmc3=/usr/local/HepMC3-3.2.5 \
+&& ./configure --enable-shared --prefix=/usr/local/ --with-hepmc3=/usr/local/HepMC3-3.2.6 \
 && make -j8 \
 && make -j8 install
 
@@ -103,7 +105,7 @@ ENV PATH $PATH:$PYTHIA8DIR/bin
 
 # Build heppy (various HEP tools via python)
 RUN cd / \
-&& git clone https://github.com/matplo/heppy.git \
+&& git clone --depth 1 --branch v1.3.8.8 https://github.com/matplo/heppy.git \
 && cd heppy \
 && ./external/fastjet/build.sh \
 && ./external/hepmc2/build.sh \

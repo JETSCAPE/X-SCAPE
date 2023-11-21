@@ -31,7 +31,6 @@
         MultipartonInteractions:alphaSvalue = 0.16
         MultipartonInteractions:pTmin = 7.0
       </LinesToRead>
-      <useHybridHad>1</useHybridHad>
     </PythiaGun>
   </Hard>
 
