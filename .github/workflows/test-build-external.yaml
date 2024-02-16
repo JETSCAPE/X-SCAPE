@@ -4,13 +4,13 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-1.1-RC
+      - XSCAPE-1.1.1-RC
       - XSCAPE-1.1-RC_mergeMUSIC
 
   push:
     branches:
       - main
-      - XSCAPE-1.1-RC
+      - XSCAPE-1.1.1-RC
       - XSCAPE-1.1-RC_mergeMUSIC
 
 env:
