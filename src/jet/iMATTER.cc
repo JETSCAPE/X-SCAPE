@@ -1568,6 +1568,7 @@ double iMATTER::PDF(int pid, double z, double t){
 double iMATTER::alpha_s(double q2) {
   double a, L2, q24, c_nf;
 
+  Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
   L2 = std::pow(Lambda_QCD, 2);
 
   q24 = q2 / 4.0;
