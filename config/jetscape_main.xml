@@ -84,7 +84,7 @@
 
     <!-- Options to read initial conditions from saved file  -->
     <initial_profile_path>../examples/test_hydro_files</initial_profile_path>
-
+    <initial_Ncoll_list>../examples/test_hydro_files</initial_Ncoll_list>
     <MCGlauber> 
         <ran_seed_MCGla> -1 </ran_seed_MCGla>
         <rapidity_loss_method> 4 </rapidity_loss_method>
