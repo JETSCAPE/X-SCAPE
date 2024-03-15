@@ -4,13 +4,13 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-1.1-RC
+      - XSCAPE-1.1.1-RC
       - XSCAPE-1.1-RC_mergeMUSIC
 
   push:
     branches:
       - main
-      - XSCAPE-1.1-RC
+      - XSCAPE-1.1.1-RC
       - XSCAPE-1.1-RC_mergeMUSIC
 
 env:
@@ -44,6 +44,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: JETSCAPE/TEST-EXAMPLES
+        ref: main
         path: TEST-EXAMPLES
 
     - name: Run pp tests

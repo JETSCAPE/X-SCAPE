@@ -14,10 +14,15 @@
 ##############################################################################
 
 # download the code package
-commitHash="4bc2badcd31401bcdea8be5a2efc778bdf99fc57" # for xscape 1.1
+# commitHash="4bc2badcd31401bcdea8be5a2efc778bdf99fc57" # for xscape 1.1
+
+# using a commit from the iSS repository that is compatible with X-SCAPE 1.1.1
+folderName="iSS"
+commitHash="2471dcc0e74c4a2d86c08ae82ad4304643b30439"
+
 rm -fr iSS
 git clone https://github.com/chunshen1987/iSS -b JETSCAPE iSS
-cd iSS
+cd $folderName
 git checkout $commitHash
 #git checkout tags/v1.1.1 -b v1.1.1
 rm -fr iSS/.git
