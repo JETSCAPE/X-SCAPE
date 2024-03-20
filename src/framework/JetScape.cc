@@ -210,7 +210,7 @@ void JetScape::ReadGeneralParametersFromXML() {
 void JetScape::DetermineTaskListFromXML() {
 
   // First, check for Liquefier and create it if so (since it needs to be passed to other modules)
-  VERBOSE(2) << "Checking if Liquifier should be created...";
+  VERBOSE(2) << "Checking if Liquefier should be created...";
   tinyxml2::XMLElement *elementXML =
       (tinyxml2::XMLElement *)JetScapeXML::Instance()
           ->GetXMLRootUser()
@@ -222,6 +222,21 @@ void JetScape::DetermineTaskListFromXML() {
       JSINFO << "Created liquefier.";
     }
     elementXML = elementXML->NextSiblingElement();
+  }
+
+    // Check for HadronicEMT and create it if so
+  VERBOSE(2) << "Checking if HadronicEMT should be created...";
+  tinyxml2::XMLElement *elementXML2 =
+      (tinyxml2::XMLElement *)JetScapeXML::Instance()
+          ->GetXMLRootUser()
+          ->FirstChildElement();
+  while (elementXML2) {
+    std::string elementName = elementXML2->Name();
+    if (elementName == "HadronicEMT") {
+      hadronicEMT = make_shared<HadronicEMT>();
+      JSINFO << "Created HadronicEMT.";
+    }
+    elementXML2 = elementXML2->NextSiblingElement();
   }
 
   // Loop through and create all modules
@@ -409,7 +424,7 @@ void JetScape::DetermineTaskListFromXML() {
     else if (elementName == "Hydro") {
 
       // First, check if liquefier should be added (Note: Can't use GetXMLElementText(), since that only works for unique tags)
-      VERBOSE(2) << "Checking if liquefer should be added: Hydro";
+      VERBOSE(2) << "Checking if liquefier should be added: Hydro";
       bool bAddLiquefier = false;
       tinyxml2::XMLElement *childElementLiquefier =
           (tinyxml2::XMLElement *)element->FirstChildElement();

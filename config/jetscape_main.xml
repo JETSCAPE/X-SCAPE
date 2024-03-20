@@ -418,6 +418,14 @@
     </iSS>
   </SoftParticlization>
 
+  <!-- Create hadronic energy-momentum tensor -->
+  <HadronicEMT>
+    <!-- width of the box around a given point (x,y,z) taken into account -->
+    <dx>0.3</dx>
+    <dy>0.3</dy>
+    <dz>0.3</dz>
+  </HadronicEMT>
+
   <!-- Hadronic Afterburner  -->
   <Afterburner>
     <!-- fragmentation hadrons in the afterburner only possible with hybrid hadronization-->
