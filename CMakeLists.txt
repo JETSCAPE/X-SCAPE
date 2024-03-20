@@ -88,7 +88,7 @@ if (USE_ISS)
   include_directories(./external_packages/iSS ./external_packages/iSS/src)
 endif (USE_ISS)
 
-# SMASH afterburner. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON -Dsmash=ON'.
+# SMASH afterburner. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_SMASH=ON'.
 option(USE_SMASH "Build tests for SMASH" OFF)
 if (USE_SMASH)
   message("SMASH includes and library ...")
@@ -188,7 +188,7 @@ install(
   "${CMAKE_SOURCE_DIR}/external_packages/music/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/trento/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper/"
-  "${CMAKE_SOURCE_DIR}/external_packages/smash/src/"
+  "${CMAKE_SOURCE_DIR}/external_packages/smash/smash_code/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/googletest/googletest/src/"
   DESTINATION "include" # target directory
   FILES_MATCHING # install only matched files
