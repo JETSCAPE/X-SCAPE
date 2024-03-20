@@ -89,10 +89,14 @@ public:
    */
   std::vector<shared_ptr<Hadron>> GetNewHadronsAndClear();
 
+  /** Get the hadrons to be removed in the upcoming timestep and clear the vector for the next timestep
+   */
+  std::vector<shared_ptr<Hadron>> GetHadronsToRemoveAndClear();
+
   /** Add one new hadron for transport to hadron list for new timestep
    */
   void AddNewHadron(const shared_ptr<Hadron>& new_hadron) {
-    new_hadrons_for_timestep.push_back(new_hadron);
+    new_hadrons_for_timestep_.push_back(new_hadron);
   }
 
   /** Add list of new hadrons for transport to hadron list for new timestep
@@ -103,16 +107,36 @@ public:
     }
   }
 
+  /** Remove one hadron from transport, add it to remove hadron list for new timestep
+   */
+  void RemoveHadron(const shared_ptr<Hadron>& hadron) {
+    remove_hadrons_for_timestep_.push_back(hadron);
+  }
+
+  /** Remove list of hadrons from transport, add it to remove hadron list for new timestep
+   */
+  void RemoveHadrons(const std::vector<shared_ptr<Hadron>>& hadrons) {
+    for (const auto& had : hadrons) {
+      RemoveHadron(had);
+    }
+  }
+
 private:
 
   /** New hadrons for upcoming timestep of transport evolution,
    * to be filled at end of timestep by particlization routine.
    */
-  std::vector<shared_ptr<Hadron>> new_hadrons_for_timestep;
+  std::vector<shared_ptr<Hadron>> new_hadrons_for_timestep_;
+
+  /** Hadrons to be removed from the transport evolution in the 
+   * upcoming timestep, to be determined at the end of timestep 
+   * by some criterion (iso-tau surface, energy density, ...) 
+   */
+  std::vector<shared_ptr<Hadron>> remove_hadrons_for_timestep_;
 
   /** Switching temperature between media.
    */
-  float Tc;
+  float Tc_;
 
 };
 

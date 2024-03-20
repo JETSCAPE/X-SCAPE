@@ -56,7 +56,7 @@ void BulkDynamicsManager::InitTask() {
   JSINFO << "Intialize BulkDynamicsManager ...";
 
   //Critical temperature to switch from hydro to something else
-  Tc = GetXMLElementDouble({"BDM", "Tc"});
+  Tc_ = GetXMLElementDouble({"BDM", "Tc"});
 
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk dynamics Manager modules found ...";
@@ -82,11 +82,11 @@ void BulkDynamicsManager::CalculateTime()
   VERBOSE(3) << "Calculate Bulk Dynamics Manager per timestep ... Current Time = "<<GetModuleCurrentTime();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
 
-  VERBOSE(3) << "Size of new hadron list at beginning of CalculateTime in BDM (should be something) = " << new_hadrons_for_timestep.size();
+  VERBOSE(3) << "Size of new hadron list at beginning of CalculateTime in BDM (should be something) = " << new_hadrons_for_timestep_.size();
 
   JetScapeModuleBase::CalculateTimeTasks();
 
-  VERBOSE(3) << "Size of new hadron list at end of CalculateTime in BDM (should be empty) = " << new_hadrons_for_timestep.size();
+  VERBOSE(3) << "Size of new hadron list at end of CalculateTime in BDM (should be empty) = " << new_hadrons_for_timestep_.size();
 
 }
 
@@ -120,12 +120,12 @@ void BulkDynamicsManager::ExecTime()
 {
   VERBOSE(3) << "Execute Bulk Dynamics Manager at timestep (end) ... Current Time = "<<GetModuleCurrentTime()<<" Thread Id = "<<this_thread::get_id();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
-  VERBOSE(3) << "Size of new hadron list at beginning of ExecTime (should be empty) = " << new_hadrons_for_timestep.size();
+  VERBOSE(3) << "Size of new hadron list at beginning of ExecTime (should be empty) = " << new_hadrons_for_timestep_.size();
 
   AddNewHadrons(SomeNewHadrons(GetModuleCurrentTime()));
   JetScapeModuleBase::ExecTimeTasks();
 
-  VERBOSE(3) << "Size of new hadron list at end of ExecTime (should be something) = " << new_hadrons_for_timestep.size();
+  VERBOSE(3) << "Size of new hadron list at end of ExecTime (should be something) = " << new_hadrons_for_timestep_.size();
 }
 
 void BulkDynamicsManager::InitPerEvent()
@@ -208,7 +208,7 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
   for (auto it : GetTaskList()) {
     if(dynamic_pointer_cast<FluidDynamics>(it)){
       dynamic_pointer_cast<FluidDynamics>(it)->GetHydroInfo(t,x,y,z,fluid_cell_info_ptr);
-      if(fluid_cell_info_ptr->temperature > Tc) validHydro = true;
+      if(fluid_cell_info_ptr->temperature > Tc_) validHydro = true;
     }
   }
   //if validHydro = true, we are done; if not get info from other modules
@@ -246,10 +246,19 @@ void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell
 
 std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {
   std::vector<shared_ptr<Hadron>> new_h_to_return;
-  // The swap puts the empty vector for new_hadrons_for_timestep
+  // The swap puts the empty vector for new_hadrons_for_timestep_
   // and therefore clears the vector (to be filled again at next timestep)
-  new_h_to_return.swap(new_hadrons_for_timestep);
+  new_h_to_return.swap(new_hadrons_for_timestep_);
   return new_h_to_return;
 }
+
+std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetHadronsToRemoveAndClear() {
+  std::vector<shared_ptr<Hadron>> new_h_to_remove;
+  // The swap puts the empty vector for remove_hadrons_for_timestep_
+  // and therefore clears the vector (to be filled again at the next timestep)
+  new_h_to_remove.swap(remove_hadrons_for_timestep_);
+  return new_h_to_remove;
+}
+
 
 } // end namespace Jetscape
