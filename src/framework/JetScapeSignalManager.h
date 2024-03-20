@@ -19,6 +19,7 @@
 #define JETSCAPESIGNALMANAGER_H
 
 #include "Afterburner.h"
+#include "Transport.h"
 #include "InitialState.h"
 #include "JetEnergyLoss.h"
 #include "JetEnergyLossManager.h"
@@ -166,6 +167,7 @@ private:
   weak_ptr<JetScapeWriter> writer;
   weak_ptr<HadronizationManager> hadro;
   weak_ptr<Afterburner> afterburner;
+  weak_ptr<Transport> transport;
   weak_ptr<PartonPrinter> pprinter;
   weak_ptr<HadronPrinter> hprinter;
   weak_ptr<JetEnergyLoss> eloss;

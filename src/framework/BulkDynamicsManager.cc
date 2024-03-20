@@ -214,11 +214,13 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
   //if validHydro = true, we are done; if not get info from other modules
   if(validHydro == false){
     std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
+    // this has to be fixed with the new HadronicEMT class
+    /*for (auto it : GetTaskList()) {
     for (auto it : GetTaskList()) {
       if(dynamic_pointer_cast<Afterburner>(it)){
 	      dynamic_pointer_cast<Afterburner>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
       }
-    }
+    }*/
     InfoWrapper(fluid_cell_info_ptr,bulk_info_ptr);
   }
 }

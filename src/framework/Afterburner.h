@@ -46,11 +46,6 @@ public:
 
   virtual void CalculateTime();
 
-  /// Fill in bulk media info for (t,x,y,z) from current hadron list (work in progress, see .cc file)
-  void GetBulkInfo(Jetscape::real t, Jetscape::real x,
-                   Jetscape::real y, Jetscape::real z,
-			             std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
-
   /// Get the current list of hadrons in the afterburner as Jetscape Hadrons (has to be provided by all afterburner implementations)
   virtual std::vector<Hadron> GetCurrentHadronList() const = 0;
 
@@ -61,8 +56,6 @@ protected:
   std::vector<std::vector<std::shared_ptr<Hadron>>> GetSoftParticlizationHadrons();
   /// Get the list of fragmentation hadrons
   std::vector<std::shared_ptr<Hadron>> GetFragmentationHadrons();
-  /// Get the list of hadrons for the upcoming timestep from BulkDynamicsManager (will clear the list)
-  std::vector<std::shared_ptr<Hadron>> GetTimestepParticlizationHadrons();
 
   std::vector<std::vector<std::shared_ptr<Hadron>>> dummy;
   std::uniform_real_distribution<double> ZeroOneDistribution;
