@@ -487,6 +487,17 @@ Hadron::Hadron(int label, int id, int stat, const FourVector &p,
   set_restmass(mass);
 }
 
+Hadron::Hadron(int label, int id, int stat, const FourVector &p,
+                const FourVector &x, double mass, int charge, int baryon_number,
+                int strangeness)
+    : JetScapeParticleBase::JetScapeParticleBase(label, id, stat, p, x, mass) {
+  assert(CheckOrForceHadron(id, mass));
+  set_restmass(mass);
+  set_charge(charge);
+  set_baryon_number(baryon_number);
+  set_strangeness(strangeness);
+}
+
 bool Hadron::CheckOrForceHadron(const int id, const double mass) {
   bool status = InternalHelperPythia.particleData.isHadron(id);
   if (status)
