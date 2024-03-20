@@ -14,9 +14,10 @@
 ##############################################################################
 
 # 1) Download the SMASH code
-git clone --depth=1 https://github.com/smash-transport/smash.git --branch SMASH-3.0 smash/smash_code
+git clone --depth=1 https://github.com/smash-transport/smash.git --branch SMASH-3.1 smash/smash_code
 
 # 2) Compile SMASH
+(
 cd smash/smash_code
 mkdir build
 cd build
@@ -25,3 +26,5 @@ number_of_cores=`nproc --all`
 number_of_cores_to_compile=$(( ${number_of_cores} > 20 ? 20 : ${number_of_cores} ))
 echo "Compiling SMASH using ${number_of_cores_to_compile} cores."
 make -j${number_of_cores} smash_shared
+)
+export SMASH_DIR="$(pwd)/smash/smash_code"

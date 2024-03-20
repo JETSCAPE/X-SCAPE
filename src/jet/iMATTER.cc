@@ -108,7 +108,8 @@ void iMATTER::InitTask()
     {
         throw std::runtime_error("iMatter cannot find the pdfdata folder of pythia. Tried looking in " + pdfpath.str());
     }
-    pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
+    //pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
+    pdf = new Pythia8::LHAGrid1(2212, "20", pdfpath.str(), nullptr); /// Assuming its a proton (since Pythia 8.310)
     
 
     // Setup the quadrature rules for calculating the z_distribution 

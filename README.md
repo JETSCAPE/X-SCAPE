@@ -6,7 +6,7 @@ The new framework allows for novel functionality such as the ability of the main
 state and final state evolution. It allows for multiple bulk event generators to run concurrently while exchanging information via a new Bulk Dynamics Manager.
 The X-SCAPE framework can be run using the new functionality or in JETSCAPE mode allowing for full backwards compatibility. New modules can also run in a hybrid fashion,
 choosing to use or not use the new clock functionality. More documentation of the new X-SCAPE framework capabilities will be provided in the near future.
-For now, test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory (for example in `PythiaBDMTes.cc` and `PythiaBrickTest.cc`).
+For now, test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory (for example in `PythiaBDMTest.cc` and `PythiaBrickTest.cc`).
 
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
@@ -129,8 +129,8 @@ MUSIC can be integrated into the JETSCAPE framework. To download the latest vers
 ```
 
 This shell script will clone the latest version of MUSIC to external_packages folder.
-It also setup the enviroment variables for MUSIC to run. Specifically, MUSIC
-needs the folder path for the EOS tables. Please make sure the enviroment
+It also setup the environment variables for MUSIC to run. Specifically, MUSIC
+needs the folder path for the EOS tables. Please make sure the environment
 variable HYDROPROGRAMPATH to be set to the path for MUSIC code package.
 
 When compiling MUSIC with JETSCAPE, please turn on the MUSIC support option
@@ -151,7 +151,7 @@ To run JETSCAPE with MUSIC, one needs to use MPI commands,
 ### iSS support
 
 iSS is a Monte Carlo sampler code after the hydrodynamics and can be integrated
-into the JETSCAPE framework. To download the lastest
+into the JETSCAPE framework. To download the latest
 version of iSS, one can run the shell script under the external_packages folder,
 
 ```bash
@@ -193,20 +193,22 @@ you will need to install AMD APP SDK.
 
 SMASH [https://smash-transport.github.io] is a hadronic transport approach
 developed at Frankfurt University and GSI by the group of
-Prof. H. Elfner (nee Petersen).  In JetScape SMASH can
+Prof. H. Elfner (nee Petersen). In JetScape SMASH can
 serve as an afterburner, useful to compute soft observables.
 
 ### Installing SMASH
 
 SMASH is published on github at https://github.com/smash-transport/smash.
 See SMASH Readme for libraries required by SMASH and how to install them.
+When using the docker container, SMASH should be installed inside, since it 
+relies on external libraries available in the container. 
 
 ```bash
   export EIGEN3_ROOT=<eigen install directory>/include/eigen3/
   export GSL_ROOT_DIR=$(gsl-config --prefix)
   export BOOST_ROOT=<boost install directory>
-  export PYTHIA8DIR=${PYTHIAINSTALLDIR}/pythia8235
-  export PYTHIA8_ROOT_DIR=${PYTHIAINSTALLDIR}/pythia8235
+  export PYTHIA8DIR=${PYTHIAINSTALLDIR}/pythia8310
+  export PYTHIA8_ROOT_DIR=${PYTHIAINSTALLDIR}/pythia8310
 
   export JETSCAPE_DIR=${HOME}/JETSCAPE-COMP
   export SMASH_DIR=${JETSCAPE_DIR}/external_packages/smash/smash_code
@@ -214,6 +216,9 @@ See SMASH Readme for libraries required by SMASH and how to install them.
   cd ${JETSCAPE_DIR}/external_packages
   ./get_smash.sh
 ```
+
+To set the `SMASH_DIR` variable directly when using the docker container, one 
+can run `source get_smash.sh`.
 
 ### Compiling JetScape with SMASH
 
