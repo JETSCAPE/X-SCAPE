@@ -95,6 +95,35 @@
         <ylossParam4var> 0.555 </ylossParam4var>
         <remnant_energy_loss_fraction> 0.5 </remnant_energy_loss_fraction>
     </MCGlauber>
+
+    <SMASH>
+      <SMASH_config_file>../external_packages/smash/smash_config_initial_condition.yaml</SMASH_config_file>
+      <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+
+      <ProjectileProtons>79</ProjectileProtons>
+      <ProjectileNeutrons>118</ProjectileNeutrons>
+      <TargetProtons>79</TargetProtons>
+      <TargetNeutrons>118</TargetNeutrons>
+
+      <!-- time in fm/c in the computational frame, when the simulation should be ended -->
+      <End_Time>300.0</End_Time>
+      <Sqrtsnn>200.0</Sqrtsnn>
+      <FermiMotion>frozen</FermiMotion>
+      <CollisionsWithinNucleus>1</CollisionsWithinNucleus>
+
+      <Impact>
+        <RandomReactionPlane>0</RandomReactionPlane>
+        <!-- Pick the mode for the impact parameter -->
+        <!-- Mode=0 : Value has to be set -->
+        <!-- Mode=1 : Sample (uniform, quadratic) with ImpactMin, ImpactMax have to be set -->
+        <Mode>0</Mode>
+        <Value>0.0</Value>
+        <Sample>quadratic</Sample>
+        <ImpactMin>0.0</ImpactMin>
+        <ImpactMax>3.0</ImpactMax>
+      </Impact>
+    </SMASH>
   </IS>
 
   <!-- Hard Process -->
