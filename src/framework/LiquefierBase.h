@@ -30,6 +30,9 @@ class Droplet {
 private:
   std::array<Jetscape::real, 4> xmu;
   std::array<Jetscape::real, 4> pmu;
+  int baryon_number;
+  int electric_charge;
+  int strangeness;
 
 public:
   Droplet() = default;
@@ -38,11 +41,26 @@ public:
     xmu = x_in;
     pmu = p_in;
   }
+
+  Droplet(std::array<Jetscape::real, 4> x_in,
+          std::array<Jetscape::real, 4> p_in,
+          int baryon_number_in,
+          int electric_charge_in,
+          int strangeness_in) {
+    xmu = x_in;
+    pmu = p_in;
+    baryon_number = baryon_number_in;
+    electric_charge = electric_charge_in;
+    strangeness = strangeness_in;
+  }
+
   ~Droplet(){};
 
   std::array<Jetscape::real, 4> get_xmu() const { return (xmu); }
-
   std::array<Jetscape::real, 4> get_pmu() const { return (pmu); }
+  int get_baryon_number() const { return baryon_number; }
+  int get_electric_charge() const { return electric_charge; }
+  int get_strangeness() const { return strangeness; }
 };
 
 class LiquefierBase {
