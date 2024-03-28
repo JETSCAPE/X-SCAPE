@@ -207,7 +207,7 @@ smash::ParticleList SmashWrapper::get_smash_plist_from_JS_hadrons(const std::vec
     const FourVector r = JS_had->x_in();
     smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
     new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
-    new_p.set_4momentum(smash::FourVector(r.t(), p.x(), p.y(), p.z()));
+    new_p.set_4momentum(smash::FourVector(p.t(), p.x(), p.y(), p.z()));
     new_particles.push_back(new_p);
   }
   smash::validate_and_adjust_particle_list(new_particles);
