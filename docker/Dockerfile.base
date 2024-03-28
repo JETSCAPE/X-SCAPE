@@ -85,7 +85,7 @@ RUN curl -SL http://hepmc.web.cern.ch/hepmc/releases/HepMC3-3.2.6.tar.gz | tar -
 ENV LD_LIBRARY_PATH="/usr/local/lib:${LD_LIBRARY_PATH}"
 
 # Install Pythia8 with HepMC3-3.2.6 (that is needed by SMASH)
-ARG pythiaV="8309"
+ARG pythiaV="8310"
 RUN curl -SLk http://pythia.org/download/pythia83/pythia${pythiaV}.tgz \
 | tar -xvzC /usr/local \
 && cd /usr/local/pythia${pythiaV} \
