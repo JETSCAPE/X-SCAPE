@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+
+<!-- Copyright (c) The JETSCAPE Collaboration, 2018 -->
+<!-- Modular, task-based framework for simulating all aspects of heavy-ion collisions -->
+<!-- For the list of contributors see AUTHORS. -->
+<!-- Report issues at https://github.com/JETSCAPE/JETSCAPE/issues -->
+<!-- or via email to bugs.jetscape@gmail.com -->
+<!-- Distributed under the GNU General Public License 3.0 (GPLv3 or later). -->
+<!-- See COPYING for details. -->
+
+ <jetscape>
+
+  <!-- General settings -->
+  <nEvents> 1 </nEvents>
+
+  <!-- Technical settings -->
+  <debug> off </debug>
+  <remark> off </remark>
+  <vlevel> 0 </vlevel>
+  <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
+
+  <!--  JetScape Writer Settings -->
+  <outputFilename>test_out</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+
+  <Random>
+    <seed>42</seed>
+  </Random>
+
+  <BDM>
+    <Tc>0.250</Tc>
+    <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
+  </BDM>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <!-- x range [-grid_max_x, grid_max_x] -->
+    <!-- y range [-grid_max_y, grid_max_y]-->
+    <!-- longitudinal range [-grid_max_z, grid_max_z]-->
+    <!-- in units of [fm] -->
+    <grid_max_x> 15 </grid_max_x>
+    <grid_max_y> 15 </grid_max_y>
+    <grid_max_z> 15 </grid_max_z>
+    <grid_step_x> 0.3 </grid_step_x>
+    <grid_step_y> 0.3 </grid_step_y>
+    <grid_step_z> 0.3 </grid_step_z>
+
+    <SMASH>
+      <SMASH_config_file>../external_packages/smash/smash_config_initial_condition.yaml</SMASH_config_file>
+      <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+
+      <ProjectileProtons>18</ProjectileProtons>
+      <ProjectileNeutrons>18</ProjectileNeutrons>
+      <TargetProtons>18</TargetProtons>
+      <TargetNeutrons>18</TargetNeutrons>
+
+      <!-- time in fm/c in the computational frame, when the simulation should be ended -->
+      <end_time>10</end_time>
+      <Sqrtsnn>19.3</Sqrtsnn>
+      <FermiMotion>frozen</FermiMotion>
+      <CollisionsWithinNucleus>0</CollisionsWithinNucleus>
+
+      <Impact>
+        <RandomReactionPlane>0</RandomReactionPlane>
+        <!-- Pick the mode for the impact parameter -->
+        <!-- Mode=0 : Value has to be set -->
+        <!-- Mode=1 : Sample (uniform, quadratic) with ImpactMin, ImpactMax have to be set -->
+        <Mode>0</Mode>
+        <Value>0.0</Value>
+      </Impact>
+    </SMASH>
+  </IS>
+
+  <Liquefier>
+      <HadronicLiquefier>
+        <!-- covariant_kernel = 0 -> Gaussian smearing -->
+        <!-- covariant kernel = 1 -> covariant kernel from arXiv:1508.04378 -->
+        <covariant_kernel>0</covariant_kernel>
+        <sigma_transverse>1.0</sigma_transverse>
+        <sigma_longitudinal>0.5</sigma_longitudinal>
+      </HadronicLiquefier>
+  </Liquefier>
+
+  <!-- Hydro  Module  -->
+  <Hydro>
+
+    <AddHadronicLiquefier> true </AddHadronicLiquefier>
+
+    <!-- MUSIC  -->
+    <MUSIC>
+      <name>MUSIC</name>
+      <MUSIC_input_file>music_input</MUSIC_input_file>
+      <InitialProfile>43</InitialProfile>
+      <beastMode>0</beastMode>
+      <Initial_time_tau_0>0.1</Initial_time_tau_0>
+      <output_evolution_to_file>0</output_evolution_to_file>
+      <store_hydro_info_in_memory>0</store_hydro_info_in_memory>
+      <shear_viscosity_eta_over_s>0.08</shear_viscosity_eta_over_s>
+      <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
+      <shear_viscosity_3_at_kink>0.16</shear_viscosity_3_at_kink>
+      <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
+      <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
+      <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
+      <bulk_viscosity_3_max>0.06</bulk_viscosity_3_max>
+      <zeta_over_s_T_peak_in_GeV>0.17</zeta_over_s_T_peak_in_GeV>
+      <zeta_over_s_width_in_GeV>0.02</zeta_over_s_width_in_GeV>
+      <zeta_over_s_lambda_asymm>0.1</zeta_over_s_lambda_asymm>
+      <Include_second_order_terms>1</Include_second_order_terms>
+      <freezeout_temperature>0.16</freezeout_temperature>
+      <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
+      <string_source_sigma_x>0.5</string_source_sigma_x>
+      <string_source_sigma_eta>0.5</string_source_sigma_eta>
+      <stringPreEqFlowFactor>0.13</stringPreEqFlowFactor>
+    </MUSIC>
+
+  </Hydro>
+
+ </jetscape>
