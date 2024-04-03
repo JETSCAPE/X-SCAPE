@@ -62,7 +62,6 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
     std::array<double, 2> pT; double LatestPartonNewPz;
     double s0 = 0.2, sP0;
     double TotalMomentumFraction;
-    double Lambda_QCD;
 
     std::string Fpath = "ISR-PT.dat";
     std::ofstream *File;
