@@ -244,6 +244,7 @@ public:
   vector<Parton> pIn;
   vector<node> vStartVec;
   bool foundchangedorig = false;
+  double gammaLoss_on = false;
 
 protected:
   std::weak_ptr<LiquefierBase> liquefier_ptr;
@@ -255,6 +256,9 @@ private:
   double deltaT;
   double maxT;
   double startT = 0;
+
+  bool thermalEmissionOn = false;
+  bool thermalActivated;
 
   double qhat;
   shared_ptr<Parton> inP = nullptr;
@@ -288,6 +292,8 @@ private:
   int droplet_stat = -11;
   int miss_stat = -13;
   int neg_stat = -17;
+  int abs_stat = -22;
+  int therm_stat = -23;
 
   //old test signals
   bool jetSignalConnected;
