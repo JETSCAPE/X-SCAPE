@@ -207,6 +207,16 @@
       <in_vac> 0 </in_vac>
     </AdSCFT>
 
+    <gammaLoss>
+      <name> gammaLoss </name>
+      <gammaLoss_on> 0 </gammaLoss_on>
+      <source> 1 </source>
+      <thermalEmission> 0 </thermalEmission>
+      <infraredCutOff>2</infraredCutOff>
+      <maxThermalEnergy>50</maxThermalEnergy>
+      <reabsorption>1</reabsorption>
+    </gammaLoss>
+
   </Eloss>
 
   <PartonPrinter>
@@ -438,4 +448,3 @@
     </SMASH>
   </Afterburner>
 </jetscape>
-

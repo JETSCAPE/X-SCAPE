@@ -101,8 +101,9 @@ endif (USE_SMASH)
 ###############################
 ### Compiler & Linker Flags ###
 ###############################
+set(Boost_USE_MULTITHREADED FALSE)
 message("Compiler and Linker flags ...")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pipe -Wall -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pipe -Wall -std=c++17 -lboost_system -pthread -ldl")
 ## can turn off some warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder -Wno-unused-variable -Wno-inconsistent-missing-override -Wno-unused-private-field")
 ## Then set the build type specific options. These will be automatically appended.
@@ -301,7 +302,7 @@ if (${HEPMC_FOUND})
   Message(STATUS "HepMC Include dir : " ${HEPMC_INCLUDE_DIR})
 endif()
 
-option(USE_ROOT "Build using ROOT Libraries and Output" OFF)
+option(USE_ROOT "Build using ROOT Libraries and Output" ON)
 if (USE_ROOT)
   message("Looking for ROOT ...")
   #find_package(ROOT)
