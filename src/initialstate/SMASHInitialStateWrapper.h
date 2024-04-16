@@ -59,7 +59,7 @@ public:
 
   std::vector<Hadron> GetCurrentHadronList() const override;
 
-  virtual any GetHistory() {return any(GetCurrentHadronList());}
+  virtual any GetHistory() {return GetCurrentHadronList();}
 
   void reset_event_numbering() { event_number_ = 0; }
   int current_event_number() {return event_number_;}
