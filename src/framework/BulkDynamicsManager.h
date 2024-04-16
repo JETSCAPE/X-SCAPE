@@ -22,6 +22,7 @@
 #include "JetClass.h"
 #include "FluidCellInfo.h"
 #include "BulkMediaInfo.h"
+#include "LiquefierBase.h"
 #include "sigslot.h"
 
 #include <vector>
@@ -93,6 +94,10 @@ public:
    */
   std::vector<shared_ptr<Hadron>> GetHadronsToRemoveAndClear();
 
+  /** Extract particles at iso-tau hypersurface
+   */
+  void ExtractParticlesIsoTau(double tau_surface, std::vector<shared_ptr<Hadron>> &current_hadrons);
+
   /** Add one new hadron for transport to hadron list for new timestep
    */
   void AddNewHadron(const shared_ptr<Hadron>& new_hadron) {
@@ -134,9 +139,33 @@ private:
    */
   std::vector<shared_ptr<Hadron>> remove_hadrons_for_timestep_;
 
+  /** Store the hadrons extracted when the SMASH initial condition is used and 
+   * the hydro does not run in Cartesian coordinates. 
+   * In this case, SMASH has to run first (up to some large time), and the
+   * particles have to be extracted at an iso-tau surface. Afterwards they can
+   * be used as source terms in the hydro.
+  */
+  std::vector<shared_ptr<Hadron>> store_source_term_hadrons_iso_tau_;
+
   /** Switching temperature between media.
    */
   float Tc_;
+
+  /** Switching proper time, when particles from transport initial condition are
+   * fed into the hydro 
+   */
+  double IC_particle_extraction_tau_;
+
+  /**
+   * Is the hydro in cartesian or not? Needed to decide whether SMASH IC has to 
+   * run first, or if it can run concurrently with hydro.
+   */
+  bool hydro_Cartesian_;
+  bool SMASH_IC_attached_;
+
+
+  protected:
+    std::weak_ptr<LiquefierBase> liquefier_ptr_;
 
 };
 

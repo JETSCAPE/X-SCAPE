@@ -59,7 +59,7 @@ int main(int argc, char** argv)
   Show();
 
   // clocks here are defaulted for testing, clocks can customized via inheriting from the MainClock/ModuleClock base classes ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-2,3,0.1); // JP: make consistent with reading from XML in init phase ...
+  auto mClock = make_shared<MainClock>("SpaceTime",-2,5,0.2); // JP: make consistent with reading from XML in init phase ...
   mClock->Info();
 
   auto jetscape = make_shared<JetScape>();
@@ -97,12 +97,17 @@ int main(int argc, char** argv)
   // per time step soft particlization
   //iSS->SetTimeStepped(true);
 
+  // Hadronic afterburner
+  //auto afterburner = make_shared<Afterburner>();
+  //afterburner->SetTimeStepped(true);
+
   // Bulk Dynamics Manager (BDM)
   auto bdm = make_shared<BulkDynamicsManager>();
   bdm->SetTimeStepped(true);
   bdm->Add(smash_ic);
-  //bdm->Add(hydro);
+  bdm->Add(hydro);
   //bdm->Add(iSS);
+  //bdm->Add(afterburner);
 
   // Add BDM to X-SCAPE
   jetscape->Add(bdm);

@@ -44,6 +44,7 @@
   <!--Bulk Dynamics Manager -->
   <BDM>
     <Tc>0.250</Tc>
+    <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
   </BDM>
 
   <!-- Inital State Module  -->
@@ -284,6 +285,7 @@
   <Hydro>
 
     <AddLiquefier> false </AddLiquefier>
+    <CartesianHydro> false </CartesianHydro>
 
     <!-- Test Brick if bjorken_expansion_on="true", T(t) = T * (start_time[fm]/t)^{1/3} -->
     <Brick bjorken_expansion_on="false" start_time="0.6">

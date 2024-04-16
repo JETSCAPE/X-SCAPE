@@ -72,20 +72,10 @@
     </SMASH>
   </IS>
 
-  <Liquefier>
-      <HadronicLiquefier>
-        <!-- covariant_kernel = 0 -> Gaussian smearing -->
-        <!-- covariant kernel = 1 -> covariant kernel from arXiv:1508.04378 -->
-        <covariant_kernel>0</covariant_kernel>
-        <sigma_transverse>1.0</sigma_transverse>
-        <sigma_longitudinal>0.5</sigma_longitudinal>
-      </HadronicLiquefier>
-  </Liquefier>
-
   <!-- Hydro  Module  -->
   <Hydro>
 
-    <AddHadronicLiquefier> true </AddHadronicLiquefier>
+    <CartesianHydro> false </CartesianHydro>
 
     <!-- MUSIC  -->
     <MUSIC>
