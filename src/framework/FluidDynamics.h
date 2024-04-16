@@ -84,7 +84,7 @@ public:
   /** Default destructor. */
   virtual ~FluidDynamics();
 
-  /** Reads the input parameters from the XML file under the tag <Hydro>. Uses JetScapeSingnalManager Instance to retrive the Initial State Physics information. Calls InitializeHydro(parameter_list) and InitTask(); This explicit call can be used for actual initialization of modules such as @a Brick, @a MpiMusic, or @a OSU-HYDRO if attached as a @a polymorphic class. It also initializes the tasks within the current module.
+  /** Reads the input parameters from the XML file under the tag <Hydro>. Uses JetScapeSignalManager Instance to retrieve the Initial State Physics information. Calls InitializeHydro(parameter_list) and InitTask(); This explicit call can be used for actual initialization of modules such as @a Brick, @a MpiMusic, or @a OSU-HYDRO if attached as a @a polymorphic class. It also initializes the tasks within the current module.
 	@sa Read about @a polymorphism in C++. Override Init (not InitTask) here as sub-tasks are called as well.
     */
   void Init() override;
@@ -316,6 +316,9 @@ public:
 
   // get a reference to the bulk_info object
   const EvolutionHistory& get_bulk_info() const { return bulk_info; }
+
+  // get the liquefier pointer
+  std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
 
 }; // end class FluidDynamics
 
