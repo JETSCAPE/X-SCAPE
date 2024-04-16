@@ -127,7 +127,7 @@ void JetScapeModuleBase::CalculateTimeTasks()
     auto tasks =  GetTaskList();
     for (auto it : tasks) {
       auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-      if (module && module->IsTimeStepped() && module->IsValidModuleTime()) {
+      if (module && module->IsTimeStepped() && module->IsValidModuleTime() && module->GetActive()) {
         VERBOSE(3) << "Calculate Time Step = " << it->GetId();
         module->CalculateTime();
       }
@@ -141,7 +141,7 @@ void JetScapeModuleBase::ExecTimeTasks()
     auto tasks =  GetTaskList();
     for (auto it : tasks) {
       auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-      if (module && module->IsTimeStepped() && module->IsValidModuleTime()) {
+      if (module && module->IsTimeStepped() && module->IsValidModuleTime() && module->GetActive()) {
   	     VERBOSE(3) << "Execute Time Step = " << it->GetId();
   	     module->ExecTime();
       }
