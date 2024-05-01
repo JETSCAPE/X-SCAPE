@@ -20,6 +20,7 @@
 #include "JetScapeTaskSupport.h"
 #include "JetScapeModuleBase.h"
 #include "CausalLiquefier.h"
+#include "HadronicLiquefier.h"
 #include "HadronicEMT.h"
 #include <unordered_map>
 
@@ -119,6 +120,7 @@ protected:
   unsigned int n_reuse_hydro_;
 
   std::shared_ptr<CausalLiquefier> liquefier;
+  std::shared_ptr<HadronicLiquefier> hadronicLiquefier;
   std::shared_ptr<HadronicEMT> hadronicEMT;
 
  // Option to automatically determine the task list from the XML file,

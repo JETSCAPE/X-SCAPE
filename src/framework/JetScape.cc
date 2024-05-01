@@ -23,6 +23,8 @@
 #include "PreequilibriumDynamics.h"
 #include "JetEnergyLoss.h"
 #include "CausalLiquefier.h"
+#include "HadronicLiquefier.h"
+#include "HadronicEMT.h"
 
 #include "QueryHistory.h"
 
@@ -47,7 +49,8 @@ namespace Jetscape {
    */
 JetScape::JetScape()
     : JetScapeModuleBase(), n_events(1), n_events_printout(100), reuse_hydro_(false), n_reuse_hydro_(1),
-      liquefier(nullptr), fEnableAutomaticTaskListDetermination(true) {
+      liquefier(nullptr), hadronicLiquefier(nullptr), hadronicEMT(nullptr),
+      fEnableAutomaticTaskListDetermination(true) {
   VERBOSE(8);
   SetId("primary");
 }
@@ -210,7 +213,7 @@ void JetScape::ReadGeneralParametersFromXML() {
 void JetScape::DetermineTaskListFromXML() {
 
   // First, check for Liquefier and create it if so (since it needs to be passed to other modules)
-  VERBOSE(2) << "Checking if Liquefier should be created...";
+  VERBOSE(2) << "Checking if CausalLiquefier should be created...";
   tinyxml2::XMLElement *elementXML =
       (tinyxml2::XMLElement *)JetScapeXML::Instance()
           ->GetXMLRootUser()
@@ -224,7 +227,22 @@ void JetScape::DetermineTaskListFromXML() {
     elementXML = elementXML->NextSiblingElement();
   }
 
-    // Check for HadronicEMT and create it if so
+  // Check if the HadronicLiquefier should be created
+  VERBOSE(2) << "Checking if HadronicLiquefier should be created...";
+  tinyxml2::XMLElement *elementXML1 =
+      (tinyxml2::XMLElement *)JetScapeXML::Instance()
+          ->GetXMLRootUser()
+          ->FirstChildElement();
+  while (elementXML1) {
+    std::string elementName = elementXML1->Name();
+    if (elementName == "Liquefier") {
+      hadronicLiquefier = make_shared<HadronicLiquefier>();
+      JSINFO << "Created HadronicLiquefier.";
+    }
+    elementXML1 = elementXML1->NextSiblingElement();
+  }
+
+  // Check for HadronicEMT and create it if so
   VERBOSE(2) << "Checking if HadronicEMT should be created...";
   tinyxml2::XMLElement *elementXML2 =
       (tinyxml2::XMLElement *)JetScapeXML::Instance()
@@ -443,6 +461,26 @@ void JetScape::DetermineTaskListFromXML() {
         childElementLiquefier = childElementLiquefier->NextSiblingElement();
       }
 
+      // Check if hadronic_liquefier should be added
+      VERBOSE(2) << "Checking if hadronic_liquefier should be added: Hydro";
+      bool bAddHadronicLiquefier = false;
+      tinyxml2::XMLElement *childElementHadronicLiquefier =
+          (tinyxml2::XMLElement *)element->FirstChildElement();
+      while (childElementHadronicLiquefier) {
+        std::string childElementName = childElementHadronicLiquefier->Name();
+        VERBOSE(2) << "Parsing childElementHadronicLiq: " << childElementName;
+        if (childElementName == "AddHadronicLiquefier") {
+          std::string strAddLiquefier = childElementHadronicLiquefier->GetText();
+          if ((int)strAddLiquefier.find("true") >= 0) {
+            bAddHadronicLiquefier = true;
+            VERBOSE(1) << "Add hadronic_liquefier to Hydro: True.";
+          } else {
+            VERBOSE(1) << "Add hadronic_liquefier to Hydro: False.";
+          }
+        }
+        childElementHadronicLiquefier = childElementHadronicLiquefier->NextSiblingElement();
+      }
+
       // Loop through elements to look for specific hydro module
       tinyxml2::XMLElement *childElement =
           (tinyxml2::XMLElement *)element->FirstChildElement();
@@ -464,6 +502,12 @@ void JetScape::DetermineTaskListFromXML() {
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to Brick.";
             }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to Brick.";
+            }
           }
         }
         //   - Gubser
@@ -479,6 +523,12 @@ void JetScape::DetermineTaskListFromXML() {
                   liquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to Gubser.";
+            }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to Gubser.";
             }
           }
         }
@@ -496,6 +546,12 @@ void JetScape::DetermineTaskListFromXML() {
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to hydro_from_file.";
             }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to hydro_from_file.";
+            }
           }
         }
         //   - MUSIC
@@ -512,6 +568,12 @@ void JetScape::DetermineTaskListFromXML() {
                   liquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to MUSIC.";
+            }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to MUSIC.";
             }
           }
 #else
@@ -545,6 +607,12 @@ void JetScape::DetermineTaskListFromXML() {
                   ->add_a_liquefier(liquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to CustomModule.";
+            }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(customModule)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to CustomModule.";
             }
           }
         }

@@ -74,6 +74,7 @@ protected:
   std::vector<SurfaceCellInfo> surfaceCellVector_;
 
   std::weak_ptr<LiquefierBase> liquefier_ptr;
+  std::weak_ptr<LiquefierBase> hadronic_liquefier_ptr;
 
 public:
   /** Default constructor. task ID as "FluidDynamics",
@@ -221,7 +222,7 @@ public:
   void PrintFluidCellInformation(FluidCellInfo *fluid_cell_info_ptr);
 
   // this function returns hypersurface for Cooper-Frye or recombination
-  // the detailed implementation is left to the hydro developper
+  // the detailed implementation is left to the hydro developer
   /** @return Default function to get the hypersurface for Cooper-Frye or recombination model. It can overridden by different modules.
      */
   void FindAConstantTemperatureSurface(
@@ -303,6 +304,10 @@ public:
 
   virtual void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
     liquefier_ptr = new_liquefier;
+  }
+
+  virtual void add_a_hadronic_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
+    hadronic_liquefier_ptr = new_liquefier;
   }
 
   void get_source_term(Jetscape::real tau, Jetscape::real x, Jetscape::real y,
