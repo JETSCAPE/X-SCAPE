@@ -334,6 +334,15 @@ void JetScape::DetermineTaskListFromXML() {
                       "epemGun to task list.";
           }
         }
+        else if (childElementName == "EPGun") {
+          auto EPGun =
+              JetScapeModuleFactory::createInstance(childElementName);
+          if (EPGun) {
+            Add(EPGun);
+            JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
+                      "EPGun to task list.";
+          }
+        }
         else if (((int)childElementName.find("CustomModule") >= 0)) {
           auto customModule =
               JetScapeModuleFactory::createInstance(childElementName);

@@ -133,6 +133,16 @@
         HadronLevel::all = off
       </LinesToRead>
     </epemGun>
+
+    <EPGun>
+      <name>EPGun</name>
+      <electron_energy>27.5</electron_energy>
+      <proton_energy>920</proton_energy>
+      <Q2min>25</Q2min>
+      <FSR_on>0</FSR_on>
+      <!-- The soft momentum cutoff in GeV removes partons from the pythia gun. The default matches the PP19 setup. -->
+      <softMomentumCutoff>0.0</softMomentumCutoff>
+    </EPGun>
   </Hard>
 
   <!--Eloss Modules -->
@@ -437,4 +447,3 @@
     </SMASH>
   </Afterburner>
 </jetscape>
-
