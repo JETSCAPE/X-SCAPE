@@ -61,15 +61,17 @@ void HadronicLiquefier::InitializeParameters() {
 
   // get the grid specifications from the initial state module, which are
   // also used in the hydro evolution
-  Nx_ = ini->GetXSize();
-  Ny_ = ini->GetYSize();
-  Nz_ = ini->GetZSize();
-  dx_ = ini->GetXStep();
-  dy_ = ini->GetYStep();
-  dz_ = ini->GetZStep();
-  xMax_ = ini->GetXMax();
-  yMax_ = ini->GetYMax();
-  zMax_ = ini->GetZMax();
+  xMax_ = JetScapeXML::Instance()->GetElementDouble({"IS", "grid_max_x"});
+  yMax_ = JetScapeXML::Instance()->GetElementDouble({"IS", "grid_max_y"});
+  zMax_ = JetScapeXML::Instance()->GetElementDouble({"IS", "grid_max_z"});
+  dx_ = JetScapeXML::Instance()->GetElementDouble({"IS", "grid_step_x"});
+  dy_ = JetScapeXML::Instance()->GetElementDouble({"IS", "grid_step_y"});
+  dz_ = JetScapeXML::Instance()->GetElementDouble({"IS", "grid_step_z"});
+
+  Nx_ = int(std::ceil(2 * xMax_ / dx_));
+  Ny_ = int(std::ceil(2 * yMax_ / dy_));
+  Nz_ = int(std::ceil(2 * zMax_ / dz_));
+
   if (Nz_ == 1 || dz_ == 0.) {
     JSWARN << "HadronicLiquefier: The longitudinal grid range is not set up "
               "properly.";
@@ -165,14 +167,8 @@ double HadronicLiquefier::compute_drop_kernel_normalization(
         if (abs(y_diff) > skip_dis_x) {
           continue;
         }
-        const double eta_s =
-            0.5 * log((xmu_i[0] + xmu_i[3]) / (xmu_i[0] - xmu_i[3]));
-        double eta_diff;
-        if (!hydro_Cartesian_) {
-          eta_diff = eta - eta_s;
-        } else {
-          eta_diff = eta - xmu_i[3];
-        }
+        const double eta_s = xmu_i[3]; // Cartesian z, Milne eta
+        double eta_diff = eta - xmu_i[3];
         if (abs(eta_diff) > skip_dis_eta) {
           continue;
         }
@@ -242,14 +238,8 @@ void HadronicLiquefier::get_source_energy(
     if (abs(y_diff) > skip_dis_x) {
       continue;
     }
-    double eta_diff;
-    const double eta_s =
-        0.5 * log((xmu_i[0] + xmu_i[3]) / (xmu_i[0] - xmu_i[3]));
-    if (!hydro_Cartesian_) {
-      eta_diff = eta - eta_s;
-    } else {
-      eta_diff = eta - xmu_i[3];
-    }
+    const double eta_s = xmu_i[3]; // Cartesian z, Milne eta
+    double eta_diff = eta - eta_s;
     if (abs(eta_diff) > skip_dis_eta) {
       continue;
     }
@@ -339,14 +329,8 @@ double HadronicLiquefier::get_source_quantity(const double tau,
     if (abs(y_diff) > skip_dis_x) {
       continue;
     }
-    double eta_diff;
-    const double eta_s =
-        0.5 * log((xmu_i[0] + xmu_i[3]) / (xmu_i[0] - xmu_i[3]));
-    if (hydro_Cartesian_) {
-      eta_diff = eta - xmu_i[3];
-    } else {
-      eta_diff = eta - eta_s;
-    }
+    const double eta_s = xmu_i[3]; // Cartesian z, Milne eta
+    double eta_diff = eta - xmu_i[3];
     if (abs(eta_diff) > skip_dis_eta) {
       continue;
     }
@@ -414,16 +398,28 @@ void HadronicLiquefier::add_hydro_sources_hadrons(const double tau,
     auto p_init = hadron.p_in();
     auto x_init = hadron.x_in();
 
-    std::array<double, 4> x_hadron = {
+    std::array<double, 4> x_hadron = {0.0, 0.0, 0.0, 0.0};
+    if (hydro_Cartesian_) {
+      std::array<double, 4> x_hadron = {
         static_cast<double>(x_init.t()),
         static_cast<double>(x_init.x()),
         static_cast<double>(x_init.y()),
         static_cast<double>(x_init.z())};
+    } else {
+      const double tau = sqrt(x_init.t() * x_init.t() - x_init.z() * x_init.z());
+      const double eta_s =
+          0.5 * log((x_init.t() + x_init.z()) / (x_init.t() - x_init.z()));
+      std::array<double, 4> x_hadron = {
+        static_cast<double>(tau),
+        static_cast<double>(x_init.x()),
+        static_cast<double>(x_init.y()),
+        static_cast<double>(eta_s)};
+    }
     std::array<double, 4> p_hadron = {
-        static_cast<double>(p_init.t()),
-        static_cast<double>(p_init.x()),
-        static_cast<double>(p_init.y()),
-        static_cast<double>(p_init.z())};
+      static_cast<double>(p_init.t()),
+      static_cast<double>(p_init.x()),
+      static_cast<double>(p_init.y()),
+      static_cast<double>(p_init.z())};
 
     int baryon_number = hadron.baryon_number();
     int electric_charge = hadron.charge();
@@ -435,6 +431,14 @@ void HadronicLiquefier::add_hydro_sources_hadrons(const double tau,
     hadron_droplet.set_normalization(norm);
     hadron_droplets_list.push_back(hadron_droplet);
   }
+}
+
+Jetscape::real HadronicLiquefier::get_dropletlist_total_energy() const {
+  Jetscape::real total_E = 0.0;
+  for (const auto &drop_i : hadron_droplets_list) {
+    total_E += drop_i.get_pmu()[0];
+  }
+  return (total_E);
 }
 
 void HadronicLiquefier::ClearTask() { hadron_droplets_list.clear(); }

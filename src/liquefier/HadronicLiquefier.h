@@ -200,6 +200,10 @@ public:
    * Function to add the hadrons as sources for hydrodynamics by creating 
    * droplets and smear them with the selected smearing kernel.
    * The tau parameter is only important for the normalization in the Milne case.
+   * 
+   * In case the hydro runs in Cartesian coordinates, the position of the droplets
+   * is given in the Cartesian coordinates. In case the hydro runs in Milne
+   * coordinates, the position of the droplets is given in Milne coordinates.
   */
   void add_hydro_sources_hadrons(const double tau, std::vector<Hadron> &hIn);
 
@@ -210,14 +214,14 @@ public:
     hadron_droplets_list.push_back(droplet_in);
   }
 
-  int get_hadron_droplet_list_size() const { 
-    return hadron_droplets_list.size();
-  }
+  int get_dropletlist_size() const { return (hadron_droplets_list.size()); }
 
   /**
    * Function to clear the list of droplets.
   */
   void clear_hadron_droplet_list() { hadron_droplets_list.clear(); }
+
+  Jetscape::real get_dropletlist_total_energy() const;
 
   virtual void ClearTask();
 };
