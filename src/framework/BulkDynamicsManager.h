@@ -23,6 +23,7 @@
 #include "FluidCellInfo.h"
 #include "BulkMediaInfo.h"
 #include "LiquefierBase.h"
+#include "HadronicLiquefier.h"
 #include "sigslot.h"
 
 #include <vector>
@@ -146,6 +147,7 @@ private:
    * be used as source terms in the hydro.
   */
   std::vector<shared_ptr<Hadron>> store_source_term_hadrons_iso_tau_;
+  std::vector<shared_ptr<Hadron>> store_spectator_hadrons_iso_tau_;
 
   /** Switching temperature between media.
    */
@@ -162,10 +164,13 @@ private:
    */
   bool hydro_Cartesian_;
   bool SMASH_IC_attached_;
-
+  
+  bool SMASH_IC_in_progress_;
+  bool hydro_in_progress_;
 
   protected:
     std::weak_ptr<LiquefierBase> liquefier_ptr_;
+    std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr_;
 
 };
 

@@ -77,11 +77,17 @@ void BulkDynamicsManager::InitTask() {
     // Check if the task is an instance of FluidDynamics, then set liquefier_ptr
     if (auto fluidDynamics = std::dynamic_pointer_cast<FluidDynamics>(task)) {
         liquefier_ptr_ = fluidDynamics->get_liquefier();
+        hadronic_liquefier_ptr_ = fluidDynamics->get_hadronic_liquefier();
     }
   }
 
   JSINFO << "Found " << GetNumberOfTasks()
          << " Bulk Dynamics Manager Tasks/Modules Initialize them ... ";
+
+  for(auto it : GetTaskList()) {
+        auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+        JSWARN << "Module in task list: " << module->GetId();
+  }
 }
 
 void BulkDynamicsManager::ExecuteTask() {
@@ -117,70 +123,104 @@ void BulkDynamicsManager::ExecTime()
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
  
   if(SMASH_IC_attached_) {
-    VERBOSE(3) << "Size of new hadron list at beginning of ExecTime (should be empty) = " 
-                << new_hadrons_for_timestep_.size();
-    
-    linb::any current_hadrons_IC = QueryHistory::Instance()->GetHistoryFromModule("SMASHInitialState");
-    std::vector<Hadron> hadrons = any_cast<std::vector<Hadron>>(current_hadrons_IC);
-    JSINFO << "BDM has " << hadrons.size() << " hadrons obtained from SMASH";
-  
-    // Convert to vector of shared pointers using std::transform
-    std::vector<std::shared_ptr<Hadron>> shared_hadrons;
-    std::transform(hadrons.begin(), hadrons.end(), std::back_inserter(shared_hadrons),
-                [](const Hadron& h) { return std::make_shared<Hadron>(h); });
 
-    // Determine which particles should be removed from the SMASH initial condition
-    ExtractParticlesIsoTau(IC_particle_extraction_tau_, shared_hadrons);
-
-    if(!hydro_Cartesian_) {
-      for(const auto& hadron : remove_hadrons_for_timestep_) {
-        store_source_term_hadrons_iso_tau_.push_back(hadron);
-      }
-    }
-    JSINFO << "Currently " << store_source_term_hadrons_iso_tau_.size() << " hadrons in storage.";
-    
-    // if the hydro is not Cartesian and the SMASH IC is empty, then set the time back to 0
-    if(!hydro_Cartesian_ && shared_hadrons.empty()) {
-      JSINFO << "SMASH IC is empty, resetting time to 0";
-      GetMainClock()->ResetToTime(0.0);
-      JSINFO << "Time reset to " << GetMainClock()->GetCurrentTime();
+    if (SMASH_IC_in_progress_) {
+      VERBOSE(3) << "Size of new hadron list at beginning of ExecTime (should be empty) = " 
+                  << new_hadrons_for_timestep_.size();
       
-      // Set SMASH IC to inactive and the other modules to active
-      for(auto it : GetTaskList()) {
-        auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-        if(dynamic_pointer_cast<SmashInitialConditionWrapper>(module)) {
-          JSWARN << "SetActive(false) = " << module->GetId();
-          module->SetActive(false);
-        } else {
-          JSWARN << "SetActive(true) = " << module->GetId();
-          module->SetActive(true);
+      linb::any current_hadrons_IC = QueryHistory::Instance()->GetHistoryFromModule("SMASHInitialState");
+      std::vector<Hadron> hadrons = any_cast<std::vector<Hadron>>(current_hadrons_IC);
+
+      // Convert to vector of shared pointers using std::transform
+      std::vector<std::shared_ptr<Hadron>> shared_hadrons;
+      std::transform(hadrons.begin(), hadrons.end(), std::back_inserter(shared_hadrons),
+                  [](const Hadron& h) { return std::make_shared<Hadron>(h); });
+
+      // Determine which particles should be removed from the SMASH initial condition
+      ExtractParticlesIsoTau(IC_particle_extraction_tau_, shared_hadrons);
+
+      if(!hydro_Cartesian_) {
+        for(const auto& hadron : remove_hadrons_for_timestep_) {
+          JSINFO << "Remove hadron with participant status " << hadron->participant();
+          if (hadron->participant()) {
+            store_source_term_hadrons_iso_tau_.push_back(hadron);
+          } else {
+            store_spectator_hadrons_iso_tau_.push_back(hadron);
+          }
         }
       }
-    }
-  }
+      JSINFO << "Currently " << store_source_term_hadrons_iso_tau_.size() << " source term hadrons in storage.";
+      JSINFO << "Currently " << store_spectator_hadrons_iso_tau_.size() << " spectator hadrons in storage.";
 
-  // Check if the hydro is activated
-  bool hydro_activated = false;
-  for(auto it : GetTaskList()) {
-    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-    if(dynamic_pointer_cast<FluidDynamics>(module)) {
-      if(module->GetActive()) {
-        hydro_activated = true;
-        JSWARN << "Hydro is active " << hydro_activated;
-        break;
+      if(shared_hadrons.empty()) {
+        SMASH_IC_in_progress_ = false;
+        hydro_in_progress_ = true;
+      }
+
+      if(!hydro_Cartesian_ && !SMASH_IC_in_progress_) {
+        JSINFO << "SMASH IC is empty, resetting time to " << IC_particle_extraction_tau_-GetMainClock()->GetDeltaT();
+        GetMainClock()->ResetToTime(IC_particle_extraction_tau_-GetMainClock()->GetDeltaT());
+        JSINFO << "Time reset to " << GetMainClock()->GetCurrentTime();
+
+        // Set SMASH IC to inactive and the other modules to active
+        for(auto it : GetTaskList()) {
+          auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+          if(dynamic_pointer_cast<SmashInitialConditionWrapper>(module)) {
+            JSWARN << "SetActive(false) = " << module->GetId();
+            module->SetActive(false);
+          } else {
+            JSWARN << "SetActive(true) = " << module->GetId();
+            module->SetActive(true);
+          }
+        }
+
+        // Check if the hydro is activated
+        // ONLY FOR TESTING
+        bool hydro_activated = false;
+        for(auto it : GetTaskList()) {
+          auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+          if(dynamic_pointer_cast<FluidDynamics>(module)) {
+            if(module->GetActive()) {
+              hydro_activated = true;
+              JSWARN << "Hydro is active " << hydro_activated;
+              break;
+            }
+          }
+        }
+        // ONLY FOR TESTING END
       }
     }
+    
+    // if the hydro is in Milne coordinates, and still running
+    if(!hydro_Cartesian_ && hydro_in_progress_) {
+      if(!weak_ptr_is_uninitialized(hadronic_liquefier_ptr_)) {
+        hadronic_liquefier_ptr_.lock()->clear_hadron_droplet_list();
+      }
+
+      // If the hydro is activated, then add the hadrons to the hydro source terms
+      // Create hydro source terms from the removed hadrons
+      bool add_sources_at_current_tau = false;
+      if (std::abs(GetMainClock()->GetCurrentTime() - IC_particle_extraction_tau_) < (GetMainClock()->GetDeltaT() - rounding_error)) {
+        add_sources_at_current_tau = true;
+      }
+      JSWARN << "Add sources at current tau = " << add_sources_at_current_tau;
+      if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr_) && add_sources_at_current_tau) {
+        JSWARN << "Create a hydro source with " 
+                  << store_source_term_hadrons_iso_tau_.size() << " hadrons";
+
+        // Convert std::shared_ptr<Jetscape::Hadron> to raw pointers and store in a vector
+        std::vector<Jetscape::Hadron> hadron_objects;
+        for (const auto& ptr : store_source_term_hadrons_iso_tau_) {
+            hadron_objects.push_back(*ptr);
+        }
+        hadronic_liquefier_ptr_.lock()->add_hydro_sources_hadrons(IC_particle_extraction_tau_,hadron_objects);
+
+        JSWARN << "Number of hadronic droplets: " << hadronic_liquefier_ptr_.lock()->get_dropletlist_size();
+      }
+
+    }
+
   }
-
-  // If the hydro is activated, then add the hadrons to the hydro source terms
-
-
-  // Create hydro source terms from the removed hadrons
-  /*if (!remove_hadrons_for_timestep_.empty() && !weak_ptr_is_uninitialized(liquefier_ptr_)) {
-    VERBOSE(3) << "Create a hydro source with " 
-              << remove_hadrons_for_timestep_.size() << " hadrons";
-    liquefier_ptr_.lock()->add_hydro_sources_hadrons(remove_hadrons_for_timestep_);
-  }*/
 
   // Get the soft particlization hadrons from iSS for the further evolution in SMASH
   // This function fills new_hadrons_for_timestep_, which is handed to SMASH
@@ -213,6 +253,8 @@ void BulkDynamicsManager::InitPerEvent()
       if(dynamic_pointer_cast<SmashInitialConditionWrapper>(module)) {
         JSWARN << "SetActive(true) = " << module->GetId();
         SMASH_IC_attached_ = true;
+        SMASH_IC_in_progress_ = true;
+        hydro_in_progress_ = false;
       } else {
         JSWARN << "SetActive(false) = " << module->GetId();
         module->SetActive(false);
