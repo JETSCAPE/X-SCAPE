@@ -279,6 +279,14 @@
           <d_diff>0.08</d_diff><!-- in [fm] -->
           <width_delta>0.1</width_delta><!-- in [fm] -->
       </CausalLiquefier>
+
+      <!-- HadronicLiquefier-->
+      <HadronicLiquefier>
+          <name>HadronicLiquefier</name>
+          <covariant_kernel>1</covariant_kernel> <!-- 0: use Gaussian kernel, 1: use covariant kernel -->
+          <sigma_transverse>0.5</sigma_transverse> <!-- smearing width in transverse direction -->
+          <sigma_longitudinal>0.5</sigma_longitudinal> <!-- smearing width in longitudinal direction (only for Gaussian kernel) -->
+      </HadronicLiquefier>
   </Liquefier>
 
   <!-- Hydro  Module  -->
