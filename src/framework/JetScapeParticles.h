@@ -379,6 +379,9 @@ public:
   Hadron(const Hadron &srh);
   Hadron(int label, int id, int stat, const FourVector &p, const FourVector &x, 
         double mass, int charge, int baryon_number, int strangeness);
+  Hadron(int label, int id, int stat, const FourVector &p, const FourVector &x, 
+        double mass, int charge, int baryon_number, int strangeness,
+        bool participant);
 
   Hadron &operator=(Hadron &c);
   Hadron &operator=(const Hadron &c);
@@ -399,17 +402,20 @@ public:
   void set_charge(int charge) { charge_ = charge; }
   void set_baryon_number(int baryon_number) { baryon_number_ = baryon_number; }
   void set_strangeness(int strangeness) { strangeness_ = strangeness; }
+  void set_participant(bool participant) { participant_ = participant; }
 
   /// Getter functions for conserved charges
-  int charge() const { return charge_; }
-  int baryon_number() const { return baryon_number_; }
-  int strangeness() const { return strangeness_; }
+  int charge() const { return (charge_); }
+  int baryon_number() const { return (baryon_number_); }
+  int strangeness() const { return (strangeness_); }
+  bool participant() const { return (participant_); }
 
 protected:
   double width_;
   int charge_ = 0;
   int baryon_number_ = 0;
   int strangeness_ = 0;
+  bool participant_ = false;
 };
 
 class Photon : public Parton {

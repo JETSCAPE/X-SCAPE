@@ -232,9 +232,14 @@ std::vector<Hadron> SmashInitialConditionWrapper::GetCurrentHadronList() const {
     const int charge = particle.type().charge();
     const int baryon_number = particle.type().baryon_number();
     const int strangeness = particle.type().strangeness();
+    const auto history = particle.get_history();
+    bool participant = false;
+    if (history.collisions_per_particle > 0) {
+      participant = true;
+    }
     h_list.push_back(Hadron(hadron_label, hadron_id, hadron_status, hadron_p, 
                             hadron_r, hadron_mass, charge, baryon_number, 
-                            strangeness));
+                            strangeness, participant));
   }
   return h_list;
 }
@@ -268,9 +273,20 @@ void SmashInitialConditionWrapper::fill_JS_hadrons_from_smash_particles(
     const int charge = particle.type().charge();
     const int baryon_number = particle.type().baryon_number();
     const int strangeness = particle.type().strangeness();
-    JS_hadrons.push_back(make_shared<Hadron>(hadron_label, hadron_id,
-                                             hadron_status, hadron_p, hadron_r,
-                                             hadron_mass, charge, baryon_number,
-                                             strangeness));
+    const auto history = particle.get_history();
+    bool participant = false;
+    if (history.collisions_per_particle > 0) {
+      participant = true;
+    }
+    // Create a new Hadron object
+    Hadron had(hadron_label, hadron_id, hadron_status, hadron_p, hadron_r,
+             hadron_mass);
+    
+    // Set the properties using setter functions
+    had.set_charge(charge);
+    had.set_baryon_number(baryon_number);
+    had.set_strangeness(strangeness);
+    had.set_participant(participant);
+    JS_hadrons.push_back(make_shared<Hadron>(had));
   }
 }

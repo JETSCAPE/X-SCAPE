@@ -460,6 +460,10 @@ bool Parton::isPhoton(int pid) {
 Hadron::Hadron(const Hadron &srh)
     : JetScapeParticleBase::JetScapeParticleBase(srh) {
   width_ = srh.width_;
+  charge_ = srh.charge_;
+  baryon_number_ = srh.baryon_number_;
+  strangeness_ = srh.strangeness_;
+  participant_ = srh.participant_;
 }
 
 Hadron::Hadron(int label, int id, int stat, const FourVector &p,
@@ -498,6 +502,18 @@ Hadron::Hadron(int label, int id, int stat, const FourVector &p,
   set_strangeness(strangeness);
 }
 
+Hadron::Hadron(int label, int id, int stat, const FourVector &p,
+                const FourVector &x, double mass, int charge, int baryon_number,
+                int strangeness, bool participant)
+    : JetScapeParticleBase::JetScapeParticleBase(label, id, stat, p, x, mass) {
+  assert(CheckOrForceHadron(id, mass));
+  set_restmass(mass);
+  set_charge(charge);
+  set_baryon_number(baryon_number);
+  set_strangeness(strangeness);
+  set_participant(participant);
+}
+
 bool Hadron::CheckOrForceHadron(const int id, const double mass) {
   bool status = InternalHelperPythia.particleData.isHadron(id);
   if (status)
@@ -529,12 +545,20 @@ bool Hadron::has_no_position(){
 Hadron &Hadron::operator=(Hadron &c) {
   JetScapeParticleBase::operator=(c);
   width_ = c.width_;
+  charge_ = c.charge_;
+  baryon_number_ = c.baryon_number_;
+  strangeness_ = c.strangeness_;
+  participant_ = c.participant_;
   return *this;
 }
 
 Hadron &Hadron::operator=(const Hadron &c) {
   JetScapeParticleBase::operator=(c);
   width_ = c.width_;
+  charge_ = c.charge_;
+  baryon_number_ = c.baryon_number_;
+  strangeness_ = c.strangeness_;
+  participant_ = c.participant_;
   return *this;
 }
 
