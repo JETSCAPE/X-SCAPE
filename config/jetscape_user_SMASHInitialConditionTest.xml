@@ -41,9 +41,9 @@
     <grid_max_x> 15 </grid_max_x>
     <grid_max_y> 15 </grid_max_y>
     <grid_max_z> 15 </grid_max_z>
-    <grid_step_x> 0.3 </grid_step_x>
-    <grid_step_y> 0.3 </grid_step_y>
-    <grid_step_z> 0.3 </grid_step_z>
+    <grid_step_x> 0.2 </grid_step_x>
+    <grid_step_y> 0.2 </grid_step_y>
+    <grid_step_z> 0.2 </grid_step_z>
 
     <SMASH>
       <SMASH_config_file>../external_packages/smash/smash_config_initial_condition.yaml</SMASH_config_file>
@@ -72,6 +72,15 @@
     </SMASH>
   </IS>
 
+  <Liquefier>
+    <HadronicLiquefier>
+        <name>HadronicLiquefier</name>
+        <covariant_kernel>1</covariant_kernel> <!-- 0: use Gaussian kernel, 1: use covariant kernel -->
+        <sigma_transverse>0.5</sigma_transverse> <!-- smearing width in transverse direction -->
+        <sigma_longitudinal>0.5</sigma_longitudinal> <!-- smearing width in longitudinal direction (only for Gaussian kernel) -->
+    </HadronicLiquefier>
+  </Liquefier>
+
   <!-- Hydro  Module  -->
   <Hydro>
 
@@ -83,7 +92,7 @@
       <MUSIC_input_file>music_input</MUSIC_input_file>
       <InitialProfile>43</InitialProfile>
       <beastMode>0</beastMode>
-      <Initial_time_tau_0>0.1</Initial_time_tau_0>
+      <Initial_time_tau_0>0.5</Initial_time_tau_0>
       <output_evolution_to_file>0</output_evolution_to_file>
       <store_hydro_info_in_memory>0</store_hydro_info_in_memory>
       <shear_viscosity_eta_over_s>0.08</shear_viscosity_eta_over_s>
