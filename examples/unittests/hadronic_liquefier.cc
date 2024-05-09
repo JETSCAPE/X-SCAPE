@@ -434,7 +434,7 @@ TEST(HadronicLiquefierTest, TestAddHydroSourcesHadrons) {
     std::vector<Hadron> hIn = {had, had, had};
     lqf.add_hydro_sources_hadrons(1.0, hIn);
 
-    EXPECT_EQ(3, lqf.get_hadron_droplet_list_size());
+    EXPECT_EQ(3, lqf.get_dropletlist_size());
 }
 
 TEST(HadronicLiquefierTest, TestGetSourceQuantityZero) {
@@ -631,4 +631,30 @@ TEST(HadronicLiquefierTest, TestGetSourceQuantityGaussCartesian) {
     double tolerance = 1.e-6;
     double expected_result = 1.0;
     ASSERT_NEAR(total_rhob, expected_result, tolerance);
+}
+
+TEST(HadronicLiquefierTest, TestGetDropletlistTotalEnergy) {
+    int label = 1;
+    int id = 211;
+    int stat = 27;
+    // Use the fastjet FourVector convention with the time as last element 
+    FourVector p(0.0, 0.0, 0.0, 0.138);
+    FourVector x(0.1, 0.2, 0.3, 1.0);
+    double mass = 0.138;
+    int charge = 0;
+    int baryon_number = 0;
+    int strangeness = 0;
+
+    Hadron had = Hadron(label, id, stat, p, x, mass, charge, baryon_number, strangeness);
+
+    // add the same hadron 3 times and check the hadron_droplet_list size
+    HadronicLiquefier lqf(true, 0.5, 0.5, 15., 15., 15., 128, 128, 128, false);
+    std::vector<Hadron> hIn = {had, had, had};
+    lqf.add_hydro_sources_hadrons(1.0, hIn);
+
+    double tolerance = 1.e-6;
+    double expected_result = 3.*0.138;
+    double real_result = lqf.get_dropletlist_total_energy();
+
+    ASSERT_NEAR(expected_result, real_result, tolerance);
 }
