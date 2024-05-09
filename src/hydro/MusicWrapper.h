@@ -31,29 +31,51 @@ using namespace Jetscape;
 class HydroSourceJETSCAPE : public HydroSourceBase {
 private:
   std::weak_ptr<LiquefierBase> liquefier_ptr;
+  std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr;
 
 public:
   HydroSourceJETSCAPE() = default;
   ~HydroSourceJETSCAPE() {}
 
-  void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liqueifier) {
-    liquefier_ptr = new_liqueifier;
+  void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
+    liquefier_ptr = new_liquefier;
+  }
+
+  void add_a_hadronic_liquefier(std::shared_ptr<HadronicLiquefier> new_liquefier) {
+    hadronic_liquefier_ptr = new_liquefier;
   }
 
   int get_number_of_sources() const {
+    int num_sources = 0;
     if (weak_ptr_is_uninitialized(liquefier_ptr)) {
-      return (0);
+      num_sources += 0;
     } else {
-      return (liquefier_ptr.lock()->get_dropletlist_size());
+      num_sources += (liquefier_ptr.lock()->get_dropletlist_size());
     }
+
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      num_sources += 0;
+    } else {
+      num_sources += 
+                (hadronic_liquefier_ptr.lock()->get_dropletlist_size());
+    }
+    return num_sources;
   }
 
   double get_total_E_of_sources() const {
+    double total_E = 0.0;
     if (weak_ptr_is_uninitialized(liquefier_ptr)) {
-      return (0.0);
+      total_E += 0.0;
     } else {
-      return (liquefier_ptr.lock()->get_dropletlist_total_energy());
+      total_E += (liquefier_ptr.lock()->get_dropletlist_total_energy());
     }
+
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      total_E += 0.0;
+    } else {
+      total_E += (hadronic_liquefier_ptr.lock()->get_dropletlist_total_energy());
+    }
+    return total_E;
   }
 
   //! this function returns the energy source term J^\mu at a given point
@@ -62,14 +84,50 @@ public:
                                const double eta_s, const FlowVec &u_mu,
                                EnergyFlowVec &j_mu) const {
     j_mu = {0.0};
-    if (weak_ptr_is_uninitialized(liquefier_ptr))
-      return;
-
-    std::array<Jetscape::real, 4> jmu_tmp = {0.0};
-    liquefier_ptr.lock()->get_source(tau, x, y, eta_s, jmu_tmp);
-    for (int i = 0; i < 4; i++) {
-      j_mu[i] = jmu_tmp[i]/hbarC;  // convert the unit from GeV/fm^4 to 1/fm^5
+    if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
+      std::array<Jetscape::real, 4> jmu_tmp = {0.0};
+      liquefier_ptr.lock()->get_source(tau, x, y, eta_s, jmu_tmp);
+      for (int i = 0; i < 4; i++) {
+        j_mu[i] = jmu_tmp[i]/hbarC;  // convert the unit from GeV/fm^4 to 1/fm^5
+      }
     }
+
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      std::array<double, 4> jmu_tmp = {0.0};
+      hadronic_liquefier_ptr.lock()->get_source_energy(tau, x, y, eta_s, jmu_tmp);
+      for (int i = 0; i < 4; i++) {
+        j_mu[i] += jmu_tmp[i]/hbarC;  // convert the unit from GeV/fm^4 to 1/fm^5
+      }
+    }
+  }
+
+  //! these functions return the B, Q, S density source terms at a given point
+  //! (tau, x, y, eta_s)
+  double get_hydro_rhob_source(const double tau, const double x, const double y,
+                               const double eta_s, const FlowVec &u_mu) const {
+
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      return 0.0;
+    }
+    return hadronic_liquefier_ptr.lock()->get_source_rhob(tau, x, y, eta_s);
+  }
+
+  double get_hydro_rhoq_source(const double tau, const double x, const double y,
+                               const double eta_s, const FlowVec &u_mu) const {
+
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      return 0.0;
+    }
+    return hadronic_liquefier_ptr.lock()->get_source_rhoq(tau, x, y, eta_s);
+  }
+
+  double get_hydro_rhos_source(const double tau, const double x, const double y,
+                               const double eta_s, const FlowVec &u_mu) const {
+
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      return 0.0;
+    }
+    return hadronic_liquefier_ptr.lock()->get_source_rhos(tau, x, y, eta_s);
   }
 };
 
@@ -121,9 +179,14 @@ public:
   void SetHydroGridInfo();
   void PassHydroEvolutionHistoryToFramework();
 
-  void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liqueifier) {
-    liquefier_ptr = new_liqueifier;
+  void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
+    liquefier_ptr = new_liquefier;
     hydro_source_terms_ptr->add_a_liquefier(liquefier_ptr.lock());
+  }
+
+  void add_a_hadronic_liquefier(std::shared_ptr<HadronicLiquefier> new_liquefier) {
+    hadronic_liquefier_ptr = new_liquefier;
+    hydro_source_terms_ptr->add_a_hadronic_liquefier(hadronic_liquefier_ptr.lock());
   }
 
   void GetHyperSurface(Jetscape::real T_cut,

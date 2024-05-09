@@ -182,19 +182,23 @@ void MpiMusic::InitializeHydroEnergyProfile() {
   JSINFO << "Initialize density profiles in MUSIC ...";
   std::vector<double> entropy_density = ini->GetEntropyDensityDistribution();
   double dx = ini->GetXStep();
+  double dy = ini->GetYStep();
   double dz = ini->GetZStep();
   double z_max = ini->GetZMax();
+  int nx = ini->GetXSize();
+  int ny = ini->GetYSize();
   int nz = ini->GetZSize();
-  double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
-  JSINFO << "hydro initial time  tau0 = " << tau0 << " fm"; //xyw
 
   // need further improvement to accept multiple source term objects
   music_hydro_ptr->generate_hydro_source_terms();
 
   if (pre_eq_ptr == nullptr) {
-    JSWARN << "Missing the pre-equilibrium module ...";
-    music_hydro_ptr->initialize_hydro();
+    JSINFO << "Missing the pre-equilibrium module ...";
+    JSINFO << nx << "," << ny << "," << nz;
+    music_hydro_ptr->initialize_hydro_xscape(nx,ny,nz,dx,dy,dz);
   } else {
+    double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
+    JSINFO << "hydro initial time  tau0 = " << tau0 << " fm";
     music_hydro_ptr->initialize_hydro_from_jetscape_preequilibrium_vectors(
         tau0,
         dx, dz, z_max, nz, pre_eq_ptr->e_, pre_eq_ptr->P_,
@@ -215,7 +219,7 @@ void MpiMusic::InitializeHydroEnergyProfile() {
 void MpiMusic::EvolveHydroUpto(const double tauEnd) {
   if (hydro_status == NOT_START) {
     InitializeHydroEnergyProfile();
-    music_hydro_ptr-> prepare_run_hydro_one_time_step();
+    music_hydro_ptr->prepare_run_hydro_one_time_step();
   }
   music_hydro_ptr->run_hydro_upto(tauEnd);
 }
@@ -229,7 +233,11 @@ void MpiMusic::CalculateTime() {
 void MpiMusic::ExecTime() {
   VERBOSE(2) << "MpiMusic::ExecTime() main Clock = "
              << GetMainClock()->GetCurrentTime() << " fm/c ...";
-  PassHydroSurfaceToFramework();
+  // Add hydro sources for the current time step here
+
+  // Pass the FO surface for the current time step to framework
+  
+  //PassHydroSurfaceToFramework();
 }
 
 void MpiMusic::EvolveHydro() {
