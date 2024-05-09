@@ -34,6 +34,7 @@
 #include "BulkMediaInfo.h"
 #include "FluidEvolutionHistory.h"
 #include "LiquefierBase.h"
+#include "HadronicLiquefier.h"
 #include "SurfaceCellInfo.h"
 
 namespace Jetscape {
@@ -74,7 +75,7 @@ protected:
   std::vector<SurfaceCellInfo> surfaceCellVector_;
 
   std::weak_ptr<LiquefierBase> liquefier_ptr;
-  std::weak_ptr<LiquefierBase> hadronic_liquefier_ptr;
+  std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr;
 
 public:
   /** Default constructor. task ID as "FluidDynamics",
@@ -306,7 +307,7 @@ public:
     liquefier_ptr = new_liquefier;
   }
 
-  virtual void add_a_hadronic_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
+  virtual void add_a_hadronic_liquefier(std::shared_ptr<HadronicLiquefier> new_liquefier) {
     hadronic_liquefier_ptr = new_liquefier;
   }
 
@@ -324,6 +325,11 @@ public:
 
   // get the liquefier pointer
   std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
+
+  // get the hadronic liquefier pointer
+  std::weak_ptr<HadronicLiquefier> get_hadronic_liquefier() {
+    return (hadronic_liquefier_ptr);
+  }
 
 }; // end class FluidDynamics
 
