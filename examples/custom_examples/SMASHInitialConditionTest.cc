@@ -59,7 +59,7 @@ int main(int argc, char** argv)
   Show();
 
   // clocks here are defaulted for testing, clocks can customized via inheriting from the MainClock/ModuleClock base classes ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-2,5,0.2); // JP: make consistent with reading from XML in init phase ...
+  auto mClock = make_shared<MainClock>("SpaceTime",-2,5,0.1); // JP: make consistent with reading from XML in init phase ...
   mClock->Info();
 
   auto jetscape = make_shared<JetScape>();
@@ -77,20 +77,20 @@ int main(int argc, char** argv)
 
   // Initial conditions
   auto initial_state = make_shared<InitialState>();
-  jetscape->Add(initial_state);
+  jetscape->Add(initial_state); // to define a grid for the hydro
 
   auto smash_ic = make_shared<SmashInitialConditionWrapper>();
   // per time step for the IC
   smash_ic->SetTimeStepped(true);
 
   // Liquefier
-  //auto hadronic_liquefier = make_shared<HadronicLiquefier>();
+  auto hadronic_liquefier = make_shared<HadronicLiquefier>();
 
   // Hydro evolution
   auto hydro = make_shared<MpiMusic>();
   // per time step for the hydro
   hydro->SetTimeStepped(true);
-  //hydro->add_a_hadronic_liquefier(hadronic_liquefier);
+  hydro->add_a_hadronic_liquefier(hadronic_liquefier);
 
   // Soft particlization
   //auto iSS = make_shared<iSpectraSamplerWrapper>();
