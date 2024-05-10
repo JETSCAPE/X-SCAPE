@@ -205,9 +205,6 @@ void EPGun::ExecuteTask() {
       }
 
       if (!FSR_on) {
-        // only accept particles after MPI
-        if (particle.status() != 62)
-          continue;
         // only accept gluons and quarks
         // Also accept Gammas to put into the hadron's list
         if (fabs(particle.id()) > 5 &&
