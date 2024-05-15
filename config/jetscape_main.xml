@@ -142,6 +142,7 @@
       <FSR_on>0</FSR_on>
       <!-- The soft momentum cutoff in GeV removes partons from the pythia gun. The default matches the PP19 setup. -->
       <softMomentumCutoff>0.0</softMomentumCutoff>
+      <use_positron>0</use_positron>
     </EPGun>
   </Hard>
 

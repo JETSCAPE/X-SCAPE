@@ -65,6 +65,7 @@ void EPGun::InitTask() {
   eElectron = GetXMLElementDouble({"Hard", "EPGun", "electron_energy"});
   eProton = GetXMLElementDouble({"Hard", "EPGun", "proton_energy"});
   Q2min = GetXMLElementDouble({"Hard", "EPGun", "Q2min"});
+  use_positron = GetXMLElementInt({"Hard", "EPGun", "use_positron"});
 
   //other Pythia settings
   readString("HadronLevel:Decay = off");
@@ -76,7 +77,11 @@ void EPGun::InitTask() {
   readString("Beams:idA = 2212");
   settings.parm("Beams:eA", eProton);
   // BeamB = electron.
-  readString("Beams:idB = 11");
+  if(use_positron){
+    readString("Beams:idB = -11");
+    JSINFO << "Running with positron beam.";
+  }else
+    readString("Beams:idB = 11");
   settings.parm("Beams:eB", eElectron);
 
   // Set up DIS process within some phase space.
@@ -199,7 +204,7 @@ void EPGun::ExecuteTask() {
         continue;
 
       //catching electrons
-      if(particle.id() == 11){
+      if(abs(particle.id()) == 11){
         AddHadron(EPGun::PythiaToJSHadron(particle));
         continue;
       }
