@@ -31,6 +31,8 @@
 
 using std::ofstream;
 
+#include "pdgcode.h"
+
 namespace Jetscape {
 
 template <class T>
@@ -61,9 +63,6 @@ public:
   // class. Tasks will often directly call these functions, so we need to prevent them from doing so.
   void WriteComment(string s) { }
   void WriteWhiteSpace(string s) { }
-
-  void get_ptclist();
-  int get_ch(const int pid);
 
 protected:
   T output_file; //!< Output file
