@@ -456,6 +456,23 @@ void HybridHadronization::DoHadronization(vector<vector<shared_ptr<Parton>>>& sh
   number_p_fake = 0;    //reset counter for the number of fake partons
   double energy_hadrons = 0.; //needed for the kinetic scaling of the negative hadrons
 
+  //initial hadron list
+  //pre existing hadrons
+  if(hOut.size() > 0 and reco_hadrons_pythia){
+    JSINFO << "adding initial hadrons";
+    for(int i=0; i<hOut.size(); i++){
+      //if(hOut[i].get()->pid() < 23) continue;
+      HHhadron earlyHad;
+      earlyHad.set_id(hOut[i].get()->pid());
+      earlyHad.P(hOut[i].get()->p_in());
+      earlyHad.is_final(true);
+      earlyHad.is_recohad(false);
+      //earlyHad.status(hOut[i].get()->pstat());
+      Initial_hadrons.add(earlyHad);
+    }
+    hOut.clear();
+  }
+
   //JSINFO<<"Start Hybrid Hadronization using both Recombination and PYTHIA Lund string model.";
   pythia.event.reset(); HH_shower.clear();
   parton_collection neg_ptns;
@@ -767,19 +784,6 @@ void HybridHadronization::DoHadronization(vector<vector<shared_ptr<Parton>>>& sh
           JSWARN << "Hadronization of negative partons failed, try without recombination one more time";
         }
       }
-
-      
-      //pre existing hadrons
-      for(int i=1; i<hOut.size(); i++){
-        HHhadron earlyHad;
-        earlyHad.set_id(hOut[i].get()->pid());
-        earlyHad.P(hOut[i].get()->p_in());
-        earlyHad.is_final(true);
-        earlyHad.is_recohad(false);
-        //earlyHad.status(hOut[i].get()->pstat());
-        HH_hadrons.add(earlyHad);
-      }
-      hOut.resize(1);
 
 	    //running recombination
 	    recomb();
@@ -6371,6 +6375,18 @@ bool HybridHadronization::invoke_py(){
 			    eve_to_had.push_back(i+1);
 		    }
       }
+
+      //initial hadrons
+      for(int i=0; i<Initial_hadrons.num(); ++i){
+        //to make sure mass is set appropriately
+        double massnow = Initial_hadrons[i].e()*Initial_hadrons[i].e() -
+                        (Initial_hadrons[i].px()*Initial_hadrons[i].px() + Initial_hadrons[i].py()*Initial_hadrons[i].py() + Initial_hadrons[i].pz()*Initial_hadrons[i].pz());
+        massnow = (massnow >= 0.) ? sqrt(massnow) : -sqrt(-massnow);
+        event.append(Initial_hadrons[i].id(),81,0,0,Initial_hadrons[i].px(),Initial_hadrons[i].py(),Initial_hadrons[i].pz(),Initial_hadrons[i].e(),massnow);
+        event[event.size()-1].vProd(Initial_hadrons[i].x(), Initial_hadrons[i].y(), Initial_hadrons[i].z(), Initial_hadrons[i].x_t());
+        eve_to_had.push_back(i+1);
+      }
+
       case4 &= pythia.next();
       set_spacetime_for_pythia_hadrons(event,size_input,eve_to_had,attempt,case4,true,true);
       event.reset();

@@ -337,7 +337,7 @@ class HybridHadronization : public HadronizationModule<HybridHadronization>
   parton_collection HH_shower, HH_thermal;
   parton_collection HH_recomb_extrapartons;
   parton_collection HH_showerptns, HH_remnants, HH_pyremn;
-  hadron_collection HH_hadrons, HH_pythia_hadrons;
+  hadron_collection HH_hadrons, HH_pythia_hadrons, Initial_hadrons;
 
   //function to form strings out of original shower
   void stringform();
