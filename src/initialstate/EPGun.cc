@@ -190,6 +190,10 @@ void EPGun::ExecuteTask() {
         continue; // 0, 1, 2: total event and beams
       Pythia8::Particle &particle = event[parid];
 
+      //skipping everything decayed
+      if (!particle.isFinal())
+        continue;
+
       //replacing diquarks with antiquarks (and anti-dq's with quarks)
       //the id is set to the heaviest quark in the diquark (except down quark)
       //this technically violates baryon number conservation over the entire event
@@ -199,12 +203,8 @@ void EPGun::ExecuteTask() {
         else{particle.id( particle.id()/1000 );}
       }
 
-      //skipping everything decayed
-      if (!particle.isFinal())
-        continue;
-
-      //catching electrons
-      if(abs(particle.id()) == 11){
+      //catching scattered electron and beam remenants
+      if(particle.isHadron() or particle.isLepton()){
         AddHadron(EPGun::PythiaToJSHadron(particle));
         continue;
       }
