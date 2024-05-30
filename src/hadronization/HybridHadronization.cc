@@ -768,6 +768,19 @@ void HybridHadronization::DoHadronization(vector<vector<shared_ptr<Parton>>>& sh
         }
       }
 
+      
+      //pre existing hadrons
+      for(int i=1; i<hOut.size(); i++){
+        HHhadron earlyHad;
+        earlyHad.set_id(hOut[i].get()->pid());
+        earlyHad.P(hOut[i].get()->p_in());
+        earlyHad.is_final(true);
+        earlyHad.is_recohad(false);
+        //earlyHad.status(hOut[i].get()->pstat());
+        HH_hadrons.add(earlyHad);
+      }
+      hOut.resize(1);
+
 	    //running recombination
 	    recomb();
       sh_recofactor = sh_recofactor_store;
