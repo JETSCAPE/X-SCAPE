@@ -459,18 +459,19 @@ void HybridHadronization::DoHadronization(vector<vector<shared_ptr<Parton>>>& sh
   //initial hadron list
   //pre existing hadrons
   if(hOut.size() > 0 and reco_hadrons_pythia){
-    JSINFO << "adding initial hadrons";
-    for(int i=0; i<hOut.size(); i++){
-      //if(hOut[i].get()->pid() < 23) continue;
-      HHhadron earlyHad;
-      earlyHad.set_id(hOut[i].get()->pid());
-      earlyHad.P(hOut[i].get()->p_in());
-      earlyHad.is_final(true);
-      earlyHad.is_recohad(false);
-      //earlyHad.status(hOut[i].get()->pstat());
-      Initial_hadrons.add(earlyHad);
+    for(vector<shared_ptr<Hadron>>::iterator hadIter = hOut.begin(); hadIter<hOut.end();){
+      if(hadIter->get()->pid() > 23){ //skipping leptons
+        HHhadron earlyHad;
+        earlyHad.set_id(hadIter->get()->pid());
+        earlyHad.P(hadIter->get()->p_in());
+        earlyHad.is_final(true);
+        earlyHad.is_recohad(false);
+        //earlyHad.status(hOut[i].get()->pstat());
+        Initial_hadrons.add(earlyHad);
+        hadIter = hOut.erase(hadIter);
+      }
+      else hadIter++;
     }
-    hOut.clear();
   }
 
   //JSINFO<<"Start Hybrid Hadronization using both Recombination and PYTHIA Lund string model.";
