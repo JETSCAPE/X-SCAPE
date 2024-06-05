@@ -34,6 +34,7 @@ private:
   double softMomentumCutoff;
   bool FSR_on = false;
   int use_positron = 0;
+  int photoproduction = 0;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<EPGun> reg;

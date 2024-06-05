@@ -66,6 +66,7 @@ void EPGun::InitTask() {
   eProton = GetXMLElementDouble({"Hard", "EPGun", "proton_energy"});
   Q2min = GetXMLElementDouble({"Hard", "EPGun", "Q2min"});
   use_positron = GetXMLElementInt({"Hard", "EPGun", "use_positron"});
+  photoproduction = GetXMLElementInt({"Hard", "EPGun", "photoproduction"});
 
   //other Pythia settings
   readString("HadronLevel:Decay = off");
@@ -84,24 +85,31 @@ void EPGun::InitTask() {
     readString("Beams:idB = 11");
   settings.parm("Beams:eB", eElectron);
 
-  // Set up DIS process within some phase space.
-  // Neutral current (with gamma/Z interference).
-  readString("WeakBosonExchange:ff2ff(t:gmZ) = on");
-  // Uncomment to allow charged current.
-  //readString("WeakBosonExchange:ff2ff(t:W) = on");
-  // Phase-space cut: minimal Q2 of process.
-  settings.parm("PhaseSpace:Q2Min", Q2min);
+  if(photoproduction){
+    readString("PDF:lepton2gamma = on");
+    readString("HardQCD:all = on");
+    readString("PhotonParton:all = on");
+  }
+  else{
+    // Set up DIS process within some phase space.
+    // Neutral current (with gamma/Z interference).
+    readString("WeakBosonExchange:ff2ff(t:gmZ) = on");
+    // Uncomment to allow charged current.
+    //readString("WeakBosonExchange:ff2ff(t:W) = on");
+    // Phase-space cut: minimal Q2 of process.
+    settings.parm("PhaseSpace:Q2Min", Q2min);
 
-  // Set dipole recoil on. Necessary for DIS + shower.
-  readString("SpaceShower:dipoleRecoil = on");
+    // Set dipole recoil on. Necessary for DIS + shower.
+    readString("SpaceShower:dipoleRecoil = on");
 
-  // Allow emissions up to the kinematical limit,
-  // since rate known to match well to matrix elements everywhere.
-  readString("SpaceShower:pTmaxMatch = 2");
+    // Allow emissions up to the kinematical limit,
+    // since rate known to match well to matrix elements everywhere.
+    readString("SpaceShower:pTmaxMatch = 2");
 
-  // QED radiation off lepton not handled yet by the new procedure.
-  readString("PDF:lepton = off");
-  readString("TimeShower:QEDshowerByL = off");
+    // QED radiation off lepton not handled yet by the new procedure.
+    readString("PDF:lepton = off");
+    readString("TimeShower:QEDshowerByL = off");
+  }
 
   // SC: read flag for FSR
   FSR_on = GetXMLElementInt({"Hard", "EPGun", "FSR_on"});
