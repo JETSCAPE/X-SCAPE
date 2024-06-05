@@ -458,6 +458,7 @@ void HybridHadronization::DoHadronization(vector<vector<shared_ptr<Parton>>>& sh
 
   //initial hadron list
   //pre existing hadrons
+  Initial_hadrons.clear();
   if(hOut.size() > 0 and reco_hadrons_pythia){
     for(vector<shared_ptr<Hadron>>::iterator hadIter = hOut.begin(); hadIter<hOut.end();){
       if(hadIter->get()->pid() > 23){ //skipping leptons
