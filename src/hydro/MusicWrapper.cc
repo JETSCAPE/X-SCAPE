@@ -185,8 +185,6 @@ void MpiMusic::InitializeHydroEnergyProfile() {
   double dz = ini->GetZStep();
   double z_max = ini->GetZMax();
   int nz = ini->GetZSize();
-  double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
-  JSINFO << "hydro initial time  tau0 = " << tau0 << " fm"; //xyw
 
   // need further improvement to accept multiple source term objects
   music_hydro_ptr->generate_hydro_source_terms();
@@ -195,6 +193,8 @@ void MpiMusic::InitializeHydroEnergyProfile() {
     JSWARN << "Missing the pre-equilibrium module ...";
     music_hydro_ptr->initialize_hydro();
   } else {
+    double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
+    JSINFO << "hydro initial time  tau0 = " << tau0 << " fm";
     music_hydro_ptr->initialize_hydro_from_jetscape_preequilibrium_vectors(
         tau0,
         dx, dz, z_max, nz, pre_eq_ptr->e_, pre_eq_ptr->P_,
