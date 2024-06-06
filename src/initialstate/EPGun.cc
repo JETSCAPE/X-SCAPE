@@ -87,8 +87,10 @@ void EPGun::InitTask() {
 
   if(photoproduction){
     readString("PDF:lepton2gamma = on");
-    readString("HardQCD:all = on");
     readString("PhotonParton:all = on");
+    readString("Photon:Q2max = 1.0");
+    readString("Photon:ProcessType = 0");
+    readString("SoftQCD:nonDiffractive = on");
   }
   else{
     // Set up DIS process within some phase space.
