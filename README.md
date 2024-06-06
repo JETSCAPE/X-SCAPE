@@ -1,4 +1,4 @@
-# X-SCAPE 1.1.2
+# X-SCAPE 1.1.3
 
 The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (X-SCAPE) is the enhanced (and 2nd) project of the JETSCAPE
 collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions.
@@ -75,16 +75,14 @@ An example reading an ascii output file is provided:
 ./build/readerTest
 ```
 
-which reads in the generated showers does some DFS search and shows the output. You can generate an output graph format which can be easily visualized using graphViz or other tools like Gephi (GUI for free for Mac) or more advanced, graph-tools (Python) and many more. Furthermore, as a "closure" test, the FastJet core package (compiled in our JetScape library) is used to perform a simple jetfinding (on the "final" partons, in graph language, incoming partons in a vertex with no outgoing partons/childs), and since the "shower" is perfectly collinear the jet pT is identical to the hard process parton pT (modulo some random new partons/roots in the final state, see above).  
+which reads in the generated showers does some DFS search and shows the output. You can generate an output graph format which can be easily visualized using graphViz or other tools like Gephi (GUI for free for Mac) or more advanced, graph-tools (Python) and many more. Furthermore, as a "closure" test, the FastJet core package (compiled in our JetScape library) is used to perform a simple jetfinding (on the "final" partons, in graph language, incoming partons in a vertex with no outgoing partons/childs), and since the "shower" is perfectly collinear the jet pT is identical to the hard process parton pT (modulo some random new partons/roots in the final state, see above).
 
 ## JETSCAPE Tunes
 
-Currently, there exists a pp tune [PP19](https://arxiv.org/abs/1910.05481), which can be run by:
-```bash
-./runJetscape ../config/jetscape_user_PP19.xml
-```
+There are several JETSCAPE tunes from publications available.
+The XML files to reproduce the results are available in the `config/publications_config` directory.
+Please see [JETSCAPE Tunes](config/publications_config/README.md) for more information.
 
-Tuning of Pb-Pb is ongoing.
 Several example hydro profiles can be downloaded using `examples/get_hydroSample*`.
 
 ## X-SCAPE modules (New)
@@ -243,7 +241,6 @@ More material on the physics behind JETSCAPE and how to use it can be found in t
 ## Troubleshooting
 
 If you encounter a problem, please report the issue [here](https://github.com/JETSCAPE/JETSCAPE/issues).
-Please be sure to include enough information so that we can reproduce your issue: your platform, JETSCAPE version, configuration file, and anything else that may be relevant.
 
 # Contributing
 
