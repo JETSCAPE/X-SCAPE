@@ -134,26 +134,29 @@ void gammaLoss::InitTask() {
   NUM1 = -1 * rand();
   rng_engine.seed(rand_seed);
 
-  //initial integral initializations
-  TF1* ffunc = new TF1("ffunc",f,x0,x1,0);
-  ffunc->SetParameter(0,1);
-  integral1 = ffunc->Integral(x0,x1);
-  delete ffunc;
+  //thermal emission initialization
+  if(emissionOn){
+    //initial integral initializations
+    TF1* ffunc = new TF1("ffunc",f,x0,x1,0);
+    ffunc->SetParameter(0,1);
+    integral1 = ffunc->Integral(x0,x1);
+    delete ffunc;
 
-  TF1* gfunc = new TF1("gfunc",g,x0,x1,0);
-  gfunc->SetParameter(0,1);
-  integral2 = gfunc->Integral(x0,x1);
-  delete gfunc;
-
-  //distribution initialization
-  thermalpdf = new TF1("pdf",dRdx,x0,x1,1);
-  thermalpdf->SetParameter(0,0.25);
-  sampler = ROOT::Math::Factory::CreateDistSampler();
-  sampler->SetFunction(*thermalpdf,1);
-  sampler->SetRange(x0,x1);
-  sampler->SetSeed(rand_seed);
-  bool success = sampler->Init();
-  if(!success) JSWARN << "Sampler failed to initialize";
+    TF1* gfunc = new TF1("gfunc",g,x0,x1,0);
+    gfunc->SetParameter(0,1);
+    integral2 = gfunc->Integral(x0,x1);
+    delete gfunc;
+  
+    //creating the pdf
+    thermalpdf = new TF1("pdf",dRdx,x0,x1,1);
+    thermalpdf->SetParameter(0,0.25);
+    sampler = ROOT::Math::Factory::CreateDistSampler();
+    sampler->SetFunction(*thermalpdf,1);
+    sampler->SetRange(x0,x1);
+    sampler->SetSeed(rand_seed);
+    bool success = sampler->Init();
+    if(!success) JSWARN << "Sampler failed to initialize";
+  }
 }
 
 void gammaLoss::WriteTask(weak_ptr<JetScapeWriter> w) {

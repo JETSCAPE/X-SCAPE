@@ -29,6 +29,9 @@ private:
   double brick_L;
   double start_time;
   bool bjorken_expansion_on;
+  double vx = 0.;
+  double vy = 0.;
+  double vz = 0.;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<Brick> reg;

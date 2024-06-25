@@ -69,6 +69,11 @@ void Brick::InitTask() {
   hydro_tau_0 = start_time;
 
   brick_L = GetXMLElementDouble({"Eloss", "Matter", "brick_length"});
+  vx = GetXMLElementDouble({"Hydro", "Brick", "vx"});
+  vy = GetXMLElementDouble({"Hydro", "Brick", "vy"});
+  vz = GetXMLElementDouble({"Hydro", "Brick", "vz"});
+
+  JSINFO << "Brick flow (vx,vy,vz) = " << vx << ", " << vy << ", " << vz; 
 
   //Parameter parameter_list;
   GetParameterList().hydro_input_filename = (char *)"dummy"; //*(argv+1);
@@ -116,9 +121,9 @@ void Brick::GetHydroInfo(
     fluid_cell_info_ptr->mu_C = 0.0;
     fluid_cell_info_ptr->mu_S = 0.0;
     // dynamical quantites
-    fluid_cell_info_ptr->vx = 0.0;
-    fluid_cell_info_ptr->vy = 0.0;
-    fluid_cell_info_ptr->vz = 0.0;
+    fluid_cell_info_ptr->vx = vx;
+    fluid_cell_info_ptr->vy = vy;
+    fluid_cell_info_ptr->vz = vz;
     for (int i = 0; i < 4; i++) {
       for (int j = 0; j < 4; j++) {
         fluid_cell_info_ptr->pi[i][j] = 0.0;
