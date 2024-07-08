@@ -35,6 +35,7 @@ private:
   bool FSR_on = false;
   int use_positron = 0;
   int photoproduction = 0;
+  int initial_virtuality_pT = 1;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<EPGun> reg;
