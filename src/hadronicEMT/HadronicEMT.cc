@@ -17,84 +17,407 @@
 #include "JetScapeSignalManager.h"
 #include "BulkMediaInfo.h"
 
+#include <gsl/gsl_eigen.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
+
+
 namespace Jetscape {
 
 HadronicEMT::HadronicEMT(){
   VERBOSE(8);
-  dx_ = 0.3;
-  dy_ = 0.3;
-  dz_ = 0.3;
   InitTask(); // Get values of parameters from XML 
+
+  Tmualpha_gsl = gsl_matrix_alloc(4, 4);
+  eigenvalues = gsl_vector_complex_alloc(4);
+  eigenvectors = gsl_matrix_complex_alloc(4, 4);
+  w = gsl_eigen_nonsymmv_alloc(4);
 }
 
-HadronicEMT::HadronicEMT(double dx, double dy, double dz){
+HadronicEMT::HadronicEMT(double sigma_transverse, double sigma_longitudinal, 
+    int smearing_covariant)
+    : sigma_transverse_(sigma_transverse),
+    sigma_longitudinal_(sigma_longitudinal),
+    smearing_covariant_(smearing_covariant){
   VERBOSE(8);
   JSINFO << "Initialize HadronicEMT ...";
-  dx_ = dx;
-  dy_ = dy;
-  dz_ = dz;
-  JSINFO << "<HadronicEMT> cell size: dx = " << dx_ << " fm, dy = " 
-    << dy_ << " fm, dz = " << dz_ << " fm";
+
+  Tmualpha_gsl = gsl_matrix_alloc(4, 4);
+  eigenvalues = gsl_vector_complex_alloc(4);
+  eigenvectors = gsl_matrix_complex_alloc(4, 4);
+  w = gsl_eigen_nonsymmv_alloc(4);
 }
+
+HadronicEMT::~HadronicEMT() {
+  gsl_matrix_free(Tmualpha_gsl);
+  gsl_vector_complex_free(eigenvalues);
+  gsl_matrix_complex_free(eigenvectors);
+  gsl_eigen_nonsymmv_free(w);
+}
+
 
 void HadronicEMT::InitTask(){
     JSINFO << "Initialize HadronicEMT ...";
 
-    dx_ = JetScapeXML::Instance()->GetElementDouble({"HadronicEMT", "dx"});
-    dy_ = JetScapeXML::Instance()->GetElementDouble({"HadronicEMT", "dy"});
-    dz_ = JetScapeXML::Instance()->GetElementDouble({"HadronicEMT", "dz"});
+    sigma_transverse_ = JetScapeXML::Instance()->GetElementDouble({"HadronicEMT", "sigma_transverse"});
+    sigma_longitudinal_ = JetScapeXML::Instance()->GetElementDouble({"HadronicEMT", "sigma_longitudinal"});
+    smearing_covariant_ = JetScapeXML::Instance()->GetElementInt({"HadronicEMT", "smearing_covariant"});
+}
+
+
+/** 
+ * @brief Computes the energy density and flow velocity from the stress-energy 
+ * tensor T^{\mu\nu}.
+ *
+ * This function takes the stress-energy tensor T^{\mu\nu} for a single 
+ * space-time point and computes the energy density (e) and flow velocity 
+ * (u^\mu).
+ * It solves the equation T^{\mu}_{\nu} u^{\nu} = e u^{\mu} using GSL for 
+ * eigenvalue computation.
+ * 
+ * @param Tmn Reference to a 4x4 array representing the stress-energy tensor 
+ * T^{\mu\nu}.
+ * @param e Output parameter where the computed energy density will be stored.
+ * @param umu Output parameter where the computed flow velocity u^\mu will be 
+ * stored.
+ * 
+ * @details
+ * The function multiplies T^{\mu\nu} with a metric tensor g_{\nu\alpha} to 
+ * obtain T^{\mu}_{\alpha}, initializes T^{\mu}_{\alpha} as a 4x4 array of 
+ * zeros, and then solves the eigenvalue problem using GSL. If the eigenvalue 
+ * computation fails (returns GSL_FAILURE), it sets e to 0.0 and umu to 
+ * {1., 0., 0., 0.}. Otherwise, it parses the eigenvalues and eigenvectors to 
+ * determine the energy density and flow velocity.
+ * 
+ * @note The function assumes the existence of the following member variables:
+ *   - gsl_matrix_complex *Tmualpha_gsl: GSL matrix representing 
+ *     T^{\mu}_{\alpha}.
+ *   - gsl_vector_complex *eigenvalues: GSL vector storing the eigenvalues.
+ *   - gsl_matrix_complex *eigenvectors: GSL matrix storing the eigenvectors.
+ *   - gsl_eigen_nonsymmv_workspace *w: GSL workspace for eigenvalue 
+ *     computation.
+ *   - g: Metric tensor g_{\nu\alpha} (assumed to be defined externally).
+ * 
+ * @see ParseEigenSystem for the function that parses eigenvalues and 
+ * eigenvectors.
+ */
+void HadronicEMT::ComputeEnergyDensityAndFlowVelocity(
+    const std::array<std::array<double, 4>, 4> &Tmn, double &e,
+    std::array<double, 4> &umu) {
+
+    // multiply T^{\mu\nu} with g_{\nu\alpha} to get T^{\mu}_{\alpha}
+    // intialize T^{\mu}_{\alpha} as a 4x4 array of zeros
+    std::array<std::array<double, 4>, 4> Tmualpha = {{{0., 0., 0., 0.},
+                                                      {0., 0., 0., 0.},
+                                                      {0., 0., 0., 0.},
+                                                      {0., 0., 0., 0.}}};
+
+    // solve T^{\mu}_{\nu} u^{\nu} = e u^{\mu} using GSL
+    // fill the gsl matrix with the values of T^{\mu}_{\alpha}
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            for (int k = 0; k < 4; k++) {
+                Tmualpha[i][j] += Tmn[i][k] * g[k][j];
+            }
+            gsl_matrix_set(Tmualpha_gsl, i, j, Tmualpha[i][j]);
+        }
+    }
+
+    // solve the eigenvalue problem
+    int status = gsl_eigen_nonsymmv(Tmualpha_gsl, eigenvalues, eigenvectors, w);
+
+    // error handling
+    if (status != GSL_SUCCESS) {
+        VERBOSE(9) << "HadronicEMT: Eigenvalue problem could not be solved!";
+        e = 0.0;
+        umu = {1., 0., 0., 0.};
+        return;
+    }
+
+    // parse the eigenvalues and eigenvectors to determine the eigenvalue with 
+    // the a positive real part and the corresponding eigenvector
+    // this eigenvector is the flow velocity u^{\mu} and the eigenvalue is 
+    // the energy density e
+    ParseEigenSystem(eigenvectors, eigenvalues, umu, e);
+}
+
+/** 
+ * @brief Parses the eigenvalues and eigenvectors to determine the energy 
+ * density and flow velocity.
+ *
+ * This function parses the eigenvalues and eigenvectors obtained from solving 
+ * the eigenvalue problem T^{\mu}_{\nu} u^{\nu} = e u^{\mu} using GSL. It 
+ * identifies the eigenvalue with a positive real part and a corresponding 
+ * time-like eigenvector, which represents the flow velocity u^\mu.
+ * 
+ * @param eigen_vectors GSL matrix containing the eigenvectors of the eigenvalue 
+ * problem.
+ * @param eigen_values GSL vector containing the eigenvalues of the eigenvalue 
+ * problem.
+ * @param umu Output parameter where the computed flow velocity u^\mu will be 
+ * stored.
+ * @param e Output parameter where the computed energy density will be stored.
+ * 
+ * @details
+ * The function iterates over the eigenvalues and eigenvectors to find a real 
+ * eigenvalue that is positive and has a time-like eigenvector (where the 
+ * Minkowski norm is positive). It checks for uniqueness of the solution and 
+ * handles cases where multiple candidates exist. If no valid eigenvalue and 
+ * eigenvector pair is found, it sets e to 0.0 and umu to {1., 0., 0., 0.}.
+ * 
+ * @note The function assumes that the eigenvalue problem has already been 
+ * solved and the GSL matrices and vectors (eigenvectors and eigenvalues) are 
+ * properly initialized and filled.
+ */
+void HadronicEMT::ParseEigenSystem(gsl_matrix_complex *eigen_vectors,
+                        gsl_vector_complex *eigen_values,
+                        std::array<double, 4> &umu, double &e) {
+  // an exact solution corresponds to one real positive eigenvalue and a 
+  // time-like eigenvector
+
+  const double imag_tolerance = 1e-30;
+  bool found_a_candidate = false;
+  bool too_many_candidates = false;
+  double eval_candidate = 0.0;
+  std::array<double, 4> evec_candidate = {0.0, 0.0, 0.0, 0.0};
+  double evec_candidate_norm_sq = 0.0;
+
+  // loop over the 4 eigenvalues & eigenvectors
+  for (int i = 0; i < 4; i++) {
+    // get the real and imaginary part of the eigenvalue and store them in double
+    double eval_real_part = GSL_REAL(gsl_vector_complex_get(eigen_values, i));
+    double eval_imag_part = GSL_IMAG(gsl_vector_complex_get(eigen_values, i));
+
+    // continue if the eigenvalue is real and positive
+    if (eval_real_part > 0.0 && (fabs(eval_imag_part/eval_real_part) < imag_tolerance)) {
+      // take the corresponding eigenvector to check it
+      gsl_vector_complex_view evec_i = gsl_matrix_complex_column(eigen_vectors, i);
+
+      bool all_real = true;
+      double norm_sq = 0.0;
+      double evec[4];
+      for (int j = 0; j < 4; j++) {
+        // get real and imag elements of the eigenvector
+        const double evec_real = GSL_REAL(gsl_matrix_complex_get(eigen_vectors, j, i));
+        const double evec_imag = GSL_IMAG(gsl_matrix_complex_get(eigen_vectors, j, i));
+
+        // check if the eigenvector is real
+        if (evec_imag == 0. || (fabs(evec_imag/evec_real) < imag_tolerance)) {
+          // compute Minkowski norm of the eigenvector
+          if (j == 0) {
+            norm_sq += evec_real * evec_real;
+          } else {
+            norm_sq -= evec_real * evec_real;
+          }
+          evec[j] = evec_real;
+        } else {
+          all_real = false;
+          break;
+        }
+      }
+
+      // for a time-like real eigenvector we have reached the solution
+      if ((norm_sq > 0) && all_real) {
+        // if there is another candidate, we might have a problem here..
+        if (found_a_candidate) {
+          const double similarity = 1e-3;
+          // if the other candidate only differs in the imaginary part, then we
+          // do not have a problem
+          if ((fabs(1-eval_candidate/eval_real_part) > similarity) 
+              && (eval_candidate != eval_real_part)
+              && (fabs(evec_candidate[0]/evec[0]) > similarity)
+              && (evec_candidate[0] != evec[0])
+              && (fabs(evec_candidate[1]/evec[1]) > similarity)
+              && (evec_candidate[1] != evec[1])
+              && (fabs(evec_candidate[2]/evec[2]) > similarity)
+              && (evec_candidate[2] != evec[2])
+              && (fabs(evec_candidate[3]/evec[3]) > similarity)
+              && (evec_candidate[3] != evec[3])){
+            too_many_candidates = true;
+          }
+        }
+
+        eval_candidate = eval_real_part;
+        evec_candidate_norm_sq = norm_sq;
+        evec_candidate = {evec[0], evec[1], evec[2], evec[3]};
+        found_a_candidate = true;
+      }
+    }
+  }
+
+  if (found_a_candidate && !too_many_candidates) {
+    e = eval_candidate;
+    // assumption that time component is non-zero
+    const double u0_sign = evec_candidate[0] / fabs(evec_candidate[0]);
+
+    for (int i = 0; i < 4; i++) {
+      umu[i] = u0_sign * evec_candidate[i] / sqrt(evec_candidate_norm_sq);
+    }
+  } else {
+    e = 0.0;
+    umu = {1., 0., 0., 0.};
+  }
+}
+
+void HadronicEMT::ResetEnergyMomentumTensor() {
+  Tmn_requested_point = {{{0., 0., 0., 0.},
+                          {0., 0., 0., 0.},
+                          {0., 0., 0., 0.},
+                          {0., 0., 0., 0.}}};
+}
+
+std::array<std::array<double, 4>, 4> HadronicEMT::GetEnergyMomentumTensor() const {
+  return Tmn_requested_point;
+}
+
+void HadronicEMT::AddParticleToEnergyMomentumTensor(Hadron &hadron, 
+                                                    double scaling_factor) {
+  const FourVector p = hadron.p_in();
+  const double e = p.t() * scaling_factor;
+  const double px = p.x() * scaling_factor;
+  const double py = p.y() * scaling_factor;
+  const double pz = p.z() * scaling_factor;
+
+  // add the scaled particle quantities to the T^{\mu\nu} tensor
+  Tmn_requested_point[0][0] += e;
+  Tmn_requested_point[0][1] += px;
+  Tmn_requested_point[0][2] += py;
+  Tmn_requested_point[0][3] += pz;
+  Tmn_requested_point[1][1] += px * px / e;
+  Tmn_requested_point[1][2] += px * py / e;
+  Tmn_requested_point[1][3] += px * pz / e;
+  Tmn_requested_point[2][2] += py * py / e;
+  Tmn_requested_point[2][3] += py * pz / e;
+  Tmn_requested_point[3][3] += pz * pz / e;
+  
+  Tmn_requested_point[1][0] += px;
+  Tmn_requested_point[2][0] += py;
+  Tmn_requested_point[3][0] += pz;
+  Tmn_requested_point[2][1] += py * px / e;
+  Tmn_requested_point[3][1] += pz * px / e;
+  Tmn_requested_point[3][2] += pz * py / e;
+
+}
+
+double HadronicEMT::smearing_kernel_covariant_Cartesian(
+    const double x_diff, const double y_diff, const double z_diff,
+    const double ux, const double uy, const double uz,
+    const double gamma) {
+
+  const double N = gamma / (pow(M_PI, 1.5) * sigma_transverse_ *
+                   sigma_transverse_ * sigma_transverse_);
+  // compute the squared distance and the scalar product r*u
+  const double dr_squared =
+      (x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
+  const double dr_dot_u = (x_diff * ux + y_diff * uy + z_diff * uz);
+
+  return N * exp(-(dr_squared + dr_dot_u * dr_dot_u) /
+                 (sigma_transverse_ * sigma_transverse_));
+}
+
+double HadronicEMT::smearing_kernel_gaussian(
+    const double x_diff, const double y_diff, const double z_diff) {
+  const double N_z = 1. / (sqrt(M_PI) * sigma_longitudinal_);
+  const double N_trans = 1. / (M_PI * sigma_transverse_ * sigma_transverse_);
+
+  const double r_trans_squared = x_diff * x_diff + y_diff * y_diff;
+  const double deta_squared = z_diff * z_diff;
+
+  const double exp_trans =
+      N_trans * exp(-r_trans_squared / (sigma_transverse_ * sigma_transverse_));
+  const double exp_z =
+      N_z * exp(-deta_squared / (sigma_longitudinal_ * sigma_longitudinal_));
+  return exp_trans * exp_z;
 }
 
 void HadronicEMT::GetBulkInfo(Jetscape::real t, Jetscape::real x,
                               Jetscape::real y, Jetscape::real z,
                               std::unique_ptr<BulkMediaInfo> &bulk_info_ptr,
                               std::vector<Hadron> &h_list) {
-  bulk_info_ptr = make_unique<BulkMediaInfo>();
 
-  // compute the T^munu in units of GeV/fm^3 from the hadron list in the lab frame
-  Jetscape::real T00, T01, T02, T03, T11, T12, T13, T22, T23, T33;
-  T00 = T01 = T02 = T03 = T11 = T12 = T13 = T22 = T23 = T33 = 0.;
-  const double dV = dx_*dy_*dz_;
-  for (const auto ihad: h_list) {
-    const FourVector r = ihad.x_in();
-    // check if the hadron is in the surrounding of the requested point
-    // time has to match exactly (do we want to keep this check??, if time stepped evolution there is no need for it...)
-    if ((std::abs(t-r.t()) < rounding_error) && (std::abs(x-r.x()) <= dx_/2.)
-        && (std::abs(y-r.y()) <= dy_/2.) && (std::abs(z-r.z()) <= dz_/2.)) {
-      T00 += ihad.e();
-      T01 += ihad.px();
-      T02 += ihad.py();
-      T03 += ihad.pz();
-      T11 += ihad.px() * ihad.px() / ihad.e();
-      T12 += ihad.px() * ihad.py() / ihad.e();
-      T13 += ihad.px() * ihad.pz() / ihad.e();
-      T22 += ihad.py() * ihad.py() / ihad.e();
-      T23 += ihad.py() * ihad.pz() / ihad.e();
-      T33 += ihad.pz() * ihad.pz() / ihad.e();
-    }
-    // fill T^{\mu\nu}
-    bulk_info_ptr->tmn[0][0] = T00/dV;
-    bulk_info_ptr->tmn[0][1] = T01/dV;
-    bulk_info_ptr->tmn[0][2] = T02/dV;
-    bulk_info_ptr->tmn[0][3] = T03/dV;
-    bulk_info_ptr->tmn[1][1] = T11/dV;
-    bulk_info_ptr->tmn[1][2] = T12/dV;
-    bulk_info_ptr->tmn[1][3] = T13/dV;
-    bulk_info_ptr->tmn[2][2] = T22/dV;
-    bulk_info_ptr->tmn[2][3] = T23/dV;
-    bulk_info_ptr->tmn[3][3] = T33/dV;
+  bulk_info_ptr = std::make_unique<BulkMediaInfo>();
 
-    // fill the rest of T^{\mu\nu} by symmetry
-    bulk_info_ptr->tmn[1][0] = T01/dV;
-    bulk_info_ptr->tmn[2][0] = T02/dV;
-    bulk_info_ptr->tmn[2][1] = T12/dV;
-    bulk_info_ptr->tmn[3][0] = T03/dV;
-    bulk_info_ptr->tmn[3][1] = T13/dV;
-    bulk_info_ptr->tmn[3][2] = T23/dV;
+  ResetEnergyMomentumTensor();
 
-    // provide the energy density
-    bulk_info_ptr->energy_density = T00/dV;
+  double skip_distance_transverse_ = 5.0 * sigma_transverse_;
+  double skip_distance_longitudinal_ = 5.0 * sigma_longitudinal_;
+  if (smearing_covariant_ == 1) {
+    skip_distance_longitudinal_ = skip_distance_transverse_;
   }
+  
+  // loop over particles
+  for (auto &ihad: h_list) {
+    const FourVector r = ihad.x_in();
+    // t,x,y,z of hadron
+    const double t_had = r.t();
+    const double x_had = r.x();
+    const double y_had = r.y();
+    const double z_had = r.z();
+
+    const double x_diff = x_had - x;
+    if (std::abs(x_diff) > skip_distance_transverse_) {
+      continue;
+    }
+    const double y_diff = y_had - y;
+    if (std::abs(y_diff) > skip_distance_transverse_) {
+      continue;
+    }
+    const double z_diff = z_had - z;
+    if (std::abs(z_diff) > skip_distance_longitudinal_) {
+      continue;
+    }
+
+    // get the momentum of the hadron
+    const FourVector p = ihad.p_in();
+    const double e = p.t();
+    const double px = p.x();
+    const double py = p.y();
+    const double pz = p.z();
+    // mass of the hadron
+    const double m = sqrt(e * e - px * px - py * py - pz * pz);
+    const double rapidity = 0.5 * log((e + pz) / (e - pz));
+    const double mT = sqrt(m * m + px * px + py * py);
+
+    double value_kernel;
+    if (smearing_covariant_) {
+      const double ux = px / m;
+      const double uy = py / m;
+      const double uz = pz / m;
+      const double gamma = e / m;
+      value_kernel = smearing_kernel_covariant_Cartesian(x_diff, y_diff, z_diff,
+                                                            ux, uy, uz, gamma);
+    } else {
+      value_kernel = smearing_kernel_gaussian(x_diff, y_diff, z_diff);
+    }
+
+    // give reference to the hadron and the value of the kernel
+    AddParticleToEnergyMomentumTensor(ihad, value_kernel);
+  }
+
+  // fill T^{\mu\nu} in the bulk media info
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      bulk_info_ptr->tmn[i][j] = static_cast<Jetscape::real>(Tmn_requested_point[i][j]);
+    }
+  }
+
+  if (bulk_info_ptr->tmn[0][0] < rounding_error) {
+    bulk_info_ptr->energy_density = 0.0;
+    bulk_info_ptr->vx = 0.0;
+    bulk_info_ptr->vy = 0.0;
+    bulk_info_ptr->vz = 0.0;
+    return;
+  }
+
+  // all particles added, then compute the energy density and flow velocity
+  ComputeEnergyDensityAndFlowVelocity(Tmn_requested_point, e_requested_point, umu_requested_point);
+
+  // provide the energy density
+  bulk_info_ptr->energy_density = e_requested_point;
+  // provide the flow velocity
+  bulk_info_ptr->vx = umu_requested_point[1];
+  bulk_info_ptr->vy = umu_requested_point[2];
+  bulk_info_ptr->vz = umu_requested_point[3];
 }
 
 // Get Cartesian time t from tau and eta

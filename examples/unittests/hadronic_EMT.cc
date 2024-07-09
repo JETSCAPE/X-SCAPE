@@ -21,7 +21,7 @@ using namespace Jetscape;
 // check coordinate transformation functions (same as in causal_liquifier.cc test)
 TEST(HadronicEMTTest, TEST_COORDINATES){
 
-  HadronicEMT hEMT(0.3,0.3,0.3);
+  HadronicEMT hEMT(0.5,0.5,1);
 
   // for the transformation from tau-eta to t-z (configuration space)
   EXPECT_DOUBLE_EQ(0.0, hEMT.get_t(0.0,0.5));
@@ -45,8 +45,44 @@ TEST(HadronicEMTTest, TEST_COORDINATES){
   EXPECT_DOUBLE_EQ(5.0, hEMT.get_peta(0.0,5.0,0.0));
 }
 
-TEST(HadronicEMTTest, TEST_TMUNU){
+TEST(HadronicEMTTest, TEST_LANDAU_MATCHING){
+  // check the Landau matching for a simple case
+  const std::array<std::array<double, 4>, 4> Tmn = {{{1.0, 0.0, 0.0, 0.0},
+                                                    {0.0, 1./3., 0.0, 0.0},
+                                                    {0.0, 0.0, 1./3., 0.0},
+                                                    {0.0, 0.0, 0.0, 1./3.}}};
+  double e = 0.0;
+  std::array<double, 4> umu = {0.0, 0.0, 0.0, 0.0};
 
+  HadronicEMT hEMT(0.5,0.5,1);
+  hEMT.ComputeEnergyDensityAndFlowVelocity(Tmn, e, umu);
+
+  EXPECT_NEAR(1.0,e,1e-4);
+  EXPECT_NEAR(1.0,umu[0],1e-4);
+  EXPECT_NEAR(0.0,umu[1],1e-4);
+  EXPECT_NEAR(0.0,umu[2],1e-4);
+  EXPECT_NEAR(0.0,umu[3],1e-4);
+
+  // check the Landau matching for a more complicated case
+  // This tensor is created with T^{\mu\nu} = (e + P) u^{\mu} u^{\nu} - P g^{\mu\nu}
+  // e = 1.0, P = e/3, u^{\mu} = (u^0,0.1,0.1,0.1), u^0 = sqrt(1.0 + 0.1^2 + 0.1^2 + 0.1^2) = 1.01488916
+  const std::array<std::array<double, 4>, 4> Tmn1 = {{{1.04, 0.13531855, 0.13531855, 0.13531855},
+                                                    {0.13531855, 0.34666667, 0.01333333, 0.01333333},
+                                                    {0.13531855, 0.01333333, 0.34666667, 0.01333333},
+                                                    {0.13531855, 0.01333333, 0.01333333, 0.34666667}}};
+  double e1 = 0.0;
+  std::array<double, 4> umu1 = {0.0, 0.0, 0.0, 0.0};
+
+  hEMT.ComputeEnergyDensityAndFlowVelocity(Tmn1, e1, umu1);
+
+  EXPECT_NEAR(1.0,e1,1e-4);
+  EXPECT_NEAR(1.01488916,umu1[0],1e-4);
+  EXPECT_NEAR(0.1,umu1[1],1e-4);
+  EXPECT_NEAR(0.1,umu1[2],1e-4);
+  EXPECT_NEAR(0.1,umu1[3],1e-4);
+}
+
+TEST(HadronicEMTTest, TEST_TMUNU){
   // create fake hadrons
   std::vector<Hadron> hadron_list;
   unsigned int nparticles = 10;
@@ -55,9 +91,8 @@ TEST(HadronicEMTTest, TEST_TMUNU){
     const int hadron_status = 11;
     const int hadron_id = 111;
     const double hadron_mass = 1.0;
-    const double pz = 1.0;
-    const double energy = std::sqrt(hadron_mass*hadron_mass + pz*pz);
-    FourVector hadron_p(pz, 0.0, 0.0, energy);
+    const double energy = hadron_mass;
+    FourVector hadron_p(0.0, 0.0, 0.0, energy);
     FourVector hadron_x(0.0, 0.0, 0.0, 0.0);
 
     // create a JETSCAPE Hadron
@@ -67,69 +102,63 @@ TEST(HadronicEMTTest, TEST_TMUNU){
 
   std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
 
-  HadronicEMT hEMT(0.3,0.3,0.3);
-  double dV = 0.027; // fm^3
+  HadronicEMT hEMT_cov(0.5,0.5,1);
+  hEMT_cov.GetBulkInfo(0.0,0.0,0.0,0.0,bulk_info_ptr,hadron_list);
 
-  hEMT.GetBulkInfo(0.0,0.0,0.0,0.0,bulk_info_ptr,hadron_list);
-  double energy_density = bulk_info_ptr->energy_density;
-  EXPECT_NEAR(nparticles*std::sqrt(2.0)/dV,energy_density,1e-4);
+  // value of the kernel is 1.4367
+  EXPECT_NEAR(nparticles*1.4367,bulk_info_ptr->energy_density,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vx,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vy,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vz,1e-4);
 
-  // add one more particle outside of the box and check that it is not taken
-  // into account
-  for (unsigned int ipart = 0; ipart < 1; ipart++) {
+  
+  // place half of the particles outside of the 5 sigma range
+  // create fake hadrons
+  std::vector<Hadron> hadron_list1;
+  unsigned int nparticles1 = 5;
+  for (unsigned int ipart = 0; ipart < nparticles1; ipart++) {
     const int hadron_label = 0;
     const int hadron_status = 11;
     const int hadron_id = 111;
     const double hadron_mass = 1.0;
-    const double px = 1.0;
-    const double energy = std::sqrt(hadron_mass*hadron_mass + px*px);
-    FourVector hadron_p(px, 0.0, 0.0, energy);
-    FourVector hadron_x(1.0, 0.0, 0.0, 0.0);
+    const double energy = hadron_mass;
+    FourVector hadron_p(0.0, 0.0, 0.0, energy);
+    FourVector hadron_x(0.0, 0.0, 0.0, 0.0);
 
     // create a JETSCAPE Hadron
-    hadron_list.push_back(Hadron(hadron_label, hadron_id, hadron_status, 
+    hadron_list1.push_back(Hadron(hadron_label, hadron_id, hadron_status, 
+                                hadron_p, hadron_x, hadron_mass));
+  }
+  for (unsigned int ipart = 0; ipart < nparticles1; ipart++) {
+    const int hadron_label = 0;
+    const int hadron_status = 11;
+    const int hadron_id = 111;
+    const double hadron_mass = 1.0;
+    const double energy = hadron_mass;
+    FourVector hadron_p(0.0, 0.0, 0.0, energy);
+    FourVector hadron_x(0.0, 50.0, 0.0, 0.0);
+
+    // create a JETSCAPE Hadron
+    hadron_list1.push_back(Hadron(hadron_label, hadron_id, hadron_status, 
                                 hadron_p, hadron_x, hadron_mass));
   }
 
-  hEMT.GetBulkInfo(0.0,0.0,0.0,0.0,bulk_info_ptr,hadron_list);
-  double energy_density1 = bulk_info_ptr->energy_density;
-  EXPECT_NEAR(nparticles*std::sqrt(2.0)/dV,energy_density1,1e-4);
+  hEMT_cov.GetBulkInfo(0.0,0.0,0.0,0.0,bulk_info_ptr,hadron_list1);
 
-  // check the rest of the energy momentum tensor
-  double T00 = bulk_info_ptr->tmn[0][0];
-  EXPECT_NEAR(nparticles*std::sqrt(2.0)/dV,T00,1e-4);
+  // value of the kernel is 1.4367
+  EXPECT_NEAR(nparticles1*1.4367,bulk_info_ptr->energy_density,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vx,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vy,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vz,1e-4);
 
-  double T01 = bulk_info_ptr->tmn[0][1];
-  EXPECT_NEAR(nparticles*1.0/dV,T01,1e-4);
 
-  double T02 = bulk_info_ptr->tmn[0][2];
-  EXPECT_NEAR(0.0,T02,1e-4);
+  // test the first setup with the Gaussian kernel
+  HadronicEMT hEMT_gauss(0.5,0.5,0);
+  hEMT_gauss.GetBulkInfo(0.0,0.0,0.0,0.0,bulk_info_ptr,hadron_list);
 
-  double T03 = bulk_info_ptr->tmn[0][3];
-  EXPECT_NEAR(0.0,T03,1e-4);
-
-  double T11 = bulk_info_ptr->tmn[1][1];
-  EXPECT_NEAR(nparticles*1.0/std::sqrt(2.0)/dV,T11,1e-4);
-
-  double T12 = bulk_info_ptr->tmn[1][2];
-  EXPECT_NEAR(0.0,T12,1e-4);
-
-  double T13 = bulk_info_ptr->tmn[1][3];
-  EXPECT_NEAR(0.0,T13,1e-4);
-
-  double T22 = bulk_info_ptr->tmn[2][2];
-  EXPECT_NEAR(0.0,T22,1e-4);
-
-  double T23 = bulk_info_ptr->tmn[2][3];
-  EXPECT_NEAR(0.0,T23,1e-4);
-
-  double T33 = bulk_info_ptr->tmn[3][3];
-  EXPECT_NEAR(0.0,T33,1e-4);
-
-  EXPECT_DOUBLE_EQ(T01,bulk_info_ptr->tmn[1][0]);
-  EXPECT_DOUBLE_EQ(T02,bulk_info_ptr->tmn[2][0]);
-  EXPECT_DOUBLE_EQ(T12,bulk_info_ptr->tmn[2][1]);
-  EXPECT_DOUBLE_EQ(T03,bulk_info_ptr->tmn[3][0]);
-  EXPECT_DOUBLE_EQ(T13,bulk_info_ptr->tmn[3][1]);
-  EXPECT_DOUBLE_EQ(T23,bulk_info_ptr->tmn[3][2]);
+  // value of the kernel is 1.4367
+  EXPECT_NEAR(nparticles*1.4367,bulk_info_ptr->energy_density,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vx,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vy,1e-4);
+  EXPECT_NEAR(0.0,bulk_info_ptr->vz,1e-4);
 }

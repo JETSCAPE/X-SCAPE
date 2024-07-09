@@ -45,6 +45,8 @@
   <BDM>
     <Tc>0.250</Tc>
     <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
+    <!-- CreateHadronicTimeEvolutionOutput: To create a movie for one event, not recommended for production runs -->
+    <CreateHadronicTimeEvolutionOutput> true </CreateHadronicTimeEvolutionOutput>
   </BDM>
 
   <!-- Inital State Module  -->
@@ -459,10 +461,9 @@
 
   <!-- Create hadronic energy-momentum tensor -->
   <HadronicEMT>
-    <!-- width of the box around a given point (x,y,z) taken into account -->
-    <dx>0.3</dx>
-    <dy>0.3</dy>
-    <dz>0.3</dz>
+    <smearing_covariant>1</smearing_covariant> <!-- 0: use Gaussian kernel, 1: use covariant kernel -->
+    <sigma_transverse>0.5</sigma_transverse>
+    <sigma_longitudinal>0.5</sigma_longitudinal>
   </HadronicEMT>
 
   <!-- Hadronic Afterburner  -->
