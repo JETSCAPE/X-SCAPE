@@ -30,6 +30,12 @@ private:
   double sigma_transverse_, sigma_longitudinal_;
   int smearing_covariant_;
 
+  // EOS variables
+  double e_lower_bound_, e_upper_bound_, e_spacing_;
+  int e_length_;
+  std::vector<double> T_table_;
+  std::vector<double> s_table_;
+
   // define the (pseudo)-metric tensor g_{\mu\nu} as a 4x4 array
   const std::array<std::array<int, 4>, 4> g = {{{1, 0, 0, 0},
                                                 {0, -1, 0, 0},
@@ -89,12 +95,22 @@ public:
   double smearing_kernel_gaussian(
     const double x_diff, const double y_diff, const double z_diff);
 
+  // setter functions for unit testing
+  void set_lower_bound(double e_lower_bound) { e_lower_bound_ = e_lower_bound; }
+  void set_upper_bound(double e_upper_bound) { e_upper_bound_ = e_upper_bound; }
+  void set_spacing(double e_spacing) { e_spacing_ = e_spacing; }
+  void set_length(int e_length) { e_length_ = e_length; }
+
+  void read_EOS_from_file(const std::string &filename);
+  double interpolate_1D_EOS(double e, const std::vector<double> &table) const;
+  double get_T(double e) const;
+  double get_s(double e) const;
+
   double get_t(double tau, double eta) const;
   double get_z(double tau, double eta) const;
 
   double get_ptau(double px, double pz, double eta) const;
   double get_peta(double px, double pz, double eta) const;
-
 
 };
 

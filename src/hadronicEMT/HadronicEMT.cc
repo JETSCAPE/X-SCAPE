@@ -32,6 +32,16 @@ HadronicEMT::HadronicEMT(){
   eigenvalues = gsl_vector_complex_alloc(4);
   eigenvectors = gsl_matrix_complex_alloc(4, 4);
   w = gsl_eigen_nonsymmv_alloc(4);
+
+  e_lower_bound_ = 0.0;
+  e_upper_bound_ = 0.0;
+  e_length_ = 100000;
+  e_spacing_ = 0.0;
+  T_table_.resize(e_length_);
+  s_table_.resize(e_length_);
+
+  read_EOS_from_file("./EOS/hotQCD/hrg_hotqcd_eos_SMASH_binary.dat");
+
 }
 
 HadronicEMT::HadronicEMT(double sigma_transverse, double sigma_longitudinal, 
@@ -46,6 +56,15 @@ HadronicEMT::HadronicEMT(double sigma_transverse, double sigma_longitudinal,
   eigenvalues = gsl_vector_complex_alloc(4);
   eigenvectors = gsl_matrix_complex_alloc(4, 4);
   w = gsl_eigen_nonsymmv_alloc(4);
+
+  e_lower_bound_ = 0.0;
+  e_upper_bound_ = 0.0;
+  e_length_ = 100000;
+  e_spacing_ = 0.0;
+  T_table_.resize(e_length_);
+  s_table_.resize(e_length_);
+
+  read_EOS_from_file("./EOS/hotQCD/hrg_hotqcd_eos_SMASH_binary.dat");
 }
 
 HadronicEMT::~HadronicEMT() {
@@ -418,6 +437,85 @@ void HadronicEMT::GetBulkInfo(Jetscape::real t, Jetscape::real x,
   bulk_info_ptr->vx = umu_requested_point[1];
   bulk_info_ptr->vy = umu_requested_point[2];
   bulk_info_ptr->vz = umu_requested_point[3];
+
+  // provide the temperature and entropy density from the EOS
+  bulk_info_ptr->temperature = get_T(e_requested_point);
+  bulk_info_ptr->entropy_density = get_s(e_requested_point);
+}
+
+void HadronicEMT::read_EOS_from_file(const std::string &filename) {
+  // Read the EOS table from file
+  std::ifstream file(filename);
+  if (!file.is_open()) {
+    throw std::runtime_error("HadronicEMT: Could not open EOS file " + filename);
+  }
+
+  double temp;
+  for (int i = 0; i < e_length_; i++) {
+    file.read(reinterpret_cast<char*>(&temp), sizeof(double));  // e
+    temp /= hbarC;      // 1/fm^4
+    if (i == 0) {
+      e_lower_bound_ = temp;
+    }
+    if (i == 1) {
+      e_spacing_ = temp - e_lower_bound_;
+    }
+    if (i == e_length_ - 1) {
+      e_upper_bound_ = temp;
+    }
+    file.read(reinterpret_cast<char*>(&temp), sizeof(double));  // P, not used
+    file.read(reinterpret_cast<char*>(&temp), sizeof(double));  // s
+    s_table_[i] = temp;
+
+    file.read(reinterpret_cast<char*>(&temp), sizeof(double));  // T
+    temp /= hbarC;   // 1/fm
+    T_table_[i] = std::pow(temp, 5);   // store T^5
+    }
+}
+
+double HadronicEMT::interpolate_1D_EOS(double e, const std::vector<double> &table) const {
+    // This is a generic linear interpolation routine for EOS at zero mu_B
+    // it assumes the input table has the following structure:
+    //       e, P(e), T(e), s(e)
+    // as one-dimensional arrays on an equally spacing lattice grid
+    // units: e is in 1/fm^4
+
+    // Compute the index and clamp it within the valid range
+    int idx_e = std::clamp(static_cast<int>((e - e_lower_bound_) / e_spacing_),
+                            0, e_length_ - 2);
+
+    // Handle potential underflow
+    if (e < e_lower_bound_) {
+        return table[0] * e / e_lower_bound_;
+    }
+
+    // Handle potential overflow
+    if (e > e_upper_bound_) {
+        return table[e_length_ - 1];
+    }
+
+    // Linear interpolation
+    const double frac_e = (e - (idx_e * e_spacing_ + e_lower_bound_)) 
+                        / e_spacing_;
+    const double temp1 = table[idx_e];
+    const double temp2 = table[idx_e + 1];
+    return temp1 * (1.0 - frac_e) + temp2 * frac_e;
+}
+
+// This function returns the local temperature in [GeV]
+// Input local energy density [GeV/fm^3]
+double HadronicEMT::get_T(double e) const {
+    double e_fm4 = e / hbarC;  // 1/fm^4
+    double T5 = interpolate_1D_EOS(e_fm4, T_table_);  // returns e/T^5
+    double T = pow(T5, 0.2) * hbarC;  // GeV
+    return T;
+}
+
+// This function returns the local entropy density in [GeV/fm^3]
+// Input local energy density [GeV/fm^3]
+double HadronicEMT::get_s(double e) const {
+    double e_fm4 = e / hbarC;  // 1/fm^4
+    return interpolate_1D_EOS(e_fm4, s_table_);
 }
 
 // Get Cartesian time t from tau and eta
