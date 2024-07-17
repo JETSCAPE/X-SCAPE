@@ -111,7 +111,11 @@ TEST(HadronicEMTTest, TEST_TMUNU){
   EXPECT_NEAR(0.0,bulk_info_ptr->vy,1e-4);
   EXPECT_NEAR(0.0,bulk_info_ptr->vz,1e-4);
 
-  
+  std::cout << "Temperature: " << bulk_info_ptr->temperature << std::endl;
+  std::cout << "Pressure: " << bulk_info_ptr->pressure << std::endl;
+  std::cout << "Entropy density: " << bulk_info_ptr->entropy_density << std::endl;
+  std::cout << "Energy density: " << bulk_info_ptr->energy_density << std::endl;
+
   // place half of the particles outside of the 5 sigma range
   // create fake hadrons
   std::vector<Hadron> hadron_list1;
@@ -161,4 +165,35 @@ TEST(HadronicEMTTest, TEST_TMUNU){
   EXPECT_NEAR(0.0,bulk_info_ptr->vx,1e-4);
   EXPECT_NEAR(0.0,bulk_info_ptr->vy,1e-4);
   EXPECT_NEAR(0.0,bulk_info_ptr->vz,1e-4);
+}
+
+TEST(HadronicEMTTest, TEST_1D_INTERPOLATION){
+  HadronicEMT hEMT(0.5,0.5,1);
+
+  // set the quantities for the fake EOS table
+  hEMT.set_lower_bound(1.0);
+  hEMT.set_upper_bound(6.0);
+  hEMT.set_spacing(1.0);
+  hEMT.set_length(6);
+
+  // create a fake EOS table
+  std::vector<double> table = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+
+  // test the interpolation
+  EXPECT_NEAR(1.0,hEMT.interpolate_1D_EOS(1.0,table),1e-4);
+  EXPECT_NEAR(2.0,hEMT.interpolate_1D_EOS(2.0,table),1e-4);
+  EXPECT_NEAR(3.0,hEMT.interpolate_1D_EOS(3.0,table),1e-4);
+  EXPECT_NEAR(4.0,hEMT.interpolate_1D_EOS(4.0,table),1e-4);
+  EXPECT_NEAR(5.0,hEMT.interpolate_1D_EOS(5.0,table),1e-4);
+  EXPECT_NEAR(6.0,hEMT.interpolate_1D_EOS(6.0,table),1e-4);
+  EXPECT_NEAR(2.5,hEMT.interpolate_1D_EOS(2.5,table),1e-4);
+
+  // test the interpolation outside of the table
+  EXPECT_NEAR(0.0,hEMT.interpolate_1D_EOS(0.0,table),1e-4);
+  EXPECT_NEAR(6.0,hEMT.interpolate_1D_EOS(7.0,table),1e-4);
+
+
+  // test the get_T function
+  const double expected_T = pow(hEMT.interpolate_1D_EOS(0.3 / hbarC,table), 0.2) * hbarC;
+  EXPECT_NEAR(expected_T,hEMT.get_T(0.3),1e-4);
 }
