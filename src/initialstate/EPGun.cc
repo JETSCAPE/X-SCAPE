@@ -111,6 +111,12 @@ void EPGun::InitTask() {
     // QED radiation off lepton not handled yet by the new procedure.
     readString("PDF:lepton = off");
     readString("TimeShower:QEDshowerByL = off");
+    readString("PartonShowers:model = 1");
+    readString("TimeShower:pTmaxMatch = 1");
+
+    //special PDF
+    readString("PDF:useHard = on");
+    readString("PDF:pHardSet = LHAPDF6:PDF4LHC21_40");
   }
 
   // SC: read flag for FSR
