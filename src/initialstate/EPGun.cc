@@ -64,9 +64,18 @@ void EPGun::InitTask() {
   // initial kinematics
   eElectron = GetXMLElementDouble({"Hard", "EPGun", "electron_energy"});
   eProton = GetXMLElementDouble({"Hard", "EPGun", "proton_energy"});
-  Q2min = GetXMLElementDouble({"Hard", "EPGun", "Q2min"});
   use_positron = GetXMLElementInt({"Hard", "EPGun", "use_positron"});
   photoproduction = GetXMLElementInt({"Hard", "EPGun", "photoproduction"});
+
+  //kinematic cuts
+  Q2min = GetXMLElementDouble({"Hard", "EPGun", "Q2min"});
+  Q2max = GetXMLElementDouble({"Hard", "EPGun", "Q2max"});
+  W2min = GetXMLElementDouble({"Hard", "EPGun", "W2min"});
+  W2max = GetXMLElementDouble({"Hard", "EPGun", "W2max"});
+  xmin = GetXMLElementDouble({"Hard", "EPGun", "xmin"});
+  xmax = GetXMLElementDouble({"Hard", "EPGun", "xmax"});
+  ymin = GetXMLElementDouble({"Hard", "EPGun", "ymin"});
+  ymax = GetXMLElementDouble({"Hard", "EPGun", "ymax"});
 
   //other Pythia settings
   readString("HadronLevel:Decay = off");
@@ -192,6 +201,35 @@ void EPGun::ExecuteTask() {
 
   do {
     next();
+
+    //getting scattered electron index
+    int elecID = 6;
+    if(photoproduction){
+      for(int iElec=0; iElec<event.size(); iElec++){
+        if(abs(event[iElec].id()) == 11 and event[iElec].status() == 23)
+          elecID = iElec;
+      }
+    }
+
+    //kinematic cuts
+    Pythia8::Vec4 pProton = event[1].p();
+    Pythia8::Vec4 peIn    = event[2].p();
+    Pythia8::Vec4 peOut   = event[6].p();
+    Pythia8::Vec4 pPhoton = peIn - peOut;
+
+    // Q2, W2, Bjorken x, y.
+    double Q2    = - pPhoton.m2Calc();
+    double W2    = (pProton + pPhoton).m2Calc();
+    double x     = Q2 / (2. * pProton * pPhoton);
+    double y     = (pProton * pPhoton) / (pProton * peIn);
+
+    if(x < xmin or x > xmax) continue;
+    if(y < ymin or y > ymax) continue;
+    if(Q2 < Q2min or Q2 > Q2max) continue;
+    if(W2 < W2min or W2 > W2max) continue;
+
+    JSINFO << "Q2 = " << Q2 << "; W2 = " << W2 << "; x = " << x << "; y = " << y;
+
     p62.clear();
       if (!printer.empty()){
             std::ofstream sigma_printer;
@@ -199,6 +237,7 @@ void EPGun::ExecuteTask() {
 
             sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
             //sigma_printer.close();
+
 
 //      JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
     };

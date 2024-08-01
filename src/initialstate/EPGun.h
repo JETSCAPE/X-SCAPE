@@ -29,13 +29,22 @@ class EPGun : public HardProcess, public Pythia8::Pythia {
 private:
   double eProton   = 920.;
   double eElectron = 27.5;
-  double Q2min     = 25.;
   double vir_factor;
   double softMomentumCutoff;
   bool FSR_on = false;
   int use_positron = 0;
   int photoproduction = 0;
   int initial_virtuality_pT = 1;
+
+  //cut variables
+  double Q2min     = 0.;
+  double Q2max    = 1000000.;
+  double W2min     = 0.;
+  double W2max     = 1000000.;
+  double xmin     = 0.;
+  double xmax     = 1.;
+  double ymin     = 0.;
+  double ymax     = 1.;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<EPGun> reg;
