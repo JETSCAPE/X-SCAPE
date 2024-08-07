@@ -228,7 +228,7 @@ void EPGun::ExecuteTask() {
     if(Q2 < Q2min or Q2 > Q2max) continue;
     if(W2 < W2min or W2 > W2max) continue;
 
-    JSINFO << "Q2 = " << Q2 << "; W2 = " << W2 << "; x = " << x << "; y = " << y;
+    //JSINFO << "Q2 = " << Q2 << "; W2 = " << W2 << "; x = " << x << "; y = " << y;
 
     p62.clear();
       if (!printer.empty()){
