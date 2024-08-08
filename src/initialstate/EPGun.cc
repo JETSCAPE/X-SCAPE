@@ -118,12 +118,12 @@ void EPGun::InitTask() {
     readString("SpaceShower:pTmaxMatch = 2");
 
     // QED radiation off lepton not handled yet by the new procedure.
-    readString("PDF:lepton = off");
     readString("TimeShower:QEDshowerByL = off");
     readString("PartonShowers:model = 1");
     readString("TimeShower:pTmaxMatch = 1");
 
     //special PDF
+    readString("PDF:lepton = off");
     readString("PDF:useHard = on");
     readString("PDF:pHardSet = LHAPDF6:PDF4LHC21_40");
   }
@@ -200,7 +200,8 @@ void EPGun::ExecuteTask() {
   };
 
   do {
-    next();
+    bool check = next();
+    if(check ==  false) continue;
 
     //getting scattered electron index
     int elecID = 6;
