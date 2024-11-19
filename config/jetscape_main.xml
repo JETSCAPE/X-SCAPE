@@ -127,6 +127,16 @@
         <ImpactMax>3.0</ImpactMax>
       </Impact>
     </SMASH>
+
+    <!-- Creates a nucleus configuration from SMASH -->
+    <SMASHNucleus>
+      <SMASH_config_file>../external_packages/smash/smash_config_nucleus.yaml</SMASH_config_file>
+      <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+      <Protons>82</Protons>
+      <Neutrons>126</Neutrons>
+      <FermiMomenta>0</FermiMomenta>
+    </SMASHNucleus>
   </IS>
 
   <!-- Hard Process -->

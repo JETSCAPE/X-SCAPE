@@ -513,6 +513,9 @@ if ( USE_SMASH )
 
     add_executable(SMASHInitialConditionTest ./examples/custom_examples/SMASHInitialConditionTest.cc)
     target_link_libraries(SMASHInitialConditionTest JetScape )
+
+    add_executable(SMASHNucleusTest ./examples/custom_examples/SMASHNucleusTest.cc)
+    target_link_libraries(SMASHNucleusTest JetScape )
 endif (USE_SMASH )
 
 
