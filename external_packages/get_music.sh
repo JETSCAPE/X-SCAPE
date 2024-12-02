@@ -13,10 +13,9 @@
 # See COPYING for details.
 ##############################################################################
 
-
-# using a commit from the MUSIC repository that is compatible with X-SCAPE 1.1.5
 folderName="music"
-commitHash="fdcce5d9f63fc25281eda8d498c32c69ac132dac"
+# commitHash="52b0454b0a07a76f26c8138245c0b3c54d00af65" # for xscape 1.1
+commitHash="db320898c4a9bd99ed21aa9dbb7c78e2cb0729bd" # for xscape 1.1.1
 
 # download the code package
 rm -fr $folderName
