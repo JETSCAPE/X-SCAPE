@@ -31,8 +31,9 @@ namespace Jetscape {
 
 class SoftParticlization : public JetScapeModuleBase {
 private:
-  bool HydroHyperSurfaceConnected_;
+bool HydroHyperSurfaceConnected_;
   bool ClearHydroHyperSurfaceConnected_;
+
 public:
   SoftParticlization();
   ~SoftParticlization();
