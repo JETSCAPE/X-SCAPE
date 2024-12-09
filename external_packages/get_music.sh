@@ -14,7 +14,7 @@
 ##############################################################################
 
 folderName="music"
-commitHash="ace023d23df3024bf4a6e43a29e8c5e4b7e32d04"
+commitHash="fdcce5d9f63fc25281eda8d498c32c69ac132dac"
 
 # download the code package
 rm -fr $folderName
