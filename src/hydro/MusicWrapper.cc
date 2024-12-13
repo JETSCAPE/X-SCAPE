@@ -270,6 +270,8 @@ void MpiMusic::EvolveHydro() {
     //}
   }
 
+  clearSurfaceCellVector();
+
   PassHydroSurfaceToFramework();
 
   //collect_freeze_out_surface();
