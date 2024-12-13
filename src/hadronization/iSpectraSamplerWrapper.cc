@@ -156,7 +156,6 @@ int iSpectraSamplerWrapper::getSurfCellVector() {
     FOsurf_array.push_back(iSS_surf_cell);
   }
   iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
-  ClearHydroHyperSurface();
   return(nCells);
 }
 
@@ -220,6 +219,14 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   inputfile.close();
 
   int nCells = getSurfCellVector();
+  if (nCells == 0) {
+    int status = iSpectraSampler_ptr_->read_in_FO_surface();
+    if (status != 0) {
+      JSWARN << "Some errors happened in reading in the hyper-surface";
+      exit(-1);
+    }
+    nCells = 1;
+  }
   //int status = iSpectraSampler_ptr_->read_in_FO_surface();
   //if (status != 0) {
   //  JSWARN << "Some errors happened in reading in the hyper-surface";
