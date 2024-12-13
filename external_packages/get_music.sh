@@ -13,6 +13,8 @@
 # See COPYING for details.
 ##############################################################################
 
+
+# using a commit from the MUSIC repository that is compatible with X-SCAPE 1.1.5
 folderName="music"
 commitHash="fdcce5d9f63fc25281eda8d498c32c69ac132dac"
 
