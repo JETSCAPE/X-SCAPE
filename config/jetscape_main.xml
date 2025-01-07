@@ -348,7 +348,8 @@
       <Include_second_order_terms>1</Include_second_order_terms>
       <!--freeze-out parameters-->
       <freezeout_temperature>0.15</freezeout_temperature>
-      <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
+      <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
       <!--source term parameters for InitialProfile 13-->
       <string_source_sigma_x>0.5</string_source_sigma_x>
       <string_source_sigma_eta>0.5</string_source_sigma_eta>
@@ -376,7 +377,7 @@
       <scale_factor> 57 </scale_factor>
       <dtau> 0.02 </dtau>
       <result_directory>./</result_directory>
-      <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
     </CLVisc>
 
   </Hydro>

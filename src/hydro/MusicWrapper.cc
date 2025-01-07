@@ -52,7 +52,7 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
 
   string input_file = GetXMLElementText({"Hydro", "MUSIC", "MUSIC_input_file"});
   doCooperFrye =
-      GetXMLElementInt({"Hydro", "MUSIC", "Perform_CooperFrye_Feezeout"});
+      GetXMLElementInt({"Hydro", "MUSIC", "Perform_CooperFrye_Freezeout"});
 
   music_hydro_ptr = std::unique_ptr<MUSIC>(new MUSIC(input_file));
 
@@ -312,6 +312,10 @@ void MpiMusic::EvolveHydro() {
     PassHydroSurfaceToFramework();
   } else {
     collect_freeze_out_surface();
+  }
+
+  if (hydro_status == FINISHED && doCooperFrye == 1) {
+    music_hydro_ptr->run_Cooper_Frye();
   }
 }
 
