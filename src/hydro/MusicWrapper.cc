@@ -193,7 +193,6 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 }
 
-//TODO: Check which parts have to be adapted to the output_evolution_to_memory 
 void MpiMusic::InitializeHydroEnergyProfile() {
   VERBOSE(8);
   JSINFO << "Initialize density profiles in MUSIC ...";
@@ -249,7 +248,6 @@ void MpiMusic::ExecTime() {
   PassHydroSurfaceToFramework();
 }
 
-//TODO: Check which parts have to be adapted to the output_evolution_to_memory
 void MpiMusic::EvolveHydro() {
   if (hydro_status == NOT_START) {
     InitializeHydroEnergyProfile();
@@ -260,43 +258,61 @@ void MpiMusic::EvolveHydro() {
     has_source_terms = true;
   }
 
+  if (pre_eq_ptr != nullptr) {
+    double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
+    JSINFO << "hydro initial time set by PreEq module tau0 = "
+           << tau0 << " fm/c";
+    if (flag_output_evo_to_memory == 1) {
+      // need to ensure preEq and hydro use the same dtau so that
+      // the combined evolution history file is properly set
+      double dtau = pre_eq_ptr->GetPreequilibriumEvodtau();
+      JSINFO << "Reset MUSIC dtau by PreEq module: dtau = " << dtau << " fm/c";
+      music_hydro_ptr->set_parameter("dtau", dtau);
+      if (!has_source_terms) {
+        // only the preEq evo with the first hydro without source term
+        // will be stored in memory for jet energy loss calculations
+        clear_up_evolution_data();
+        PassPreEqEvolutionHistoryToFramework();
+      }
+    }
+  }
+
+  hydro_status = INITIALIZED;
+
   if (hydro_status == INITIALIZED) {
     JSINFO << "running MUSIC ...";
     music_hydro_ptr->run_hydro();
     hydro_status = FINISHED;
   }
 
-  if (flag_output_evo_to_file == 1) {
+  if (flag_output_evo_to_memory == 1) {
     if (!has_source_terms) {
       // only the first hydro without source term will be stored
       // in memory for jet energy loss calculations
+      if (pre_eq_ptr == nullptr) {
+        clear_up_evolution_data();
+      }
       PassHydroEvolutionHistoryToFramework();
       JSINFO << "number of fluid cells received by the JETSCAPE: "
              << bulk_info.data.size();
     }
     music_hydro_ptr->clear_hydro_info_from_memory();
+  }
 
+  if (flag_output_evo_to_file == 1) {
     // add hydro_id to the hydro evolution filename
     std::ostringstream system_command;
     system_command << "mv evolution_all_xyeta.dat "
                    << "evolution_all_xyeta_" << GetId() << ".dat";
     system(system_command.str().c_str());
-
-    //std::vector<SurfaceCellInfo> surface_cells;
-    //if (freezeout_temperature > 0.0) {
-    //  FindAConstantTemperatureSurface(freezeout_temperature, surface_cells);
-    //}
   }
 
-  clearSurfaceCellVector();
-
-  PassHydroSurfaceToFramework();
-
-  //collect_freeze_out_surface();
-
-  //if (hydro_status == FINISHED && doCooperFrye == 1) {
-  //  music_hydro_ptr->run_Cooper_Frye();
-  //}
+  if (flag_surface_in_memory == 1) {
+    clearSurfaceCellVector();
+    PassHydroSurfaceToFramework();
+  } else {
+    collect_freeze_out_surface();
+  }
 }
 
 void MpiMusic::collect_freeze_out_surface() {
@@ -401,9 +417,6 @@ void MpiMusic::PassPreEqEvolutionHistoryToFramework() {
 }
 
 void MpiMusic::PassHydroEvolutionHistoryToFramework() {
-  //TODO: check if this is needed, it is not in JS
-  clear_up_evolution_data();
-
   JSINFO << "Passing hydro evolution information to JETSCAPE ... ";
   auto number_of_cells = music_hydro_ptr->get_number_of_fluid_cells();
   JSINFO << "Total number of MUSIC fluid cells: " << number_of_cells;
