@@ -74,15 +74,15 @@
             <beastMode>0</beastMode>
             <Initial_time_tau_0>1.46</Initial_time_tau_0>
             <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
-            <eta_over_s_T_kink_in_GeV>0.223</eta_over_s_T_kink_in_GeV>
-            <eta_over_s_low_T_slope_in_GeV>-0.776</eta_over_s_low_T_slope_in_GeV>
-            <eta_over_s_high_T_slope_in_GeV>0.37</eta_over_s_high_T_slope_in_GeV>
-            <eta_over_s_at_kink>0.096</eta_over_s_at_kink>
+            <shear_viscosity_3_T_kink_in_GeV>0.223</shear_viscosity_3_T_kink_in_GeV>
+            <shear_viscosity_3_low_T_slope_in_GeV>-0.776</shear_viscosity_3_low_T_slope_in_GeV>
+            <shear_viscosity_3_high_T_slope_in_GeV>0.37</shear_viscosity_3_high_T_slope_in_GeV>
+            <shear_viscosity_3_at_kink>0.096</shear_viscosity_3_at_kink>
             <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
-            <zeta_over_s_max>0.133</zeta_over_s_max>
-            <zeta_over_s_T_peak_in_GeV>0.12</zeta_over_s_T_peak_in_GeV>
-            <zeta_over_s_width_in_GeV>0.072</zeta_over_s_width_in_GeV>
-            <zeta_over_s_lambda_asymm>-0.122</zeta_over_s_lambda_asymm>
+            <bulk_viscosity_3_max>0.133</bulk_viscosity_3_max>
+            <bulk_viscosity_3_T_peak_in_GeV>0.12</bulk_viscosity_3_T_peak_in_GeV>
+            <bulk_viscosity_3_width_in_GeV>0.072</bulk_viscosity_3_width_in_GeV>
+            <bulk_viscosity_3_lambda_asymm>-0.122</bulk_viscosity_3_lambda_asymm>
             <freezeout_temperature>0.136</freezeout_temperature>
         </MUSIC>
     </Hydro>

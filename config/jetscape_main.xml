@@ -319,26 +319,37 @@
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
-      <InitialProfile>13</InitialProfile>
+      <!--InitialProfile = 42 for Trento + Pre-equilibrium, 13 for the 3D Glauber initial condition-->
+      <InitialProfile>42</InitialProfile>
+      <!--beastMode = 0: double precision, constant time step-->
+      <!--beastMode = 1: float precision, constant time step-->
+      <!--beastMode = 2: float precision, increased time step after 4 fm/ (can be used for soft sector only runs, otherwise the change in stepsize will lead to errors)-->
       <beastMode>0</beastMode>
+      <!--starting time of the hydrodynamic evolution after the pre-equilibrium phase-->
       <Initial_time_tau_0>0.5</Initial_time_tau_0>
+      <!--evolution output/storage parameters-->
       <output_evolution_to_file>0</output_evolution_to_file>
       <output_evolution_to_memory>1</output_evolution_to_memory>
       <surface_in_memory>1</surface_in_memory>
-      <store_hydro_info_in_memory>0</store_hydro_info_in_memory>
+      <!--shear viscosity settings-->
       <shear_viscosity_eta_over_s>0.08</shear_viscosity_eta_over_s>
       <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
-      <shear_viscosity_3_at_kink>0.16</shear_viscosity_3_at_kink>
+      <shear_viscosity_3_T_kink_in_GeV>0.16</shear_viscosity_3_T_kink_in_GeV>
+      <shear_viscosity_3_at_kink>0.08</shear_viscosity_3_at_kink>
       <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
       <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
+      <!--bulk viscosity settings-->
       <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
       <bulk_viscosity_3_max>0.06</bulk_viscosity_3_max>
-      <zeta_over_s_T_peak_in_GeV>0.17</zeta_over_s_T_peak_in_GeV>
-      <zeta_over_s_width_in_GeV>0.02</zeta_over_s_width_in_GeV>
-      <zeta_over_s_lambda_asymm>0.1</zeta_over_s_lambda_asymm>
+      <bulk_viscosity_3_T_peak_in_GeV>0.17</bulk_viscosity_3_T_peak_in_GeV>
+      <bulk_viscosity_3_width_in_GeV>0.02</bulk_viscosity_3_width_in_GeV>
+      <bulk_viscosity_3_lambda_asymm>0.1</bulk_viscosity_3_lambda_asymm>
+      <!--higher order transport coefficients-->
       <Include_second_order_terms>1</Include_second_order_terms>
-      <freezeout_temperature>0.3</freezeout_temperature>
+      <!--freeze-out parameters-->
+      <freezeout_temperature>0.15</freezeout_temperature>
       <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
+      <!--source term parameters for InitialProfile 13-->
       <string_source_sigma_x>0.5</string_source_sigma_x>
       <string_source_sigma_eta>0.5</string_source_sigma_eta>
       <stringPreEqFlowFactor>0.13</stringPreEqFlowFactor>
