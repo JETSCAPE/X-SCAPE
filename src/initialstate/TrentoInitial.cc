@@ -405,6 +405,19 @@ void TrentoInitial::ExecuteTask() {
     num_of_binary_collisions_.push_back(ncoll_field.data()[i]);
   }
   JSINFO << " TRENTO event generated and loaded ";
+
+  //The part of the code writes the entropy density 
+ std::ofstream myfile;
+  myfile.open("XScapeTrentoProfileSavedrun0.txt");
+  double x,y,z;
+  for (int i = 0; i <  entropy_density_distribution_.size(); i++) {
+    auto coord = CoordFromIdx(i);
+    x = std::get<0>(coord);
+    y = std::get<1>(coord);
+    z = std::get<2>(coord);
+    myfile<<x<<" "<<y<<" "<<z<<" "<<entropy_density_distribution_[i]<<"\n";
+  }
+  myfile.close();
 }
 
 void TrentoInitial::ClearTask() {
