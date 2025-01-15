@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+
+<jetscape>
+
+  <nEvents> 1 </nEvents>
+  <setReuseHydro> false </setReuseHydro>
+
+  <JetScapeWriterAscii> off </JetScapeWriterAscii>
+ <JetScapeWriterFinalStatePartonsAscii> off </JetScapeWriterFinalStatePartonsAscii>
+  <outputFilename>SavedHydro10.0</outputFilename>
+  <vlevel> 0 </vlevel>
+  <nEvents_printout> 1 </nEvents_printout>
+
+  <Random>
+    <seed>1</seed>
+  </Random>
+  <!-- Inital State Module  -->
+  <IS>
+        <grid_max_x> 15 </grid_max_x>
+        <grid_max_y> 15 </grid_max_y>
+        <grid_max_z> 0 </grid_max_z>
+        <!--  <grid_step_x> 0.2 </grid_step_x>
+                      <grid_step_y> 0.2 </grid_step_y> -->
+        <grid_step_x> 0.3 </grid_step_x>
+        <grid_step_y> 0.3 </grid_step_y>
+
+    <Trento>
+    <PhysicsInputs  projectile='Pb'
+            target='Pb'
+            sqrts='2760'
+            cross-section='6.4'
+            normalization='13.9'>
+    </PhysicsInputs>
+    <CutInputs  centrality-low='50'
+          centrality-high='60'>
+    </CutInputs>
+    <TransInputs  reduced-thickness='0.0'
+            fluctuation="1.2"
+            nucleon-width="0.9"
+            nucleon-min-dist="1.2">
+    </TransInputs>
+    <LongiInputs  mean-coeff="1.0"
+            std-coeff="3.0"
+            skew-coeff="0.0"
+            skew-type="1"
+            jacobian="0.8">
+    </LongiInputs>
+    </Trento>
+  </IS>
+
+  <!-- Hard Process -->
+  <Hard>
+	<PGun></PGun>
+  </Hard>
+
+
+  <!-- Hydro  Module  -->
+  <Hydro>
+    <hydro_from_file>
+        <name>MUSICFile</name>
+        <read_in_multiple_hydro>0</read_in_multiple_hydro>
+        <hydro_files_folder>.</hydro_files_folder>
+
+        <!-- read in file type  -->
+        <!-- hydro_type == 1 read in evo file from VISHNew -->
+        <!-- hydro_type == 2 read in evo file from MUSIC -->
+        <hydro_type>2</hydro_type>
+        <boost_invariant_>1</boost_invariant_>
+
+        <!-- MUSIC hydro evolution filename (plain binary format) -->
+        <!-- the associated input file specifies the grid information -->
+        <MUSIC_input_file>music_input</MUSIC_input_file>
+        <PreEq_file>evolution_all_xyeta_fs.dat</PreEq_file>
+        <MUSIC_file>evolution_all_xyeta_MUSIC.dat</MUSIC_file>
+        <!-- transition temperature between QGP and Hadron Resonance Gas -->
+        <T_c>0.154</T_c>
+
+        <!-- read in hydro evo file every Ntau step -->
+        <!-- (only works for MUSIC evo files) -->
+        <read_hydro_every_ntau>1</read_hydro_every_ntau>
+    </hydro_from_file>
+  </Hydro>
+
+  <!--Eloss Modules -->
+  <Eloss>
+
+    <deltaT>0.1</deltaT>
+    <formTime> -0.1</formTime>
+    <maxT>20.0</maxT>
+    <tStart> 0.6 </tStart> <!-- Start time of jet quenching, proper time, fm/c   -->
+    <mutex>ON</mutex>
+    <AddLiquefier> false </AddLiquefier>
+
+    <Matter>
+      <name>Matter</name>
+      <matter_on> 1 </matter_on>
+      <Q0> 2.0 </Q0>
+      <T0> 0.16 </T0>
+      <vir_factor> 0.25 </vir_factor>
+      <in_vac> 0 </in_vac>
+      <recoil_on> 1 </recoil_on>
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>   <!-- Set brick_med to 1 while using Brick Hydro module-->
+      <brick_length> 5.0 </brick_length>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <!-- Pick a qhat formula -->
+      <!-- Type=0 : HTL Formula with both alpha_s fixed  -->
+      <!-- Type=1 : HTL Formula with one running alpha_s and one fixed alpha_s  -->
+      <!-- Type=2 : Constant q-hat; qhat=qhat0   -->
+      <!-- Type=3 : qhat=qhat0*T^3  -->
+      <!-- Type=4 : qhat=qhat0*s; s=entropy density  -->
+      <!-- Type=5 : HTL q-hat with Virtuality dependent function 1/(1+A*pow(ln(Q2),2) + B*pow(ln(Q2),4))  -->
+      <!-- Type=6 : HTL q-hat with Virtuality dependent function int e^{-Cx}/(1+A*pow(ln(Q2),1) + B*pow(ln(Q2),2)) -->
+      <!-- Type=7 : HTL q-hat with Virtuality dependent function  int x^{C}(1-x)^{D}/(1+A*pow(ln(Q2),1) + B*pow(ln(Q2),2))-->
+      <QhatParametrizationType> 5  </QhatParametrizationType>
+      <qhat0> -2.0 </qhat0>  <!-- If Type=0, 1, 5,6,7 set qhat0 as negative since alphas will be used-->
+      <alphas> 0.3 </alphas>
+      <qhatA> 10.0 </qhatA>    <!-- Always positive, Used only if QhatParametrizationType=5,6,7  -->
+      <qhatB> 100.0 </qhatB>    <!-- Always positive, Used only if QhatParametrizationType=5,6,7  -->
+      <qhatC> 0.2 </qhatC>    <!-- (0,100) for Type=6, and (-10,100) for Type=7, Used only if QhatParametrizationType=6,7  -->
+      <qhatD> 5.0 </qhatD>    <!-- (-10,100), Used only if QhatParametrizationType=7  -->
+    </Matter>
+
+    <Lbt>
+      <name> Lbt </name>
+      <Q0> 2.0 </Q0>
+      <in_vac> 0 </in_vac>
+      <only_leading> 0 </only_leading>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <alphas> 0.3 </alphas>
+      <run_alphas>1</run_alphas>   
+    </Lbt>
+  </Eloss>
+
+  <!-- Jet Hadronization Module -->
+  <!--JetHadronization>
+    <name>colorless</name>
+    <take_recoil>1</take_recoil>
+    <eCMforHadronization>2510</eCMforHadronization>
+    <LinesToRead>
+      111:mayDecay = off
+    </LinesToRead>
+  </JetHadronization-->
+
+  <!--Afterburner>
+    <SMASH>
+      <SMASH_config_file>/rs/rs_grp_majshen/tier1/ritoban/JETSCAPE/external_packages/smash/smash_config.yaml</SMASH_config_file>
+      <SMASH_particles_file>/rs/rs_grp_majshen/tier1/ritoban/JETSCAPE/external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>/rs/rs_grp_majshen/tier1/ritoban/JETSCAPE/external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+      <end_time>1000.0</end_time>
+    </SMASH>
+  </Afterburner-->
+</jetscape>
