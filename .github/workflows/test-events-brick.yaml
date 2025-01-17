@@ -5,12 +5,14 @@ on:
     branches:
       - main
       - XSCAPE-1.1.5-RC
+      - cpp17_cmake_syntax
       - brick_matter_lbt
 
   push:
     branches:
       - main
       - XSCAPE-1.1.5-RC
+      - cpp17_cmake_syntax
       - brick_matter_lbt
 
 env:
