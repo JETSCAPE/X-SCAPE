@@ -19,6 +19,7 @@
 #define EPGUN_H
 
 #include "HardProcess.h"
+#include "Matter.h"
 #include "JetScapeLogger.h"
 #include "Pythia8/Pythia.h"
 
@@ -35,6 +36,7 @@ private:
   int use_positron = 0;
   int photoproduction = 0;
   int initial_virtuality_pT = 1;
+  bool breitVir = false;
 
   //cut variables
   double Q2min     = 0.;
@@ -48,6 +50,9 @@ private:
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<EPGun> reg;
+  
+protected:
+  std::uniform_real_distribution<double> ZeroOneDistribution;
 
 public:
   /** standard ctor
@@ -75,6 +80,8 @@ public:
       (Hadron(1,particle.id(),801,particle.pT(),particle.eta(),particle.phi(),particle.e(),0));
     return jshadron;
   }
+
+  Matter matterHelper;
 };
 
 #endif // EPGun_H

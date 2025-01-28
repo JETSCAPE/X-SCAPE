@@ -159,6 +159,7 @@
       <softMomentumCutoff>0.0</softMomentumCutoff>
       <use_positron>0</use_positron>
       <photoproduction>0</photoproduction>
+      <breit_vir>0</breit_vir>
     </EPGun>
   </Hard>
 

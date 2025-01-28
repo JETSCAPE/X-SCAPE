@@ -16,6 +16,7 @@
 // Create a pythia collision at a specified point and return the two inital hard partons
 
 #include "EPGun.h"
+#include "Matter.h"
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -66,6 +67,8 @@ void EPGun::InitTask() {
   eProton = GetXMLElementDouble({"Hard", "EPGun", "proton_energy"});
   use_positron = GetXMLElementInt({"Hard", "EPGun", "use_positron"});
   photoproduction = GetXMLElementInt({"Hard", "EPGun", "photoproduction"});
+  breitVir = GetXMLElementInt({"Hard", "EPGun", "breit_vir"});
+  initial_virtuality_pT = GetXMLElementInt({"Eloss", "Matter", "initial_virtuality_pT"});
 
   //kinematic cuts
   Q2min = GetXMLElementDouble({"Hard", "EPGun", "Q2min"});
@@ -125,7 +128,7 @@ void EPGun::InitTask() {
     //special PDF
     readString("PDF:lepton = off");
     readString("PDF:useHard = on");
-    readString("PDF:pHardSet = LHAPDF6:PDF4LHC21_40");
+    //readString("PDF:pHardSet = LHAPDF6:PDF4LHC21_40"); //for special PDF setting
   }
 
   // SC: read flag for FSR
@@ -180,8 +183,11 @@ void EPGun::InitTask() {
     throw std::runtime_error("Pythia init() failed.");
   }
 
-    std::ofstream sigma_printer;
-    sigma_printer.open(printer, std::ios::trunc);
+  std::ofstream sigma_printer;
+  sigma_printer.open(printer, std::ios::trunc);
+
+  // Initialize random number distribution
+  ZeroOneDistribution = uniform_real_distribution<double>{0.0, 1.0};
 }
 
 void EPGun::ExecuteTask() {
@@ -341,9 +347,103 @@ void EPGun::ExecuteTask() {
 
   // Accept them all
 
+  //getting Breit frame for the event to set virtualities in
+  Pythia8::Vec4 pProton = event[1].p();
+  Pythia8::Vec4 peIn    = event[4].p();
+  Pythia8::Vec4 peOut   = event[6].p();
+  Pythia8::Vec4 pPhoton = peIn - peOut;
+  double Q2    = - pPhoton.m2Calc();
+  double W2    = (pProton + pPhoton).m2Calc();
+  double x     = Q2 / (2. * pProton * pPhoton);
+  double y     = (pProton * pPhoton) / (pProton * peIn);
+  Pythia8::Vec4 pBreit  = 2*x*pProton + pPhoton;
+  Pythia8::Vec4 pQuark  = 2*x*pProton;
+  //Pythia8::Vec4 pBreit2  = 2*x*pProton + pPhoton;
+  Pythia8::RotBstMatrix breitBoost = Pythia8::toCMframe(pQuark,pPhoton);
+
+  //test statements
+  //pBreit2.rotbst(breitBoost);
+  pQuark.rotbst(breitBoost);
+  pPhoton.rotbst(breitBoost);
+  JSINFO << "pQuark: " << pQuark.px() << " " << pQuark.py() << " " << pQuark.pz() << " ";
+  JSINFO << "pPhoton: " << pPhoton.px() << " " << pPhoton.py() << " " << pPhoton.pz() << " ";
+  //JSINFO << "Breit frame test: " << pBreit2.px() << " " << pBreit2.py() << " " << pBreit2.pz() << " ";
+  const double QS = 0.9;
+
   int hCounter = 0;
   for (int np = 0; np < p62.size(); ++np) {
     Pythia8::Particle &particle = p62.at(np);
+    Pythia8::Vec4 partp = particle.p();
+    partp.rotbst(breitBoost);
+    double mass = particle.m();
+    double eCM = info.eCM();
+
+    //only doing vir setting for DIS
+    if(breitVir and particle.status() == 62){
+      //setting up max vir
+      double max_vir = (partp.pAbs() * partp.pAbs() - mass*mass) * vir_factor;
+      double min_vir = (QS * QS / 2.0) * (1.0 + std::sqrt(1.0 + 4.0 * particle.m() * particle.m() / QS / QS));
+      double tQ2 = 0.;
+
+      //using z axis for pT since thats the axis the photon quark collision happens on
+      if(initial_virtuality_pT){
+        max_vir = (partp.pz() * partp.pz() - mass*mass) * vir_factor;
+      }
+
+      max_vir *= Q2/1000.;
+
+      int iSplit = 0; // quark
+      if (particle.id() == gid) {
+        JSDEBUG << " parton is a gluon ";
+        iSplit = 1; // gluon
+      } else {
+        JSDEBUG << " parton is a quark ";
+      }
+
+      //evaluating virtuality for different cases
+      if (max_vir <= QS * QS){
+        tQ2 = 0.0;
+      }else{
+        double nu = (partp.e() + partp.pAbs())/sqrt(2.0);
+
+        if (abs(particle.id()) == 4 || abs(particle.id()) == 5) {
+          if (max_vir > min_vir) {
+              tQ2 =
+                  matterHelper.generate_vac_t_w_M(particle.id(), particle.m(), nu,
+                                    QS * QS / 2.0, max_vir, 0, iSplit);
+            } else {
+              tQ2 = QS * QS;
+            }
+            //  std::ofstream tdist;
+            //  tdist.open("tdist_heavy.dat", std::ios::app);
+            //  tdist << tQ2 << endl;
+            //  tdist.close();
+
+            VERBOSE(8) << BOLDYELLOW << " virtuality calculated as = " << tQ2;
+        } else if (particle.id() == gid) {
+            tQ2 = matterHelper.generate_vac_t_w_M(particle.id(), particle.m(), nu,
+                                    QS * QS / 2.0, max_vir, 0, iSplit);
+        } else {
+            tQ2 = matterHelper.generate_vac_t(particle.id(), nu, QS * QS / 2.0,
+                                max_vir, 0, iSplit);
+
+        }
+
+        //catching virtualitiies that are too high
+        if(sqrt(tQ2) > particle.pAbs()  or sqrt(tQ2) > partp.pAbs()) tQ2 = min_vir;
+      }
+
+      //applying virtuality change to the parton
+      //JSINFO << BOLDYELLOW << "Particle with ID: " << particle.id();
+      //JSINFO << BOLDYELLOW << "initial momentum: " << particle.px() << " " << particle.py() << " " << particle.pz();
+      //JSINFO << BOLDYELLOW << "breit momentum: " << partp.px() << " " << partp.py() << " " << partp.pz();
+      //JSINFO << BOLDYELLOW << "Virtuality: " << sqrt(tQ2) << " ";
+
+      double scale = sqrt(particle.e()*particle.e() - tQ2 - particle.m2())/particle.pAbs();
+      particle.px(particle.px()*scale);
+      particle.py(particle.py()*scale);
+      particle.pz(particle.pz()*scale);
+    }
 
     VERBOSE(7) << "Adding particle with pid = " << particle.id()
                << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
@@ -358,6 +458,24 @@ void EPGun::ExecuteTask() {
     ptn->set_color(particle.col());
     ptn->set_anti_color(particle.acol());
     ptn->set_max_color(1000 * (np + 1));
+
+    //adding mean formtime for partons that need it set
+    if(breitVir and particle.status() == 62){
+      double mean_form_time = (2.*ptn->e()) / (ptn->e()*ptn->e()
+                            - ptn->px()*ptn->px() - ptn->py()*ptn->py()
+                            - ptn->pz()*ptn->pz() - ptn->restmass()*ptn->restmass()
+                            + rounding_error) / fmToGeVinv;
+      ptn->set_form_time(mean_form_time);
+      ptn->set_mean_form_time();
+
+      double velocity[4];
+      velocity[0] = 1.0;
+      for (int j = 1; j <= 3; j++) {
+        velocity[j] = ptn->p(j) / ptn->e();
+      }
+      ptn->set_jet_v(velocity);
+    }
+
     AddParton(ptn);
   }
 
