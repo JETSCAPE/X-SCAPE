@@ -14,13 +14,11 @@
 ##############################################################################
 
 
-# using a commit from the MUSIC repository that is compatible with X-SCAPE 1.1.5
+# using a commit from the MUSIC repository that is compatible with the current X-SCAPE version
 folderName="music"
 commitHash="63476c2dd7d05a265a137aac813e294019fdb229"
 
-# download the code package
-rm -fr $folderName
-git clone https://github.com/MUSIC-fluid/MUSIC.git --branch JETSCAPE $folderName
+git clone https://github.com/MUSIC-fluid/MUSIC.git -b JETSCAPE $folderName
 cd $folderName
 git checkout $commitHash
 
