@@ -48,12 +48,6 @@ public:
   /// Get the current list of hadrons in the transport as Jetscape hadrons (has to be provided by all Transport implementations)
   virtual std::vector<Hadron> GetCurrentHadronList() const = 0;
 
-protected:
-  /// Get the list of hadrons for the upcoming timestep from BulkDynamicsManager (will clear the list)
-  std::vector<std::shared_ptr<Hadron>> GetTimestepParticlizationHadrons();
-  /// Get the list of hadrons to be removed for the upcoming timestep from BulkDynamicsManager (will clear the list)
-  std::vector<std::shared_ptr<Hadron>> GetTimestepHadronsToRemove();
-
 };
 
 } // end namespace Jetscape

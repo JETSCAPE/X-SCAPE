@@ -49,6 +49,8 @@ public:
   /// Get the current list of hadrons in the afterburner as Jetscape Hadrons (has to be provided by all afterburner implementations)
   virtual std::vector<Hadron> GetCurrentHadronList() const = 0;
 
+  virtual any GetHistory() {return GetCurrentHadronList();}
+
 protected:
   /// Gather all hadrons from soft particlization and fragmentation
   std::vector<std::vector<std::shared_ptr<Hadron>>> GatherAfterburnerHadrons();
@@ -56,6 +58,11 @@ protected:
   std::vector<std::vector<std::shared_ptr<Hadron>>> GetSoftParticlizationHadrons();
   /// Get the list of fragmentation hadrons
   std::vector<std::shared_ptr<Hadron>> GetFragmentationHadrons();
+
+  /// Get the list of hadrons for the upcoming timestep from BulkDynamicsManager (will clear the list)
+  std::vector<std::shared_ptr<Hadron>> GetTimestepParticlizationHadrons();
+  /// Get the list of hadrons to be removed for the upcoming timestep from BulkDynamicsManager (will clear the list)
+  std::vector<std::shared_ptr<Hadron>> GetTimestepHadronsToRemove();
 
   std::vector<std::vector<std::shared_ptr<Hadron>>> dummy;
   std::uniform_real_distribution<double> ZeroOneDistribution;

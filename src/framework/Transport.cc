@@ -38,24 +38,4 @@ void Transport::CalculateTime() {
   CalculateTimeTask();
 }
 
-std::vector<std::shared_ptr<Hadron>> Transport::GetTimestepParticlizationHadrons() {
-  auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
-  if (!bdm) {
-    JSWARN << "No BulkDynamicsManager module found. It is necessary to provide"
-           << " a hadron list for upcoming timesteps.";
-    exit(1);
-  }
-  return bdm->GetNewHadronsAndClear();
-}
-
-std::vector<std::shared_ptr<Hadron>> Transport::GetTimestepHadronsToRemove() {
-  auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
-  if (!bdm) {
-    JSWARN << "No BulkDynamicsManager module found. It is necessary to provide"
-           << " a hadron list for upcoming timesteps.";
-    exit(1);
-  }
-  return bdm->GetHadronsToRemoveAndClear();
-}
-
 }
