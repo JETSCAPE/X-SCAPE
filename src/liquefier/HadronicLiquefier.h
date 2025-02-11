@@ -82,6 +82,10 @@ private:
 
   std::vector<HadronDroplet> hadron_droplets_list;
 
+  // this is the dtau of the hydro, set from the hydro module
+  double dtau_ = -1.0; 
+
+
   enum QuantityType { BARYON_NUMBER, ELECTRIC_CHARGE, STRANGENESS };
 
 public:
@@ -117,6 +121,11 @@ public:
   double get_zMax() { return zMax_; }
   double get_sigma_transverse() { return sigma_transverse_; }
   double get_sigma_longitudinal() { return sigma_longitudinal_; }
+
+  /**
+   * Set the dtau of the hydro.
+  */
+  void set_hydro_dtau(double val) { dtau_ = val; };
 
   /**
    * Function to initialize all parameters from an XML file.
@@ -199,13 +208,12 @@ public:
   /**
    * Function to add the hadrons as sources for hydrodynamics by creating 
    * droplets and smear them with the selected smearing kernel.
-   * The tau parameter is only important for the normalization in the Milne case.
    * 
    * In case the hydro runs in Cartesian coordinates, the position of the droplets
    * is given in the Cartesian coordinates. In case the hydro runs in Milne
    * coordinates, the position of the droplets is given in Milne coordinates.
   */
-  void add_hydro_sources_hadrons(const double tau, std::vector<Hadron> &hIn);
+  void add_hydro_sources_hadrons(std::vector<Hadron> &hIn);
 
   /**
    * Function to add a droplet to the list of droplets.

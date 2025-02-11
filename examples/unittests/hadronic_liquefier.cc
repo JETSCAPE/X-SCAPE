@@ -432,7 +432,7 @@ TEST(HadronicLiquefierTest, TestAddHydroSourcesHadrons) {
     // add the same hadron 3 times and check the hadron_droplet_list size
     HadronicLiquefier lqf(true, 0.5, 0.5, 15., 15., 15., 128, 128, 128, false);
     std::vector<Hadron> hIn = {had, had, had};
-    lqf.add_hydro_sources_hadrons(1.0, hIn);
+    lqf.add_hydro_sources_hadrons(hIn);
 
     EXPECT_EQ(3, lqf.get_dropletlist_size());
 }
@@ -650,7 +650,7 @@ TEST(HadronicLiquefierTest, TestGetDropletlistTotalEnergy) {
     // add the same hadron 3 times and check the hadron_droplet_list size
     HadronicLiquefier lqf(true, 0.5, 0.5, 15., 15., 15., 128, 128, 128, false);
     std::vector<Hadron> hIn = {had, had, had};
-    lqf.add_hydro_sources_hadrons(1.0, hIn);
+    lqf.add_hydro_sources_hadrons(hIn);
 
     double tolerance = 1.e-6;
     double expected_result = 3.*0.138;

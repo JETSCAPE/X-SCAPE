@@ -228,6 +228,10 @@ void HadronicLiquefier::get_source_energy(
   double value_kernel = 0.;
   for (const auto &drop_i : hadron_droplets_list) {
     auto xmu_i = drop_i.get_xmu();
+    if (dtau_ > 0 && ((xmu_i[0] < tau - 0.5 * dtau_) 
+        || (xmu_i[0] >= tau + 0.5 * dtau_))) {
+      continue;
+    }
     auto pmu_i = drop_i.get_pmu();
 
     double x_diff = x - xmu_i[1];
@@ -259,9 +263,9 @@ void HadronicLiquefier::get_source_energy(
       const double gamma = mT * cosh(rapidity - eta_s) / mass;
 
       value_kernel = smearing_kernel_covariant_Milne(x_diff, y_diff, eta_diff,
-                                                     ux, uy, ueta, tau, gamma);
+                                              ux, uy, ueta, tau, gamma) / tau;
     } else if (!covariant_smearing_ && !hydro_Cartesian_) {
-      value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff);
+      value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff) / tau;
     } else if (covariant_smearing_ && hydro_Cartesian_) {
       const double ux = pmu_i[1] / mass;
       const double uy = pmu_i[2] / mass;
@@ -319,6 +323,10 @@ double HadronicLiquefier::get_source_quantity(const double tau,
     }
 
     auto xmu_i = drop_i.get_xmu();
+    if (dtau_ > 0 && ((xmu_i[0] < tau - 0.5 * dtau_) 
+          || (xmu_i[0] >= tau + 0.5 * dtau_))) {
+      continue;
+    }
     auto pmu_i = drop_i.get_pmu();
 
     double x_diff = x - xmu_i[1];
@@ -350,9 +358,9 @@ double HadronicLiquefier::get_source_quantity(const double tau,
       const double gamma = mT * cosh(rapidity - eta_s) / mass;
 
       value_kernel = smearing_kernel_covariant_Milne(x_diff, y_diff, eta_diff,
-                                                     ux, uy, ueta, tau, gamma);
+                                              ux, uy, ueta, tau, gamma) / tau;
     } else if (!covariant_smearing_ && !hydro_Cartesian_) {
-      value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff);
+      value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff) / tau;
     } else if (covariant_smearing_ && hydro_Cartesian_) {
       const double ux = pmu_i[1] / mass;
       const double uy = pmu_i[2] / mass;
@@ -391,16 +399,15 @@ double HadronicLiquefier::get_source_rhos(const double tau, const double x,
   return get_source_quantity(tau, x, y, eta, qtype);
 }
 
-void HadronicLiquefier::add_hydro_sources_hadrons(const double tau,
-                                                  std::vector<Hadron> &hIn) {
+void HadronicLiquefier::add_hydro_sources_hadrons(std::vector<Hadron> &hIn) {
   // Create droplets from the hadrons
   for (const auto &hadron : hIn) {
-    auto p_init = hadron.p_in();
     auto x_init = hadron.x_in();
+    auto p_init = hadron.p_in();
 
     std::array<double, 4> x_hadron = {0.0, 0.0, 0.0, 0.0};
     if (hydro_Cartesian_) {
-      std::array<double, 4> x_hadron = {
+      x_hadron = {
         static_cast<double>(x_init.t()),
         static_cast<double>(x_init.x()),
         static_cast<double>(x_init.y()),
@@ -409,7 +416,7 @@ void HadronicLiquefier::add_hydro_sources_hadrons(const double tau,
       const double tau = sqrt(x_init.t() * x_init.t() - x_init.z() * x_init.z());
       const double eta_s =
           0.5 * log((x_init.t() + x_init.z()) / (x_init.t() - x_init.z()));
-      std::array<double, 4> x_hadron = {
+      x_hadron = {
         static_cast<double>(tau),
         static_cast<double>(x_init.x()),
         static_cast<double>(x_init.y()),
@@ -427,7 +434,7 @@ void HadronicLiquefier::add_hydro_sources_hadrons(const double tau,
     HadronDroplet hadron_droplet = HadronDroplet(x_hadron, p_hadron, 
                           baryon_number, electric_charge, strangeness);
 
-    double norm = compute_drop_kernel_normalization(tau, hadron_droplet);
+    double norm = compute_drop_kernel_normalization(x_hadron[0], hadron_droplet);
     hadron_droplet.set_normalization(norm);
     hadron_droplets_list.push_back(hadron_droplet);
   }
