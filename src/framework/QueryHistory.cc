@@ -21,13 +21,27 @@ QueryHistory *QueryHistory::Instance() {
 
 any QueryHistory::GetHistoryFromModule(string mName)
 {
-  //JP: TO be implement and or only use the FromMpdules ...
+  //JP: TO be implement and or only use the FromModules ...
   auto it = taskMap.find(mName);
 
-  if (std::dynamic_pointer_cast<JetScapeModuleBase>(it->second.lock()))
-    return std::dynamic_pointer_cast<JetScapeModuleBase>(it->second.lock())->GetHistory();
-  else
+  if (it == taskMap.end()) {
+    JSWARN << "Module name " << mName << " not found in taskMap";
     return 0;
+  }
+
+  auto module_ptr = it->second.lock();
+  if (!module_ptr) {
+    JSWARN << "Weak pointer to module " << mName << " is expired";
+    return 0;
+  }
+
+  auto history_ptr = std::dynamic_pointer_cast<JetScapeModuleBase>(module_ptr);
+  if (!history_ptr) {
+    JSWARN << "Unable to cast to JetScapeModuleBase for module " << mName;
+    return 0;
+  }
+
+  return history_ptr->GetHistory();
 }
 
 vector<any> QueryHistory::GetHistoryFromModules(string mName)
@@ -40,7 +54,7 @@ vector<any> QueryHistory::GetHistoryFromModules(string mName)
 
   for (auto itr = it.first; itr != it.second; ++itr)
   {
-    //JP: maybe change JetSccapeTask -> JetScapeModuleBase in header to avoid this dynamic casting etc to be followed up ...
+    //JP: maybe change JetScapeTask -> JetScapeModuleBase in header to avoid this dynamic casting etc to be followed up ...
     if (std::dynamic_pointer_cast<JetScapeModuleBase>(itr->second.lock()))
       mHistories.push_back(std::dynamic_pointer_cast<JetScapeModuleBase>(itr->second.lock())->GetHistory());
   }
