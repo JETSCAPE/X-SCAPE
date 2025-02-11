@@ -174,7 +174,6 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   }
 
   music_hydro_ptr->check_parameters();
-  music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 }
 
 void MpiMusic::InitializeHydroEnergyProfile() {
@@ -190,12 +189,14 @@ void MpiMusic::InitializeHydroEnergyProfile() {
   int nz = ini->GetZSize();
 
   // need further improvement to accept multiple source term objects
-  music_hydro_ptr->generate_hydro_source_terms();
+  // this is a temporary solution
+  music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 
   if (pre_eq_ptr == nullptr) {
-    JSINFO << "Missing the pre-equilibrium module ...";
-    JSINFO << nx << "," << ny << "," << nz;
+    JSINFO << "Setting up the hydro without pre-equilibrium module ...";
     music_hydro_ptr->initialize_hydro_xscape(nx,ny,nz,dx,dy,dz);
+    hydro_source_terms_ptr->set_hydro_dtau(
+      music_hydro_ptr->get_hydro_dtau_grid());
   } else {
     double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
     JSINFO << "hydro initial time  tau0 = " << tau0 << " fm";
@@ -221,7 +222,14 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
     InitializeHydroEnergyProfile();
     music_hydro_ptr->prepare_run_hydro_one_time_step();
   }
-  music_hydro_ptr->run_hydro_upto(tauEnd);
+
+  if (hydro_status != FINISHED) {
+    int status = music_hydro_ptr->run_hydro_upto(tauEnd);
+    if (status != 0) {
+      hydro_status = FINISHED;
+    }
+  }
+  //PassHydroSurfaceToFramework();
 }
 
 void MpiMusic::CalculateTime() {
@@ -233,11 +241,13 @@ void MpiMusic::CalculateTime() {
 void MpiMusic::ExecTime() {
   VERBOSE(2) << "MpiMusic::ExecTime() main Clock = "
              << GetMainClock()->GetCurrentTime() << " fm/c ...";
-  // Add hydro sources for the current time step here
-
-  // Pass the FO surface for the current time step to framework
+  JSWARN << "Energy sources =" << hydro_source_terms_ptr->get_total_E_of_sources();
   
-  //PassHydroSurfaceToFramework();
+  // Pass the FO surface for the current time step to framework
+  if (hydro_status == INITIALIZED) {
+    JSINFO << "Passing hydro surface cells to JETSCAPE ... ";
+    PassHydroSurfaceToFramework();
+  }
 }
 
 void MpiMusic::EvolveHydro() {
@@ -330,7 +340,7 @@ void MpiMusic::SetHydroGridInfo() {
 void MpiMusic::PassHydroSurfaceToFramework() {
   JSINFO << "Passing hydro surface cells to JETSCAPE ... ";
   auto number_of_cells = music_hydro_ptr->get_number_of_surface_cells();
-  JSINFO << "total number of fluid cells: " << number_of_cells;
+  JSINFO << "Total number of fluid cells: " << number_of_cells;
   SurfaceCell surfaceCell_i;
   for (int i = 0; i < number_of_cells; i++) {
     SurfaceCellInfo surface_cell_info;
@@ -356,6 +366,7 @@ void MpiMusic::PassHydroSurfaceToFramework() {
     surface_cell_info.bulk_Pi = surfaceCell_i.bulk_Pi;
     StoreSurfaceCell(surface_cell_info);
   }
+  music_hydro_ptr->clear_surface_cell_vector();
 }
 
 void MpiMusic::PassHydroEvolutionHistoryToFramework() {
@@ -363,7 +374,7 @@ void MpiMusic::PassHydroEvolutionHistoryToFramework() {
 
   JSINFO << "Passing hydro evolution information to JETSCAPE ... ";
   auto number_of_cells = music_hydro_ptr->get_number_of_fluid_cells();
-  JSINFO << "total number of fluid cells: " << number_of_cells;
+  JSINFO << "Total number of fluid cells: " << number_of_cells;
 
   SetHydroGridInfo();
 

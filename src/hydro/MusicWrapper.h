@@ -33,9 +33,20 @@ private:
   std::weak_ptr<LiquefierBase> liquefier_ptr;
   std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr;
 
+  double dtau;
+
 public:
   HydroSourceJETSCAPE() = default;
   ~HydroSourceJETSCAPE() {}
+
+  // set the dtau of the hydro and if the hadronic source terms are present
+  // add the value to the hadronic liquefier
+  void set_hydro_dtau(double val) { 
+    dtau = val;
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      hadronic_liquefier_ptr.lock()->set_hydro_dtau(dtau);
+    }
+  };
 
   void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
     liquefier_ptr = new_liquefier;
@@ -96,7 +107,8 @@ public:
       std::array<double, 4> jmu_tmp = {0.0};
       hadronic_liquefier_ptr.lock()->get_source_energy(tau, x, y, eta_s, jmu_tmp);
       for (int i = 0; i < 4; i++) {
-        j_mu[i] += jmu_tmp[i]/hbarC;  // convert the unit from GeV/fm^4 to 1/fm^5
+        // convert the unit from GeV/fm^4 to 1/fm^5
+        j_mu[i] += jmu_tmp[i]/hbarC/dtau;
       }
     }
   }
@@ -109,7 +121,7 @@ public:
     if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
       return 0.0;
     }
-    return hadronic_liquefier_ptr.lock()->get_source_rhob(tau, x, y, eta_s);
+    return hadronic_liquefier_ptr.lock()->get_source_rhob(tau, x, y, eta_s) / dtau;
   }
 
   double get_hydro_rhoq_source(const double tau, const double x, const double y,
@@ -118,7 +130,7 @@ public:
     if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
       return 0.0;
     }
-    return hadronic_liquefier_ptr.lock()->get_source_rhoq(tau, x, y, eta_s);
+    return hadronic_liquefier_ptr.lock()->get_source_rhoq(tau, x, y, eta_s) / dtau;
   }
 
   double get_hydro_rhos_source(const double tau, const double x, const double y,
@@ -127,7 +139,7 @@ public:
     if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
       return 0.0;
     }
-    return hadronic_liquefier_ptr.lock()->get_source_rhos(tau, x, y, eta_s);
+    return hadronic_liquefier_ptr.lock()->get_source_rhos(tau, x, y, eta_s) / dtau;
   }
 };
 

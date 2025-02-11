@@ -71,7 +71,7 @@ public:
   void filter_partons(std::vector<Parton> &pOut);
   void add_hydro_sources(std::vector<Parton> &pIn, std::vector<Parton> &pOut);
   // add hydro sources for hadrons is overriden in derived HadronicLiquefier class
-  void add_hydro_sources_hadrons(const double tau, std::vector<Hadron> &hIn) {};
+  void add_hydro_sources_hadrons(std::vector<Hadron> &hIn) {};
 
   //! Core signal to receive information from the medium
   sigslot::signal5<double, double, double, double,
