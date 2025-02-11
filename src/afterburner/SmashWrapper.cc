@@ -17,6 +17,7 @@
 // -----------------------------------------
 
 #include "SmashWrapper.h"
+#include "Transport.h"
 
 #include "smash/particles.h"
 #include "smash/library.h"
@@ -45,8 +46,8 @@ void SmashWrapper::InitTask() {
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_decaymodes_file"});
   // output path is just dummy here, because no output from SMASH is foreseen
   std::filesystem::path output_path("./");
-  // do not store tabulation, which is achieved by an empty tabulations path
-  std::string tabulations_path("");
+  // store tabulation to make use of it if SMASH is used multiple times
+  std::string tabulations_path("./smash_tabulations");
   const std::string smash_version(SMASH_VERSION);
 
   auto config = smash::setup_config_and_logging(smash_config_file, 
@@ -70,8 +71,12 @@ void SmashWrapper::InitTask() {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
 
-  smash::initialize_particles_decays_and_tabulations(config, smash_version,
+  // Check if the tabulations directory exists, if not initialize particles and 
+  // decays
+  if (!std::filesystem::exists(tabulations_path)) {
+    smash::initialize_particles_decays_and_tabulations(config, smash_version,
                                                      tabulations_path);
+  }
 
   // Enforce timestep compatibility (temporarily)
   if (IsTimeStepped()) {
@@ -89,6 +94,7 @@ void SmashWrapper::InitTask() {
   JSINFO << "Seting up SMASH Experiment object";
   smash_experiment_ =
       make_shared<smash::Experiment<AfterburnerModus>>(config, output_path);
+  config.clear();
   JSINFO << "Finish initializing SMASH";
 }
 
@@ -130,17 +136,17 @@ void SmashWrapper::InitPerEvent() {
 }
 
 void SmashWrapper::CalculateTimeTask() {
+  std::vector<shared_ptr<Hadron>> hadrons_to_add = Afterburner::GetTimestepParticlizationHadrons();
+  std::vector<shared_ptr<Hadron>> hadrons_to_remove = Afterburner::GetTimestepHadronsToRemove();
 
-  // Comment in for adding new hadrons from BDM for time steps
-  // std::vector<shared_ptr<Hadron>> new_JS_hadrons = GetTimestepParticlizationHadrons();
-  // JSINFO << "SMASH got " << new_JS_hadrons.size() << " timestep partilization hadrons from BDM.";
+  VERBOSE(2) << "SMASH afterburner got " << hadrons_to_add.size()  << " hadrons in this timestep.";
+  VERBOSE(2) << "SMASH afterburner removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
 
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
-  JSINFO << "Propagating SMASH until t = " << until_time;
   if (!only_final_decays_) {
-    // Comment in for adding new hadrons from BDM for time steps
-    // smash_experiment_->run_time_evolution(until_time, get_smash_plist_from_JS_hadrons(new_JS_hadrons));
-    smash_experiment_->run_time_evolution(until_time);
+    smash::ParticleList add_list = get_smash_plist_from_JS_hadrons(hadrons_to_add);
+    smash::ParticleList remove_list = get_smash_plist_from_JS_hadrons(hadrons_to_remove);
+    smash_experiment_->run_time_evolution(until_time,std::move(add_list),std::move(remove_list));
   }
 }
 
@@ -151,13 +157,10 @@ void SmashWrapper::FinishPerEvent() {
   // SMASH within JETSCAPE only works with one (the first) ensemble
   smash::Particles *smash_particles = smash_experiment_->first_ensemble();
   int ev_no = modus->current_event_number();
-
   smash_experiment_->do_final_decays();
   smash_experiment_->final_output();
   fill_JS_hadrons_from_smash_particles(*smash_particles,
                                        modus->jetscape_hadrons_[ev_no - 1]);
-  JSINFO << modus->jetscape_hadrons_[ev_no - 1].size()
-         << " hadrons from SMASH.";
   smash_experiment_->increase_event_number();  // internal SMASH event counter
 }
 
