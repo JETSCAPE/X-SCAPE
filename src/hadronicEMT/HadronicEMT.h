@@ -29,6 +29,9 @@ class HadronicEMT {
 private:
   double sigma_transverse_, sigma_longitudinal_;
   int smearing_covariant_;
+  /// Initial state parameters (grid specifications)
+  double xMax_, yMax_, zMax_, dx_, dy_, dz_;
+  int Nx_, Ny_, Nz_;
 
   // EOS variables
   double e_lower_bound_, e_upper_bound_, e_spacing_;
@@ -37,28 +40,28 @@ private:
   std::vector<double> s_table_;
 
   // define the (pseudo)-metric tensor g_{\mu\nu} as a 4x4 array
-  const std::array<std::array<int, 4>, 4> g = {{{1, 0, 0, 0},
+  const std::array<std::array<int, 4>, 4> g_ = {{{1, 0, 0, 0},
                                                 {0, -1, 0, 0},
                                                 {0, 0, -1, 0},
                                                 {0, 0, 0, -1}}};
 
   // define the inverse (pseudo)-metric tensor g^{\mu\nu} as a 4x4 array
-  const std::array<std::array<int, 4>, 4> g_inv = {{{1, 0, 0, 0},
+  const std::array<std::array<int, 4>, 4> g_inv_ = {{{1, 0, 0, 0},
                                                     {0, -1, 0, 0},
                                                     {0, 0, -1, 0},
                                                     {0, 0, 0, -1}}};
 
-  gsl_matrix *Tmualpha_gsl;
-  gsl_vector_complex *eigenvalues;
-  gsl_matrix_complex *eigenvectors;
-  gsl_eigen_nonsymmv_workspace *w;
+  gsl_matrix *Tmualpha_gsl_;
+  gsl_vector_complex *eigenvalues_;
+  gsl_matrix_complex *eigenvectors_;
+  gsl_eigen_nonsymmv_workspace *w_;
 
   // define a 4x4 array to store the energy-momentum tensor
-  std::array<std::array<double, 4>, 4> Tmn_requested_point;
+  std::array<std::array<double, 4>, 4> Tmn_requested_point_;
   // define a length 4 array to store the flow velocity
-  std::array<double, 4> umu_requested_point;
+  std::array<double, 4> umu_requested_point_;
   // define a variable to store the energy density
-  double e_requested_point;
+  double e_requested_point_;
 
 
 public:
@@ -73,6 +76,10 @@ public:
   void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, 
             Jetscape::real z, std::unique_ptr<BulkMediaInfo> &bulk_info_ptr,
             std::vector<Hadron> &h_list);
+
+  /// Determine particles in list to fluidize
+  std::vector<bool> DetermineHadronsForFluidization(double T_critical,
+                                      std::vector<Hadron> &current_hadrons);
 
   void ComputeEnergyDensityAndFlowVelocity(
     const std::array<std::array<double, 4>, 4> &Tmn, double &e,
@@ -100,6 +107,8 @@ public:
   void set_upper_bound(double e_upper_bound) { e_upper_bound_ = e_upper_bound; }
   void set_spacing(double e_spacing) { e_spacing_ = e_spacing; }
   void set_length(int e_length) { e_length_ = e_length; }
+  void set_T_table(const std::vector<double> &T_table) { T_table_ = T_table; }
+  void set_s_table(const std::vector<double> &s_table) { s_table_ = s_table; }
 
   void read_EOS_from_file(const std::string &filename);
   double interpolate_1D_EOS(double e, const std::vector<double> &table) const;

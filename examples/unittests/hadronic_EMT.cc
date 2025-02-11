@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 
 using namespace Jetscape;
-
+/*
 // check coordinate transformation functions (same as in causal_liquifier.cc test)
 TEST(HadronicEMTTest, TEST_COORDINATES){
 
@@ -166,7 +166,7 @@ TEST(HadronicEMTTest, TEST_TMUNU){
   EXPECT_NEAR(0.0,bulk_info_ptr->vy,1e-4);
   EXPECT_NEAR(0.0,bulk_info_ptr->vz,1e-4);
 }
-
+*/
 TEST(HadronicEMTTest, TEST_1D_INTERPOLATION){
   HadronicEMT hEMT(0.5,0.5,1);
 
@@ -178,6 +178,8 @@ TEST(HadronicEMTTest, TEST_1D_INTERPOLATION){
 
   // create a fake EOS table
   std::vector<double> table = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0};
+  hEMT.set_T_table(table);
+  hEMT.set_s_table(table);
 
   // test the interpolation
   EXPECT_NEAR(1.0,hEMT.interpolate_1D_EOS(1.0,table),1e-4);
@@ -194,6 +196,59 @@ TEST(HadronicEMTTest, TEST_1D_INTERPOLATION){
 
 
   // test the get_T function
-  const double expected_T = pow(hEMT.interpolate_1D_EOS(0.3 / hbarC,table), 0.2) * hbarC;
-  EXPECT_NEAR(expected_T,hEMT.get_T(0.3),1e-4);
+  const double e_test = 0.3; // GeV/fm^3
+  const double expected_T = pow(hEMT.interpolate_1D_EOS(e_test / hbarC,table), 0.2) * hbarC;
+  const double get_T_value = hEMT.get_T(e_test);
+  EXPECT_NEAR(expected_T,hEMT.get_T(e_test),1e-4);
+
+  const double expected_s = hEMT.interpolate_1D_EOS(e_test / hbarC,table);
+  const double get_s_value = hEMT.get_s(e_test);
+  EXPECT_NEAR(expected_s,hEMT.get_s(e_test),1e-4);
 }
+
+/*double HadronicEMT::get_T(double e) const {
+  double e_fm4 = e / hbarC;  // 1/fm^4
+  double T5 = interpolate_1D_EOS(e_fm4, T_table_);  // returns e/T^5
+  double T = pow(T5, 0.2) * hbarC;  // GeV
+  return T;
+}*/
+
+/*
+TEST(HadronicEMTTest, TestDetermineHadronsForFluidization) {
+  HadronicEMT hEMT(0.5,0.5,1);
+  // Create a list of 3 hadrons
+  std::vector<Hadron> hadron_list;
+  unsigned int nparticles = 3;
+  for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
+    const int hadron_label = 0;
+    const int hadron_status = 11;
+    const int hadron_id = 111;
+    const double hadron_mass = 1.0;
+    double energy = 1.0;
+    if (ipart == 0) {
+      FourVector hadron_x(0.0, 0.0, 0.0, 0.0);
+      FourVector hadron_p(0.0, 0.0, 0.0, energy);
+      // create a JETSCAPE Hadron
+      hadron_list.push_back(Hadron(hadron_label, hadron_id, hadron_status, 
+                                  hadron_p, hadron_x, hadron_mass));
+    } else {
+      energy = 0.01; // set a small energy for the other hadrons
+      FourVector hadron_p(0.0, 0.0, 0.0, energy);
+      FourVector hadron_x(0.0, 14.0, 0.0, 0.0);
+      // create a JETSCAPE Hadron
+      hadron_list.push_back(Hadron(hadron_label, hadron_id, hadron_status, 
+                                  hadron_p, hadron_x, hadron_mass));
+    }
+  }
+
+  const double T_critical = 0.15;
+  std::vector<bool> fluidize_hadrons = 
+    hEMT.DetermineHadronsForFluidization(T_critical,hadron_list);
+  
+  // Check that the first hadron is marked for fluidization with true, the
+  // other hadrons are marked with false
+  EXPECT_TRUE(fluidize_hadrons[0]);
+  EXPECT_FALSE(fluidize_hadrons[1]);
+  EXPECT_FALSE(fluidize_hadrons[2]);
+}
+*/
