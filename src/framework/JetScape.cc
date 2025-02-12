@@ -1208,36 +1208,6 @@ void JetScape::Exec() {
     // -- all other Write()'s are being called
     // the result still confuses me. It's in the best possible order but it shouldn't be.
 
-    // collect module header data
-    for (auto w : vWriter) {
-      auto f = w.lock();
-      if (f) {
-        JetScapeTask::CollectHeaders(w);
-      }
-    }
-    // official header
-    for (auto w : vWriter) {
-      auto f = w.lock();
-      if (f) {
-        f->WriteHeaderToFile();
-      }
-    }
-
-    // event data
-    for (auto w : vWriter) {
-      auto f = w.lock();
-      if (f) {
-        JetScapeTask::WriteTasks(w);
-      }
-    }
-
-    // Finalize
-    for (auto w : vWriter) {
-      auto f = w.lock();
-      if (f) {
-        f->WriteEvent();
-      }
-    }
 
     // JP: If task not active then per time step is active (see above), which could lead to issues with hydro resuse. Follow up!
     // JS: New is timestepped flag should resolve this issue. Anything to undo below?
@@ -1339,17 +1309,67 @@ void JetScape::Exec() {
         }
       }
     }
+    
+    if (ClockUsed())
+    {
+      JSWARN << "Clock is used and FinishPerEventTasks is called!";
+      JetScapeModuleBase::FinishPerEventTasks();
+    }
+
+    // print all tasks and if they are active or not
+    for (auto it : GetTaskList()) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module) {
+        if (module->GetActive()) {
+          JSWARN << "IsActive(true) = " << module->GetId();
+        } else {
+          JSWARN << "IsActive(false) = " << module->GetId();
+        }
+      }
+    }
+
+    JSWARN << "Start the writing process ...";
+    // collect module header data
+    for (auto w : vWriter) {
+      auto f = w.lock();
+      if (f) {
+        JetScapeTask::CollectHeaders(w);
+      }
+    }
+    // official header
+    for (auto w : vWriter) {
+      auto f = w.lock();
+      if (f) {
+        f->WriteHeaderToFile();
+      }
+    }
+
+    // event data
+    for (auto w : vWriter) {
+      auto f = w.lock();
+      if (f) {
+        JetScapeTask::WriteTasks(w);
+      }
+    }
+
+    // Finalize
+    for (auto w : vWriter) {
+      auto f = w.lock();
+      if (f) {
+        f->WriteEvent();
+      }
+    }
 
     // Now clean up, only affects active tasks
+    JSWARN << "Clearing tasks ...";
     JetScapeModuleBase::ClearTasks();
 
-    //have to call this after writer and call explciitly the clear functions
+    //have to call this after writer and call explcitly the clear functions
     //in finish per event, because like writer, clear only for active tasks ...
     //have to think a bit more how to make this workflow more consistent ...
-    if (ClockUsed())
-      JetScapeModuleBase::FinishPerEventTasks();
 
     IncrementCurrentEvent();
+    JSWARN << "End of Event " << i;
   }
 }
 
