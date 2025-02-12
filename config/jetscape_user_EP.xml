@@ -14,6 +14,9 @@
       <Q2min>20</Q2min>
       <electron_energy>26.7</electron_energy>
       <proton_energy>820</proton_energy>
+      <LinesToRead>
+        Next:numberShowEvent = 1
+      </LinesToRead>
       <breit_vir>1</breit_vir>
     </EPGun>
   </Hard>

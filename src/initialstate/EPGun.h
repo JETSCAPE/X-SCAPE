@@ -37,6 +37,8 @@ private:
   int photoproduction = 0;
   int initial_virtuality_pT = 1;
   bool breitVir = false;
+  double Q2pow = 1.0;
+  double Q2factor = 0.00469765;
 
   //cut variables
   double Q2min     = 0.;

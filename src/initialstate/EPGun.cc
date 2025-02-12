@@ -68,6 +68,8 @@ void EPGun::InitTask() {
   use_positron = GetXMLElementInt({"Hard", "EPGun", "use_positron"});
   photoproduction = GetXMLElementInt({"Hard", "EPGun", "photoproduction"});
   breitVir = GetXMLElementInt({"Hard", "EPGun", "breit_vir"});
+  Q2pow = GetXMLElementDouble({"Hard", "EPGun", "Q2_pow"});
+  Q2factor = GetXMLElementDouble({"Hard", "EPGun", "Q2_factor"});
   initial_virtuality_pT = GetXMLElementInt({"Eloss", "Matter", "initial_virtuality_pT"});
 
   //kinematic cuts
@@ -356,18 +358,23 @@ void EPGun::ExecuteTask() {
   double W2    = (pProton + pPhoton).m2Calc();
   double x     = Q2 / (2. * pProton * pPhoton);
   double y     = (pProton * pPhoton) / (pProton * peIn);
-  Pythia8::Vec4 pBreit  = 2*x*pProton + pPhoton;
+  //Pythia8::Vec4 pBreit  = 2*x*pProton + pPhoton;
   Pythia8::Vec4 pQuark  = 2*x*pProton;
-  //Pythia8::Vec4 pBreit2  = 2*x*pProton + pPhoton;
+  Pythia8::Vec4 pBreit2  = 2*x*pProton + pPhoton;
   Pythia8::RotBstMatrix breitBoost = Pythia8::toCMframe(pQuark,pPhoton);
+  Pythia8::Vec4 pQuarkI= event[3].p();
+  Pythia8::Vec4 pQuarkF= event[5].p();
+  pQuarkI.rotbst(breitBoost);
+  pQuarkF.rotbst(breitBoost);
 
   //test statements
-  //pBreit2.rotbst(breitBoost);
+  pBreit2.rotbst(breitBoost);
   pQuark.rotbst(breitBoost);
   pPhoton.rotbst(breitBoost);
-  JSINFO << "pQuark: " << pQuark.px() << " " << pQuark.py() << " " << pQuark.pz() << " ";
+  JSINFO << "pQuark Initial: " << pQuarkI.px() << " " << pQuarkI.py() << " " << pQuarkI.pz() << " ";
+  JSINFO << "pQuark Final: " << pQuarkF.px() << " " << pQuarkF.py() << " " << pQuarkF.pz() << " ";
   JSINFO << "pPhoton: " << pPhoton.px() << " " << pPhoton.py() << " " << pPhoton.pz() << " ";
-  //JSINFO << "Breit frame test: " << pBreit2.px() << " " << pBreit2.py() << " " << pBreit2.pz() << " ";
+  JSINFO << "Breit frame test: " << pBreit2.px() << " " << pBreit2.py() << " " << pBreit2.pz() << " ";
   const double QS = 0.9;
 
   int hCounter = 0;
@@ -390,7 +397,9 @@ void EPGun::ExecuteTask() {
         max_vir = (partp.pz() * partp.pz() - mass*mass) * vir_factor;
       }
 
-      max_vir *= Q2/1000.;
+      //JSINFO << Q2factor;
+      max_vir *= pow(Q2/(info.s()),Q2pow) * Q2factor/sqrt(x);
+      //JSINFO << max_vir;
 
       int iSplit = 0; // quark
       if (particle.id() == gid) {
@@ -429,8 +438,9 @@ void EPGun::ExecuteTask() {
 
         }
 
+        //tQ2 = test_vir;
         //catching virtualitiies that are too high
-        if(sqrt(tQ2) > particle.pAbs()  or sqrt(tQ2) > partp.pAbs()) tQ2 = min_vir;
+        if(sqrt(tQ2) > particle.pAbs() /*or sqrt(tQ2) > partp.pAbs()*/) tQ2 = min_vir;
       }
 
       //applying virtuality change to the parton
