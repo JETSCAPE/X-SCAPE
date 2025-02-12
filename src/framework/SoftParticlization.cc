@@ -25,6 +25,7 @@ namespace Jetscape {
 SoftParticlization::SoftParticlization() {
     boost_invariance = false;
     HydroHyperSurfaceConnected_ = false;
+    ClearHydroHyperSurfaceConnected_ = false;
 }
 
 SoftParticlization::~SoftParticlization() {

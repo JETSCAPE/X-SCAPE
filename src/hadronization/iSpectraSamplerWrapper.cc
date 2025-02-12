@@ -166,12 +166,13 @@ void iSpectraSamplerWrapper::CalculateTime() {
     }
     inputfile.close();
 
-    long random_seed = (*GetMt19937Generator())(); // get random seed
-    iSpectraSampler_ptr_->set_random_seed(random_seed);
-    VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
     statusCode_ = 1;
   }
+  long random_seed = (*GetMt19937Generator())(); // get random seed
+  iSpectraSampler_ptr_->set_random_seed(random_seed);
+  VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
+
   int nCells = getSurfCellVector();
   if (nCells > 0) {
     int status = iSpectraSampler_ptr_->generate_samples();
@@ -181,6 +182,8 @@ void iSpectraSamplerWrapper::CalculateTime() {
     }
     PassHadronListToJetscapeSameEvent();
   }
+  // clear the surface vector
+  ClearHydroHyperSurface();
 }
 
 void iSpectraSamplerWrapper::ExecTime() {
