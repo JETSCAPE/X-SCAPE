@@ -144,6 +144,7 @@ void Matter::InitTask() {
   brick_length = GetXMLElementDouble({"Eloss", "Matter", "brick_length"});
   vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
   initial_virtuality_pT = GetXMLElementInt({"Eloss", "Matter", "initial_virtuality_pT"});
+  Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
 
   if(vir_factor < 0.0) {
     JSWARN << "vir_factor should not be negative";
