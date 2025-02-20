@@ -4,14 +4,14 @@ on:
   pull_request:
     branches:
       - main
-      - JETSCAPE-3.7-RC
+      - XSCAPE-1.2-RC
       - cpp17_cmake_syntax
       - ipglasma
       - support_LHAPDF
   push:
     branches:
       - main
-      - JETSCAPE-3.7-RC
+      - XSCAPE-1.2-RC
       - cpp17_cmake_syntax
       - ipglasma
       - support_LHAPDF
