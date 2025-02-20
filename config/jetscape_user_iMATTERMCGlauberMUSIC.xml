@@ -74,7 +74,6 @@
     <Matter>
       <Q0> 2.0 </Q0>
       <in_vac> 1 </in_vac>
-      <useHybridHad>1</useHybridHad>
       <vir_factor> 0.25 </vir_factor>
       <recoil_on> 0 </recoil_on>
       <broadening_on> 0 </broadening_on>

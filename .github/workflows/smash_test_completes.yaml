@@ -4,12 +4,16 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-1.1.5-RC
+      - XSCAPE-1.2-RC
+      - cpp17_cmake_syntax
+      - ipglasma
 
   push:
     branches:
       - main
-      - XSCAPE-1.1.5-RC
+      - XSCAPE-1.2-RC
+      - cpp17_cmake_syntax
+      - ipglasma
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -20,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:stable
+      image: jetscape/base:v1.10
       options: --user root
     
     steps:

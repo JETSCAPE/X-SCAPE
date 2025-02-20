@@ -72,6 +72,7 @@ void iMATTER::InitTask()
     // alpha_s = 0.2;
     Q0 = GetXMLElementDouble({"Eloss", "Matter", "Q0"});
     vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
+    Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
 
     RealP_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
