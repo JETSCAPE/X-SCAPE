@@ -86,7 +86,8 @@ private:
                                   
   int flag_preEq_output_evo_to_memory;
   int flag_output_evo_to_file;
-  int flag_store_hydro_info_in_memory;
+  int flag_output_evo_to_memory;
+  int flag_surface_in_memory;
   bool has_source_terms;
   std::shared_ptr<HydroSourceJETSCAPE> hydro_source_terms_ptr;
 
@@ -105,6 +106,8 @@ public:
   void InitializeHydroEnergyProfile();
 
   void EvolveHydro();
+  void EvolveHydroUpto(const double tauEnd);
+  
   void GetHydroInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,
                     Jetscape::real z,
                     std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
@@ -117,11 +120,13 @@ public:
                           Jetscape::real z,
                           std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
 
-  void EvolveHydroUpto(const double tauEnd);
 
-  void PassHydroSurfaceToFramework();
+  void SetPreEqGridInfo();
   void SetHydroGridInfo();
+
+  void PassPreEqEvolutionHistoryToFramework();
   void PassHydroEvolutionHistoryToFramework();
+  void PassHydroSurfaceToFramework();
 
   void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liqueifier) {
     liquefier_ptr = new_liqueifier;

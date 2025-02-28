@@ -65,6 +65,9 @@ template <class T> void JetScapeWriterQnVectorStream<T>::WriteEvent() {
     std::shared_ptr<Qvector> Qvec_tem_ptr = std::make_shared<Qvector>(pTmin_,pTmax_,npT_,rapmin_,rapmax_,nrap_,norder_,select_pid,rapidity_kind);
     int num_pid = 0;
     for (const auto particle : particles) {
+
+      if( particle->pstat()!= 11 && particle->pstat()!=27) continue;
+      // only includes hadrons from iSS and SMASH
       PdgCode pdgcode_tem(std::to_string(particle->pid()));
 
       if (select_pid == 9999) {
