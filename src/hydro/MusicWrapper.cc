@@ -111,9 +111,9 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     exit(1);
   }
 
-  int InitialProfile = (
+  initialProfile_ = (
       GetXMLElementInt({"Hydro", "MUSIC", "InitialProfile"}));
-  music_hydro_ptr->set_parameter("Initial_profile", InitialProfile);
+  music_hydro_ptr->set_parameter("Initial_profile", initialProfile_);
   double string_source_sigma_x = (
         GetXMLElementDouble({"Hydro", "MUSIC", "string_source_sigma_x"}));
   music_hydro_ptr->set_parameter("string_source_sigma_x",
@@ -218,6 +218,14 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   }
 
   music_hydro_ptr->check_parameters();
+  double eps_switch =
+      GetXMLElementDouble({"Hydro", "MUSIC", "eps_switch"});
+  if (eps_switch > 0) {
+      music_hydro_ptr->set_parameter("eps_switch", eps_switch);
+  } else {
+    JSWARN << "Freeze out energy density must be greater than zero";
+    exit(1);
+  }
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 }
 
@@ -232,10 +240,26 @@ void MpiMusic::InitializeHydroEnergyProfile() {
 
   // need further improvement to accept multiple source term objects
   music_hydro_ptr->generate_hydro_source_terms();
+  if (initialProfile_ == 13 || initialProfile_ == 131) {
+    music_hydro_ptr->generate_hydro_source_terms(ini->GetQCDStringList());
+  } else {
+    music_hydro_ptr->generate_hydro_source_terms();
+  }
 
   if (pre_eq_ptr == nullptr) {
     JSWARN << "Missing the pre-equilibrium module ...";
-    exit(1);
+    music_hydro_ptr->initialize_hydro_xscape();
+  } else {
+    double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
+    JSINFO << "hydro initial time  tau0 = " << tau0 << " fm";
+    music_hydro_ptr->initialize_hydro_from_jetscape_preequilibrium_vectors(
+        tau0,
+        dx, dz, z_max, nz, pre_eq_ptr->e_, pre_eq_ptr->P_,
+        pre_eq_ptr->utau_, pre_eq_ptr->ux_, pre_eq_ptr->uy_, pre_eq_ptr->ueta_,
+        pre_eq_ptr->pi00_, pre_eq_ptr->pi01_, pre_eq_ptr->pi02_,
+        pre_eq_ptr->pi03_, pre_eq_ptr->pi11_, pre_eq_ptr->pi12_,
+        pre_eq_ptr->pi13_, pre_eq_ptr->pi22_, pre_eq_ptr->pi23_,
+        pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
   }
   double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
   JSINFO << "hydro initial time  tau0 = " << tau0 << " fm";
