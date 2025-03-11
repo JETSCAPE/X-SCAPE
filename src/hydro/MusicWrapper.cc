@@ -207,6 +207,10 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     music_hydro_ptr->set_parameter("Include_second_order_terms", 1);
   }
 
+  int use_eps_for_freeze_out = GetXMLElementInt(
+    {"Hydro", "MUSIC", "use_eps_for_freeze_out"});
+  music_hydro_ptr->set_parameter("use_eps_for_freeze_out", 
+    use_eps_for_freeze_out);
   freezeout_temperature =
       GetXMLElementDouble({"Hydro", "MUSIC", "freezeout_temperature"});
   if (freezeout_temperature > 0.05) {
@@ -216,16 +220,11 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
            << freezeout_temperature << " GeV!";
     exit(1);
   }
-
-  music_hydro_ptr->check_parameters();
   double eps_switch =
       GetXMLElementDouble({"Hydro", "MUSIC", "eps_switch"});
-  if (eps_switch > 0) {
-      music_hydro_ptr->set_parameter("eps_switch", eps_switch);
-  } else {
-    JSWARN << "Freeze out energy density must be greater than zero";
-    exit(1);
-  }
+  music_hydro_ptr->set_parameter("eps_switch", eps_switch);
+  
+  music_hydro_ptr->check_parameters();
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 }
 

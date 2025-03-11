@@ -399,9 +399,10 @@
       <bulk_viscosity_3_lambda_asymm>0.1</bulk_viscosity_3_lambda_asymm>
       <!--higher order transport coefficients-->
       <Include_second_order_terms>1</Include_second_order_terms>
-      <eps_switch>0.3</eps_switch>
       <!--freeze-out parameters-->
+      <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
       <freezeout_temperature>0.15</freezeout_temperature>
+      <eps_switch>0.3</eps_switch>
       <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
       <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
       <!--source term parameters for InitialProfile 13-->
