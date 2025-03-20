@@ -255,7 +255,7 @@ void MpiMusic::InitializeHydroEnergyProfile() {
       pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
   }
 
-  if (pre_eq_ptr == nullptr) {
+  if (pre_eq_ptr == nullptr && (initialProfile_ != 13 && initialProfile_ != 131)) {
     JSWARN << "Missing the pre-equilibrium module ...";
     exit(1);
   }
@@ -298,7 +298,7 @@ void MpiMusic::EvolveHydro() {
     has_source_terms = true;
   }
 
-  if (flag_preEq_output_evo_to_memory == 1) {
+  if (flag_preEq_output_evo_to_memory == 1 && pre_eq_ptr != nullptr) {
     double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
     JSINFO << "hydro initial time set by PreEq module tau0 = "
            << tau0 << " fm/c";
