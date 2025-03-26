@@ -59,7 +59,6 @@ public:
   int GetPreequilibriumStatus() { return (preequilibrium_status_); }
 
   // @return Start time (or tau) for hydrodynamic evolution
-  real GetPreequilibriumStartTime() { return (preequilibrium_tau_0_); }
   virtual real GetPreequilibriumStartTime() const {
       return (preequilibrium_tau_0_);
   }

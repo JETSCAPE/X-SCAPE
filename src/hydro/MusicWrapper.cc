@@ -244,7 +244,7 @@ void MpiMusic::InitializeHydroEnergyProfile() {
   } else {
     music_hydro_ptr->generate_hydro_source_terms();
     double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
-    JSINFO << "hydro initial time  tau0 = " << tau0 << " fm";
+    JSINFO << "Hydro initial time  tau0 = " << tau0 << " fm";
     music_hydro_ptr->initialize_hydro_from_jetscape_preequilibrium_vectors(
       tau0,
       dx, dz, z_max, nz, pre_eq_ptr->e_, pre_eq_ptr->P_,
@@ -260,9 +260,9 @@ void MpiMusic::InitializeHydroEnergyProfile() {
     exit(1);
   }
 
-  JSINFO << "initial density profile dx = " << dx << " fm";
+  JSINFO << "Initial density profile dx = " << dx << " fm";
   hydro_status = INITIALIZED;
-  JSINFO << "number of source terms: "
+  JSINFO << "Number of source terms: "
          << hydro_source_terms_ptr->get_number_of_sources()
          << ", total E = " << hydro_source_terms_ptr->get_total_E_of_sources()
          << " GeV.";
@@ -300,7 +300,7 @@ void MpiMusic::EvolveHydro() {
 
   if (flag_preEq_output_evo_to_memory == 1 && pre_eq_ptr != nullptr) {
     double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
-    JSINFO << "hydro initial time set by PreEq module tau0 = "
+    JSINFO << "Hydro initial time set by pre-equilibrium module tau0 = "
            << tau0 << " fm/c";
     if (flag_output_evo_to_memory == 1) {
       // need to ensure preEq and hydro use the same dtau so that
@@ -333,7 +333,7 @@ void MpiMusic::EvolveHydro() {
         clear_up_evolution_data();
       }
       PassHydroEvolutionHistoryToFramework();
-      JSINFO << "number of fluid cells received by the JETSCAPE: "
+      JSINFO << "Number of fluid cells received by JETSCAPE: "
              << bulk_info.data.size();
     }
   }
@@ -384,17 +384,14 @@ void MpiMusic::collect_freeze_out_surface() {
 void MpiMusic::SetPreEqGridInfo() {
   bulk_info.tau_min = pre_eq_ptr->GetPreequilibriumStartTime();
   bulk_info.dtau = pre_eq_ptr->GetPreequilibriumEvodtau();
-  JSINFO << "preEq evo: tau_0 = " << bulk_info.tau_min
+  JSINFO << "Pre-equilibrium evolution: tau_0 = " << bulk_info.tau_min
          << " fm/c, dtau = " << bulk_info.dtau << " fm/c.";
 }
 
 void MpiMusic::SetHydroGridInfo() {
   bulk_info.neta = music_hydro_ptr->get_neta();
-  bulk_info.ntau = music_hydro_ptr->get_ntau();
   bulk_info.nx = music_hydro_ptr->get_nx();
   bulk_info.ny = music_hydro_ptr->get_nx();
-  bulk_info.tau_min = music_hydro_ptr->get_hydro_tau0();
-  bulk_info.dtau = music_hydro_ptr->get_hydro_dtau();
   bulk_info.x_min = -music_hydro_ptr->get_hydro_x_max();
   bulk_info.dx = music_hydro_ptr->get_hydro_dx();
   bulk_info.y_min = -music_hydro_ptr->get_hydro_x_max();
@@ -446,9 +443,9 @@ void MpiMusic::PassHydroSurfaceToFramework() {
 }
 
 void MpiMusic::PassPreEqEvolutionHistoryToFramework() {
-  JSINFO << "Passing preEq evolution information to JETSCAPE ... ";
+  JSINFO << "Passing pre-equilibrium evolution information to JETSCAPE ... ";
   auto number_of_cells = pre_eq_ptr->get_number_of_fluid_cells();
-  JSINFO << "Total number of preEq fluid cells: " << number_of_cells;
+  JSINFO << "Total number of pre-equilibrium fluid cells: " << number_of_cells;
 
   SetPreEqGridInfo();
 
