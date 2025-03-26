@@ -394,7 +394,7 @@ void EPGun::ExecuteTask() {
 
       //using z axis for pT since thats the axis the photon quark collision happens on
       if(initial_virtuality_pT){
-        max_vir = (partp.pz() * partp.pz() - mass*mass) * vir_factor;
+        max_vir = (partp.pz() * partp.pz()) * vir_factor;
       }
 
       //JSINFO << Q2factor;
