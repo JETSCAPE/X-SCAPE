@@ -371,10 +371,10 @@ void EPGun::ExecuteTask() {
   pBreit2.rotbst(breitBoost);
   pQuark.rotbst(breitBoost);
   pPhoton.rotbst(breitBoost);
-  JSINFO << "pQuark Initial: " << pQuarkI.px() << " " << pQuarkI.py() << " " << pQuarkI.pz() << " ";
-  JSINFO << "pQuark Final: " << pQuarkF.px() << " " << pQuarkF.py() << " " << pQuarkF.pz() << " ";
-  JSINFO << "pPhoton: " << pPhoton.px() << " " << pPhoton.py() << " " << pPhoton.pz() << " ";
-  JSINFO << "Breit frame test: " << pBreit2.px() << " " << pBreit2.py() << " " << pBreit2.pz() << " ";
+  //JSINFO << "pQuark Initial: " << pQuarkI.px() << " " << pQuarkI.py() << " " << pQuarkI.pz() << " ";
+  //JSINFO << "pQuark Final: " << pQuarkF.px() << " " << pQuarkF.py() << " " << pQuarkF.pz() << " ";
+  //JSINFO << "pPhoton: " << pPhoton.px() << " " << pPhoton.py() << " " << pPhoton.pz() << " ";
+  //JSINFO << "Breit frame test: " << pBreit2.px() << " " << pBreit2.py() << " " << pBreit2.pz() << " ";
   const double QS = 0.9;
 
   int hCounter = 0;
