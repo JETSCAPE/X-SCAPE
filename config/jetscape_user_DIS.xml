@@ -4,7 +4,7 @@
   
   <nEvents> 1 </nEvents>
   
-  <outputFilename>ep-test</outputFilename>
+  <outputFilename>test_out</outputFilename>
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
   <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
   

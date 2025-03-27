@@ -2,9 +2,9 @@
 
 <jetscape>
   
-  <nEvents> 100000 </nEvents>
+  <nEvents> 10 </nEvents>
   
-  <outputFilename>/scratch/user/cameron.parker/projects/ep-comparisons/Zeus-charged/X-SCAPE</outputFilename>
+  <outputFilename>test_out</outputFilename>
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
   
   <!-- Hard Process -->
