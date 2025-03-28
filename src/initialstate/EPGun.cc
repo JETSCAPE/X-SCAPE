@@ -386,7 +386,7 @@ void EPGun::ExecuteTask() {
     double eCM = info.eCM();
 
     //only doing vir setting for DIS
-    if(breitVir and particle.status() == 62){
+    if(breitVir and particle.status() == 62 and !photoproduction){
       //setting up max vir
       double max_vir = (partp.pAbs() * partp.pAbs() - mass*mass) * vir_factor;
       double min_vir = (QS * QS / 2.0) * (1.0 + std::sqrt(1.0 + 4.0 * particle.m() * particle.m() / QS / QS));
@@ -470,7 +470,7 @@ void EPGun::ExecuteTask() {
     ptn->set_max_color(1000 * (np + 1));
 
     //adding mean formtime for partons that need it set
-    if(breitVir and particle.status() == 62){
+    if(breitVir and particle.status() == 62 and !photoproduction){
       double mean_form_time = (2.*ptn->e()) / (ptn->e()*ptn->e()
                             - ptn->px()*ptn->px() - ptn->py()*ptn->py()
                             - ptn->pz()*ptn->pz() - ptn->restmass()*ptn->restmass()
