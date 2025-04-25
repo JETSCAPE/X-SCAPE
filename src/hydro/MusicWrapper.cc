@@ -259,6 +259,12 @@ void MpiMusic::InitializeHydroEnergyProfile() {
     JSWARN << "Missing the pre-equilibrium module ...";
     exit(1);
   }
+  if (pre_eq_ptr == nullptr && flag_preEq_output_evo_to_memory == 1) {
+    JSWARN << "The pre-equilibrium module is not initialized! If you want to "
+           << "run hydro with InitialProfile = 13 or 131 (3D-Glauber), please "
+           << "set Preequilibrium/evolutionInMemory = 0 in the XML file.";
+    exit(1);
+  }
 
   JSINFO << "Initial density profile dx = " << dx << " fm";
   hydro_status = INITIALIZED;
