@@ -15,7 +15,10 @@
     <seed>1</seed>
   </Random>
 
+  <outputFilename>Test_Out</outputFilename>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <write_pthat> 1 </write_pthat> <!-- Write pthat event by event for post-run reweighting -->
 
   <!-- Hard Process -->
   <Hard>
@@ -59,12 +62,12 @@
             <string_source_sigma_eta>0.5</string_source_sigma_eta>
             <stringPreEqFlowFactor>0.13</stringPreEqFlowFactor>
             <output_evolution_to_file>0</output_evolution_to_file>
-            <output_evolution_to_memory>0</output_evolution_to_memory>
             <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
             <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
             <bulk_viscosity_3_max>0.1</bulk_viscosity_3_max>
             <shear_viscosity_3_at_kink>0.13</shear_viscosity_3_at_kink>
-            <freezeout_temperature>0.3</freezeout_temperature>
+            <freezeout_temperature>0.150</freezeout_temperature>
+            <output_evolution_every_N_timesteps>20</output_evolution_every_N_timesteps>
         </MUSIC>
   </Hydro>
 
@@ -95,4 +98,3 @@
   </SoftParticlization>
 
 </jetscape>
-
