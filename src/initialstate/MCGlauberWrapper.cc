@@ -42,31 +42,144 @@ void MCGlauberWrapper::InitTask() {
         new MCGlb::EventGenerator("mcglauber.input", argc, argv, ran_seed));
 
     // overwrite input options
-    double para_temp;
-    double roots = (
-        GetXMLElementDouble({"Hard", "PythiaGun", "eCM"}));
-    mc_gen_->set_parameter("roots", roots);
-    int rapidity_loss_method = (
+    int para_temp_int;
+    double para_temp_double;
+    std:string para_temp_string;
+    para_temp_string = (
+        GetXMLElementString({"IS", "MCGlauber", "projectile"}));
+    mc_gen_->set_parameter("Projectile", para_temp_string);
+
+    para_temp_string = (
+        GetXMLElementString({"IS", "MCGlauber", "target"}));
+    mc_gen_->set_parameter("Target", para_temp_string);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "sqrts"}));
+    mc_gen_->set_parameter("roots", para_temp_double);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "b_min"}));
+    mc_gen_->set_parameter("b_min", para_temp_double);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "b_max"}));
+    mc_gen_->set_parameter("b_max", para_temp_double);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "centMin"}));
+    mc_gen_->set_parameter("centMin", para_temp_double);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "centMax"}));
+    mc_gen_->set_parameter("centMax", para_temp_double);
+
+    para_temp_int = (
+        GetXMLElementInt({"IS", "MCGlauber", 
+            "nucleon_configuration_from_file"}));
+    mc_gen_->set_parameter("nucleon_configuration_from_file", para_temp_int);
+
+    para_temp_int = (GetXMLElementInt({"IS", "MCGlauber", "useQuarks"}));
+    mc_gen_->set_parameter("useQuarks", para_temp_int);
+
+    para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", "Q2"}));
+    mc_gen_->set_parameter("Q2", para_temp_double);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "shadowing_factor"}));
+    mc_gen_->set_parameter("shadowing_factor", para_temp_double);
+
+    para_temp_int = (GetXMLElementInt({"IS", "MCGlauber", "baryon_junctions"}));
+    mc_gen_->set_parameter("baryon_junctions", para_temp_int);
+
+    para_temp_int = (
+        GetXMLElementInt({"IS", "MCGlauber", "N_sea_partons"}));
+    mc_gen_->set_parameter("N_sea_partons", para_temp_int);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "d_min"}));
+    mc_gen_->set_parameter("d_min", para_temp_double);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "lambdaB"}));
+    mc_gen_->set_parameter("lambdaB", para_temp_double);
+
+    para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", "BG"}));
+    mc_gen_->set_parameter("BG", para_temp_double);
+
+    para_temp_int = (
+        GetXMLElementInt({"IS", "MCGlauber", "Subtract_hard_momentum"}));
+    mc_gen_->set_parameter("Subtract_hard_momentum", para_temp_int);
+
+    para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", "lambdaBs"}));
+    mc_gen_->set_parameter("lambdaBs", para_temp_double);
+
+    para_temp_double = (
+        GetXMLElementDouble({"IS", "MCGlauber", "baryonInStringProb"}));
+    mc_gen_->set_parameter("baryonInStringProb", para_temp_double);
+
+    para_temp_int = (GetXMLElementInt({"IS", "MCGlauber", 
+        "fluct_Nstrings_per_NN_collision"}));
+    mc_gen_->set_parameter("fluct_Nstrings_per_NN_collision", para_temp_int);
+
+    para_temp_int = (GetXMLElementInt({"IS", "MCGlauber", 
+        "QCD_string_production_mode"}));
+    mc_gen_->set_parameter("QCD_string_production_mode", para_temp_int);
+
+    para_temp_int = (
         GetXMLElementInt({"IS", "MCGlauber", "rapidity_loss_method"}));
-    mc_gen_->set_parameter("rapidity_loss_method", rapidity_loss_method);
-    para_temp = (
-        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At2"}));
-    mc_gen_->set_parameter("ylossParam4At2", para_temp);
-    para_temp = (
-        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At4"}));
-    mc_gen_->set_parameter("ylossParam4At4", para_temp);
-    para_temp = (
-        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At6"}));
-    mc_gen_->set_parameter("ylossParam4At6", para_temp);
-    para_temp = (
-        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At10"}));
-    mc_gen_->set_parameter("ylossParam4At10", para_temp);
-    para_temp = (
-        GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4var"}));
-    mc_gen_->set_parameter("ylossParam4var", para_temp);
-    para_temp = (GetXMLElementDouble({"IS", "MCGlauber",
+    if (para_temp_int == 4) {
+        mc_gen_->set_parameter("rapidity_loss_method", para_temp_int);
+        
+        para_temp_double = (
+            GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At2"}));
+        mc_gen_->set_parameter("ylossParam4At2", para_temp_double);
+        
+        para_temp_double = (
+            GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At4"}));
+        mc_gen_->set_parameter("ylossParam4At4", para_temp_double);
+        
+        para_temp_double = (
+            GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At6"}));
+        mc_gen_->set_parameter("ylossParam4At6", para_temp_double);
+        
+        para_temp_double = (
+            GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At10"}));
+        mc_gen_->set_parameter("ylossParam4At10", para_temp_double);
+        
+        para_temp_double = (
+            GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4var"}));
+        mc_gen_->set_parameter("ylossParam4var", para_temp_double);
+    } else {
+        JSWARN << "The option " << para_temp_int
+               << " for rapidity loss method is not supported. "
+               << "Please specify these parameters in mcglauber.input!";
+    }
+
+    para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber",
                                       "remnant_energy_loss_fraction"}));
-    mc_gen_->set_parameter("remnant_energy_loss_fraction", para_temp);
+    mc_gen_->set_parameter("remnant_energy_loss_fraction", para_temp_double);
+
+    para_temp_int = (GetXMLElementInt({"IS", "MCGlauber", 
+        "fluctuation_remnant_energy_loss_fraction"}));
+    mc_gen_->set_parameter("fluctuation_remnant_energy_loss_fraction", 
+                           para_temp_int);
+    
+    para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", 
+        "remnant_energy_loss_fraction_var"}));
+    mc_gen_->set_parameter("remnant_energy_loss_fraction_var", 
+                           para_temp_double);
+
+    para_temp_int = (GetXMLElementInt({"IS", "MCGlauber", 
+        "evolve_QCD_string_mode"}));
+    mc_gen_->set_parameter("evolve_QCD_string_mode", para_temp_int);
+
+    para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", 
+        "tau_form_mean"}));
+    mc_gen_->set_parameter("tau_form_mean", para_temp_double);
+
+    para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", 
+        "tau_form_fluct_gamma_beta"}));
+    mc_gen_->set_parameter("tau_form_fluct_gamma_beta", para_temp_double);
 }
 
 
