@@ -114,8 +114,8 @@
       <sqrts>5020</sqrts> <!--Center of mass energy in GeV-->
       <b_min>0.0</b_min> <!--Minimum impact parameter in fm-->
       <b_max>20.0</b_max> <!--Maximum impact parameter in fm-->
-      <centMin>0.0</centMin> <!--Minimum centrality in %-->
-      <centMax>100.0</centMax> <!--Maximum centrality in %-->
+      <cenMin>0.0</cenMin> <!--Minimum centrality in %-->
+      <cenMax>100.0</cenMax> <!--Maximum centrality in %-->
       <nucleon_configuration_from_file>0</nucleon_configuration_from_file> <!--0: generate nucleon configuration, 1: read from file-->
       <useQuarks>1</useQuarks> <!--Switch to use valence quarks-->
       <Q2>1.0</Q2> <!--Scale when evaluating the PDF-->

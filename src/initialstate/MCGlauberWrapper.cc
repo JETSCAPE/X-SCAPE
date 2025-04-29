@@ -66,12 +66,12 @@ void MCGlauberWrapper::InitTask() {
     mc_gen_->set_parameter("b_max", para_temp_double);
 
     para_temp_double = (
-        GetXMLElementDouble({"IS", "MCGlauber", "centMin"}));
-    mc_gen_->set_parameter("centMin", para_temp_double);
+        GetXMLElementDouble({"IS", "MCGlauber", "cenMin"}));
+    mc_gen_->set_parameter("cenMin", para_temp_double);
 
     para_temp_double = (
-        GetXMLElementDouble({"IS", "MCGlauber", "centMax"}));
-    mc_gen_->set_parameter("centMax", para_temp_double);
+        GetXMLElementDouble({"IS", "MCGlauber", "cenMax"}));
+    mc_gen_->set_parameter("cenMax", para_temp_double);
 
     para_temp_int = (
         GetXMLElementInt({"IS", "MCGlauber", 
