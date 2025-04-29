@@ -114,7 +114,6 @@
       <Sqrtsnn>200.0</Sqrtsnn>
       <FermiMotion>frozen</FermiMotion>
       <CollisionsWithinNucleus>1</CollisionsWithinNucleus>
-
       <Impact>
         <RandomReactionPlane>0</RandomReactionPlane>
         <!-- Pick the mode for the impact parameter -->
@@ -126,6 +125,8 @@
         <ImpactMin>0.0</ImpactMin>
         <ImpactMax>3.0</ImpactMax>
       </Impact>
+      <!--Smaller timestep here gives more accuracy in the iso-tau hypersurface extraction-->
+      <Delta_Time>0.01</Delta_Time>
     </SMASH>
 
     <!-- Creates a nucleus configuration from SMASH -->

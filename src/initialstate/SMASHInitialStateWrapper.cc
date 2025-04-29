@@ -18,7 +18,7 @@
 // -----------------------------------------------------------------------------
 
 #include "SMASHInitialStateWrapper.h"
-#include "../framework/Transport.h"
+#include "Transport.h"
 
 #include "smash/particles.h"
 #include "smash/library.h"
@@ -50,8 +50,12 @@ void SmashInitialConditionWrapper::InitTask() {
       GetXMLElementText({"IS", "SMASH", "SMASH_decaymodes_file"});
   // output path is just dummy here, because no output from SMASH is foreseen
   std::filesystem::path output_path("./");
-  // do not store tabulation, which is achieved by an empty tabulations path
-  std::string tabulations_path("");
+  // store tabulation to make use of it if SMASH is used multiple times
+  std::string tabulations_path("./smash_tabulations");
+  // if tabulations directory exists, delete it
+  if (std::filesystem::exists(tabulations_path)) {
+    std::filesystem::remove_all(tabulations_path);
+  }
   const std::string smash_version(SMASH_VERSION);
 
   auto config = smash::setup_config_and_logging(smash_config, 
@@ -129,13 +133,19 @@ void SmashInitialConditionWrapper::InitTask() {
     exit(1);
   }
 
-  smash::initialize_particles_decays_and_tabulations(config, smash_version,
+  // Check if the tabulations directory exists, if not initialize particles and 
+  // decays
+  if (!std::filesystem::exists(tabulations_path)) {
+    smash::initialize_particles_decays_and_tabulations(config, smash_version,
                                                      tabulations_path);
+  }
+
+  const double delta_t_sm = GetXMLElementDouble({"IS", "SMASH", "Delta_Time"});
+  config.set_value({"General", "Delta_Time"}, delta_t_sm);
 
   // Enforce timestep compatibility (temporarily)
   if (IsTimeStepped()) {
     const double delta_t_js = GetMainClock()->GetDeltaT();
-    const double delta_t_sm = config.read({"General", "Delta_Time"});
     const double ts_rem = std::remainder(delta_t_js, delta_t_sm);
     const double ts_frac = delta_t_js / delta_t_sm;
     if (!(ts_rem < 1E-6 && ts_frac > 1.0)) {
@@ -146,6 +156,7 @@ void SmashInitialConditionWrapper::InitTask() {
   }
   smash_collider_experiment_ =
       make_shared<smash::Experiment<smash::ColliderModus>>(config, output_path);
+  config.clear();
   JSINFO << "Finish initializing SMASH initial condition";
 }
 
@@ -157,6 +168,7 @@ void SmashInitialConditionWrapper::ExecuteTask() {
 }
 
 void SmashInitialConditionWrapper::InitPerEvent() {
+  JSWARN << "Initializing SMASH initial condition event...";
   smash_collider_experiment_->initialize_new_event();
 }
 
@@ -166,11 +178,21 @@ void SmashInitialConditionWrapper::CalculateTimeTask() {
 
   //VERBOSE(2) << "SMASH initial condition got " << hadrons_to_add.size()  << " hadrons in this timestep.";
   //VERBOSE(2) << "SMASH initial condition removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
-  JSINFO << "SMASH initial condition got " << hadrons_to_add.size()  << " hadrons in this timestep.";
-  JSINFO << "SMASH initial condition removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
+  //JSINFO << "SMASH initial condition got " << hadrons_to_add.size()  << " hadrons in this timestep.";
+  //JSINFO << "SMASH initial condition removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
+
+  // print the properties of the hadrons to be added
+  /*for (const auto& hadron : hadrons_to_add) {
+    FourVector p = hadron->p_in();
+    FourVector r = hadron->x_in();
+    JSINFO << "Adding hadron: " << hadron->pid() << " at (x, y, z, t) = ("
+          << r.x() << ", " << r.y() << ", " << r.z() << ", " << r.t() << ") fm"
+          << " with (px, py, pz, E) = (" << p.x() << ", " << p.y() << ", " << p.z() << ", " << p.t() << ") GeV";
+  }*/
 
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
-  JSINFO << "Propagating SMASH until t = " << until_time;
+  //JSINFO << "Propagating SMASH IC until t = " << until_time;
+  //JSINFO << "End time until which SMASH initial condition propagates is " << end_time_ << " fm/c";
 
   smash::ParticleList add_list = get_smash_plist_from_JS_hadrons(hadrons_to_add);
   smash::ParticleList remove_list = get_smash_plist_from_JS_hadrons(hadrons_to_remove);
