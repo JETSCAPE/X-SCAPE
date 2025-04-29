@@ -17,7 +17,7 @@
 #include "gtest/gtest.h"
 
 using namespace Jetscape;
-/*
+
 // check coordinate transformation functions (same as in causal_liquifier.cc test)
 TEST(HadronicEMTTest, TEST_COORDINATES){
 
@@ -111,11 +111,6 @@ TEST(HadronicEMTTest, TEST_TMUNU){
   EXPECT_NEAR(0.0,bulk_info_ptr->vy,1e-4);
   EXPECT_NEAR(0.0,bulk_info_ptr->vz,1e-4);
 
-  std::cout << "Temperature: " << bulk_info_ptr->temperature << std::endl;
-  std::cout << "Pressure: " << bulk_info_ptr->pressure << std::endl;
-  std::cout << "Entropy density: " << bulk_info_ptr->entropy_density << std::endl;
-  std::cout << "Energy density: " << bulk_info_ptr->energy_density << std::endl;
-
   // place half of the particles outside of the 5 sigma range
   // create fake hadrons
   std::vector<Hadron> hadron_list1;
@@ -166,7 +161,7 @@ TEST(HadronicEMTTest, TEST_TMUNU){
   EXPECT_NEAR(0.0,bulk_info_ptr->vy,1e-4);
   EXPECT_NEAR(0.0,bulk_info_ptr->vz,1e-4);
 }
-*/
+
 TEST(HadronicEMTTest, TEST_1D_INTERPOLATION){
   HadronicEMT hEMT(0.5,0.5,1);
 
@@ -206,15 +201,7 @@ TEST(HadronicEMTTest, TEST_1D_INTERPOLATION){
   EXPECT_NEAR(expected_s,hEMT.get_s(e_test),1e-4);
 }
 
-/*double HadronicEMT::get_T(double e) const {
-  double e_fm4 = e / hbarC;  // 1/fm^4
-  double T5 = interpolate_1D_EOS(e_fm4, T_table_);  // returns e/T^5
-  double T = pow(T5, 0.2) * hbarC;  // GeV
-  return T;
-}*/
-
-/*
-TEST(HadronicEMTTest, TestDetermineHadronsForFluidization) {
+TEST(HadronicEMTTest, TEST_DETERMINE_HADRONS_FOR_FLUIDIZATION){
   HadronicEMT hEMT(0.5,0.5,1);
   // Create a list of 3 hadrons
   std::vector<Hadron> hadron_list;
@@ -251,4 +238,3 @@ TEST(HadronicEMTTest, TestDetermineHadronsForFluidization) {
   EXPECT_FALSE(fluidize_hadrons[1]);
   EXPECT_FALSE(fluidize_hadrons[2]);
 }
-*/
