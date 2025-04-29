@@ -38,13 +38,17 @@
   </Hard>
 
   <!--Preequilibrium Dynamics Module -->
-  <Preequilibrium>
+  <Preequilibrium> 
+    <evolutionInMemory>0</evolutionInMemory><!-- Must be set to zero for null predynamics -->
     <NullPreDynamics> </NullPreDynamics>
   </Preequilibrium>
 
   <!-- Initial condition  Module  -->
   <IS>
     <MCGlauber>
+      <projectile>p</projectile> <!--Projectile name-->
+      <target>p</target> <!--Target name-->
+      <sqrts>5020</sqrts> <!--Center of mass energy in GeV-->
       <ylossParam4At2> 1.666 </ylossParam4At2>
       <ylossParam4At4> 2.10 </ylossParam4At4>
       <ylossParam4At6> 2.20 </ylossParam4At6>

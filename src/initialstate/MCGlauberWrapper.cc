@@ -44,13 +44,13 @@ void MCGlauberWrapper::InitTask() {
     // overwrite input options
     int para_temp_int;
     double para_temp_double;
-    std:string para_temp_string;
+    std::string para_temp_string;
     para_temp_string = (
-        GetXMLElementString({"IS", "MCGlauber", "projectile"}));
+        GetXMLElementText({"IS", "MCGlauber", "projectile"}));
     mc_gen_->set_parameter("Projectile", para_temp_string);
 
     para_temp_string = (
-        GetXMLElementString({"IS", "MCGlauber", "target"}));
+        GetXMLElementText({"IS", "MCGlauber", "target"}));
     mc_gen_->set_parameter("Target", para_temp_string);
 
     para_temp_double = (
