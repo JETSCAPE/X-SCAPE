@@ -45,6 +45,9 @@
   <BDM>
     <Tc>0.250</Tc>
     <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
+    <!--Optional pT and momentum rapidity cuts for particles considered to go into the hydro evolution (set to 0 for no cut)-->
+    <pT_cut>0.0</pT_cut>
+    <rapidity_cut>0.0</rapidity_cut>
     <!-- CreateHadronicTimeEvolutionOutput: To create a movie for one event, not recommended for production runs -->
     <CreateHadronicTimeEvolutionOutput> true </CreateHadronicTimeEvolutionOutput>
   </BDM>

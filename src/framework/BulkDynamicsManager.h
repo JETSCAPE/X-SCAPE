@@ -227,6 +227,14 @@ private:
 
   double deltaT_main_clock_;
 
+  /**
+   * Kinematic cuts for the hadrons to be added to the hydrodynamic evolution.
+   */
+  bool enforce_pT_cut_;
+  bool enforce_rapidity_cut_;
+  double pT_cut_;
+  double rapidity_cut_;
+
   protected:
     std::weak_ptr<LiquefierBase> liquefier_ptr_;
     std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr_;

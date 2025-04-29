@@ -60,6 +60,22 @@ void BulkDynamicsManager::InitTask() {
 
   //Critical temperature to switch from hydro to something else
   Tc_ = GetXMLElementDouble({"BDM", "Tc"});
+  pT_cut_ = GetXMLElementDouble({"BDM", "pT_cut"});
+  enforce_pT_cut_ = false;
+  if (pT_cut_ > rounding_error) {
+    enforce_pT_cut_ = true;
+    JSINFO << "BulkDynamicsManager set up with pT cut = " << pT_cut_ << " ...";
+  } else {
+    JSINFO << "BulkDynamicsManager set up without pT cut ...";
+  }
+  rapidity_cut_ = GetXMLElementDouble({"BDM", "rapidity_cut"});
+  enforce_rapidity_cut_ = false;
+  if (rapidity_cut_ > rounding_error) {
+    enforce_rapidity_cut_ = true;
+    JSINFO << "BulkDynamicsManager set up with rapidity cut = " << rapidity_cut_ << " ...";
+  } else {
+    JSINFO << "BulkDynamicsManager set up without rapidity cut ...";
+  }
   IC_particle_extraction_tau_ = GetXMLElementDouble({"BDM", "IC_particle_extraction_tau"});
   hydro_Cartesian_ = false;
   std::string strCartesianHydro = GetXMLElementText({"Hydro", "CartesianHydro"});
@@ -540,7 +556,49 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
   DetermineHadronsCrossingIsoTau(shared_hadrons);
 
   for(const auto& hadron : remove_hadrons_for_timestep_) {
-    if (hadron->participant()) {
+    bool participant = hadron->participant();
+    bool add_hadron_to_source_term = false;
+    // Check if the participant is in the kinematic cuts (if applied)
+    if (participant) {
+      bool hadron_above_pT_cut_threshold = false;
+      if (enforce_pT_cut_) {
+        // Check if the hadron has a pT larger than the cut
+        const FourVector p = hadron->p_in();
+        const double pT = sqrt(p.x()*p.x() + p.y()*p.y());
+        if (pT > pT_cut_) {
+          hadron_above_pT_cut_threshold = true;
+        }
+      }
+      bool hadron_above_rapidity_cut_threshold = false;
+      if (enforce_rapidity_cut_) {
+        // Check if the hadron has a rapidity larger than the cut
+        const FourVector p = hadron->p_in();
+        const double rapidity = 0.5*log((p.t()+p.z())/(p.t()-p.z()));
+        if (abs(rapidity) > rapidity_cut_) {
+          hadron_above_rapidity_cut_threshold = true;
+        }
+      }
+      // create a bool if the hadron is outside one of the kinematic cuts
+      bool hadron_outside_cut_threshold = false;
+      if (enforce_pT_cut_ && hadron_above_pT_cut_threshold) {
+        hadron_outside_cut_threshold = true;
+      }
+      if (enforce_rapidity_cut_ && hadron_above_rapidity_cut_threshold) {
+        hadron_outside_cut_threshold = true;
+      }
+      // If the hadron is outside the cuts, then it is a 'spectator'
+      // and should not be added to the source term
+      if (hadron_outside_cut_threshold) {
+        add_hadron_to_source_term = false;
+      } else {
+        add_hadron_to_source_term = true;
+      }
+    } else {
+      // Not a participant, so it is a spectator
+      add_hadron_to_source_term = false;
+    }
+
+    if (add_hadron_to_source_term) {
       store_source_term_hadrons_iso_tau_.push_back(hadron);
     } else {
       store_spectator_hadrons_iso_tau_.push_back(hadron);
