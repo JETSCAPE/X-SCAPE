@@ -12,6 +12,9 @@
 
   <!-- General settings -->
   <nEvents> 1 </nEvents>
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 0 </nReuseHydro>
+  <nEvents_printout> 1 </nEvents_printout>
 
   <!-- Technical settings -->
   <debug> off </debug>
@@ -22,14 +25,16 @@
   <!--  JetScape Writer Settings -->
   <outputFilename>test_out</outputFilename>
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
 
   <Random>
     <seed>42</seed>
   </Random>
 
   <BDM>
-    <Tc>0.250</Tc>
+    <Tc>0.155</Tc>
     <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
+    <CreateHadronicTimeEvolutionOutput> true </CreateHadronicTimeEvolutionOutput>
   </BDM>
 
   <!-- Inital State Module  -->
@@ -50,14 +55,14 @@
       <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
       <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
 
-      <ProjectileProtons>18</ProjectileProtons>
-      <ProjectileNeutrons>18</ProjectileNeutrons>
-      <TargetProtons>18</TargetProtons>
-      <TargetNeutrons>18</TargetNeutrons>
+      <ProjectileProtons>79</ProjectileProtons>
+      <ProjectileNeutrons>118</ProjectileNeutrons>
+      <TargetProtons>79</TargetProtons>
+      <TargetNeutrons>118</TargetNeutrons>
 
       <!-- time in fm/c in the computational frame, when the simulation should be ended -->
-      <end_time>10</end_time>
-      <Sqrtsnn>19.3</Sqrtsnn>
+      <end_time>1000</end_time>
+      <Sqrtsnn>200</Sqrtsnn>
       <FermiMotion>frozen</FermiMotion>
       <CollisionsWithinNucleus>0</CollisionsWithinNucleus>
 
@@ -67,7 +72,7 @@
         <!-- Mode=0 : Value has to be set -->
         <!-- Mode=1 : Sample (uniform, quadratic) with ImpactMin, ImpactMax have to be set -->
         <Mode>0</Mode>
-        <Value>0.0</Value>
+        <Value>6.0</Value>
       </Impact>
     </SMASH>
   </IS>
@@ -91,9 +96,9 @@
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
       <InitialProfile>43</InitialProfile>
-      <beastMode>0</beastMode>
+      <beastMode>2</beastMode>
       <Initial_time_tau_0>0.5</Initial_time_tau_0>
-      <output_evolution_to_file>0</output_evolution_to_file>
+      <output_evolution_to_file>0</output_evolution_to_file><!--2 for movie output-->
       <store_hydro_info_in_memory>0</store_hydro_info_in_memory>
       <shear_viscosity_eta_over_s>0.08</shear_viscosity_eta_over_s>
       <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
@@ -106,7 +111,7 @@
       <zeta_over_s_width_in_GeV>0.02</zeta_over_s_width_in_GeV>
       <zeta_over_s_lambda_asymm>0.1</zeta_over_s_lambda_asymm>
       <Include_second_order_terms>1</Include_second_order_terms>
-      <freezeout_temperature>0.16</freezeout_temperature>
+      <freezeout_temperature>0.155</freezeout_temperature>
       <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
       <string_source_sigma_x>0.5</string_source_sigma_x>
       <string_source_sigma_eta>0.5</string_source_sigma_eta>
@@ -114,5 +119,51 @@
     </MUSIC>
 
   </Hydro>
+
+  <!-- Particlization Module  -->
+  <SoftParticlization>
+    <!-- iSpectraSampler -->
+    <iSS>
+      <!-- read in file type  -->
+      <!-- hydro_mode == 0 read in surface file from VISHNew -->
+      <!-- hydro_mode == 1 read in surface file from MUSIC (2+1)D -->
+      <!-- hydro_mode == 2 read in surface file from MUSIC (3+1)D -->
+      <hydro_mode>2</hydro_mode>
+
+      <!-- file path for the default input file  -->
+      <iSS_input_file>../external_packages/iSS/iSS_parameters.dat</iSS_input_file>
+      <!-- directory path where the hydro surface is stored  -->
+      <iSS_working_path>.</iSS_working_path>
+      <!-- file path for the default table files  -->
+      <iSS_table_path>../external_packages/iSS/iSS_tables</iSS_table_path>
+      <!-- file path for the default particle table files  -->
+      <iSS_particle_table_path>../external_packages/iSS/iSS_tables</iSS_particle_table_path>
+      <!-- hadron species list  0: PDG 2005; 1: UrQMD; 2: SMASH -->
+      <afterburner_type>2</afterburner_type>
+
+      <number_of_repeated_sampling>1</number_of_repeated_sampling>
+      <Perform_resonance_decays>0</Perform_resonance_decays>
+    </iSS>
+  </SoftParticlization>
+
+  <!-- Hadronic Afterburner  -->
+  <Afterburner>
+    <!-- fragmentation hadrons in the afterburner only possible with hybrid hadronization-->
+    <include_fragmentation_hadrons>0</include_fragmentation_hadrons>
+    <!-- only the afterburner hadrons are written to a file -->
+    <!-- if fragmentation hadrons are not included in the afterburner they are also written  -->
+    <output_only_final_state_hadrons>1</output_only_final_state_hadrons>
+    <!-- SMASH -->
+    <SMASH>
+      <name>SMASH</name>
+      <SMASH_config_file>../external_packages/smash/smash_config.yaml</SMASH_config_file>
+      <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+      <!-- time in fm/c in the computational frame, when the simulation shoud be ended -->
+      <end_time>1000.0</end_time>
+      <!-- 0 - run the full afterburner, 1 - only decay the resonances without even propagation -->
+      <only_decays>0</only_decays>
+    </SMASH>
+  </Afterburner>
 
  </jetscape>

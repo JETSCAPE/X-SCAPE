@@ -25,6 +25,7 @@
 // JetScape Framework includes ...
 #include "JetScape.h"
 #include "JetScapeLogger.h"
+#include "JetScapeWriterFinalStateStream.h"
 #include "JetScapeWriterStream.h"
 #include "JetScapeXML.h"
 
@@ -59,7 +60,7 @@ int main(int argc, char** argv)
   Show();
 
   // clocks here are defaulted for testing, clocks can customized via inheriting from the MainClock/ModuleClock base classes ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-2,5,0.1); // JP: make consistent with reading from XML in init phase ...
+  auto mClock = make_shared<MainClock>("SpaceTime",-2.0,1000.0,0.1); // JP: make consistent with reading from XML in init phase ...
   mClock->Info();
 
   auto jetscape = make_shared<JetScape>();
@@ -82,6 +83,7 @@ int main(int argc, char** argv)
   auto smash_ic = make_shared<SmashInitialConditionWrapper>();
   // per time step for the IC
   smash_ic->SetTimeStepped(true);
+  smash_ic->SetTimeRange(-2.0,1000.0);
 
   // Liquefier
   auto hadronic_liquefier = make_shared<HadronicLiquefier>();
@@ -91,31 +93,50 @@ int main(int argc, char** argv)
   // per time step for the hydro
   hydro->SetTimeStepped(true);
   hydro->add_a_hadronic_liquefier(hadronic_liquefier);
+  hydro->SetTimeRange(-2.0,1000.0);
 
   // Soft particlization
-  //auto iSS = make_shared<iSpectraSamplerWrapper>();
+  auto iSS = make_shared<iSpectraSamplerWrapper>();
   // per time step soft particlization
-  //iSS->SetTimeStepped(true);
+  iSS->SetTimeStepped(true);
+  iSS->SetTimeRange(-2.0,1000.0);
 
-  // Hadronic afterburner
-  //auto afterburner = make_shared<Afterburner>();
-  //afterburner->SetTimeStepped(true);
+  // Afterburner
+  auto afterburner = make_shared<SmashWrapper>();
+  // per time step for the afterburner
+  afterburner->SetTimeStepped(true);
+  afterburner->SetTimeRange(-2.0,1000.0);
 
   // Bulk Dynamics Manager (BDM)
   auto bdm = make_shared<BulkDynamicsManager>();
   bdm->SetTimeStepped(true);
+  bdm->SetTimeRange(-2.0,1000.0);
   bdm->Add(smash_ic);
   bdm->Add(hydro);
-  //bdm->Add(iSS);
-  //bdm->Add(afterburner);
+  bdm->Add(iSS);
+  bdm->Add(afterburner);
 
   // Add BDM to X-SCAPE
   jetscape->Add(bdm);
 
   // Output
-  auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
-  writer->SetId("Writer");
-  jetscape->Add(writer);
+  std::string outputFilename = jetscape->GetXMLElementText({"outputFilename"});
+  // check XML element "JetScapeWriterAscii" for on and off and then add the writer or not
+  std::string writerAscii = jetscape->GetXMLElementText({"JetScapeWriterAscii"});
+  if ((int)writerAscii.find("on") != std::string::npos) {
+    auto writer_ascii = make_shared<JetScapeWriterAscii> (outputFilename + string(".dat"));
+    writer_ascii->SetId("Writer");
+    jetscape->Add(writer_ascii);
+  }
+
+  // Check XML element "JetScapeWriterFinalStateHadronsAscii" for on and off and then add the writer or not
+  std::string writerFinalStateHadronsAscii = jetscape->GetXMLElementText({"JetScapeWriterFinalStateHadronsAscii"});
+  if ((int)writerFinalStateHadronsAscii.find("on") != std::string::npos) {
+    auto writer_hadrons = make_shared<JetScapeWriterFinalStateHadronsAscii> ();
+    writer_hadrons->SetOutputFileName(outputFilename + string("_final_state_hadrons.dat"));
+    writer_hadrons->SetId("FinalStateHadronsAscii");
+    jetscape->Add(writer_hadrons);
+  }
 
   // Initialize all modules tasks
   jetscape->Init();

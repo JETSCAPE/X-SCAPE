@@ -64,6 +64,8 @@ public:
 
   virtual void FinishPerEvent();
 
+  void WriteTask(weak_ptr<JetScapeWriter> w);
+
   void UpdateEnergyDeposit(int t, double edop){ UpdateEnergyDepositFromModules(t, edop); }
 
   void GetEnergyDensity(int t, double &edensity){ GetEnergyDensityFromModules(t, edensity); }
@@ -95,9 +97,24 @@ public:
    */
   std::vector<shared_ptr<Hadron>> GetHadronsToRemoveAndClear();
 
-  /** Extract particles at iso-tau hypersurface
+  /** Determine if a hadron has crossed the iso-tau hypersurface
    */
-  void ExtractParticlesIsoTau(double tau_surface, std::vector<shared_ptr<Hadron>> &current_hadrons);
+  void DetermineHadronsCrossingIsoTau(std::vector<shared_ptr<Hadron>> &current_hadrons);
+
+  /** Extract hadrons from the transport initial condition at the iso-tau surface.
+   * This adds participant hadrons to store_source_term_hadrons_iso_tau_
+   * and spectator hadrons to store_spectator_hadrons_iso_tau_.
+  */
+  void ExtractHadronsFromTransportInitialConditionIsoTau(bool &AllHadronsCrossedIsoTau);
+
+  /** Create hadronic source terms for hydro initialization from the hadrons
+   * at an iso-tau surface.
+  */
+  void CreateHadronicSourceTermsForHydroInitializationIsoTau();
+
+  /** Store hadrons from the soft particlization in store_hadrons_soft_particlization_
+  */
+  void StoreHadronsFromSoftParticlization();
 
   /** Add one new hadron for transport to hadron list for new timestep
    */
@@ -149,6 +166,15 @@ private:
   std::vector<shared_ptr<Hadron>> store_source_term_hadrons_iso_tau_;
   std::vector<shared_ptr<Hadron>> store_spectator_hadrons_iso_tau_;
 
+  /** Store the hadrons from the soft particlization, when the hydro runs in
+   * Milne coordinates. Then they are fed into SMASH after the hydro has run.
+  */
+  std::vector<shared_ptr<Hadron>> store_hadrons_soft_particlization_;
+
+  /** Store BDM final state hadrons for output
+   */
+  std::vector<std::vector<shared_ptr<Hadron>>> BDM_final_state_hadrons_;
+
   /** Switching temperature between media.
    */
   float Tc_;
@@ -158,6 +184,35 @@ private:
    */
   double IC_particle_extraction_tau_;
 
+  /** Flag and pointer to create a file output of the hadronic time evolution. 
+   * This can be used to create a video of the hadronic evolution.
+  */
+  bool hadronic_time_evolution_to_file_;
+  std::unique_ptr<ofstream> hadronic_time_evolution_file_;
+
+  /** Function to create the hadronic_time_evolution_file_ 
+   * if the flag hadronic_time_evolution_to_file_ is set to true.
+  */
+  void CreateHadronicTimeEvolutionFileIfNecessary() {
+    if (hadronic_time_evolution_to_file_) {
+      hadronic_time_evolution_file_ = 
+        std::make_unique<ofstream>("hadronic_time_evolution_BDM.dat");
+    }
+  }
+
+  /** Function to close the hadronic_time_evolution_file_ 
+   * if the flag hadronic_time_evolution_to_file_ is set to true.
+  */
+  void CloseHadronicTimeEvolutionFileIfNecessary() {
+    if (hadronic_time_evolution_to_file_) {
+      hadronic_time_evolution_file_->close();
+    }
+  }
+
+  /** Function to print the hadronic content of the time evolution to the file
+   */
+  void PrintHadronicTimeEvolutionToFileIfNecessary();
+
   /**
    * Is the hydro in cartesian or not? Needed to decide whether SMASH IC has to 
    * run first, or if it can run concurrently with hydro.
@@ -166,11 +221,17 @@ private:
   bool SMASH_IC_attached_;
   
   bool SMASH_IC_in_progress_;
+  bool reset_time_hydro_Milne_;
   bool hydro_in_progress_;
+  bool afterburner_in_progress_;
+
+  double deltaT_main_clock_;
 
   protected:
     std::weak_ptr<LiquefierBase> liquefier_ptr_;
     std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr_;
+
+    std::uniform_real_distribution<double> ZeroOneDistribution;
 
 };
 
