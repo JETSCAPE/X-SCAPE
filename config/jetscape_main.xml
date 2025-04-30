@@ -107,15 +107,47 @@
     <!-- Options to read initial conditions from saved file -->
     <initial_profile_path>../examples/test_hydro_files</initial_profile_path>
     <initial_Ncoll_list>../examples/test_hydro_files</initial_Ncoll_list>
-    <MCGlauber> 
-        <ran_seed_MCGla> -1 </ran_seed_MCGla>
-        <rapidity_loss_method> 4 </rapidity_loss_method>
-        <ylossParam4At2> 1.666 </ylossParam4At2>
-        <ylossParam4At4> 2.10 </ylossParam4At4>
-        <ylossParam4At6> 21.20 </ylossParam4At6>
-        <ylossParam4At10> 2.30 </ylossParam4At10>
-        <ylossParam4var> 0.555 </ylossParam4var>
-        <remnant_energy_loss_fraction> 0.5 </remnant_energy_loss_fraction>
+    <MCGlauber>
+      <!--Collision system definitions-->
+      <projectile>p</projectile> <!--Projectile name-->
+      <target>p</target> <!--Target name-->
+      <sqrts>5020</sqrts> <!--Center of mass energy in GeV-->
+      <b_min>0.0</b_min> <!--Minimum impact parameter in fm-->
+      <b_max>20.0</b_max> <!--Maximum impact parameter in fm-->
+      <cenMin>0.0</cenMin> <!--Minimum centrality in %-->
+      <cenMax>100.0</cenMax> <!--Maximum centrality in %-->
+      <nucleon_configuration_from_file>0</nucleon_configuration_from_file> <!--0: generate nucleon configuration, 1: read from file-->
+      <useQuarks>1</useQuarks> <!--Switch to use valence quarks-->
+      <Q2>1.0</Q2> <!--Scale when evaluating the PDF-->
+      <shadowing_factor>0.6</shadowing_factor> <!--Shadowing factor for producing strings from multiple scatterings-->
+      <baryon_junctions>1</baryon_junctions> <!--0: baryon number assumed to be at string end, 1: baryon number transported assuming baryon junctions (at smaller x) see arXiv:nucl-th/9602027-->
+      <N_sea_partons>1</N_sea_partons> <!--Number of allowed soft partons-->
+      <d_min>0.9</d_min> <!--Minimum distance between two nucleons in fm-->
+      <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
+      <BG>16</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
+      <Subtract_hard_momentum>1</Subtract_hard_momentum>
+      <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
+      <baryonInStringProb>0.2</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
+      <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> <!--Fluctuate number of strings produced per NN collision-->
+      <QCD_string_production_mode>1</QCD_string_production_mode> <!--1: strings are produced randomly in the binary collision list, 2: strings are produced at the last binary collision-->
+      <!--Rapidity loss parameters (only mode 4 supported in XML, other modes have to be set in mcglauber.input)-->
+      <rapidity_loss_method>4</rapidity_loss_method>
+      <ylossParam4At2>1.666</ylossParam4At2>
+      <ylossParam4At4>2.10</ylossParam4At4>
+      <ylossParam4At6>21.20</ylossParam4At6>
+      <ylossParam4At10>2.30</ylossParam4At10>
+      <ylossParam4var>0.555</ylossParam4var>
+      <remnant_energy_loss_fraction>0.5</remnant_energy_loss_fraction> <!--Nucleon remnant's energy loss fraction (fraction of string's y_loss) [0, 1]-->
+      <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
+      <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
+      <!--string evolution mode, tau_form = tau_form_mean [fm]-->
+      <!--1: deceleration with fixed (90%) rapidity loss (m/sigma = 1 fm, dtau = tau_form)-->
+      <!--2: deceleration with LEXUS/parameterized rapidity loss (both dtau and sigma fluctuate)-->
+      <!--3: deceleration with LEXUS/parameterized rapidity loss (m/sigma = 1 fm, dtau fluctuates)-->
+      <!--4: deceleration with LEXUS/parameterized rapidity loss (dtau = tau_form, m/sigma fluctuates)-->
+      <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
+      <tau_form_mean>0.5</tau_form_mean> <!--Mean value for tau_form [fm]-->
+      <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> <!--Fluctuation parameter for the gamma distribution-->
     </MCGlauber>
     <!-- In case IP-Glasma is used as initial condition, the parameters need to be specified in the 'ipglasma.input' file -->
     <IPGlasma> </IPGlasma>
