@@ -31,7 +31,9 @@ RegisterJetScapeModule<JetScapeWriterQnVectorStream<ogzstream>>
     JetScapeWriterQnVectorStream<ogzstream>::regQnVectorGZ("JetScapeWriterQnVectorAsciiGZ");
 
 template <class T>
-JetScapeWriterQnVectorStream<T>::JetScapeWriterQnVectorStream(string m_file_name_out) {
+JetScapeWriterQnVectorStream<T>::JetScapeWriterQnVectorStream(string m_file_name_out):
+  writeCentrality{false}
+{
   SetOutputFileName(m_file_name_out);
 }
 
@@ -44,11 +46,22 @@ template <class T> JetScapeWriterQnVectorStream<T>::~JetScapeWriterQnVectorStrea
 template <class T> void JetScapeWriterQnVectorStream<T>::WriteEvent() {
   // Write the entire event all at once.
 
+  // Optionally write event centrality to event header
+  std::string centrality_text = "";
+  if (writeCentrality) {
+    centrality_text += "\tcentrality\t";
+    centrality_text += std::to_string(GetHeader().GetEventCentrality());
+  }
+
   // First, write header
   // NOTE: Needs consistent "\t" between all entries to simplify parsing later.
   // NOTE: Could also add Npart, Ncoll, and TotalEntropy. See the original stream writer.
   output_file << "#"
-      << "\t" << "Event\t" << GetCurrentEvent() + 1  <<  "\n";
+      << "\t" << "Event\t" << GetCurrentEvent() + 1;
+
+  output_file
+      << centrality_text
+      <<  "\n";
 
   double oversamplenevent = JetScapeXML::Instance()->GetElementDouble({"SoftParticlization", "iSS", "number_of_repeated_sampling"});
 
@@ -145,6 +158,9 @@ template <class T> void JetScapeWriterQnVectorStream<T>::WriteEvent() {
 }
 
 template <class T> void JetScapeWriterQnVectorStream<T>::Init() {
+  // Whether to write the centrality for each event
+  writeCentrality = static_cast<bool>(JetScapeXML::Instance()->GetElementInt({"write_centrality"}));
+
   if (GetActive()) {
     // Capitalize name
     std::string name = GetName();
@@ -171,14 +187,21 @@ template <class T> void JetScapeWriterQnVectorStream<T>::Init() {
         << "\t" << "# PID of Charged particle 9999 \t" << " y(Charged) = pseudo-rapidity \t y(PID) = rapidity"
         << "\t" << "\n"
         << "#"
+        << "\t" << "pTmin\t" << pTmin_ << "\t" << "pTmax\t" << pTmax_ << "\t" << "NpT\t" << npT_
+        << "\t" << "rapmin\t" << rapmin_ << "\t" << "rapmax\t" << rapmax_ << "\t" << "Nrap\t" << nrap_
+        << "\t" << "Norder\t" << norder_ << "\n"
+        << "#"
+        << "\t" << "PID of Charged particle 9999 \t" << " y(Charged) = pseudo-rapidity \t y(PID) = rapidity"
+        << "\t" << "\n"
+        << "#"
         << "\t" << "pid"
-        << "\t" << "pT\t"
-        << "\t" << "pT_err\t"
-        << "\t" << "y\t"
-        << "\t" << "y_err\t"
-        << "\t" << "ET\t"
-        << "\t" << "dNdpTdy\t"
-        << "\t" << "dNdpTdy_err\t"
+        << "\t" << "pT"
+        << "\t" << "pT_err"
+        << "\t" << "y"
+        << "\t" << "y_err"
+        << "\t" << "ET"
+        << "\t" << "dNdpTdy"
+        << "\t" << "dNdpTdy_err"
         << "\t" << "vncos"
         << "\t" << "vncos_err"
         << "\t" << "vnsin"
