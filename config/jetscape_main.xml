@@ -30,6 +30,8 @@
   <JetScapeWriterRootHepMC> off </JetScapeWriterRootHepMC>
   <JetScapeWriterFinalStatePartonsAscii> off </JetScapeWriterFinalStatePartonsAscii>
   <JetScapeWriterFinalStateHadronsAscii> off </JetScapeWriterFinalStateHadronsAscii>
+  <!--Final state hadron/parton output in binary mode, only ascii or only binary switch (not both possible at the same time)-->
+  <binary_output> 0 </binary_output>
   <JetScapeWriterQnVectorAscii>off</JetScapeWriterQnVectorAscii>
   <QnVector_pTmin>0</QnVector_pTmin>
   <QnVector_pTmax>6</QnVector_pTmax>
