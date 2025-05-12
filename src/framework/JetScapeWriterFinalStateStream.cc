@@ -335,9 +335,7 @@ template <class T> void JetScapeWriterFinalStateStream<T>::Close() {
     // NOTE: Needs consistent "\t" between all entries to simplify parsing later.
     output_file << "#" << "\t"
         << "sigmaGen\t" << GetHeader().GetSigmaGen() << "\t"
-        << "sigmaErr\t" << GetHeader().GetSigmaErr() << "\t"
-        << "weight\t"   << GetHeader().GetEventWeight() << "\t"
-        << "pT-Hat\t"   << GetHeader().GetPtHat() << "\n";
+        << "sigmaErr\t" << GetHeader().GetSigmaErr() << "\n";
     output_file.close();
   } else {
     // Write xsec output at the end.
@@ -345,10 +343,6 @@ template <class T> void JetScapeWriterFinalStateStream<T>::Close() {
     output_file.write(reinterpret_cast<const char*>(&sigmaGen), sizeof(float));
     const float sigmaErr = static_cast<float>(GetHeader().GetSigmaErr());
     output_file.write(reinterpret_cast<const char*>(&sigmaErr), sizeof(float));
-    const float weight = static_cast<float>(GetHeader().GetEventWeight());
-    output_file.write(reinterpret_cast<const char*>(&weight), sizeof(float));
-    const float ptHat = static_cast<float>(GetHeader().GetPtHat());
-    output_file.write(reinterpret_cast<const char*>(&ptHat), sizeof(float));
     output_file.close();
   }
 }
