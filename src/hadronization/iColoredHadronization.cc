@@ -87,6 +87,16 @@ void iColoredHadronization::InitTask() {
     pythia.readString("ParticleDecays:limitTau0 = on");
     pythia.readString("ParticleDecays:tau0Max = 10.0");
   }
+  //Optionally read in additional settings
+  std::stringstream lines;
+  lines << GetXMLElementText({"JetHadronization", "LinesToRead"}, false);
+  while (std::getline(lines, s, '\n')) {
+    if (s.find_first_not_of(" \t\v\f\r") == s.npos)
+      continue; // skip empty lines
+    JSINFO << "Also reading in: " << s;
+    pythia.readString(s);
+  }
+
   pythia.init();
 }
 
