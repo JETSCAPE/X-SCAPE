@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "JetScapeLogger.h"
+#include "JetScapeSignalManager.h"
 #include "MCGlauberWrapper.h"
 
 // Register the module with the base class
@@ -35,6 +36,10 @@ MCGlauberWrapper::MCGlauberWrapper() {
 
 void MCGlauberWrapper::InitTask() {
     auto ran_seed = (*GetMt19937Generator())();
+    ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
+    if (!ini) {
+        JSWARN << "The MCGlauber pointer to the initial state is not set.";
+    }
 
     int argc = 0;
     char* argv[1];
@@ -45,6 +50,15 @@ void MCGlauberWrapper::InitTask() {
     int para_temp_int;
     double para_temp_double;
     std::string para_temp_string;
+
+    para_temp_int = GetXMLElementInt(
+        {"IS", "MCGlauber", "generateOnlyPositions"}, true);
+    if (para_temp_int == 1) {
+        generateOnlyPositions_ = true;
+    } else {
+        generateOnlyPositions_ = false;
+    }
+    
     para_temp_string = (
         GetXMLElementText({"IS", "MCGlauber", "projectile"}));
     mc_gen_->set_parameter("Projectile", para_temp_string);
@@ -197,31 +211,56 @@ void MCGlauberWrapper::ExecuteTask() {
     ClearTask();
     VERBOSE(1) << "Run 3DMCGlauber to generate initial hard positions "
                      << "...";
-    try {
-        int iparticle=0;
-        mc_gen_->generate_pre_events(); // generate one 3DGlauber event
-        std::vector<MCGlb::CollisionEvent> collisionEvents = (
-            mc_gen_->get_CollisionEventvector());
-        ncoll_ = collisionEvents.size();
-        rand_int_ptr_ = (
-            std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
-        while (iparticle < ncoll_) {
-             auto xvec = (
-                collisionEvents[iparticle].get_collision_position());
-             binary_collision_t_.push_back(xvec[0]);
-             binary_collision_x_.push_back(xvec[1]);
-             binary_collision_y_.push_back(xvec[2]);
-             binary_collision_z_.push_back(xvec[3]);
-             iparticle++;
+
+    if (generateOnlyPositions_) {
+        try {
+            int iparticle=0;
+            mc_gen_->generate_pre_events(); // generate one 3DGlauber event
+            std::vector<MCGlb::CollisionEvent> collisionEvents = (
+                mc_gen_->get_CollisionEventvector());
+            ncoll_ = collisionEvents.size();
+            rand_int_ptr_ = (
+                std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
+            while (iparticle < ncoll_) {
+                 auto xvec = (
+                    collisionEvents[iparticle].get_collision_position());
+                 binary_collision_t_.push_back(xvec[0]);
+                 binary_collision_x_.push_back(xvec[1]);
+                 binary_collision_y_.push_back(xvec[2]);
+                 binary_collision_z_.push_back(xvec[3]);
+                 iparticle++;
+            }
+            event_id_++;
+        } catch (std::exception &err) {
+            Jetscape::JSWARN << err.what();
+            std::exit(-1);
         }
-        event_id_++;
-    } catch (std::exception &err) {
-        Jetscape::JSWARN << err.what();
-        std::exit(-1);
+    } else {
+        try {
+            int iparticle=0;
+            mc_gen_->generate_pre_events(); // TODO: change this function to generate_full_events
+            std::vector<MCGlb::CollisionEvent> collisionEvents = (
+                mc_gen_->get_CollisionEventvector());
+            ncoll_ = collisionEvents.size();
+            rand_int_ptr_ = (
+                std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
+            while (iparticle < ncoll_) {
+                 auto xvec = (
+                    collisionEvents[iparticle].get_collision_position());
+                 binary_collision_t_.push_back(xvec[0]);
+                 binary_collision_x_.push_back(xvec[1]);
+                 binary_collision_y_.push_back(xvec[2]);
+                 binary_collision_z_.push_back(xvec[3]);
+                 iparticle++;
+            }
+            event_id_++;
+            ini->GenerateStrings();
+        } catch (std::exception &err) {
+            Jetscape::JSWARN << err.what();
+            std::exit(-1);
+        }
     }
-
 }
-
 
 void MCGlauberWrapper::SampleABinaryCollisionPoint(
         double &t, double &x, double &y, double &z) {
