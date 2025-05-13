@@ -231,6 +231,22 @@ template <class T> void JetScapeWriterFinalStateStream<T>::InitTask() {
     // Remove the default value, if there
     particleStatusToSkip.erase(std::remove(particleStatusToSkip.begin(), particleStatusToSkip.end(), -9999), particleStatusToSkip.end());
   }
+  // Print the status codes that will be skipped for logging purposes to ensure that
+  // it's clear that the values are propagated correctly.
+  if (particleStatusToSkip.size() > 0) {
+    std::stringstream ss;
+    ss << "Filtering (i.e. removing) " << GetName() << " with status codes: ";
+    unsigned int count = 0;
+    for (const auto status : particleStatusToSkip) {
+      if (count > 0) {
+        ss << ", ";
+      }
+      ss << status;
+      ++count;
+    }
+    JSINFO << ss.str();
+  }
+
   if (GetActive()) {
     if (!binaryOutput) {
       // Writing ascii output
@@ -260,22 +276,6 @@ template <class T> void JetScapeWriterFinalStateStream<T>::InitTask() {
           << "\t" << "Py"
           << "\t" << "Pz"
           << "\n";
-  
-      // Print the status codes that will be skipped for logging purposes to ensure that
-      // it's clear that the values are propagated correctly.
-      if (particleStatusToSkip.size() > 0) {
-        std::stringstream ss;
-        ss << "Filtering (i.e. removing) " << GetName() << " with status codes: ";
-        unsigned int count = 0;
-        for (const auto status : particleStatusToSkip) {
-          if (count > 0) {
-            ss << ", ";
-          }
-          ss << status;
-          ++count;
-        }
-        JSINFO << ss.str();
-      }
     } else {
       // Binary output file
       output_file.open(GetOutputFileName().c_str(), std::ios::binary);
