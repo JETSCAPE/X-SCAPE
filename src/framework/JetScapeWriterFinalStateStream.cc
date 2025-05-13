@@ -217,7 +217,7 @@ template <class T> void JetScapeWriterFinalStateStream<T>::InitTask() {
   name[0] = toupper(name[0]);
 
   // Check if we want to write binary output
-  binaryOutput = static_cast<bool>(JetScapeXML::Instance()->GetElementInt({"binary_output"}));
+  binaryOutput = static_cast<bool>(JetScapeXML::Instance()->GetElementInt({"Writer", "JetscapeWriterFinalStateBinaryOutput"}));
   // Whether to write the centrality and pt hat value for each event
   writeCentrality = static_cast<bool>(JetScapeXML::Instance()->GetElementInt({"write_centrality"}));
   // Whether to write the pt hat value for each event
@@ -279,7 +279,7 @@ template <class T> void JetScapeWriterFinalStateStream<T>::InitTask() {
     } else {
       // Binary output file
       output_file.open(GetOutputFileName().c_str(), std::ios::binary);
-      const int binary_file_version = 1;
+      const int binary_file_version = 3;
       output_file.write(reinterpret_cast<const char*>(&binary_file_version), sizeof(int));
       // Status codes to skip in the writer, assume that there are at maximum 4
       // codes to skip. If there is no code to skip, write 666 instead. If there are more than
@@ -336,15 +336,14 @@ template <class T> void JetScapeWriterFinalStateStream<T>::Close() {
     output_file << "#" << "\t"
         << "sigmaGen\t" << GetHeader().GetSigmaGen() << "\t"
         << "sigmaErr\t" << GetHeader().GetSigmaErr() << "\n";
-    output_file.close();
   } else {
     // Write xsec output at the end.
     const float sigmaGen = static_cast<float>(GetHeader().GetSigmaGen());
     output_file.write(reinterpret_cast<const char*>(&sigmaGen), sizeof(float));
     const float sigmaErr = static_cast<float>(GetHeader().GetSigmaErr());
     output_file.write(reinterpret_cast<const char*>(&sigmaErr), sizeof(float));
-    output_file.close();
   }
+  output_file.close();
 }
 
 template class JetScapeWriterFinalStateStream<ofstream>;
