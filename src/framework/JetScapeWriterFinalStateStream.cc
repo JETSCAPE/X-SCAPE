@@ -149,7 +149,7 @@ template <class T> void JetScapeWriterFinalStateStream<T>::WriteEvent() {
     output_file << ss.str();
   } else {
     const int event_number = GetCurrentEvent() + 1;
-    const float event_weight = static_cast<float>(GetHeader().GetEventWeight());
+    const double event_weight = static_cast<double>(GetHeader().GetEventWeight());
     const float event_plane_angle = static_cast<float>(GetHeader().GetEventPlaneAngle() > -999 ? GetHeader().GetEventPlaneAngle() : 0);
     const float vertex_x = static_cast<float>(GetHeader().GetVertexX());
     const float vertex_y = static_cast<float>(GetHeader().GetVertexY());
@@ -159,7 +159,7 @@ template <class T> void JetScapeWriterFinalStateStream<T>::WriteEvent() {
 
     // Write the event number, weight, and event plane angle, ...
     output_file.write(reinterpret_cast<const char*>(&event_number), sizeof(int));
-    output_file.write(reinterpret_cast<const char*>(&event_weight), sizeof(float));
+    output_file.write(reinterpret_cast<const char*>(&event_weight), sizeof(double));
     output_file.write(reinterpret_cast<const char*>(&event_plane_angle), sizeof(float));
     output_file.write(reinterpret_cast<const char*>(&vertex_x), sizeof(float));
     output_file.write(reinterpret_cast<const char*>(&vertex_y), sizeof(float));
@@ -338,10 +338,10 @@ template <class T> void JetScapeWriterFinalStateStream<T>::Close() {
         << "sigmaErr\t" << GetHeader().GetSigmaErr() << "\n";
   } else {
     // Write xsec output at the end.
-    const float sigmaGen = static_cast<float>(GetHeader().GetSigmaGen());
-    output_file.write(reinterpret_cast<const char*>(&sigmaGen), sizeof(float));
-    const float sigmaErr = static_cast<float>(GetHeader().GetSigmaErr());
-    output_file.write(reinterpret_cast<const char*>(&sigmaErr), sizeof(float));
+    const double sigmaGen = static_cast<double>(GetHeader().GetSigmaGen());
+    output_file.write(reinterpret_cast<const char*>(&sigmaGen), sizeof(double));
+    const double sigmaErr = static_cast<double>(GetHeader().GetSigmaErr());
+    output_file.write(reinterpret_cast<const char*>(&sigmaErr), sizeof(double));
   }
   output_file.close();
 }
