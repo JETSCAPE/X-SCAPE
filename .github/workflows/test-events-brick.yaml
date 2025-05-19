@@ -5,21 +5,11 @@ on:
     branches:
       - main
       - XSCAPE-1.2-RC
-      - cpp17_cmake_syntax
-      - brick_matter_lbt
-      - ipglasma
-      - support_LHAPDF
-      - require_cmake_3_5
 
   push:
     branches:
       - main
       - XSCAPE-1.2-RC
-      - cpp17_cmake_syntax
-      - brick_matter_lbt
-      - ipglasma
-      - support_LHAPDF
-      - require_cmake_3_5
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
