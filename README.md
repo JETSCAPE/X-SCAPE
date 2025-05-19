@@ -137,6 +137,9 @@ To use the ISR shower of iMatter, please make sure that the environment variable
 
 After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` (in the build directory) to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`. For running 3DGlauber with Hydro (Music) please see [3DGlauber](https://github.com/JETSCAPE/X-SCAPE/wiki/3DGlauber,-MUSIC,-iSS-and-Initial-State-Radiation).
 
+### Electron-Proton Gun
+
+X-SCAPE includes an electron-proton gun capable of recreating both Deep-Inelastic Scattering (DIS) and photoproduction events. It should be run in photoproduction mode for when the virtuality of the exchanged photon (normally called Q^2) is under 1 GeV^2, and in DIS mode when it is larger. The photoproduction mode works well for all HERA energies and DIS can be run down to HERMES energies. It should not be run under this.
 
 ## JETSCAPE modules
 
