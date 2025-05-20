@@ -82,6 +82,7 @@ void FluidDynamics::ClearTask() {
   if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
     liquefier_ptr.lock()->ClearTask();
   }
+  hydro_status = NOT_START;
 }
 
 void FluidDynamics::CollectHeader(weak_ptr<JetScapeWriter> w) {
