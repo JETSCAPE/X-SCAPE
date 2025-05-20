@@ -304,7 +304,8 @@ void MpiMusic::EvolveHydro() {
     has_source_terms = true;
   }
 
-  if (flag_preEq_output_evo_to_memory == 1 && pre_eq_ptr != nullptr) {
+  if (flag_preEq_output_evo_to_memory == 1 
+    && pre_eq_ptr != nullptr && initialProfile_ == 42) {
     double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
     JSINFO << "Hydro initial time set by pre-equilibrium module tau0 = "
            << tau0 << " fm/c";
