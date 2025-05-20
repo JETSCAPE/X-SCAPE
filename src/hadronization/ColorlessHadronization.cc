@@ -135,6 +135,21 @@ void ColorlessHadronization::DoHadronization(
   Event &event = pythia.event;
   ParticleData &pdt = pythia.particleData;
 
+  //initial hadron list
+  //pre existing hadrons
+  if(hOut.size() > 0){
+    for(vector<shared_ptr<Hadron>>::iterator hadIter = hOut.begin(); hadIter<hOut.end();){
+      if(hadIter->get()->pid() > 23){ //skipping leptons
+        double massnow = hadIter->get()->e()*hadIter->get()->e() -
+                        (hadIter->get()->px()*hadIter->get()->px() + hadIter->get()->py()*hadIter->get()->py() + hadIter->get()->pz()*hadIter->get()->pz());
+        massnow = (massnow >= 0.) ? sqrt(massnow) : -sqrt(-massnow);
+        event.append(hadIter->get()->pid(),0,0,0,hadIter->get()->px(),hadIter->get()->py(),hadIter->get()->pz(),hadIter->get()->e(),massnow);
+        event[event.size()-1].vProd(0., 0., 0., 0.);
+      }
+      else hadIter++;
+    }
+  }
+
   // Hadronize positive (status = 0) and negative (status = -1) partons in a different space
   for (int want_pos = 1; want_pos >= 0; --want_pos) {
     event.reset();
