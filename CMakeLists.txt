@@ -493,6 +493,8 @@ if(USE_MUSIC AND USE_ISS)
     target_link_libraries(PythiaIsrTest JetScape )
     add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
     target_link_libraries(PythiaIsrMUSIC JetScape )
+    add_executable(PythiaIsrNoHadro ./examples/custom_examples/PythiaIsrNoHadro.cc)
+    target_link_libraries(PythiaIsrNoHadro JetScape )
   endif (USE_3DGlauber)
 endif (USE_MUSIC AND USE_ISS )
 
