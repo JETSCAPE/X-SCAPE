@@ -363,7 +363,7 @@ double HydroFromFile::GetEventPlaneAngle() {
     std::getline(inputfile, dummy);
     inputfile >> dummy >> v2 >> dummy >> psi_2;
     inputfile.close();
-  } else if (hydro_type_ == 5) {
+  } else if (hydro_type_ == 4 || hydro_type_ == 5) {
     std::ostringstream angle_filename;
     string folder =
         GetXMLElementText({"Hydro", "hydro_from_file", "hydro_files_folder"});
