@@ -13,13 +13,12 @@
 # See COPYING for details.
 ##############################################################################
 
-folderName="music"
-# commitHash="52b0454b0a07a76f26c8138245c0b3c54d00af65" # for xscape 1.1
-commitHash="db320898c4a9bd99ed21aa9dbb7c78e2cb0729bd" # for xscape 1.1.1
 
-# download the code package
-rm -fr $folderName
-git clone https://github.com/MUSIC-fluid/MUSIC.git --branch JETSCAPE $folderName
+# using a commit from the MUSIC repository that is compatible with the current X-SCAPE version
+folderName="music"
+commitHash="132448235467999067f1c01f340736139499ce16"
+
+git clone https://github.com/MUSIC-fluid/MUSIC.git -b JETSCAPE $folderName
 cd $folderName
 git checkout $commitHash
 

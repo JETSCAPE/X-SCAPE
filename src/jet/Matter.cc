@@ -30,8 +30,6 @@
 using namespace Jetscape;
 using namespace std;
 
-const double QS = 0.9;
-
 // Register the module with the base class
 RegisterJetScapeModule<Matter> Matter::reg("Matter");
 
@@ -87,6 +85,7 @@ Matter::Matter() {
   initEner = 0.;
   Q00 = 0.;
   Q0 = 0.;
+  QS = 0.;
   T0 = 0.;
   iEvent = 0;
   NUM1 = 0;
@@ -103,6 +102,7 @@ void Matter::InitTask() {
 
   qhat = 0.0;
   Q00 = 1.0;    // virtuality separation scale
+  QS = 0.9;
   qhat0 = 2.0;  // GeV^2/fm for gluon at s = 96 fm^-3
   alphas = 0.3; // only useful when qhat0 is a negative number
   tscale=1;
@@ -131,6 +131,7 @@ void Matter::InitTask() {
   broadening_on = GetXMLElementInt({"Eloss", "Matter", "broadening_on"});
   brick_med = GetXMLElementInt({"Eloss", "Matter", "brick_med"});
   Q00 = GetXMLElementDouble({"Eloss", "Matter", "Q0"});
+  QS = GetXMLElementDouble({"Eloss", "Matter", "QS"});
   T0 = GetXMLElementDouble({"Eloss", "Matter", "T0"});
   alphas = GetXMLElementDouble({"Eloss", "Matter", "alphas"});
   qhatA = GetXMLElementDouble({"Eloss", "Matter", "qhatA"});
@@ -144,6 +145,7 @@ void Matter::InitTask() {
   brick_length = GetXMLElementDouble({"Eloss", "Matter", "brick_length"});
   vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
   initial_virtuality_pT = GetXMLElementInt({"Eloss", "Matter", "initial_virtuality_pT"});
+  Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
 
   if(vir_factor < 0.0) {
     JSWARN << "vir_factor should not be negative";
@@ -152,6 +154,14 @@ void Matter::InitTask() {
   if (!initial_virtuality_pT) {
     cout << "Reminder: initial energy will be used as initial t_max" << endl;
   }
+  if(QS < 2.*Lambda_QCD + 0.05){
+    JSWARN << "QS too low; will be set to 2*LambdaQCD + 0.05";
+    QS = 2.*Lambda_QCD + 0.05;
+  } 
+  if(QS > Q00){
+    JSWARN << "QS too high; will be set to Q0";
+    QS = Q00;
+  }
 
   MaxColor = 101; // MK:recomb
 
@@ -159,7 +169,8 @@ void Matter::InitTask() {
   JSINFO << MAGENTA << "matter shower on: " << matter_on;
   JSINFO << MAGENTA << "in_vac: " << in_vac << "  brick_med: " << brick_med
          << "  recoil_on: " << recoil_on<<", tStart ="<<tStart;
-  JSINFO << MAGENTA << "Q0: " << Q00 << " vir_factor: " << vir_factor
+  JSINFO << MAGENTA << "Lambda_QCD: " << Lambda_QCD;
+  JSINFO << MAGENTA << "Q0: " << Q00 << " QS: " << QS << " vir_factor: " << vir_factor
          << " initial_virtuality_pT: " << initial_virtuality_pT
          << "  qhat0: " << qhat0 << " alphas: " << alphas << ", QhatParametrizationType="<<QhatParametrizationType
          << "  qhatA: " << qhatA << " qhatB:  " <<qhatB  << "  qhatC: " << qhatC << " qhatD:  " <<qhatD
@@ -476,7 +487,6 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
     if (pIn[i].form_time() <
         0.0) /// A parton without a virtuality or formation time, must set...
     {
-
       VERBOSE(8) << BOLDYELLOW << " pid = " << pIn[i].pid()
                  << " E = " << pIn[i].e();
 

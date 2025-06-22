@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<jetscape>
+  
+  <nEvents> 10 </nEvents>
+  
+  <outputFilename>test_out</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  
+  <!-- Hard Process -->
+  <Hard>
+    <EPGun>
+      <electron_energy>27.52</electron_energy>
+      <proton_energy>920</proton_energy>
+      <use_positron>0</use_positron>
+      <photoproduction>1</photoproduction>
+      <LinesToRead>
+       Photon:Wmin = 10
+       MultipartonInteractions:pT0Ref = 4
+      </LinesToRead>
+    </EPGun>
+  </Hard>
+  
+  <!--Eloss Modules -->
+  <Eloss>
+    <maxT>100</maxT>
+    <Matter> 
+      <Q0> 1 </Q0>
+      <in_vac> 1 </in_vac>
+      <vir_factor> 1.0 </vir_factor>
+      <recoil_on> 0 </recoil_on>
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>
+    </Matter>
+  </Eloss>
+  
+  <!-- Jet Hadronization Module -->
+  <JetHadronization>
+    <name>hybrid</name>
+    <eCMforHadronization>1840</eCMforHadronization>
+    <tau0Max>10</tau0Max>
+  </JetHadronization>
+  
+</jetscape>

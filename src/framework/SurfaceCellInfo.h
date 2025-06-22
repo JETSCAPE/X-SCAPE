@@ -33,11 +33,12 @@ public:
   Jetscape::real entropy_density; //!< Local entropy density [1/fm^3].
   Jetscape::real temperature;     //!< Local temperature [GeV].
   Jetscape::real pressure;        //!< Thermal pressure [GeV/fm^3].
+  Jetscape::real baryon_density;  //!< net baryon density [1/fm^3].
   Jetscape::real mu_B;       //!< Net baryon chemical potential [GeV].
   Jetscape::real mu_Q;       //!< Net charge chemical potential [GeV].
   Jetscape::real mu_S;       //!< Net strangeness chemical potential [GeV].
-  Jetscape::real umu[4];
-  Jetscape::real pi[10];     //!< Shear stress tensor [GeV/fm^3].
+  Jetscape::real umu[4]; //!< Flow velocity.
+  Jetscape::real pi[10];   //!< Shear stress tensor [GeV/fm^3].
   Jetscape::real bulk_Pi;    //!< Bulk viscous pressure [GeV/fm^3].
 
   /** Default constructor. */

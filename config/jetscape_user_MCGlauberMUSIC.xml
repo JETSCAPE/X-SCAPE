@@ -7,12 +7,11 @@
 
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
 
-    <!-- Inital State Module  -->
-    <IS>
-        <MCGlauber> 
-         <ran_seed_MCGla>-1</ran_seed_MCGla>
-         <nEvents_MCGla>1</nEvents_MCGla>
-        </MCGlauber>
-    </IS>
+  <!-- Inital State Module  -->
+  <IS>
+    <MCGlauber>
+      <nEvents_MCGla>1</nEvents_MCGla>
+    </MCGlauber>
+  </IS>
 
 </jetscape>

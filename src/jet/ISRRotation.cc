@@ -67,7 +67,8 @@ void ISRRotation::InitTask()
   JSINFO<<"Intialize ISRRotation ...";
 
   P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
-  
+  Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
+
   P_B = P_A ; /// assuming symmetric system, rewrite for non-symmetric collision.
 
   if (!P_A)

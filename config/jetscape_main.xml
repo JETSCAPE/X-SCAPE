@@ -38,13 +38,29 @@
   <QnVector_rapmax>4</QnVector_rapmax>
   <QnVector_Nrap>80</QnVector_Nrap>
   <QnVector_Norder>7</QnVector_Norder>
+  <!-- Printing the centrality to the event header is only possible for the Trento initial condition -->
+  <write_centrality> 0 </write_centrality>
   <write_pthat> 0 </write_pthat>
+  <Writer>
+    <!-- Comma separated list of statuses to skip: e.g. "2, 3, 4" -->
+    <!-- -9999 corresponds to skipping no status code. It needs to have some entry to be avoid a segfault w/ empty values in tinyxml -->
+    <FinalStateHadrons>
+       <statusToSkip>-9999</statusToSkip>
+       <headerVersion>2</headerVersion>
+    </FinalStateHadrons>
+    <FinalStatePartons>
+       <statusToSkip>-9999</statusToSkip>
+       <headerVersion>2</headerVersion>
+    </FinalStatePartons>
+    <!--JetScapeWriterFinalStateHadronsAscii/JetScapeWriterFinalStatePartonsAscii output in binary mode, only ascii or only binary switch (not both possible at the same time)-->
+    <JetscapeWriterFinalStateBinaryOutput> 0 </JetscapeWriterFinalStateBinaryOutput>
+  </Writer>
 
   <!--  Random Settings. For now, just a global  seed. -->
   <!--  Note: It's each modules responsibility to adopt it -->
   <!--  Note: Most if not all modules should understand 0 to mean a random value -->
   <!--  Note: Both 0 and non-zero values require careful treatment in case of multi-threading -->
-  <!--           An example implementation is in JetEnergyLossManager.cc -->
+  <!--  An example implementation is in JetEnergyLossManager.cc -->
   <Random>
     <seed>0</seed>
   </Random>
@@ -62,7 +78,7 @@
     <!-- in units of [fm] -->
     <grid_max_x> 15 </grid_max_x>
     <grid_max_y> 15 </grid_max_y>
-    <grid_max_z> 0.2 </grid_max_z>
+    <grid_max_z> 0  </grid_max_z>
     <grid_step_x> 0.3 </grid_step_x>
     <grid_step_y> 0.3 </grid_step_y>
     <grid_step_z> 0.2 </grid_step_z>
@@ -90,19 +106,53 @@
     </LongiInputs>
     </Trento>
 
-    <!-- Options to read initial conditions from saved file  -->
+    <!-- Options to read initial conditions from saved file -->
     <initial_profile_path>../examples/test_hydro_files</initial_profile_path>
     <initial_Ncoll_list>../examples/test_hydro_files</initial_Ncoll_list>
-    <MCGlauber> 
-        <ran_seed_MCGla> -1 </ran_seed_MCGla>
-        <rapidity_loss_method> 4 </rapidity_loss_method>
-        <ylossParam4At2> 1.666 </ylossParam4At2>
-        <ylossParam4At4> 2.10 </ylossParam4At4>
-        <ylossParam4At6> 21.20 </ylossParam4At6>
-        <ylossParam4At10> 2.30 </ylossParam4At10>
-        <ylossParam4var> 0.555 </ylossParam4var>
-        <remnant_energy_loss_fraction> 0.5 </remnant_energy_loss_fraction>
+    <MCGlauber>
+      <!--Collision system definitions-->
+      <projectile>p</projectile> <!--Projectile name-->
+      <target>p</target> <!--Target name-->
+      <sqrts>5020</sqrts> <!--Center of mass energy in GeV-->
+      <b_min>0.0</b_min> <!--Minimum impact parameter in fm-->
+      <b_max>20.0</b_max> <!--Maximum impact parameter in fm-->
+      <cenMin>0.0</cenMin> <!--Minimum centrality in %-->
+      <cenMax>100.0</cenMax> <!--Maximum centrality in %-->
+      <nucleon_configuration_from_file>0</nucleon_configuration_from_file> <!--0: generate nucleon configuration, 1: read from file-->
+      <useQuarks>1</useQuarks> <!--Switch to use valence quarks-->
+      <Q2>1.0</Q2> <!--Scale when evaluating the PDF-->
+      <shadowing_factor>0.6</shadowing_factor> <!--Shadowing factor for producing strings from multiple scatterings-->
+      <baryon_junctions>1</baryon_junctions> <!--0: baryon number assumed to be at string end, 1: baryon number transported assuming baryon junctions (at smaller x) see arXiv:nucl-th/9602027-->
+      <N_sea_partons>1</N_sea_partons> <!--Number of allowed soft partons-->
+      <d_min>0.9</d_min> <!--Minimum distance between two nucleons in fm-->
+      <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
+      <BG>16</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
+      <Subtract_hard_momentum>1</Subtract_hard_momentum>
+      <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
+      <baryonInStringProb>0.2</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
+      <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> <!--Fluctuate number of strings produced per NN collision-->
+      <QCD_string_production_mode>1</QCD_string_production_mode> <!--1: strings are produced randomly in the binary collision list, 2: strings are produced at the last binary collision-->
+      <!--Rapidity loss parameters (only mode 4 supported in XML, other modes have to be set in mcglauber.input)-->
+      <rapidity_loss_method>4</rapidity_loss_method>
+      <ylossParam4At2>1.666</ylossParam4At2>
+      <ylossParam4At4>2.10</ylossParam4At4>
+      <ylossParam4At6>21.20</ylossParam4At6>
+      <ylossParam4At10>2.30</ylossParam4At10>
+      <ylossParam4var>0.555</ylossParam4var>
+      <remnant_energy_loss_fraction>0.5</remnant_energy_loss_fraction> <!--Nucleon remnant's energy loss fraction (fraction of string's y_loss) [0, 1]-->
+      <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
+      <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
+      <!--string evolution mode, tau_form = tau_form_mean [fm]-->
+      <!--1: deceleration with fixed (90%) rapidity loss (m/sigma = 1 fm, dtau = tau_form)-->
+      <!--2: deceleration with LEXUS/parameterized rapidity loss (both dtau and sigma fluctuate)-->
+      <!--3: deceleration with LEXUS/parameterized rapidity loss (m/sigma = 1 fm, dtau fluctuates)-->
+      <!--4: deceleration with LEXUS/parameterized rapidity loss (dtau = tau_form, m/sigma fluctuates)-->
+      <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
+      <tau_form_mean>0.5</tau_form_mean> <!--Mean value for tau_form [fm]-->
+      <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> <!--Fluctuation parameter for the gamma distribution-->
     </MCGlauber>
+    <!-- In case IP-Glasma is used as initial condition, the parameters need to be specified in the 'ipglasma.input' file -->
+    <IPGlasma> </IPGlasma>
   </IS>
 
   <!-- Hard Process -->
@@ -141,10 +191,33 @@
         HadronLevel::all = off
       </LinesToRead>
     </epemGun>
+
+    <EPGun>
+      <name>EPGun</name>
+      <electron_energy>27.5</electron_energy>
+      <proton_energy>920</proton_energy>
+      <Q2_pow>1.7</Q2_pow>
+      <Q2_factor>500</Q2_factor>
+      <Q2min>0</Q2min>
+      <Q2max>1000000</Q2max>
+      <W2min>0</W2min>
+      <W2max>1000000</W2max>
+      <xmin>0</xmin>
+      <xmax>1</xmax>
+      <ymin>0</ymin>
+      <ymax>1</ymax>
+      <FSR_on>0</FSR_on>
+      <!-- The soft momentum cutoff in GeV removes partons from the pythia gun. The default matches the PP19 setup. -->
+      <softMomentumCutoff>0.0</softMomentumCutoff>
+      <use_positron>0</use_positron>
+      <photoproduction>0</photoproduction>
+      <breit_vir>1</breit_vir>
+    </EPGun>
   </Hard>
 
   <!--Eloss Modules -->
   <!-- Individual Eloss Modules run Eloss and Eloss Manager  -->
+  <!-- In the user XML file the Hydro section should be placed before Eloss -->
   <Eloss>
 
     <deltaT>0.1</deltaT>
@@ -153,11 +226,13 @@
     <tStart> 0.6 </tStart> <!-- Start time of jet quenching, proper time, fm/c   -->
     <mutex>ON</mutex>
     <AddLiquefier> false </AddLiquefier>
+    <lambdaQCD>0.2</lambdaQCD> <!-- 0.2 JETSCAPE standard value, 0.4 is the value chosen in JETSET -->
 
     <Matter>
       <name>Matter</name>
       <matter_on> 1 </matter_on>
       <Q0> 2.0 </Q0>
+      <QS> 0.9 </QS>
       <T0> 0.16 </T0>
       <!--if initial_virtuality_pT == 1: pT of hard parton is used to compute initial virtuality in shower, initial_virtuality_pT == 0: use parton 3-momentum-->
       <initial_virtuality_pT> 1 </initial_virtuality_pT>
@@ -227,16 +302,41 @@
 
     <!-- starting long. proper time for Preequilibrium dynamics -->
     <tau0>0.0</tau0>
-    <!-- starting long. proper time for Preequilibrium dynamics outuput for hard probes -->
+    <!-- starting long. proper time for Preequilibrium dynamics output for hard probes -->
     <tauj>0.1</tauj>
     <!-- switching long. proper time from Preequilibrium dynamics to Hydrodynamics (Landau Matching) -->
-    <taus>0.2</taus>
+    <taus>0.5</taus>
+    <evolutionInMemory>1</evolutionInMemory>
 
     <!-- Individual Preequilibrium Dynamics models  -->
     <FreestreamMilne>
       <name>FreestreamMilne</name>
       <freestream_input_file>freestream_input</freestream_input_file>
+      <!-- number of timesteps for the evolution, this defines the dtau = (taus - tauj)  / ntau -->
+      <!-- in the case of <evolutionInMemory>1</evolutionInMemory> this will also set the time step for the hydro, make sure that it is small enough -->
+      <ntau>50</ntau>
+
+      <!--Energy dependent free streaming time (Phys.Rev.C 103 (2021) 5, 054904, see Eq. 19)-->
+      <!--This overrides the constant free streaming time defined by taus-->
+      <!--E_DEP_FS = 0: constant free streaming time according to taus, E_DEP_FS = 1: energy dependent free streaming time-->
+      <E_DEP_FS>0</E_DEP_FS>
+      <!--E_R: energy scale in GeV/fm^2 for the energy dependent free streaming time-->
+      <E_R>4.0</E_R>
+      <!--TAU_R: free streaming time tau_R in fm for the energy dependent free streaming time-->
+      <TAU_R>1.46</TAU_R>
+      <!--ALPHA: power of the energy dependence for the energy dependent free streaming time-->
+      <ALPHA>0.031</ALPHA>
     </FreestreamMilne>
+
+    <!-- Glasma pre-equilibrium stage for the IP-Glasma initial condition -->
+    <!-- These parameters should match the ones in 'ipglasma.input' -->
+    <!-- Other pre-equilibrium parameters are ignored in the Glasma case -->
+    <Glasma>
+      <tau0>0.001</tau0>
+      <taus>0.4</taus>
+      <dtau>0.005</dtau>
+      <input_filename_glasma>./epsilon-u-Hydro-t0.4-0.dat</input_filename_glasma>
+    </Glasma>
 
     <NullPreDynamics> </NullPreDynamics>
 
@@ -264,6 +364,7 @@
   </Liquefier>
 
   <!-- Hydro  Module  -->
+  <!-- In the user XML file the Hydro section should be placed before Eloss -->
   <Hydro>
 
     <AddLiquefier> false </AddLiquefier>
@@ -296,6 +397,9 @@
       <!-- (only works for VISHNew evo files) -->
       <load_viscous_info>0</load_viscous_info>
 
+       <!-- PreEquilibrium evolution filename (plain binary format) -->
+      <PreEq_file>../examples/test_hydro_files/evolution_all_xyeta_fs.dat</PreEq_file>
+
       <!-- MUSIC hydro evolution filename (plain binary format) -->
       <!-- the associated input file specifies the grid information -->
       <MUSIC_input_file>../examples/test_hydro_files/MUSIC_input</MUSIC_input_file>
@@ -312,24 +416,52 @@
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
-      <InitialProfile>13</InitialProfile>
+      <!--InitialProfile = 42 for Trento + Pre-equilibrium, 13 for the 3D Glauber initial condition-->
+      <InitialProfile>42</InitialProfile>
+      <!--beastMode = 0: double precision, constant time step-->
+      <!--beastMode = 1: float precision, constant time step-->
+      <!--beastMode = 2: float precision, increased time step after 4 fm/ (can be used for soft sector only runs, otherwise the change in stepsize will lead to errors)-->
       <beastMode>0</beastMode>
+      <!--starting time of the hydrodynamic evolution after the pre-equilibrium phase-->
       <Initial_time_tau_0>0.5</Initial_time_tau_0>
+      <!--evolution output/storage parameters-->
       <output_evolution_to_file>0</output_evolution_to_file>
-      <store_hydro_info_in_memory>0</store_hydro_info_in_memory>
+      <output_evolution_to_memory>1</output_evolution_to_memory>
+      <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
+      <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
+      <surface_in_memory>1</surface_in_memory>
+      <!--shear viscosity settings-->
       <shear_viscosity_eta_over_s>0.08</shear_viscosity_eta_over_s>
       <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
-      <shear_viscosity_3_at_kink>0.16</shear_viscosity_3_at_kink>
+      <!-- Parameters for parametrization 2-->
+      <shear_viscosity_2_curv>-0.48</shear_viscosity_2_curv>
+      <shear_viscosity_2_slope>1.11</shear_viscosity_2_slope>
+      <shear_viscosity_2_min>0.081</shear_viscosity_2_min>
+      <!-- Parameters for parametrization 3, the names for these parameters are different compared to JETSCAPE-->
+      <shear_viscosity_3_T_kink_in_GeV>0.16</shear_viscosity_3_T_kink_in_GeV>
+      <shear_viscosity_3_at_kink>0.08</shear_viscosity_3_at_kink>
       <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
       <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
+      <!--bulk viscosity settings-->
       <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
+      <!-- Parameters for parametrization 2-->
+      <bulk_viscosity_2_normalisation>0.052</bulk_viscosity_2_normalisation>
+      <bulk_viscosity_2_width_in_GeV>0.022</bulk_viscosity_2_width_in_GeV>
+      <bulk_viscosity_2_peak_in_GeV>0.183</bulk_viscosity_2_peak_in_GeV>
+      <!-- Parameters for parametrization 3, the names for these parameters are different compared to JETSCAPE-->
       <bulk_viscosity_3_max>0.06</bulk_viscosity_3_max>
-      <zeta_over_s_T_peak_in_GeV>0.17</zeta_over_s_T_peak_in_GeV>
-      <zeta_over_s_width_in_GeV>0.02</zeta_over_s_width_in_GeV>
-      <zeta_over_s_lambda_asymm>0.1</zeta_over_s_lambda_asymm>
+      <bulk_viscosity_3_T_peak_in_GeV>0.17</bulk_viscosity_3_T_peak_in_GeV>
+      <bulk_viscosity_3_width_in_GeV>0.02</bulk_viscosity_3_width_in_GeV>
+      <bulk_viscosity_3_lambda_asymm>0.1</bulk_viscosity_3_lambda_asymm>
+      <!--higher order transport coefficients-->
       <Include_second_order_terms>1</Include_second_order_terms>
-      <freezeout_temperature>0.3</freezeout_temperature>
-      <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
+      <!--freeze-out parameters-->
+      <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
+      <freezeout_temperature>0.15</freezeout_temperature>
+      <eps_switch>0.3</eps_switch>
+      <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
+      <!--source term parameters for InitialProfile 13-->
       <string_source_sigma_x>0.5</string_source_sigma_x>
       <string_source_sigma_eta>0.5</string_source_sigma_eta>
       <stringPreEqFlowFactor>0.13</stringPreEqFlowFactor>
@@ -356,7 +488,7 @@
       <scale_factor> 57 </scale_factor>
       <dtau> 0.02 </dtau>
       <result_directory>./</result_directory>
-      <Perform_CooperFrye_Feezeout>0</Perform_CooperFrye_Feezeout>
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
     </CLVisc>
 
   </Hydro>
@@ -423,13 +555,13 @@
       <!-- file path for the default particle table files  -->
       <iSS_particle_table_path>../external_packages/iSS/iSS_tables</iSS_particle_table_path>
       <!-- hadron species list  0: PDG 2005; 1: UrQMD; 2: SMASH -->
-      <afterburner_type>1</afterburner_type>
+      <afterburner_type>2</afterburner_type>
 
       <include_deltaf_shear>1</include_deltaf_shear>
       <include_deltaf_bulk>1</include_deltaf_bulk>
       <deltaf_type>20</deltaf_type>
       <number_of_repeated_sampling>1</number_of_repeated_sampling>
-      <Perform_resonance_decays>1</Perform_resonance_decays>
+      <Perform_resonance_decays>0</Perform_resonance_decays>
     </iSS>
   </SoftParticlization>
 
@@ -453,4 +585,3 @@
     </SMASH>
   </Afterburner>
 </jetscape>
-

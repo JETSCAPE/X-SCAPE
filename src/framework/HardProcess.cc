@@ -64,6 +64,7 @@ void HardProcess::Init() {
         printer = GetXMLElementText({"PartonPrinter","FileName"});
         JSINFO << BOLDYELLOW << "Extra parton info goes to " << printer ;
     }
+
   InitTask();
   InitTasks();
 }
@@ -122,6 +123,12 @@ void HardProcess::CollectHeader(weak_ptr<JetScapeWriter> w) {
     header.SetSigmaErr(GetSigmaErr());
     header.SetPtHat(GetPtHat());
     header.SetEventWeight(GetEventWeight());
+
+    if (hp_list.size() > 0) {
+      header.SetVertexX(hp_list[0]->x_in().x());
+      header.SetVertexY(hp_list[0]->x_in().y());
+      header.SetVertexZ(hp_list[0]->x_in().z());
+    }
   }
 }
 
