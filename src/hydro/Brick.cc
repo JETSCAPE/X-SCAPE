@@ -77,7 +77,7 @@ void Brick::InitTask() {
   vx = GetXMLElementDouble({"Hydro", "Brick", "v_x"});
   vy = GetXMLElementDouble({"Hydro", "Brick", "v_y"});
   vz = GetXMLElementDouble({"Hydro", "Brick", "v_z"});
-  if(vx*vx + vy*vy + vz*vz){
+  if(vx*vx + vy*vy + vz*vz >= 1.0){
     JSWARN << "Brick velocity set higher than c";
     exit(-1);
   }else{
