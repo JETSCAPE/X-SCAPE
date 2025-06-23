@@ -373,6 +373,9 @@
     <Brick bjorken_expansion_on="false" start_time="0.6">
       <name>Brick</name>
       <T>0.2</T>
+      <v_x>0.0</v_x>
+      <v_y>0.0</v_y>
+      <v_z>0.0</v_z>
     </Brick>
 
     <!-- Test Gubser  -->
