@@ -58,7 +58,7 @@ void MCGlauberWrapper::InitTask() {
     } else {
         generateOnlyPositions_ = false;
     }
-    
+
     para_temp_string = (
         GetXMLElementText({"IS", "MCGlauber", "projectile"}));
     mc_gen_->set_parameter("Projectile", para_temp_string);
@@ -143,23 +143,23 @@ void MCGlauberWrapper::InitTask() {
         GetXMLElementInt({"IS", "MCGlauber", "rapidity_loss_method"}));
     if (para_temp_int == 4) {
         mc_gen_->set_parameter("rapidity_loss_method", para_temp_int);
-        
+
         para_temp_double = (
             GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At2"}));
         mc_gen_->set_parameter("ylossParam4At2", para_temp_double);
-        
+
         para_temp_double = (
             GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At4"}));
         mc_gen_->set_parameter("ylossParam4At4", para_temp_double);
-        
+
         para_temp_double = (
             GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At6"}));
         mc_gen_->set_parameter("ylossParam4At6", para_temp_double);
-        
+
         para_temp_double = (
             GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4At10"}));
         mc_gen_->set_parameter("ylossParam4At10", para_temp_double);
-        
+
         para_temp_double = (
             GetXMLElementDouble({"IS", "MCGlauber", "ylossParam4var"}));
         mc_gen_->set_parameter("ylossParam4var", para_temp_double);
@@ -177,7 +177,7 @@ void MCGlauberWrapper::InitTask() {
         "fluctuation_remnant_energy_loss_fraction"}));
     mc_gen_->set_parameter("fluctuation_remnant_energy_loss_fraction", 
                            para_temp_int);
-    
+
     para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", 
         "remnant_energy_loss_fraction_var"}));
     mc_gen_->set_parameter("remnant_energy_loss_fraction_var", 
@@ -194,6 +194,9 @@ void MCGlauberWrapper::InitTask() {
     para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", 
         "tau_form_fluct_gamma_beta"}));
     mc_gen_->set_parameter("tau_form_fluct_gamma_beta", para_temp_double);
+
+    mc_gen_->print_parameter_list();
+    mc_gen_->initializeGlauberModel();
 }
 
 
