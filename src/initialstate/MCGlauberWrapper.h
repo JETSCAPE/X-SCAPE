@@ -103,6 +103,7 @@ private:
   std::shared_ptr<MCGlb::RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
+  bool generateOnlyPositions_ = false;
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberWrapper> reg;
