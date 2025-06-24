@@ -26,7 +26,11 @@
 
   <!-- Inital State Module  -->
   <IS>
-    <Trento> </Trento>
+    <MCGlauber>
+      <!--0: generates full event with binary collisions and strings-->
+      <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
+      <generateOnlyPositions>1</generateOnlyPositions>
+    </MCGlauber>
   </IS>
 
   <!-- Hard Process -->
