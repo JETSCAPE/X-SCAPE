@@ -216,6 +216,7 @@ void MCGlauberWrapper::ExecuteTask() {
                      << "...";
 
     if (generateOnlyPositions_) {
+        //Run 3DGlauber for positions only (ISR Configuration)
         try {
             int iparticle=0;
             mc_gen_->generate_pre_events(); // generate one 3DGlauber event
@@ -239,6 +240,7 @@ void MCGlauberWrapper::ExecuteTask() {
             std::exit(-1);
         }
     } else {
+        //Run 3DMCGlauber to generate initial hard positions and strings
         try {
             int iparticle=0;
             mc_gen_->generate_pre_events(); // TODO: change this function to generate_full_events
