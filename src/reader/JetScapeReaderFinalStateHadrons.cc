@@ -44,7 +44,7 @@ void JetScapeReaderFinalStateHadrons::AddHadron(string s) {
   }
 
   double p[4] = {stod(vS[3]), stod(vS[4]), stod(vS[5]), stod(vS[6])};
-  double mass = sqrt(p[3]*p[3] - p[4]*p[4] - p[5]*p[5] - p[6]*p[6]);
+  double mass = sqrt(p[0]*p[0] - p[1]*p[1] - p[2]*p[2] - p[3]*p[3]);
 
   hadrons.push_back(make_shared<Hadron>(0, stoi(vS[1]), stoi(vS[2]), p, x, mass));
 }
