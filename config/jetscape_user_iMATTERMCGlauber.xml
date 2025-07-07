@@ -15,7 +15,6 @@
 
   <Random>
     <seed>1</seed>
-    <seed>13</seed>
   </Random>
   
   <outputFilename>test_out</outputFilename>

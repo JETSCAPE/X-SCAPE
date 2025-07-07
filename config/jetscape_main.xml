@@ -129,7 +129,7 @@
       <N_sea_partons>1</N_sea_partons> <!--Number of allowed soft partons-->
       <d_min>0.9</d_min> <!--Minimum distance between two nucleons in fm-->
       <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
-      <BG>16</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
+      <BG>5.0</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
       <Subtract_hard_momentum>1</Subtract_hard_momentum>
       <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
       <baryonInStringProb>0.2</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
@@ -137,11 +137,11 @@
       <QCD_string_production_mode>1</QCD_string_production_mode> <!--1: strings are produced randomly in the binary collision list, 2: strings are produced at the last binary collision-->
       <!--Rapidity loss parameters (only mode 4 supported in XML, other modes have to be set in mcglauber.input)-->
       <rapidity_loss_method>4</rapidity_loss_method>
-      <ylossParam4At2>1.666</ylossParam4At2>
-      <ylossParam4At4>2.10</ylossParam4At4>
-      <ylossParam4At6>21.20</ylossParam4At6>
-      <ylossParam4At10>2.30</ylossParam4At10>
-      <ylossParam4var>0.555</ylossParam4var>
+      <ylossParam4At2>1.60</ylossParam4At2>
+      <ylossParam4At4>2.15</ylossParam4At4>
+      <ylossParam4At6>2.45</ylossParam4At6>
+      <ylossParam4At10>2.95</ylossParam4At10>
+      <ylossParam4var>0.5</ylossParam4var>
       <remnant_energy_loss_fraction>0.5</remnant_energy_loss_fraction> <!--Nucleon remnant's energy loss fraction (fraction of string's y_loss) [0, 1]-->
       <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
       <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
