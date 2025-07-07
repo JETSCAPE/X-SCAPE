@@ -211,18 +211,21 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     {"Hydro", "MUSIC", "use_eps_for_freeze_out"});
   music_hydro_ptr->set_parameter("use_eps_for_freeze_out", 
     use_eps_for_freeze_out);
-  freezeout_temperature =
+  if (use_eps_for_freeze_out == 0) {
+    freezeout_temperature =
       GetXMLElementDouble({"Hydro", "MUSIC", "freezeout_temperature"});
-  if (freezeout_temperature > 0.05) {
-    music_hydro_ptr->set_parameter("T_freeze", freezeout_temperature);
+    if (freezeout_temperature > 0.05) {
+      music_hydro_ptr->set_parameter("T_freeze", freezeout_temperature);
+    } else {
+      JSWARN << "The input freeze-out temperature is too low! T_frez = "
+             << freezeout_temperature << " GeV!";
+      exit(1);
+    }
   } else {
-    JSWARN << "The input freeze-out temperature is too low! T_frez = "
-           << freezeout_temperature << " GeV!";
-    exit(1);
+    double eps_switch =
+        GetXMLElementDouble({"Hydro", "MUSIC", "eps_switch"});
+    music_hydro_ptr->set_parameter("eps_switch", eps_switch);
   }
-  double eps_switch =
-      GetXMLElementDouble({"Hydro", "MUSIC", "eps_switch"});
-  music_hydro_ptr->set_parameter("eps_switch", eps_switch);
   
   music_hydro_ptr->check_parameters();
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
