@@ -618,7 +618,8 @@ void HadronicEMT::GetBulkInfo(Jetscape::real t, Jetscape::real x,
  *   or hadron populations.
  */
 std::vector<bool> HadronicEMT::DetermineHadronsForFluidization(double T_critical,
-                                       std::vector<Hadron> &current_hadrons) {
+          std::vector<Hadron> &current_hadrons,
+          std::shared_ptr<FluidDynamics> fluid_dynamics_ptr) {
   // vector of bools to determine which hadrons to fluidize
   std::vector<bool> fluidize_hadrons(current_hadrons.size(), false);
 
@@ -626,6 +627,11 @@ std::vector<bool> HadronicEMT::DetermineHadronsForFluidization(double T_critical
   double skip_distance_longitudinal_ = 5.0 * sigma_longitudinal_;
   if (smearing_covariant_ == 1) {
     skip_distance_longitudinal_ = skip_distance_transverse_;
+  }
+
+  std::unique_ptr<FluidCellInfo> fluid_cell_info_ptr;
+  if (fluid_dynamics_ptr) {
+    fluid_cell_info_ptr = std::make_unique<FluidCellInfo>();
   }
 
   // loop over the whole 3D grid
@@ -636,38 +642,41 @@ std::vector<bool> HadronicEMT::DetermineHadronsForFluidization(double T_critical
       for (int iz = 0; iz < Nz_; iz++) {
         const double z = -zMax_ + iz * dz_;
 
-        // get the bulk media info for the current space-time point
-        std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
-        GetBulkInfo(0.0, x, y, z, bulk_info_ptr, current_hadrons);
+        bool above_Tc = false;
 
-        // check if the temperature is above the critical value
-        if (bulk_info_ptr->temperature > T_critical) {
-          // loop over particle positions and determine the ones to fluidize
-          int hadron_index = 0;
-          for (auto &ihad: current_hadrons) {
-            const FourVector r = ihad.x_in();
-            const double x_had = r.x();
-            const double y_had = r.y();
-            const double z_had = r.z();
+        if (fluid_dynamics_ptr) {
+// TODO: This needs the hydro medium info at the current time step
+          fluid_dynamics_ptr->GetHydroInfo(0.0, x, y, z, fluid_cell_info_ptr);
+          above_Tc = (fluid_cell_info_ptr->temperature > T_critical);
+        } else {
+          std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
+          // get the bulk media info for the current space-time point
+          // t = 0 is a dummy, because it is the current hadron list
+          GetBulkInfo(0.0, x, y, z, bulk_info_ptr, current_hadrons);
+          above_Tc = (bulk_info_ptr->temperature > T_critical);
+        }
 
-            const double x_diff = x_had - x;
-            if (std::abs(x_diff) > skip_distance_transverse_) {
-              hadron_index++;
-              continue;
-            }
-            const double y_diff = y_had - y;
-            if (std::abs(y_diff) > skip_distance_transverse_) {
-              hadron_index++;
-              continue;
-            }
-            const double z_diff = z_had - z;
-            if (std::abs(z_diff) > skip_distance_longitudinal_) {
-              hadron_index++;
-              continue;
-            }
-            // set the entry at the corresponding index to true
+        if (!above_Tc) continue;
+
+        int hadron_index = 0;
+        // loop over particle positions and determine the ones to fluidize
+        for (auto &ihad : current_hadrons) {
+          const FourVector r = ihad.x_in();
+          const double x_had = r.x();
+          const double y_had = r.y();
+          const double z_had = r.z();
+
+          const double x_diff = x_had - x;
+          const double y_diff = y_had - y;
+          const double z_diff = z_had - z;
+
+          if (std::abs(x_diff) <= skip_distance_transverse_ &&
+              std::abs(y_diff) <= skip_distance_transverse_ &&
+              std::abs(z_diff) <= skip_distance_longitudinal_) {
             fluidize_hadrons[hadron_index] = true;
           }
+
+          hadron_index++;
         }
       }
     }

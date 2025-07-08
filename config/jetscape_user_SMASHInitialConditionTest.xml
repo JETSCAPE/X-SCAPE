@@ -34,6 +34,9 @@
   <BDM>
     <Tc>0.155</Tc>
     <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
+    <!--Optional pT and momentum rapidity cuts for particles considered to go into the hydro evolution (set to 0 for no cut)-->
+    <pT_cut>0.0</pT_cut>
+    <rapidity_cut>0.0</rapidity_cut>
     <CreateHadronicTimeEvolutionOutput> true </CreateHadronicTimeEvolutionOutput>
   </BDM>
 
@@ -96,7 +99,7 @@
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
       <InitialProfile>43</InitialProfile>
-      <beastMode>2</beastMode>
+      <beastMode>1</beastMode>
       <Initial_time_tau_0>0.5</Initial_time_tau_0>
       <output_evolution_to_file>0</output_evolution_to_file><!--2 for movie output-->
       <store_hydro_info_in_memory>0</store_hydro_info_in_memory>

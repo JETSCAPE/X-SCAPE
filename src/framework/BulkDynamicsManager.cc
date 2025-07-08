@@ -99,6 +99,7 @@ void BulkDynamicsManager::InitTask() {
     exit(-1);
   }
 
+  bool hydro_module_attached = false;
   for (auto task : GetTaskList()) {
     // Check if the task is an instance of FluidDynamics, then set liquefier_ptr
     if (auto fluidDynamics = std::dynamic_pointer_cast<FluidDynamics>(task)) {
@@ -107,6 +108,7 @@ void BulkDynamicsManager::InitTask() {
 
       JetScapeSignalManager::Instance()->SetHydroPointer(
           dynamic_pointer_cast<FluidDynamics>(fluidDynamics));
+      hydro_module_attached = true;
     }
     if (auto particlization = std::dynamic_pointer_cast<SoftParticlization>(task)) {
       JSWARN << "Connect signals for SoftParticlization";
@@ -128,6 +130,11 @@ void BulkDynamicsManager::InitTask() {
   for(auto it : GetTaskList()) {
         auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
         JSWARN << "Module in task list: " << module->GetId();
+  }
+
+  // Create the hadronic_emt_ object
+  if (hydro_module_attached) {
+    HadronicEMT hadronic_emt_;
   }
 }
 
@@ -487,7 +494,9 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
   }
 }
 
-void BulkDynamicsManager::InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){
+void BulkDynamicsManager::InfoWrapper(
+  std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,
+  std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){
   fluid_cell_info_ptr = make_unique<FluidCellInfo>();
   fluid_cell_info_ptr->temperature = bulk_info_ptr->temperature;
   fluid_cell_info_ptr->pressure = bulk_info_ptr->pressure;

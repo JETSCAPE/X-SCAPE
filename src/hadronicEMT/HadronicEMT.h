@@ -19,6 +19,7 @@
 #include "sigslot.h"
 #include "BulkMediaInfo.h"
 #include "JetScapeParticles.h"
+#include "FluidDynamics.h"
 #include <memory>
 #include <array>
 #include <gsl/gsl_eigen.h>
@@ -79,7 +80,8 @@ public:
 
   /// Determine particles in list to fluidize
   std::vector<bool> DetermineHadronsForFluidization(double T_critical,
-                                      std::vector<Hadron> &current_hadrons);
+                  std::vector<Hadron> &current_hadrons,
+                  std::shared_ptr<FluidDynamics> fluid_dynamics_ptr = nullptr);
 
   void ComputeEnergyDensityAndFlowVelocity(
     const std::array<std::array<double, 4>, 4> &Tmn, double &e,

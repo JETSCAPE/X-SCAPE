@@ -24,6 +24,7 @@
 #include "BulkMediaInfo.h"
 #include "LiquefierBase.h"
 #include "HadronicLiquefier.h"
+#include "HadronicEMT.h"
 #include "sigslot.h"
 
 #include <vector>
@@ -226,6 +227,11 @@ private:
   bool afterburner_in_progress_;
 
   double deltaT_main_clock_;
+
+  /**
+   * HadronicEMT object to obtain bulk quantities of hadronic media.
+   */
+  HadronicEMT hadronic_emt_;
 
   /**
    * Kinematic cuts for the hadrons to be added to the hydrodynamic evolution.

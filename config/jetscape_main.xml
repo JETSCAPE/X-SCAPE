@@ -113,7 +113,8 @@
       <TargetNeutrons>118</TargetNeutrons>
 
       <!-- time in fm/c in the computational frame, when the simulation should be ended -->
-      <End_Time>300.0</End_Time>
+      <!-- This time should coincide with the time used in the afterburner module-->
+      <end_time>1000.0</end_time>
       <Sqrtsnn>200.0</Sqrtsnn>
       <FermiMotion>frozen</FermiMotion>
       <CollisionsWithinNucleus>1</CollisionsWithinNucleus>
