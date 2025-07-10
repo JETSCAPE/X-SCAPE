@@ -121,10 +121,12 @@ void SMASHNucleusWrapper::ExecuteTask() {
   VERBOSE(2) << "SMASH Nucleus generation running: " << GetId() << "...";
   smash_nucleus_hadrons_->reset();
   smash_nucleus_->initial_conditions(smash_nucleus_hadrons_);
+  // Store the hadrons in the hadrons_ vector
+  // This is done to have a copy of the hadrons in the SMASHNucleusWrapper
+  StoreHadronsInWrapper();
 }
 
-std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronList() const {
-  std::vector<Hadron> h_list;
+void SMASHNucleusWrapper::StoreHadronsInWrapper() {
   for (auto it = smash_nucleus_hadrons_->begin();
        it != smash_nucleus_hadrons_->end(); ++it) {
     const auto &particle = *it;
@@ -151,11 +153,14 @@ std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronList() const {
     if (history.collisions_per_particle > 0) {
       participant = true;
     }
-    h_list.push_back(Hadron(hadron_label, hadron_id, hadron_status, hadron_p,
+    hadrons_.push_back(Hadron(hadron_label, hadron_id, hadron_status, hadron_p,
                             hadron_r, hadron_mass, charge, baryon_number,
                             strangeness, participant));
   }
-  return h_list;
+}
+
+std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronList() const {
+  return hadrons_;
 }
 
 bool SMASHNucleusWrapper::IsHadronAtPosition(double t, double x,
@@ -164,6 +169,9 @@ bool SMASHNucleusWrapper::IsHadronAtPosition(double t, double x,
   // This function only checks if there is at least one hadron spatially
   // within nucleon_radius_black_disk_ of the given (x, y, z).
   for (const auto &hadron : GetCurrentHadronList()) {
+    if (std::abs(hadron.x_in().t() - t) > rounding_error) {
+      continue;
+    }
     double dx = hadron.x_in().x() - x;
     double dy = hadron.x_in().y() - y;
     double dz = hadron.x_in().z() - z;
@@ -208,10 +216,8 @@ std::tuple<double, double, double, double> SMASHNucleusWrapper::BoostCoordinates
                           boosted_coordinates[2], boosted_coordinates[3]);
 }
 
-std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronListBoosted(double vx, double vy, double vz) const {
-  std::vector<Hadron> h_list = GetCurrentHadronList();
-
-  for (auto &hadron : h_list) {
+std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronListBoosted(double vx, double vy, double vz) {
+  for (auto &hadron : hadrons_) {
     // Boost the hadron's position and momentum
     const FourVector r = hadron.x_in();
     const FourVector p = hadron.p_in();
@@ -236,7 +242,7 @@ std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronListBoosted(double vx, 
     double new_x[4] = {t_prime, x_prime, y_prime, z_prime};
     hadron.set_x(new_x);
   }
-  return h_list;
+  return hadrons_;
 }
 
 

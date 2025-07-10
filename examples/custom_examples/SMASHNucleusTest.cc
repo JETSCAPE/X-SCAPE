@@ -86,6 +86,17 @@ int main(int argc, char **argv) {
   }
   outfile.close();
 
+  // Check that all nucleons are in a range of x, y, z from -15 to 15
+  for (const auto &hadron : h_list) {
+    if (std::abs(hadron.x_in().x()) > 15.0 || 
+        std::abs(hadron.x_in().y()) > 15.0 ||
+        std::abs(hadron.x_in().z()) > 15.0) {
+      JSWARN << "Hadron at position (" << hadron.x_in().x() << ", "
+             << hadron.x_in().y() << ", " << hadron.x_in().z() << ") is out of range!";
+      exit(1);
+    }
+  }
+
   std::vector<Hadron> h_list2 = smash_nucleus->GetCurrentHadronList();
   // Check that the number of hadrons is still 208
   if (h_list2.size() != 208) {
