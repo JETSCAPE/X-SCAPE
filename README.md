@@ -1,4 +1,4 @@
-# X-SCAPE 1.1.1
+# X-SCAPE 1.1.5
 
 The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (X-SCAPE) is the enhanced (and 2nd) project of the JETSCAPE
 collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions.
@@ -75,17 +75,41 @@ An example reading an ascii output file is provided:
 ./build/readerTest
 ```
 
-which reads in the generated showers does some DFS search and shows the output. You can generate an output graph format which can be easily visualized using graphViz or other tools like Gephi (GUI for free for Mac) or more advanced, graph-tools (Python) and many more. Furthermore, as a "closure" test, the FastJet core package (compiled in our JetScape library) is used to perform a simple jetfinding (on the "final" partons, in graph language, incoming partons in a vertex with no outgoing partons/childs), and since the "shower" is perfectly collinear the jet pT is identical to the hard process parton pT (modulo some random new partons/roots in the final state, see above).  
+which reads in the generated showers does some DFS search and shows the output. You can generate an output graph format which can be easily visualized using graphViz or other tools like Gephi (GUI for free for Mac) or more advanced, graph-tools (Python) and many more. Furthermore, as a "closure" test, the FastJet core package (compiled in our JetScape library) is used to perform a simple jetfinding (on the "final" partons, in graph language, incoming partons in a vertex with no outgoing partons/childs), and since the "shower" is perfectly collinear the jet pT is identical to the hard process parton pT (modulo some random new partons/roots in the final state, see above).
 
 ## JETSCAPE Tunes
 
-Currently, there exists a pp tune [PP19](https://arxiv.org/abs/1910.05481), which can be run by:
+There are several JETSCAPE tunes from publications available.
+The XML files to reproduce the results are available in the `config/publications_config` directory.
+Please see [JETSCAPE Tunes](config/publications_config/README.md) for more information.
+
+Several example hydro profiles can be downloaded using `examples/get_hydroSample*`.
+
+## Running JETSCAPE/X-SCAPE with LHAPDF
+
+[LHAPDF](https://www.lhapdf.org/) is now included in the JETSCAPE/X-SCAPE Docker image. Instructions to run JETSCAPE/X-SCAPE in Docker are [here](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Installation.Docker.Linux). While inside the container, use [external_packages/get_lhapdf.sh](external_packages/get_lhapdf.sh) to download the desired set. For example, to download the JAM20-SIDIS_PDF_proton_nlo set, run:
+
 ```bash
-./runJetscape ../config/jetscape_user_PP19.xml
+cd ${JETSCAPE_DIR}/external_packages
+./get_lhapdf.sh JAM20-SIDIS_PDF_proton_nlo
 ```
 
-Tuning of Pb-Pb is ongoing.
-Several example hydro profiles can be downloaded using `examples/get_hydroSample*`.
+The above script sets an environment variable `LHAPATH='/home/jetscape-user/.local/share/LHAPDF'`. Adjust as needed.
+
+Add the set to PythiaGun in your user XML file:
+
+```xml
+<LinesToRead>
+  PDF:useHard = on
+  PDF:pHardSet LHAPDF6:JAM20-SIDIS_PDF_proton_nlo
+</LinesToRead>
+```
+Or run the example [config/jetscape_user_nPDF_test.xml](config/jetscape_user_nPDF_test.xml) user XML file.
+
+```bash
+cd ${JETSCAPE_DIR}/build
+./runJetscape ../config/jetscape_user_nPDF_test.xml
+```
 
 ## X-SCAPE modules (New)
 ### 3DGlauber support
@@ -113,6 +137,9 @@ To use the ISR shower of iMatter, please make sure that the environment variable
 
 After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` (in the build directory) to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`. For running 3DGlauber with Hydro (Music) please see [3DGlauber](https://github.com/JETSCAPE/X-SCAPE/wiki/3DGlauber,-MUSIC,-iSS-and-Initial-State-Radiation).
 
+### Electron-Proton Gun
+
+X-SCAPE includes an electron-proton gun capable of recreating both Deep-Inelastic Scattering (DIS) and photoproduction events. It should be run in photoproduction mode for when the virtuality of the exchanged photon (normally called Q^2) is under 1 GeV^2, and in DIS mode when it is larger. The photoproduction mode works well for all HERA energies and DIS can be run down to HERMES energies. It should not be run under this.
 
 ## JETSCAPE modules
 
@@ -248,7 +275,6 @@ More material on the physics behind JETSCAPE and how to use it can be found in t
 ## Troubleshooting
 
 If you encounter a problem, please report the issue [here](https://github.com/JETSCAPE/JETSCAPE/issues).
-Please be sure to include enough information so that we can reproduce your issue: your platform, JETSCAPE version, configuration file, and anything else that may be relevant.
 
 # Contributing
 

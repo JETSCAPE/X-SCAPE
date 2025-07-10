@@ -1,0 +1,167 @@
+name: test build macOS native
+
+on:
+  pull_request:
+    branches:
+      - main
+      - XSCAPE-1.2-RC
+
+  push:
+    branches:
+      - main
+      - XSCAPE-1.2-RC
+
+env:
+  REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  build:
+    name: install packages and build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-14, macos-15]
+
+    steps:
+
+    - name: brew install dependencies
+      run: |
+        export NONINTERACTIVE=1
+        brew update
+        brew cleanup
+        brew install --formula doxygen
+        brew install --formula root
+        brew install --formula graph-tool
+        brew install --formula hdf5
+        brew install --formula open-mpi
+        brew install --formula gsl
+        brew install --formula boost
+        brew install --formula zlib
+        brew install --formula gcc
+        . /opt/homebrew/bin/thisroot.sh
+
+    - name: set environment variables
+      run: |
+        export ROOTSYS="/usr/local/root"
+        export PATH="$ROOTSYS/bin:\$PATH"
+        export LD_LIBRARY_PATH="$ROOTSYS/lib:$LD_LIBRARY_PATH"
+        export PYTHONPATH="$ROOTSYS/lib"
+
+    - name: Download CMake 3.31.6
+      run: |
+        curl -L -o cmake.dmg https://github.com/Kitware/CMake/releases/download/v3.31.6/cmake-3.31.6-macos-universal.dmg
+
+    - name: Mount CMake disk image
+      run: |
+        hdiutil attach cmake.dmg -mountpoint /Volumes/CMake
+
+    - name: Copy CMake.app to home directory
+      run: |
+        mkdir -p $HOME/cmake
+        cp -R /Volumes/CMake/CMake.app $HOME/cmake/
+
+    - name: Unmount CMake disk image
+      run: |
+        hdiutil detach /Volumes/CMake
+
+    - name: Add CMake to PATH
+      run: echo "$HOME/cmake/CMake.app/Contents/bin" >> $GITHUB_PATH
+
+    - name: Verify CMake version
+      run: cmake --version
+
+
+    - name: Download HepMC 3.2.6
+      run: |
+        curl -L -O http://hepmc.web.cern.ch/hepmc/releases/HepMC3-3.2.6.tar.gz
+        ls -l
+
+    - name: Build and Install HepMC 3.2.6
+      run: |
+        tar -xzf HepMC3-3.2.6.tar.gz
+        ls -l
+        cp -r HepMC3-3.2.6 hepmc3-source
+        mkdir hepmc3-build
+        cd hepmc3-build
+        cmake -DCMAKE_INSTALL_PREFIX=../hepmc3-install   \
+          -DHEPMC3_ENABLE_ROOTIO:BOOL=OFF            \
+          -DHEPMC3_ENABLE_PROTOBUFIO:BOOL=OFF        \
+          -DHEPMC3_ENABLE_TEST:BOOL=OFF              \
+          -DHEPMC3_INSTALL_INTERFACES:BOOL=ON        \
+          -DHEPMC3_BUILD_STATIC_LIBS:BOOL=OFF        \
+          -DHEPMC3_BUILD_DOCS:BOOL=OFF               \
+          -DHEPMC3_ENABLE_PYTHON:BOOL=ON             \
+          -DHEPMC3_PYTHON_VERSIONS=3.12              \
+          -DHEPMC3_Python_SITEARCH312=../hepmc3-install/lib/python3.12/site-packages \
+          ../hepmc3-source
+        make
+        make install
+
+    - name: Download Pythia 8309
+      run: |
+        cd ${GITHUB_WORKSPACE}
+        curl -SLOk http://pythia.org/download/pythia83/pythia8309.tgz
+        ls -l
+
+    - name: Build and Install Pythia 8309
+      run: |
+        tar -xzf pythia8309.tgz
+        ls -l
+        cd pythia8309
+        ./configure --enable-shared --prefix=${GITHUB_WORKSPACE}/pythia8309 --with-hepmc3=${GITHUB_WORKSPACE}/hepmc3-install
+        make
+        make install
+
+    - name: set more variables
+      run: |
+        echo "JETSCAPE_DIR=${GITHUB_WORKSPACE}/${REPO_NAME}" >> $GITHUB_ENV
+        echo "PYTHIA8DIR=${GITHUB_WORKSPACE}/pythia8309" >> $GITHUB_ENV
+
+    - name: Checkout JETSCAPE Repository
+      uses: actions/checkout@v4
+      with:
+        path: ${{ github.event.repository.name }}
+
+    - name: Download MUSIC
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
+        ./get_music.sh
+
+    - name: Download ISS
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
+        ./get_iSS.sh
+
+    - name: Download FREESTREAM
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
+        ./get_freestream-milne.sh
+
+    - name: Download SMASH
+      run: |
+        echo "JETSCAPE_DIR is $JETSCAPE_DIR"
+        echo "PYTHIA8DIR is $PYTHIA8DIR"
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
+        ./get_smash.sh
+
+    - name: Download 3DGlauber
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
+        ./get_3dglauber.sh
+
+    - name: Build Application
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}
+        mkdir build
+        cd build
+        export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
+        echo "This is SMASH_DIR: "
+        echo ${SMASH_DIR}
+        ls ${SMASH_DIR}
+        cmake .. -DUSE_3DGlauber=ON -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON
+        make -j2
+
+    - name: Test Run
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/build
+        ./runJetscape ../config/publications_config/arXiv_1910.05481/jetscape_user_PP_1910.05481.xml

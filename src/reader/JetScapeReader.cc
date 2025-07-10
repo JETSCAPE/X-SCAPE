@@ -22,6 +22,9 @@ template <class T> JetScapeReader<T>::JetScapeReader():
   currentEvent{-1}
   , sigmaGen{-1}
   , sigmaErr{-1}
+  , vertexX{-999}
+  , vertexY{-999}
+  , vertexZ{-999}
   , eventWeight{-1}
   , EventPlaneAngle{0.0}
 {
@@ -39,6 +42,9 @@ template <class T> void JetScapeReader<T>::ClearTask() {
 
   sigmaGen = -1;
   sigmaErr = -1;
+  vertexX = -999;
+  vertexY = -999;
+  vertexZ = -999;
   eventWeight = -1;
   EventPlaneAngle = 0.0;
 }
@@ -127,29 +133,39 @@ template <class T> void JetScapeReader<T>::Next() {
       if (line.find("sigmaGen") != std::string::npos) {
         std::stringstream data(line);
         std::string dummy;
-        data >> dummy >> dummy >> sigmaGen;
+        data >> dummy >> dummy >> dummy >> sigmaGen;
         JSDEBUG << " sigma gen=" << sigmaGen;
       }
       // Cross section error
       if (line.find("sigmaErr") != std::string::npos) {
         std::stringstream data(line);
         std::string dummy;
-        data >> dummy >> dummy >> sigmaErr;
+        data >> dummy >> dummy >> dummy >> sigmaErr;
         JSDEBUG << " sigma err=" << sigmaErr;
       }
       // Event weight
       if (line.find("weight") != std::string::npos) {
         std::stringstream data(line);
         std::string dummy;
-        data >> dummy >> dummy >> eventWeight;
+        data >> dummy >> dummy >> dummy >> eventWeight;
         JSDEBUG << " Event weight=" << eventWeight;
       }
       // EP angle
       if (line.find(EPAngleStr) != std::string::npos) {
         std::stringstream data(line);
         std::string dummy;
-        data >> dummy >> dummy >> EventPlaneAngle;
+        data >> dummy >> dummy >> dummy >> EventPlaneAngle;
         JSDEBUG << " EventPlaneAngle=" << EventPlaneAngle;
+      }
+      // vertex position of hard scattering
+      if (line.find("HardProcess") != std::string::npos) {
+        getline(inFile, line); // get next line to get vertex position
+        std::stringstream data(line);
+        double dummy;
+        data >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> vertexX >> vertexY >> vertexZ;
+        JSDEBUG << " vertexX=" << vertexX;
+        JSDEBUG << " vertexY=" << vertexY;
+        JSDEBUG << " vertexZ=" << vertexZ;
       }
       continue;
     }

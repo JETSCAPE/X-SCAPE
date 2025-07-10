@@ -62,7 +62,7 @@ void CLVisc::InitializeHydro(Parameter parameter_list) {
   cfg.result_directory =
       GetXMLElementInt({"Hydro", "CLVisc", "result_directory"});
   doCooperFrye =
-      GetXMLElementInt({"Hydro", "CLVisc", "Perform_CooperFrye_Feezeout"});
+      GetXMLElementInt({"Hydro", "CLVisc", "Perform_CooperFrye_Freezeout"});
   cfg.tau0 = GetXMLElementDouble({"Hydro", "CLVisc", "tau0"});
   cfg.dt = GetXMLElementDouble({"Hydro", "CLVisc", "dtau"});
   cfg.ntskip = GetXMLElementDouble({"Hydro", "CLVisc", "ntau_skip"});

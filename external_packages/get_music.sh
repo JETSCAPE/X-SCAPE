@@ -13,16 +13,13 @@
 # See COPYING for details.
 ##############################################################################
 
+# using a commit from the MUSIC repository that is compatible with the current X-SCAPE version
 folderName="music"
-# commitHash="52b0454b0a07a76f26c8138245c0b3c54d00af65" # for xscape 1.1
-#commitHash="db320898c4a9bd99ed21aa9dbb7c78e2cb0729bd" # for xscape 1.1.1
+commitHash="41853111253c13704984a6c5aaa21b52792d6174"
 
-# download the code package
-rm -fr $folderName
-#git clone https://github.com/MUSIC-fluid/MUSIC.git --branch JETSCAPE $folderName
-git clone https://github.com/MUSIC-fluid/MUSIC.git --branch hendrik_XSCAPE_dynamical_sources $folderName
-#cd $folderName
-#git checkout $commitHash
+git clone https://github.com/MUSIC-fluid/MUSIC.git -b XSCAPE $folderName
+cd $folderName
+git checkout $commitHash
 
 ### ALTERNATIVE VERSION
 ### Download a zipped snapshot

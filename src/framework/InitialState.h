@@ -72,6 +72,11 @@ public:
   */
   virtual double GetTotalEntropy() { return -1; };
 
+  /** Generated event centrality
+      To be overwritten by implementations that have such information.
+  */
+  virtual double GetEventCentrality() { return -1; };
+
   // one can set range by hand if not read from xml file
   /** Sets the range of the coordinates (xmax, ymax, zmax).
       @param xmax Maximum value of the coordinate x in the nuclear density profile.
@@ -126,17 +131,17 @@ public:
   std::tuple<double, double, double> CoordFromIdx(int idx);
   virtual void SampleABinaryCollisionPoint(double &t, double &x,
                                            double &y, double &z);
-                                           
+
   virtual double Get_total_nucleon_density_lab(double t, double x,
                                                double y, double z) {
       return 0.0;
   }
-                                           
+
   virtual double Get_target_nucleon_density_lab(double t, double x,
                                                 double y, double z) {
       return 0.0;
   }
-                                                
+
   virtual double Get_projectile_nucleon_density_lab(double t, double x,
                                                     double y, double z) {
       return 0.0;
@@ -148,7 +153,6 @@ public:
   virtual void OutputHardPartonMomentum(double E, double px, double py, double pz,
                                         int direction, double P_A);
   virtual void ClearHardPartonMomentum();
-                                   
 
   virtual std::vector<double> Get_projectile_nucleon_z_lab();
   virtual std::vector<double> Get_target_nucleon_z_lab();
@@ -164,6 +168,9 @@ public:
 
   virtual void GetHardPartonPosAndMomentumProj();
   virtual void GetHardPartonPosAndMomentumTarg();
+  virtual std::vector< std::vector<double> > GetQCDStringList() {
+    return(QCDStringList_);
+}
 
   virtual void GenerateStrings();
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
@@ -232,6 +239,7 @@ protected:
       @sa Function CoordFromIdx(int idx) for the mapping.
    */
   std::vector<double> num_of_binary_collisions_;
+  std::vector< std::vector<double> > QCDStringList_;
   // the above should be private. Only Adding getters for now to not break other people's code
 
   /**  @return The initial state entropy density distribution.

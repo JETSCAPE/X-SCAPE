@@ -47,12 +47,16 @@ void PreequilibriumDynamics::Init() {
   // this is grabbing the initial entropy density ?
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   if (!ini) {
-    JSWARN << "No initialization module, try: "
+    JSWARN << "No initial state module, try: "
            << "auto trento = make_shared<TrentoInitial>(); "
            << "jetscape->Add(trento);";
+    exit(-1);
   }
 
-  InitializePreequilibrium(parameter_list_);
+  preequilibrium_tau_0_ = GetXMLElementDouble({"Preequilibrium", "tau0"});
+  preequilibrium_tau_max_ = GetXMLElementDouble({"Preequilibrium", "taus"});
+
+ InitializePreequilibrium();
 
   InitTask();
   InitTasks();

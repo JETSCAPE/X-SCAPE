@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<jetscape>
+  
+  <nEvents> 1 </nEvents>
+  
+  <outputFilename>test_out</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+  
+  <!-- Hard Process -->
+  <Hard>
+    <EPGun>
+      <Q2min>20</Q2min>
+      <electron_energy>26.7</electron_energy>
+      <proton_energy>820</proton_energy>
+      <LinesToRead>
+        Next:numberShowEvent = 1
+      </LinesToRead>
+      <breit_vir>1</breit_vir>
+    </EPGun>
+  </Hard>
+  
+  <!--Eloss Modules -->
+  <Eloss>
+    <Matter> 
+      <Q0> 1.0 </Q0>
+      <in_vac> 1 </in_vac>
+      <vir_factor> 0.25 </vir_factor>
+      <recoil_on> 0 </recoil_on>
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>
+    </Matter>
+  </Eloss>
+  
+  <!-- Jet Hadronization Module -->
+  <JetHadronization>
+    <name>hybrid</name>
+  </JetHadronization>
+  
+</jetscape>

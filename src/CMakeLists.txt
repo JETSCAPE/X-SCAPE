@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project (libJetScape)
 
 #for MacOSX
@@ -16,6 +16,19 @@ set (SOURCES  ${SOURCES}  ${frameworksources} )
 #   list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/framework/JetScapeWriterAsciiGZ.cc)
 # endif()
 
+# Include the endian test
+include(TestBigEndian)
+test_big_endian(IS_BIG_ENDIAN)
+
+# Add endian-specific definitions based on the test result
+if(IS_BIG_ENDIAN)
+    message(STATUS "Big endian architecture detected.")
+    add_definitions(-DBIG_ENDIAN_ARCHITECTURE)
+else()
+    message(STATUS "Little endian architecture detected.")
+    add_definitions(-DLITTLE_ENDIAN_ARCHITECTURE)
+endif()
+
 if(NOT "${HEPMC_FOUND}")
   list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/framework/JetScapeWriterHepMC.cc)
 endif()
@@ -24,7 +37,7 @@ endif()
 FILE(GLOB initialstatesources initialstate/*.cc)
 set (SOURCES  ${SOURCES}  ${initialstatesources} )
 ## Take care of options
-if(NOT "${USE_IPGlasma}")
+if(NOT "${USE_IPGLASMA}")
   list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/IPGlasmaWrapper.cc)
 endif()
 
@@ -126,7 +139,7 @@ if ( ${HEPMC_FOUND} )
   endif()
 endif()
 
-if ( USE_IPGlasma)
+if ( USE_IPGLASMA )
   target_link_libraries (JetScape ipglasma_lib)
 endif()
 

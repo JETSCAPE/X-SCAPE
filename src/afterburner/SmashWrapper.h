@@ -58,8 +58,8 @@ public:
   // This function overrides the function from ListModus.
   double initial_conditions(smash::Particles *particles,
                             const smash::ExperimentParameters &) {
-    if (!jetscape_hadrons_[event_number_].empty()) {
-      add_JS_hadrons_to_smash_particles(jetscape_hadrons_[event_number_], *particles);
+    add_JS_hadrons_to_smash_particles(jetscape_hadrons_[event_number_], *particles);
+    if (particles->size() > 0) {
       backpropagate_to_same_time(*particles);
     } else {
       start_time_ = 0.0;

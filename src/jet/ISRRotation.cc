@@ -67,7 +67,8 @@ void ISRRotation::InitTask()
   JSINFO<<"Intialize ISRRotation ...";
 
   P_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
-  
+  Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
+
   P_B = P_A ; /// assuming symmetric system, rewrite for non-symmetric collision.
 
   if (!P_A)
@@ -471,7 +472,6 @@ void ISRRotation::AddRemenant(Parton &Out,int label){
   int NHardScatterings = ini->pTHat.size();
   double Pz = (Rem.pz() >=0 ? 1.0:-1.0);
 
-  Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
   Rem.reset_momentum(0.25 * Lambda_QCD, 0.25 * Lambda_QCD,Pz,0.0);
   Rem.set_color(Out.anti_color()); 
   Rem.set_anti_color(Out.color());
