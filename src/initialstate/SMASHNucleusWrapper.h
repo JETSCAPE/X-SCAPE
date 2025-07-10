@@ -99,6 +99,8 @@ private:
   bool Fermi_momenta_;
   /// The mass of a nucleon in GeV.
   const double nucleon_mass_ = 0.938;
+  /// The radius of the nucleus in fm.
+  double nucleon_radius_black_disk_;
 
   /// Shared pointer to the NucleusModus instance.
   shared_ptr<NucleusModus> smash_nucleus_;
@@ -141,6 +143,39 @@ public:
     * @return The history of generated hadrons as a generic type.
     */
   virtual any GetHistory() { return GetCurrentHadronList(); }
+
+  /** 
+   * @brief Checks if a Hadron is at a specific position.
+   * @param t The time at which to check the position (ignored since the nucleus is static).
+   * @param x The x coordinate of the position.
+   * @param y The y coordinate of the position.
+   * @param z The z coordinate of the position.
+   * @return True if a Hadron is at the specified position, false otherwise.
+   */
+  bool IsHadronAtPosition(double t, double x, double y, double z) const;
+
+  /**
+   * @brief Boost the hadrons in the nucleus with a given velocity.
+   * @param vx The x component of the boost velocity.
+   * @param vy The y component of the boost velocity.
+   * @param vz The z component of the boost velocity.
+   * @return A vector of Hadron objects that have been boosted.
+   */
+  std::vector<Hadron> GetCurrentHadronListBoosted(double vx, double vy, double vz) const;
+
+  /**
+   * @brief Boost function for (x0, x1, x2, x3) coordinates.
+   * @param x0 The time coordinate.
+   * @param x1 The x coordinate.
+   * @param x2 The y coordinate.
+   * @param x3 The z coordinate.
+   * @param vx The x component of the boost velocity.
+   * @param vy The y component of the boost velocity.
+   * @param vz The z component of the boost velocity.
+   * @return A tuple containing the boosted coordinates (x0', x1', x2', x3').
+   */
+  std::tuple<double, double, double, double> BoostCoordinates(double x0, double x1, double x2, double x3, double vx, double vy, double vz) const;
+
 };
 
 } // end namespace Jetscape

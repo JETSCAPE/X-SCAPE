@@ -86,12 +86,42 @@ int main(int argc, char **argv) {
   }
   outfile.close();
 
-  // Check that the number of hadrons is 208
-  if (h_list.size() != 208) {
-    JSWARN << "Number of hadrons is not 208!";
+  std::vector<Hadron> h_list2 = smash_nucleus->GetCurrentHadronList();
+  // Check that the number of hadrons is still 208
+  if (h_list2.size() != 208) {
+    JSWARN << "Number of hadrons is not 208 after second call!";
+    exit(1);
   } else {
-    JSINFO << "Number of hadrons is 208! This is the good result!";
+    JSINFO << "Number of hadrons is still 208 after second call! This is the good result!";
   }
+
+  // Test the IsHadronAtPosition() function
+  double t_had = 0.0, x_had = 1.21692, y_had = -5.85427, z_had = -3.31002;
+  if (smash_nucleus->IsHadronAtPosition(t_had, x_had, y_had, z_had)) {
+    JSINFO << "There is a hadron at position (" << t_had << ", " << x_had 
+          << ", " << y_had << ", " << z_had << ")";
+  } else {
+    JSWARN << "There is no hadron at position (" << t_had << ", " << x_had 
+           << ", " << y_had << ", " << z_had << ")";
+    exit(1);
+  }
+
+  // Boost the nucleus with a velocity vx = 0, vy = 0, vz = 0.8
+  double vx = 0.0, vy = 0.0, vz = 0.8;
+  std::vector<Hadron> h_list_boosted = smash_nucleus->GetCurrentHadronListBoosted(vx, vy, vz);
+
+  // Write the boosted hadrons to file
+  std::ofstream outfile_boosted("SMASHNucleusTest_Boosted.csv");
+  outfile_boosted << "# pid,charge,t,x,y,z,E,p_x,p_y,p_z" << std::endl;
+  for (const auto &hadron : h_list_boosted) {
+    const FourVector hadron_r = hadron.x_in();
+    const FourVector hadron_p = hadron.p_in();
+    outfile_boosted << hadron.pid() << "," << hadron.charge() << "," << hadron_r.t()
+                    << "," << hadron_r.x() << "," << hadron_r.y() << "," << hadron_r.z()
+                    << "," << hadron_p.t() << "," << hadron_p.x() << "," << hadron_p.y()
+                    << "," << hadron_p.z() << std::endl;
+  }
+  outfile_boosted.close();
 
   jetscape->Finish();
 

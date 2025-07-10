@@ -141,6 +141,8 @@
       <Protons>82</Protons>
       <Neutrons>126</Neutrons>
       <FermiMomenta>0</FermiMomenta>
+      <!--Black disk nucleon radius (fm) for checks if a nucleon is at a specific position-->
+      <NucleonRadiusBlackDisk>0.6</NucleonRadiusBlackDisk>
     </SMASHNucleus>
   </IS>
 
