@@ -54,7 +54,7 @@ void BulkDynamicsManager::ClearTask() {
 }
 
 void BulkDynamicsManager::InitTask() {
-  JSINFO << "Intialize BulkDynamicsManager ...";
+  JSINFO << "Initialize BulkDynamicsManager ...";
 
   ZeroOneDistribution = uniform_real_distribution<double>{0.0, 1.0};
 
@@ -284,8 +284,6 @@ void BulkDynamicsManager::ExecTime()
         }
       }
     }
-
-
   }
 
   JetScapeModuleBase::ExecTimeTasks();
@@ -483,13 +481,57 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
   //if validHydro = true, we are done; if not get info from other modules
   if(validHydro == false){
     std::unique_ptr<BulkMediaInfo> bulk_info_ptr;
-    // this has to be fixed with the new HadronicEMT class
-    /*for (auto it : GetTaskList()) {
-    for (auto it : GetTaskList()) {
-      if(dynamic_pointer_cast<Afterburner>(it)){
-	      dynamic_pointer_cast<Afterburner>(it)->GetBulkInfo(t,x,y,z,bulk_info_ptr);
+
+    // Get the current hadrons from the initial condition or afterburner module
+    // Check if SMASH IC or afterburner is active (it should be only one of them)
+    bool SMASH_IC_active = false;
+    bool SMASH_Afterburner_active = false;
+    for(auto it : GetTaskList()) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if(dynamic_pointer_cast<SmashInitialConditionWrapper>(module)) {
+        SMASH_IC_active = true;
       }
-    }*/
+      if(dynamic_pointer_cast<Afterburner>(module) && (module->GetId() == "SMASH")) {
+        SMASH_Afterburner_active = true;
+      }
+    }
+    // If SMASH IC or afterburner is active, get the current hadrons
+    // If both are active, we assume the afterburner is the one to use
+    // If neither is active, we cannot get the bulk info, so return
+    std::vector<Hadron> current_hadrons;
+    if (SMASH_IC_active) {
+      linb::any current_hadrons_IC = QueryHistory::Instance()->GetHistoryFromModule("SMASHInitialState");
+      if (!current_hadrons_IC.empty()) {
+        try {
+          current_hadrons = any_cast<std::vector<Hadron>>(current_hadrons_IC);
+        } catch (const linb::bad_any_cast& e) {
+          JSWARN << "Failed to retrieve hadrons from module SMASHInitialState: " << e.what();
+        }
+      } else {
+        JSWARN << "Failed to retrieve hadrons from module SMASHInitialState, invalid QueryHistory::GetHistoryFromModule() call";
+      }
+    } else if (SMASH_Afterburner_active) {
+      linb::any current_hadrons_afterburner = QueryHistory::Instance()->GetHistoryFromModule("SMASH");
+      if (!current_hadrons_afterburner.empty()) {
+        try {
+          current_hadrons = any_cast<std::vector<Hadron>>(current_hadrons_afterburner);
+        } catch (const linb::bad_any_cast& e) {
+          JSWARN << "Failed to retrieve hadrons from module SMASH: " << e.what();
+        }
+      } else {
+        JSWARN << "Failed to retrieve hadrons from module SMASH, invalid QueryHistory::GetHistoryFromModule() call";
+      }
+    }
+
+    // Use hadronic_emt_.GetBulkInfo(t,x,y,z,bulk_info_ptr,current_hadrons) to get the bulk info from the hadronic medium
+    if (SMASH_IC_active) {
+      hadronic_emt_.GetBulkInfo(t,x,y,z,bulk_info_ptr,current_hadrons);
+    } else if (SMASH_Afterburner_active) {
+      hadronic_emt_.GetBulkInfo(t,x,y,z,bulk_info_ptr,current_hadrons);
+    } else {
+      JSWARN << "No SMASH IC or Afterburner active, cannot get bulk info!";
+      return;
+    }
     InfoWrapper(fluid_cell_info_ptr,bulk_info_ptr);
   }
 }
@@ -515,7 +557,7 @@ void BulkDynamicsManager::InfoWrapper(
       fluid_cell_info_ptr->pi[i][j] = bulk_info_ptr->pi[i][j];
     }
   }
-  // tmn from bulk info not converted as not present in fluid cell info
+  // T^{\mu\nu} from bulk info not converted as not present in fluid cell info
 }
 
 std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {

@@ -371,35 +371,51 @@ std::array<std::array<double, 4>, 4> HadronicEMT::GetEnergyMomentumTensor() cons
  * @param scaling_factor A factor to scale the particle's momentum and energy 
  *                       before adding it to the tensor.
  *
- * @note Ensure that the input `hadron` contains valid four-momentum data.
+ * @note If the energy of the particle after scaling is less than or equal to a
+ *       small positive cutoff (defined as `eps`), the particle is skipped to
+ *       avoid numerical issues such as division by zero.
  */
 void HadronicEMT::AddParticleToEnergyMomentumTensor(Hadron &hadron, 
                                                     double scaling_factor) {
   const FourVector p = hadron.p_in();
-  const double e = p.t() * scaling_factor;
+  const double e_raw = p.t() * scaling_factor;
+
+  // Define a small positive cutoff to avoid division by zero
+  constexpr double eps = 1e-12;
+
+  // Check if the energy is physically reasonable
+  if (e_raw <= eps) {
+    VERBOSE(8) << "HadronicEMT: Skipping particle with very low or negative energy: e = " << e_raw;
+    return;
+  }
+
+  // Precompute scaled momenta
   const double px = p.x() * scaling_factor;
   const double py = p.y() * scaling_factor;
   const double pz = p.z() * scaling_factor;
 
-  // add the scaled particle quantities to the T^{\mu\nu} tensor
-  Tmn_requested_point_[0][0] += e;
-  Tmn_requested_point_[0][1] += px;
-  Tmn_requested_point_[0][2] += py;
-  Tmn_requested_point_[0][3] += pz;
-  Tmn_requested_point_[1][1] += px * px / e;
-  Tmn_requested_point_[1][2] += px * py / e;
-  Tmn_requested_point_[1][3] += px * pz / e;
-  Tmn_requested_point_[2][2] += py * py / e;
-  Tmn_requested_point_[2][3] += py * pz / e;
-  Tmn_requested_point_[3][3] += pz * pz / e;
-  
-  Tmn_requested_point_[1][0] += px;
-  Tmn_requested_point_[2][0] += py;
-  Tmn_requested_point_[3][0] += pz;
-  Tmn_requested_point_[2][1] += py * px / e;
-  Tmn_requested_point_[3][1] += pz * px / e;
-  Tmn_requested_point_[3][2] += pz * py / e;
+  // Add contributions to the symmetric energy-momentum tensor T^{\mu\nu}
+  // Diagonal terms
+  Tmn_requested_point_[0][0] += e_raw;            // T^{00}: energy density
+  Tmn_requested_point_[1][1] += px * px / e_raw;  // T^{11}
+  Tmn_requested_point_[2][2] += py * py / e_raw;  // T^{22}
+  Tmn_requested_point_[3][3] += pz * pz / e_raw;  // T^{33}
 
+  // Off-diagonal terms (momentum flux / stress terms)
+  Tmn_requested_point_[0][1] += px;               // T^{01}
+  Tmn_requested_point_[0][2] += py;               // T^{02}
+  Tmn_requested_point_[0][3] += pz;               // T^{03}
+  Tmn_requested_point_[1][2] += px * py / e_raw;  // T^{12}
+  Tmn_requested_point_[1][3] += px * pz / e_raw;  // T^{13}
+  Tmn_requested_point_[2][3] += py * pz / e_raw;  // T^{23}
+
+  // Symmetrize the tensor explicitly to ensure T^{\mu\nu} = T^{\nu\mu}
+  Tmn_requested_point_[1][0] += px;               // T^{10} = T^{01}
+  Tmn_requested_point_[2][0] += py;               // T^{20} = T^{02}
+  Tmn_requested_point_[3][0] += pz;               // T^{30} = T^{03}
+  Tmn_requested_point_[2][1] += py * px / e_raw;  // T^{21} = T^{12}
+  Tmn_requested_point_[3][1] += pz * px / e_raw;  // T^{31} = T^{13}
+  Tmn_requested_point_[3][2] += pz * py / e_raw;  // T^{32} = T^{23}
 }
 
 /**
