@@ -510,8 +510,8 @@ if ( USE_SMASH )
     add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
     target_link_libraries(SMASHTest JetScape )
 
-    add_executable(ConcurrencyTest ./examples/custom_examples/ConcurrencyTest.cc)
-    target_link_libraries(ConcurrencyTest JetScape )
+    #add_executable(ConcurrencyTest ./examples/custom_examples/ConcurrencyTest.cc)
+    #target_link_libraries(ConcurrencyTest JetScape )
 
     add_executable(SMASHInitialConditionTest ./examples/custom_examples/SMASHInitialConditionTest.cc)
     target_link_libraries(SMASHInitialConditionTest JetScape )
