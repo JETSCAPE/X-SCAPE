@@ -56,7 +56,23 @@ void FluidDynamics::Init() {
 
   pre_eq_ptr =
       JetScapeSignalManager::Instance()->GetPreEquilibriumPointer().lock();
-  if (!pre_eq_ptr and GetId()!="Brick") {
+  bool need_pre_eq = true;
+  if (GetId() == "MUSIC") {
+    // Check if InitialProfile is set to 43 in the XML, then SMASH IC is used
+    // and no pre-equilibrium is needed.
+    int hydro_profile = GetXMLElementDouble({"Hydro", "MUSIC", "InitialProfile"});
+    if (hydro_profile == 43) {
+      need_pre_eq = false;
+    }
+  } else if (GetId() == "Brick") {
+    // Brick does not need pre-equilibrium.
+    need_pre_eq = false;
+  }
+  
+  // Exit the program if pre-equilibrium is needed but not set.
+  // The pre equilibrium module is not needed for Brick or if the initial
+  // state is SMASH IC.
+  if (need_pre_eq and !pre_eq_ptr) {
     JSWARN << "No Pre-equilibrium module";
     exit(-1);
   }

@@ -268,11 +268,11 @@ void MpiMusic::InitializeHydroEnergyProfile() {
       pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
   }
 
-  if (pre_eq_ptr == nullptr && (initialProfile_ != 13 && initialProfile_ != 131)) {
+  if (pre_eq_ptr == nullptr && (initialProfile_ != 13 && initialProfile_ != 131 && initialProfile_ != 43)) {
     JSWARN << "Missing the pre-equilibrium module ...";
     exit(1);
   }
-  if (pre_eq_ptr == nullptr && flag_preEq_output_evo_to_memory == 1) {
+  if (pre_eq_ptr == nullptr && flag_preEq_output_evo_to_memory == 1 && initialProfile_ != 43) {
     JSWARN << "The pre-equilibrium module is not initialized! If you want to "
            << "run hydro with InitialProfile = 13 or 131 (3D-Glauber), please "
            << "set Preequilibrium/evolutionInMemory = 0 in the XML file.";
