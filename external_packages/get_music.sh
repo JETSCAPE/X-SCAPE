@@ -20,6 +20,8 @@ commitHash="41853111253c13704984a6c5aaa21b52792d6174"
 git clone https://github.com/MUSIC-fluid/MUSIC.git -b XSCAPE $folderName
 cd $folderName
 git checkout $commitHash
+cd EOS
+bash download_hotQCD.sh binary
 
 ### ALTERNATIVE VERSION
 ### Download a zipped snapshot
