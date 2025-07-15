@@ -21,7 +21,7 @@ git clone https://github.com/MUSIC-fluid/MUSIC.git -b XSCAPE $folderName
 cd $folderName
 git checkout $commitHash
 cd EOS
-bash download_hotQCD.sh binary_SMASH
+bash download_hotQCD.sh SMASH_binary
 
 ### ALTERNATIVE VERSION
 ### Download a zipped snapshot
