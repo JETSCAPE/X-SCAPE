@@ -213,6 +213,10 @@ public:
   void GetHyperSurface(Jetscape::real T_cut,
                        SurfaceCellInfo *surface_list_ptr){};
   void collect_freeze_out_surface();
+
+  bool update_music_input_parameter(const std::string& filename,
+                                  const std::string& key,
+                                  int new_value);
 };
 
 #endif // MUSICWRAPPER_H

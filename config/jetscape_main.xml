@@ -67,13 +67,18 @@
 
   <!--Bulk Dynamics Manager -->
   <BDM>
-    <Tc>0.250</Tc>
+    <!-- energy_density_criterion = 1: use energy density criterion for switching media, 0: use temperature criterion -->
+    <!-- This criterion is only used to access the bulk media, not for the FO in the hydro, this has to be set separately in the hydro section-->
+    <energy_density_criterion>0</energy_density_criterion>
+    <Tc>0.155</Tc>
+    <ec>0.35</ec>
     <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
     <!--Optional pT and momentum rapidity cuts for particles considered to go into the hydro evolution (set to 0 for no cut)-->
     <pT_cut>0.0</pT_cut>
     <rapidity_cut>0.0</rapidity_cut>
+    <ignore_spectator_hadrons>0</ignore_spectator_hadrons>
     <!-- CreateHadronicTimeEvolutionOutput: To create a movie for one event, not recommended for production runs -->
-    <CreateHadronicTimeEvolutionOutput> true </CreateHadronicTimeEvolutionOutput>
+    <CreateHadronicTimeEvolutionOutput> false </CreateHadronicTimeEvolutionOutput>
   </BDM>
 
   <!-- Inital State Module  -->
@@ -482,6 +487,8 @@
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
+      <!--EOS used for the hydro evolution: 91 hotQCD EOS, 20 NEOS-4D-->
+      <EOS>91</EOS>
       <!--InitialProfile = 42 for Trento + Pre-equilibrium, 13 for the 3D Glauber initial condition-->
       <InitialProfile>42</InitialProfile>
       <!--beastMode = 0: double precision, constant time step-->
@@ -508,6 +515,16 @@
       <shear_viscosity_3_at_kink>0.08</shear_viscosity_3_at_kink>
       <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
       <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
+      <!--mu_B dependent shear viscosity settings-->
+      <muB_dependent_Shear_to_S_ratio>0</muB_dependent_Shear_to_S_ratio>
+      <!-- Parameters for parametrization 7, piecewise linear-->
+      <!-- If set to -1, then shear_7_muBf0p4=1 and shear_7_muBf0p2=(1+shear_7_muBf0p4)/2-->
+      <shear_7_muBf0p2>-1</shear_7_muBf0p2>
+      <shear_7_muBf0p4>-1</shear_7_muBf0p4>
+      <!-- Parameters for parametrization 10, power law-->
+      <shear_10_muBDep_alpha>0.7</shear_10_muBDep_alpha>
+      <shear_10_muBDep_slope>2.0</shear_10_muBDep_slope>
+      <shear_10_muBDep_scale>0.6</shear_10_muBDep_scale>
       <!--bulk viscosity settings-->
       <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
       <!-- Parameters for parametrization 2-->
@@ -519,8 +536,20 @@
       <bulk_viscosity_3_T_peak_in_GeV>0.17</bulk_viscosity_3_T_peak_in_GeV>
       <bulk_viscosity_3_width_in_GeV>0.02</bulk_viscosity_3_width_in_GeV>
       <bulk_viscosity_3_lambda_asymm>0.1</bulk_viscosity_3_lambda_asymm>
+      <!-- Parameters for parametrization 10-->
+      <bulk_viscosity_10_max>0.10</bulk_viscosity_10_max>
+      <!-- The following two parameters are set automatically to bulk_viscosity_10_max and (max+max_muB0p4)/2. if the values are -1 here-->
+      <bulk_viscosity_10_max_muB0p4>-1</bulk_viscosity_10_max_muB0p4>
+      <bulk_viscosity_10_max_muB0p2>-1</bulk_viscosity_10_max_muB0p2>
+      <bulk_viscosity_10_width_high>0.08</bulk_viscosity_10_width_high>
+      <bulk_viscosity_10_width_low>0.010</bulk_viscosity_10_width_low>
+      <bulk_viscosity_10_T_peak>0.17</bulk_viscosity_10_T_peak>
+      <bulk_viscosity_10_T_peak_muBcurve>-0.15</bulk_viscosity_10_T_peak_muBcurve>
       <!--higher order transport coefficients-->
       <Include_second_order_terms>1</Include_second_order_terms>
+      <!--Conserved charge settings-->
+      <Include_Rhob>0</Include_Rhob>
+      <Include_QS>0</Include_QS>
       <!--freeze-out parameters-->
       <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
       <freezeout_temperature>0.15</freezeout_temperature>

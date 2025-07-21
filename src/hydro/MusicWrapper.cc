@@ -21,6 +21,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <regex>
 
 #include "JetScapeLogger.h"
 #include "MusicWrapper.h"
@@ -87,6 +88,16 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     music_hydro_ptr->set_parameter("surface_in_memory", 1);
   } else {
     music_hydro_ptr->set_parameter("surface_in_memory", 0);
+  }
+
+  int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
+  music_hydro_ptr->set_parameter("EOS", EOS);
+  // Try to reset the EOS in the music input file
+  // This is needed for iSS, which reads this parameter from the music input file
+  try {
+    update_music_input_parameter(input_file, "EOS_to_use", EOS);
+  } catch (const std::exception& e) {
+    JSWARN << "Error updating EOS_to_use in MUSIC input file: " << e.what();
   }
 
   int beastMode = (
@@ -162,11 +173,52 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
       music_hydro_ptr->set_parameter("shear_viscosity_2_curv", shear_curv);
     }
   }
+  int muB_dependent_Shear_to_S_ratio = GetXMLElementInt(
+          {"Hydro", "MUSIC", "muB_dependent_Shear_to_S_ratio"});
+  if (muB_dependent_Shear_to_S_ratio > 0) {
+    music_hydro_ptr->set_parameter("muB_dependent_Shear_to_S_ratio", 
+      muB_dependent_Shear_to_S_ratio);
+    if (muB_dependent_Shear_to_S_ratio == 10) {
+      double shear_muBDep_alpha = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "shear_10_muBDep_alpha"});
+      music_hydro_ptr->set_parameter("shear_muBDep_alpha", shear_muBDep_alpha);
+      double shear_muBDep_slope = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "shear_10_muBDep_slope"});
+      music_hydro_ptr->set_parameter("shear_muBDep_slope", shear_muBDep_slope);
+      double shear_muBDep_scale = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "shear_10_muBDep_scale"});
+      music_hydro_ptr->set_parameter("shear_muBDep_scale", shear_muBDep_scale);
+    } else if (muB_dependent_Shear_to_S_ratio == 7) {
+      double shear_muBf0p4 = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "shear_7_muBf0p4"});
+      if (shear_muBf0p4 < 0) {
+        // set to 1
+        shear_muBf0p4 = 1.0;
+      }
+      music_hydro_ptr->set_parameter("shear_muBf0p4", shear_muBf0p4);
+      double shear_muBf0p2 = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "shear_7_muBf0p2"});
+      if (shear_muBf0p2 < 0) {
+        // set to (shear_muBf0p4 + 1) / 2
+        shear_muBf0p2 = (shear_muBf0p4 + 1) / 2.;
+      }
+      music_hydro_ptr->set_parameter("shear_muBf0p2", shear_muBf0p2);
+    }
+  }
 
   int flag_bulkvis = GetXMLElementInt(
           {"Hydro", "MUSIC", "temperature_dependent_bulk_viscosity"});
   if (flag_bulkvis != 0) {
     music_hydro_ptr->set_parameter("Include_Bulk_Visc_Yes_1_No_0", 1);
+    // Try to reset the flag Include_Bulk_Visc_Yes_1_No_0 in the music input file
+    // This is needed for iSS, which reads this parameter from the music input file
+    try {
+        update_music_input_parameter(
+            input_file, "Include_Bulk_Visc_Yes_1_No_0", flag_bulkvis);
+    } catch (const std::exception& e) {
+      JSWARN << "Error updating Include_Bulk_Visc_Yes_1_No_0 in MUSIC input file: "
+              << e.what();
+    }
     music_hydro_ptr->set_parameter("T_dependent_Bulk_to_S_ratio",
                                    flag_bulkvis);
     if (flag_bulkvis == 3) {
@@ -198,6 +250,44 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
             {"Hydro", "MUSIC", "bulk_viscosity_2_peak_in_GeV"});
       music_hydro_ptr->set_parameter("bulk_viscosity_2_peak_in_GeV",
                                      bulk_T);
+    } else if (flag_bulkvis == 10) {
+      double bulk_viscosity_10_max = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "bulk_viscosity_10_max"});
+      music_hydro_ptr->set_parameter("bulk_viscosity_10_max", 
+                                      bulk_viscosity_10_max);
+      double bulk_viscosity_10_max_muB0p4 = GetXMLElementDouble(
+        {"Hydro", "MUSIC", "bulk_viscosity_10_max_muB0p4"});
+      if (bulk_viscosity_10_max_muB0p4 < 0) {
+        // set to bulk_viscosity_10_max
+        bulk_viscosity_10_max_muB0p4 = bulk_viscosity_10_max;
+      }
+      music_hydro_ptr->set_parameter("bulk_viscosity_10_max_muB0p4", 
+                                      bulk_viscosity_10_max_muB0p4);
+      double bulk_viscosity_10_max_muB0p2 = GetXMLElementDouble(
+        {"Hydro", "MUSIC", "bulk_viscosity_10_max_muB0p2"});
+      if (bulk_viscosity_10_max_muB0p2 < 0) {
+        // set to (bulk_viscosity_10_max + bulk_viscosity_10_max_muB0p4)/2
+        bulk_viscosity_10_max_muB0p2 = 
+          (bulk_viscosity_10_max + bulk_viscosity_10_max_muB0p4) / 2.;
+      }
+      music_hydro_ptr->set_parameter("bulk_viscosity_10_max_muB0p2", 
+                                      bulk_viscosity_10_max_muB0p2);
+      double bulk_viscosity_10_width_high = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "bulk_viscosity_10_width_high"});
+      music_hydro_ptr->set_parameter("bulk_viscosity_10_width_high", 
+                                      bulk_viscosity_10_width_high);
+      double bulk_viscosity_10_width_low = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "bulk_viscosity_10_width_low"});
+      music_hydro_ptr->set_parameter("bulk_viscosity_10_width_low", 
+                                      bulk_viscosity_10_width_low);
+      double bulk_viscosity_10_T_peak = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "bulk_viscosity_10_T_peak"});
+      music_hydro_ptr->set_parameter("bulk_viscosity_10_T_peak", 
+                                      bulk_viscosity_10_T_peak);
+      double bulk_viscosity_10_T_peak_muBcurve = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "bulk_viscosity_10_T_peak_muBcurve"});
+      music_hydro_ptr->set_parameter("bulk_viscosity_10_T_peak_muBcurve", 
+                                      bulk_viscosity_10_T_peak_muBcurve);
     }
   }
 
@@ -206,6 +296,12 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   if (flag_secondorderTerms == 1) {
     music_hydro_ptr->set_parameter("Include_second_order_terms", 1);
   }
+  int flag_include_Rhob = GetXMLElementInt(
+          {"Hydro", "MUSIC", "Include_Rhob"});
+  music_hydro_ptr->set_parameter("Include_Rhob", flag_include_Rhob);
+  int flag_include_QS = GetXMLElementInt(
+          {"Hydro", "MUSIC", "Include_QS"});
+  music_hydro_ptr->set_parameter("Include_QS", flag_include_QS);
 
   int use_eps_for_freeze_out = GetXMLElementInt(
     {"Hydro", "MUSIC", "use_eps_for_freeze_out"});
@@ -565,4 +661,56 @@ void MpiMusic::GetHydroInfo_MUSIC(
   }
   fluid_cell_info_ptr->bulk_Pi = fluidCell_ptr->bulkPi;
   delete fluidCell_ptr;
+}
+
+bool MpiMusic::update_music_input_parameter(const std::string& filename,
+                                  const std::string& key,
+                                  int new_value) {
+  std::ifstream infile(filename);
+  if (!infile.is_open()) {
+    std::cerr << "Error opening input file: " << filename << "\n";
+    return false;
+  }
+
+  std::ostringstream buffer;
+  std::string line;
+  bool found = false;
+
+  std::regex pattern("^\\s*" + key + R"(\s+([-+]?[0-9]*\.?[0-9]+)(\s+|$))");
+
+  while (std::getline(infile, line)) {
+    std::smatch match;
+    if (std::regex_search(line, match, pattern)) {
+      found = true;
+      std::string comment;
+      size_t comment_pos = line.find("#");
+      if (comment_pos != std::string::npos) {
+        comment = line.substr(comment_pos);
+      }
+      std::ostringstream newline;
+      newline << key << " " << new_value;
+      if (!comment.empty()) {
+        newline << " " << comment;
+      }
+      buffer << newline.str() << "\n";
+    } else {
+      buffer << line << "\n";
+    }
+  }
+  infile.close();
+
+  if (!found) {
+    std::cerr << "Parameter \"" << key << "\" not found in " << filename << "\n";
+    return false;
+  }
+
+  std::ofstream outfile(filename);
+  if (!outfile.is_open()) {
+    std::cerr << "Error writing to file: " << filename << "\n";
+    return false;
+  }
+  outfile << buffer.str();
+  outfile.close();
+
+  return true;
 }

@@ -176,9 +176,18 @@ private:
    */
   std::vector<std::vector<shared_ptr<Hadron>>> BDM_final_state_hadrons_;
 
+  /** Flag to decide if the energy density criterion is used to distinguish
+   * between different media.
+   */
+  bool energy_density_criterion_;
+
   /** Switching temperature between media.
    */
   float Tc_;
+
+  /** Switching energy density between media
+   */
+  double ec_;
 
   /** Switching proper time, when particles from transport initial condition are
    * fed into the hydro 
@@ -238,6 +247,7 @@ private:
    */
   bool enforce_pT_cut_;
   bool enforce_rapidity_cut_;
+  bool ignore_spectator_hadrons_;
   double pT_cut_;
   double rapidity_cut_;
 

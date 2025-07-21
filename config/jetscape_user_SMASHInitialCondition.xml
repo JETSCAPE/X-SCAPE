@@ -32,11 +32,13 @@
   </Random>
 
   <BDM>
-    <Tc>0.155</Tc>
+    <energy_density_criterion>1</energy_density_criterion>
+    <ec>0.35</ec>
     <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
     <!--Optional pT and momentum rapidity cuts for particles considered to go into the hydro evolution (set to 0 for no cut)-->
     <pT_cut>0.0</pT_cut>
     <rapidity_cut>0.0</rapidity_cut>
+    <ignore_spectator_hadrons>1</ignore_spectator_hadrons>
     <CreateHadronicTimeEvolutionOutput> false </CreateHadronicTimeEvolutionOutput>
   </BDM>
 
@@ -48,10 +50,10 @@
     <!-- in units of [fm] -->
     <grid_max_x> 15 </grid_max_x>
     <grid_max_y> 15 </grid_max_y>
-    <grid_max_z> 15 </grid_max_z>
+    <grid_max_z> 7 </grid_max_z>
     <grid_step_x> 0.2 </grid_step_x>
     <grid_step_y> 0.2 </grid_step_y>
-    <grid_step_z> 0.2 </grid_step_z>
+    <grid_step_z> 0.1 </grid_step_z>
 
     <SMASH>
       <SMASH_config_file>../external_packages/smash/smash_config_initial_condition.yaml</SMASH_config_file>
@@ -99,14 +101,15 @@
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
       <InitialProfile>43</InitialProfile>
-      <beastMode>1</beastMode>
+      <beastMode>0</beastMode>
       <Initial_time_tau_0>0.5</Initial_time_tau_0>
+      <EOS>20</EOS>
 
       <!--evolution output/storage parameters-->
       <output_evolution_to_file>0</output_evolution_to_file><!--2 for movie output-->
-      <output_evolution_to_memory>1</output_evolution_to_memory>
+      <output_evolution_to_memory>0</output_evolution_to_memory>
       <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
-      <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
+      <output_evolution_every_N_timesteps>10</output_evolution_every_N_timesteps>
       <surface_in_memory>1</surface_in_memory>
 
       <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
@@ -115,19 +118,26 @@
       <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
       <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
 
-      <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
-      <shear_viscosity_3_at_kink>0.16</shear_viscosity_3_at_kink>
-      <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
-      <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
-      
-      <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
-      <bulk_viscosity_3_max>0.06</bulk_viscosity_3_max>
-      <bulk_viscosity_3_T_peak_in_GeV>0.17</bulk_viscosity_3_T_peak_in_GeV>
-      <bulk_viscosity_3_width_in_GeV>0.02</bulk_viscosity_3_width_in_GeV>
-      <bulk_viscosity_3_lambda_asymm>0.1</bulk_viscosity_3_lambda_asymm>
+      <temperature_dependent_bulk_viscosity>10</temperature_dependent_bulk_viscosity>
+      <bulk_viscosity_10_max_muB0p4>-1</bulk_viscosity_10_max_muB0p4>
+      <bulk_viscosity_10_max_muB0p2>-1</bulk_viscosity_10_max_muB0p2>
+      <bulk_viscosity_10_width_high>0.08</bulk_viscosity_10_width_high>
+      <bulk_viscosity_10_width_low>0.010</bulk_viscosity_10_width_low>
+      <bulk_viscosity_10_T_peak>0.1</bulk_viscosity_10_T_peak>
+      <bulk_viscosity_10_T_peak_muBcurve>-0.15</bulk_viscosity_10_T_peak_muBcurve>
+
+      <muB_dependent_Shear_to_S_ratio>10</muB_dependent_Shear_to_S_ratio>
+      <shear_10_muBDep_alpha>0.7</shear_10_muBDep_alpha>
+      <shear_10_muBDep_slope>2.0</shear_10_muBDep_slope>
+      <shear_10_muBDep_scale>0.6</shear_10_muBDep_scale>
 
       <Include_second_order_terms>1</Include_second_order_terms>
-      <freezeout_temperature>0.155</freezeout_temperature>
+      <Include_Rhob>1</Include_Rhob>
+      <Include_QS>1</Include_QS>
+
+      <use_eps_for_freeze_out>1</use_eps_for_freeze_out>
+      <eps_switch>0.35</eps_switch>
+
       <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
     </MUSIC>
 
@@ -154,6 +164,10 @@
       <!-- hadron species list  0: PDG 2005; 1: UrQMD; 2: SMASH -->
       <afterburner_type>2</afterburner_type>
 
+      <deltaf_type>20</deltaf_type>
+      <include_deltaf_shear>1</include_deltaf_shear>
+      <include_deltaf_bulk>1</include_deltaf_bulk>
+
       <number_of_repeated_sampling>1</number_of_repeated_sampling>
       <Perform_resonance_decays>0</Perform_resonance_decays>
     </iSS>
@@ -161,11 +175,6 @@
 
   <!-- Hadronic Afterburner  -->
   <Afterburner>
-    <!-- fragmentation hadrons in the afterburner only possible with hybrid hadronization-->
-    <include_fragmentation_hadrons>0</include_fragmentation_hadrons>
-    <!-- only the afterburner hadrons are written to a file -->
-    <!-- if fragmentation hadrons are not included in the afterburner they are also written  -->
-    <output_only_final_state_hadrons>1</output_only_final_state_hadrons>
     <!-- SMASH -->
     <SMASH>
       <name>SMASH</name>
@@ -174,8 +183,6 @@
       <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
       <!-- time in fm/c in the computational frame, when the simulation shoud be ended -->
       <end_time>1000.0</end_time>
-      <!-- 0 - run the full afterburner, 1 - only decay the resonances without even propagation -->
-      <only_decays>0</only_decays>
     </SMASH>
   </Afterburner>
 

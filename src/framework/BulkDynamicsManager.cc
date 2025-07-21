@@ -58,8 +58,16 @@ void BulkDynamicsManager::InitTask() {
 
   ZeroOneDistribution = uniform_real_distribution<double>{0.0, 1.0};
 
-  //Critical temperature to switch from hydro to something else
+  //Critical values to switch from hydro to something else
+  energy_density_criterion_ = GetXMLElementInt({"BDM", "energy_density_criterion"});
   Tc_ = GetXMLElementDouble({"BDM", "Tc"});
+  ec_ = GetXMLElementDouble({"BDM", "ec"});
+  if (energy_density_criterion_ == true) {
+    JSINFO << "BulkDynamicsManager set up to use energy density criterion for switching media ...";
+  } else {
+    JSINFO << "BulkDynamicsManager set up to not use temperature criterion for switching media ...";
+  }
+
   pT_cut_ = GetXMLElementDouble({"BDM", "pT_cut"});
   enforce_pT_cut_ = false;
   if (pT_cut_ > rounding_error) {
@@ -76,6 +84,15 @@ void BulkDynamicsManager::InitTask() {
   } else {
     JSINFO << "BulkDynamicsManager set up without rapidity cut ...";
   }
+  const int ignore_spectator_hadrons_ = GetXMLElementInt({"BDM", "ignore_spectator_hadrons"});
+  if (ignore_spectator_hadrons_ > rounding_error) {
+    ignore_spectator_hadrons_ = true;
+    JSINFO << "BulkDynamicsManager set up to ignore spectator hadrons ...";
+  } else {
+    ignore_spectator_hadrons_ = false;
+    JSINFO << "BulkDynamicsManager set up to include spectator hadrons ...";
+  }
+
   IC_particle_extraction_tau_ = GetXMLElementDouble({"BDM", "IC_particle_extraction_tau"});
   hydro_Cartesian_ = false;
   std::string strCartesianHydro = GetXMLElementText({"Hydro", "CartesianHydro"});
@@ -264,13 +281,15 @@ void BulkDynamicsManager::ExecTime()
     if (afterburner_in_progress_) {
       // check the hadrons in store_spectator_hadrons_iso_tau_ and store_hadrons_soft_particlization_ if they have times larger than the current time
       // and smaller than the current time + deltaT, then add them to the new_hadrons_for_timestep_ list
-      for (const auto& had : store_spectator_hadrons_iso_tau_) {
-        const FourVector r = had->x_in();
-        const double t = r.t();
+      if (!ignore_spectator_hadrons_) {
+        for (const auto& had : store_source_term_hadrons_iso_tau_) {
+          const FourVector r = had->x_in();
+          const double t = r.t();
 
-        if((t >= GetMainClock()->GetCurrentTime()) 
-          && (t < GetMainClock()->GetCurrentTime()+GetMainClock()->GetDeltaT())) {
-          new_hadrons_for_timestep_.push_back(had);
+          if((t >= GetMainClock()->GetCurrentTime()) 
+            && (t < GetMainClock()->GetCurrentTime()+GetMainClock()->GetDeltaT())) {
+            new_hadrons_for_timestep_.push_back(had);
+          }
         }
       }
 
@@ -313,7 +332,7 @@ void BulkDynamicsManager::InitPerEvent()
     deltaT_main_clock_ = GetMainClock()->GetDeltaT();
     // reset the deltaT of the main clock to small value for high iso-tau
     // extraction accuracy
-    GetMainClock()->SetDeltaT(0.01);
+    GetMainClock()->SetDeltaT(0.001);
 
     for(auto it : GetTaskList()) {
       auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
@@ -475,7 +494,13 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
   for (auto it : GetTaskList()) {
     if(dynamic_pointer_cast<FluidDynamics>(it)){
       dynamic_pointer_cast<FluidDynamics>(it)->GetHydroInfo(t,x,y,z,fluid_cell_info_ptr);
-      if(fluid_cell_info_ptr->temperature > Tc_) validHydro = true;
+      if (energy_density_criterion_) {
+        // Check if the energy density is above the critical value
+        if(fluid_cell_info_ptr->energy_density > ec_) validHydro = true;
+      } else {
+        // Check if the temperature is above the critical value
+        if(fluid_cell_info_ptr->temperature > Tc_) validHydro = true;
+      }
     }
   }
   //if validHydro = true, we are done; if not get info from other modules

@@ -62,12 +62,12 @@ int main(int argc, char** argv)
   auto jetscape = make_shared<JetScape>();
 
   std::string mainXMLName = "../config/jetscape_main.xml";
-  std::string userXMLName = "../config/jetscape_user_SMASHInitialConditionTest.xml";
+  std::string userXMLName = "../config/jetscape_user_SMASHInitialCondition.xml";
   if (argc == 2)  {
     if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
       std::cout << "Command line options:" << std::endl;
-      std::cout << "- First (optional) argument: path to user XML file ./SMASHInitialConditionTest /path/to/user.xml" << std::endl;
-      std::cout << "- Second (optional) argument: path to main XML file ./SMASHInitialConditionTest /path/to/user.xml /path/to/main.xml" << std::endl;
+      std::cout << "- First (optional) argument: path to user XML file ./SMASHInitialCondition /path/to/user.xml" << std::endl;
+      std::cout << "- Second (optional) argument: path to main XML file ./SMASHInitialCondition /path/to/user.xml /path/to/main.xml" << std::endl;
       std::cout << "- If no command line options are given, defaults are used: config/jetscape_user.xml config/jetscape_main.xml" << std::endl;
       return -1;
     }
@@ -90,7 +90,6 @@ int main(int argc, char** argv)
   // Get the end time from the XML file
   double end_time = JetScapeXML::Instance()->GetElementDouble({"IS", "SMASH", "end_time"}, true);
 
-  // clocks here are defaulted for testing, clocks can customized via inheriting from the MainClock/ModuleClock base classes ...
   auto mClock = make_shared<MainClock>("SpaceTime",-2.0,end_time,0.1); // JP: make consistent with reading from XML in init phase ...
   mClock->Info();
 
