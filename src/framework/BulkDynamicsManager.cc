@@ -84,8 +84,8 @@ void BulkDynamicsManager::InitTask() {
   } else {
     JSINFO << "BulkDynamicsManager set up without rapidity cut ...";
   }
-  const int ignore_spectator_hadrons_ = GetXMLElementInt({"BDM", "ignore_spectator_hadrons"});
-  if (ignore_spectator_hadrons_ > rounding_error) {
+  int ignore_spectators = GetXMLElementInt({"BDM", "ignore_spectator_hadrons"});
+  if (ignore_spectators > rounding_error) {
     ignore_spectator_hadrons_ = true;
     JSINFO << "BulkDynamicsManager set up to ignore spectator hadrons ...";
   } else {
