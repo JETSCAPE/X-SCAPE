@@ -308,11 +308,11 @@ double HadronicLiquefier::get_source_quantity(const double tau,
   double value_kernel = 0.;
   for (const auto &drop_i : hadron_droplets_list) {
     int quantity_smear = 0;
-    if (quantity_smear == BARYON_NUMBER) {
+    if (qtype == BARYON_NUMBER) {
       quantity_smear = drop_i.get_baryon_number();
-    } else if (quantity_smear == ELECTRIC_CHARGE) {
+    } else if (qtype == ELECTRIC_CHARGE) {
       quantity_smear = drop_i.get_electric_charge();
-    } else if (quantity_smear == STRANGENESS) {
+    } else if (qtype == STRANGENESS) {
       quantity_smear = drop_i.get_strangeness();
     } else {
       JSWARN << "The quantity to smear is not implemented.";
