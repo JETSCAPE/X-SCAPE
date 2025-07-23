@@ -808,23 +808,27 @@ bool BulkDynamicsManager::CheckIfHadronWasAddedInPreviousTimestep(
   // list_to_check = 0: store_source_term_hadrons_iso_tau_
   // list_to_check = 1: store_spectator_hadrons_iso_tau_
   const int hadron_pid = hadron->pid();
-  const FourVector hadron_position = hadron->x_in();
+  const FourVector &hadron_position = hadron->x_in();
+  const FourVector &hadron_momentum = hadron->p_in();
+
   double t = hadron_position.t();
   double x = hadron_position.x();
   double y = hadron_position.y();
   double z = hadron_position.z();
-  
-  const FourVector hadron_momentum = hadron->p_in();
+
   double E = hadron_momentum.t();
   double px = hadron_momentum.x();
   double py = hadron_momentum.y();
   double pz = hadron_momentum.z();
 
+  if (E == 0.0) return false;
+
   // Back propagate the hadron position to the previous timestep
-  double t_prime = t - GetMainClock()->GetDeltaT();
-  double x_prime = x - px * GetMainClock()->GetDeltaT() / E;
-  double y_prime = y - py * GetMainClock()->GetDeltaT() / E;
-  double z_prime = z - pz * GetMainClock()->GetDeltaT() / E;
+  const double dtime = GetMainClock()->GetDeltaT();
+  double t_prime = t - dtime;
+  double x_prime = x - px * dtime / E;
+  double y_prime = y - py * dtime / E;
+  double z_prime = z - pz * dtime / E;
 
   // Choose the appropriate list
   const auto& hadron_list = (list_to_check == 0)
