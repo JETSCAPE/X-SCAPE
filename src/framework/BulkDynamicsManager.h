@@ -223,6 +223,14 @@ private:
    */
   void PrintHadronicTimeEvolutionToFileIfNecessary();
 
+  /** Check if a hadron was added in the previous timestep.
+   * This function is needed for the rare case that SMASH can not find a hadron
+   * that is supposed to be removed and prevents the addition of the hadron to 
+   * source terms in subsequent timesteps.
+   */
+  bool CheckIfHadronWasAddedInPreviousTimestep(const shared_ptr<Hadron> &hadron,
+      const int list_to_check);
+
   /**
    * Is the hydro in cartesian or not? Needed to decide whether SMASH IC has to 
    * run first, or if it can run concurrently with hydro.
@@ -250,6 +258,7 @@ private:
   bool ignore_spectator_hadrons_;
   double pT_cut_;
   double rapidity_cut_;
+  int counter_hadrons_already_added_;
 
   protected:
     std::weak_ptr<LiquefierBase> liquefier_ptr_;

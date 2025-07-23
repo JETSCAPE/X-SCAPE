@@ -151,7 +151,7 @@ void SmashInitialConditionWrapper::InitTask() {
     if (!(ts_rem < 1E-6 && ts_frac > 1.0)) {
       JSWARN << "Timesteps of SMASH (dt = " << delta_t_sm
              << ") and JETSCAPE (dt = " << delta_t_js << ") are incompatible."
-                "SMASH timesteps should be a half, a third, etc. from JETSCAPE's";
+                "SMASH IC timesteps should be a half, a third, etc. from JETSCAPE's";
     }
   }
   smash_collider_experiment_ =

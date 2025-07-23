@@ -684,6 +684,8 @@
       <end_time>1000.0</end_time>
       <!-- 0 - run the full afterburner, 1 - only decay the resonances without even propagation -->
       <only_decays>0</only_decays>
+      <!-- time steps in the SMASH afterburner -->
+      <Delta_Time>0.05</Delta_Time>
     </SMASH>
   </Afterburner>
 </jetscape>

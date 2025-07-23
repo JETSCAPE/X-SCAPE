@@ -332,7 +332,8 @@ void BulkDynamicsManager::InitPerEvent()
     deltaT_main_clock_ = GetMainClock()->GetDeltaT();
     // reset the deltaT of the main clock to small value for high iso-tau
     // extraction accuracy
-    GetMainClock()->SetDeltaT(0.001);
+    const double deltaT_smash = GetXMLElementDouble({"IS", "SMASH", "Delta_Time"});
+    GetMainClock()->SetDeltaT(deltaT_smash);
 
     for(auto it : GetTaskList()) {
       auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
@@ -622,6 +623,7 @@ void BulkDynamicsManager::DetermineHadronsCrossingIsoTau(
 void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool &AllHadronsCrossedIsoTau) {
   linb::any current_hadrons_IC = QueryHistory::Instance()->GetHistoryFromModule("SMASHInitialState");
   std::vector<Hadron> hadrons = any_cast<std::vector<Hadron>>(current_hadrons_IC);
+  counter_hadrons_already_added_ = 0;
 
   // Convert to vector of shared pointers using std::transform
   std::vector<std::shared_ptr<Hadron>> shared_hadrons;
@@ -675,13 +677,27 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
     }
 
     if (add_hadron_to_source_term) {
+      if (CheckIfHadronWasAddedInPreviousTimestep(hadron, 0)) {
+        continue;
+      }
       store_source_term_hadrons_iso_tau_.push_back(hadron);
     } else {
+      if (CheckIfHadronWasAddedInPreviousTimestep(hadron, 1)) {
+        continue;
+      }
       store_spectator_hadrons_iso_tau_.push_back(hadron);
     }
   }
 
-  if(shared_hadrons.empty()) {
+  // Check if all hadrons have crossed the iso-tau surface
+  // Or in the very rare case that some hadrons can not be removed, we consider
+  // them as crossed when the time has crossed the 1fm/c before the SMASH IC
+  // end time, the condition counter_hadrons_already_added_ == shared_hadrons.size()
+  // should be triggered first
+  const double end_time_smash_ic = GetMainClock()->GetEndTime();
+  if(shared_hadrons.empty() ||
+      (counter_hadrons_already_added_ == shared_hadrons.size()) ||
+      (GetMainClock()->GetCurrentTime() >= end_time_smash_ic - 1.0)) {
     AllHadronsCrossedIsoTau = true;
   }
 }
@@ -783,6 +799,67 @@ void BulkDynamicsManager::PrintHadronicTimeEvolutionToFileIfNecessary() {
       }
     }
   }
+}
+
+bool BulkDynamicsManager::CheckIfHadronWasAddedInPreviousTimestep(
+    const shared_ptr<Hadron> &hadron, const int list_to_check) {
+  // Back propagate the hadron to the previous timestep and check if it was added
+  // in the previous timestep. If it was added, return true, otherwise false.
+  // list_to_check = 0: store_source_term_hadrons_iso_tau_
+  // list_to_check = 1: store_spectator_hadrons_iso_tau_
+  const int hadron_pid = hadron->pid();
+  const FourVector hadron_position = hadron->x_in();
+  double t = hadron_position.t();
+  double x = hadron_position.x();
+  double y = hadron_position.y();
+  double z = hadron_position.z();
+  
+  const FourVector hadron_momentum = hadron->p_in();
+  double E = hadron_momentum.t();
+  double px = hadron_momentum.x();
+  double py = hadron_momentum.y();
+  double pz = hadron_momentum.z();
+
+  // Back propagate the hadron position to the previous timestep
+  double t_prime = t - GetMainClock()->GetDeltaT();
+  double x_prime = x - px * GetMainClock()->GetDeltaT() / E;
+  double y_prime = y - py * GetMainClock()->GetDeltaT() / E;
+  double z_prime = z - pz * GetMainClock()->GetDeltaT() / E;
+
+  // Choose the appropriate list
+  const auto& hadron_list = (list_to_check == 0)
+      ? store_source_term_hadrons_iso_tau_
+      : store_spectator_hadrons_iso_tau_;
+
+  for (const auto& stored_hadron : hadron_list) {
+    if (stored_hadron->pid() != hadron_pid)
+      continue;
+
+    // Check back-propagated position
+    const FourVector& stored_position = stored_hadron->x_in();
+    const double dt = std::abs(stored_position.t() - t_prime);
+    const double dx = std::abs(stored_position.x() - x_prime);
+    const double dy = std::abs(stored_position.y() - y_prime);
+    const double dz = std::abs(stored_position.z() - z_prime);
+
+    if (dt > rounding_error || dx > rounding_error ||
+        dy > rounding_error || dz > rounding_error)
+      continue;
+
+    // Check momentum
+    const FourVector& stored_momentum = stored_hadron->p_in();
+    const double dE  = std::abs(stored_momentum.t() - E);
+    const double dpx = std::abs(stored_momentum.x() - px);
+    const double dpy = std::abs(stored_momentum.y() - py);
+    const double dpz = std::abs(stored_momentum.z() - pz);
+
+    if (dE < rounding_error && dpx < rounding_error &&
+        dpy < rounding_error && dpz < rounding_error) {
+      counter_hadrons_already_added_++;
+      return true;
+    }
+  }
+  return false; // Hadron was not added in the previous timestep
 }
 
 } // end namespace Jetscape
