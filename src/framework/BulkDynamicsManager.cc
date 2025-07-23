@@ -634,6 +634,17 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
   DetermineHadronsCrossingIsoTau(shared_hadrons);
 
   for(const auto& hadron : remove_hadrons_for_timestep_) {
+    // If the tau of the hadron is larger than tau_iso+deltaT, then it will be 
+    // ignored and not added to the source term or spectator list
+    const FourVector r = hadron->x_in();
+    const double t = r.t();
+    const double z = r.z();
+    const double tau = sqrt(t*t - z*z);
+    if(tau >= IC_particle_extraction_tau_ + GetMainClock()->GetDeltaT()) {
+      counter_hadrons_already_added_++;
+      continue;
+    }
+
     bool participant = hadron->participant();
     bool add_hadron_to_source_term = false;
     // Check if the participant is in the kinematic cuts (if applied)
