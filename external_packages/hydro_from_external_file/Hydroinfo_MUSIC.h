@@ -20,10 +20,13 @@ class Hydroinfo_MUSIC {
     double hydroTauMax;     // tau_max in the hydro data files
     double hydroDtau;       // step dtau in fm/c in the hydro data files
     double hydroXmax;       // maximum x in fm in the hydro data files
-                            // [-xmax, +xmax] for both x and y
+                            // [-xmax, +xmax]
+    double hydroYmax;       // maximum y in fm in the hydro data files
+                            // [-xmax, +xmax]
     double hydro_eta_max;       // maximum z in fm in the hydro data files
                             // [-zmax, +zmax] for 3D hydro
     double hydroDx;         // step dx in fm in the hydro data files
+    double hydroDy;         // step dy in fm in the hydro data files
     double hydroDeta;         // step dz in fm in the hydro data files in
                             // the z-direction for 3D hydro
 
@@ -35,7 +38,7 @@ class Hydroinfo_MUSIC {
     bool boost_invariant;
 
     int verbose_;
-    int itaumax, ixmax, ietamax;
+    int itaumax, ixmax, iymax, ietamax;
     int turn_on_shear;
     int turn_on_bulk;
     int turn_on_rhob;
