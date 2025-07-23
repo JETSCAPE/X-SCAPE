@@ -76,6 +76,7 @@
     <!--Optional pT and momentum rapidity cuts for particles considered to go into the hydro evolution (set to 0 for no cut)-->
     <pT_cut>0.0</pT_cut>
     <rapidity_cut>0.0</rapidity_cut>
+    <!--Spectator hadrons are always ignored for source terms in hydro, this switch is for the afterburner phase-->
     <ignore_spectator_hadrons>0</ignore_spectator_hadrons>
     <!-- CreateHadronicTimeEvolutionOutput: To create a movie for one event, not recommended for production runs -->
     <CreateHadronicTimeEvolutionOutput> false </CreateHadronicTimeEvolutionOutput>
@@ -182,7 +183,7 @@
       <end_time>1000.0</end_time>
       <Sqrtsnn>200.0</Sqrtsnn>
       <FermiMotion>frozen</FermiMotion>
-      <CollisionsWithinNucleus>1</CollisionsWithinNucleus>
+      <CollisionsWithinNucleus>0</CollisionsWithinNucleus>
       <Impact>
         <RandomReactionPlane>0</RandomReactionPlane>
         <!-- Pick the mode for the impact parameter -->
