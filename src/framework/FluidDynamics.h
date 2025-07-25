@@ -152,6 +152,10 @@ public:
   /** @return Status of the hydrodynamics (NOT_START, INITIALIZED, EVOLVING, FINISHED, ERROR). */
   int GetHydroStatus() const { return (hydro_status); }
 
+  void SetHydroStatus(HydroStatus status) {
+    hydro_status = status;
+  }
+
   void StoreHydroEvolutionHistory(
       std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr) {
     bulk_info.data.push_back(*fluid_cell_info_ptr);

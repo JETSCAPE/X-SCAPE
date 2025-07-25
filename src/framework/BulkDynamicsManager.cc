@@ -128,7 +128,7 @@ void BulkDynamicsManager::InitTask() {
       hydro_module_attached = true;
     }
     if (auto particlization = std::dynamic_pointer_cast<SoftParticlization>(task)) {
-      JSWARN << "Connect signals for SoftParticlization";
+      VERBOSE(3) << "Connect signals for SoftParticlization";
       JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(particlization);
       JetScapeSignalManager::Instance()->ConnectClearHydroHyperSurfaceSignal(particlization);
     }
@@ -136,8 +136,8 @@ void BulkDynamicsManager::InitTask() {
 
   for (auto task : GetTaskList()) {
     if (auto hadronization = std::dynamic_pointer_cast<SoftParticlization>(task)) {
-      JSWARN << "Connection check HydroHyperSurfaceConnected = " << hadronization->GetGetHydroHyperSurfaceConnected();
-      JSWARN << "Connection check ClearHydroHyperSurfaceConnected = " << hadronization->GetClearHydroHyperSurfaceConnected();
+      VERBOSE(3) << "Connection check HydroHyperSurfaceConnected = " << hadronization->GetGetHydroHyperSurfaceConnected();
+      VERBOSE(3) << "Connection check ClearHydroHyperSurfaceConnected = " << hadronization->GetClearHydroHyperSurfaceConnected();
     }
   }
 
@@ -146,7 +146,7 @@ void BulkDynamicsManager::InitTask() {
 
   for(auto it : GetTaskList()) {
         auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-        JSWARN << "Module in task list: " << module->GetId();
+        JSINFO << "Module in task list: " << module->GetId();
   }
 
   // Create the hadronic_emt_ object
@@ -165,8 +165,7 @@ void BulkDynamicsManager::ExecuteTask() {
   }
 }
 
-void BulkDynamicsManager::CalculateTime()
-{
+void BulkDynamicsManager::CalculateTime() {
   VERBOSE(3) << "Calculate Bulk Dynamics Manager per timestep ... Current Time = " 
             << GetModuleCurrentTime();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
@@ -181,10 +180,7 @@ void BulkDynamicsManager::CalculateTime()
 
 }
 
-void BulkDynamicsManager::ExecTime()
-{
-  //JSWARN << "Execute Bulk Dynamics Manager at timestep (end) ... Current Time = "
-  //          << GetModuleCurrentTime() << " Thread Id = " << this_thread::get_id();
+void BulkDynamicsManager::ExecTime() {
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
   VERBOSE(3) << "Size of new hadron list at beginning of ExecTime (should be empty) = " 
                   << new_hadrons_for_timestep_.size();
@@ -198,8 +194,8 @@ void BulkDynamicsManager::ExecTime()
     bool AllHadronsCrossedIsoTau = false;
     if (SMASH_IC_in_progress_) {
       ExtractHadronsFromTransportInitialConditionIsoTau(AllHadronsCrossedIsoTau);
-      //JSINFO << "Currently " << store_source_term_hadrons_iso_tau_.size() << " source term hadrons in storage.";
-      //JSINFO << "Currently " << store_spectator_hadrons_iso_tau_.size() << " spectator hadrons in storage.";
+      VERBOSE(3) << "Currently " << store_source_term_hadrons_iso_tau_.size() << " source term hadrons in storage.";
+      VERBOSE(3) << "Currently " << store_spectator_hadrons_iso_tau_.size() << " spectator hadrons in storage.";
     }
 
     // If all hadrons have crossed the iso-tau surface, then the SMASH IC is
@@ -207,21 +203,22 @@ void BulkDynamicsManager::ExecTime()
     // Therefore, set SMASH IC to inactive and the hydro and soft particlization
     // to active. Also reset the time to close before the iso-tau surface.
     if (AllHadronsCrossedIsoTau && !reset_time_hydro_Milne_) {
+      VERBOSE(3) << "All hadrons crossed iso-tau surface ...";
       SMASH_IC_in_progress_ = false;
 
       // Set the SMASH IC to inactive and hydro and soft particlization to active
       for(auto it : GetTaskList()) {
         auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
         if (dynamic_pointer_cast<FluidDynamics>(module)) {
-          JSWARN << "SetActive(true) = " << module->GetId();
+          VERBOSE(3) << "SetActive(true) = " << module->GetId();
           module->SetActive(true);
           reset_time_hydro_Milne_ = true;
           hydro_in_progress_ = true;
         } else if (dynamic_pointer_cast<SoftParticlization>(module)) {
-          JSWARN << "SetActive(true) = " << module->GetId();
+          VERBOSE(3) << "SetActive(true) = " << module->GetId();
           module->SetActive(true);
         } else {
-          JSWARN << "SetActive(false) = " << module->GetId();
+          VERBOSE(3) << "SetActive(false) = " << module->GetId();
           module->SetActive(false);
         }
       }
@@ -230,9 +227,9 @@ void BulkDynamicsManager::ExecTime()
       // SMASH IC run
       GetMainClock()->SetDeltaT(deltaT_main_clock_);
 
-      JSINFO << "SMASH IC is empty, resetting time to " << IC_particle_extraction_tau_-GetMainClock()->GetDeltaT();
+      VERBOSE(3) << "SMASH IC is empty, resetting time to " << IC_particle_extraction_tau_-GetMainClock()->GetDeltaT();
       GetMainClock()->ResetToTime(IC_particle_extraction_tau_-GetMainClock()->GetDeltaT());
-      JSINFO << "Time reset to " << GetMainClock()->GetCurrentTime();
+      VERBOSE(3) << "Time reset to " << GetMainClock()->GetCurrentTime();
 
       // Create the hadronic source terms for the hydro
       CreateHadronicSourceTermsForHydroInitializationIsoTau();
@@ -246,7 +243,7 @@ void BulkDynamicsManager::ExecTime()
           if(fluid_dynamics->GetHydroStatus() == FINISHED) {
             hydro_in_progress_ = false;
             afterburner_in_progress_ = true;
-            JSWARN << "Hydro finished";
+            VERBOSE(3) << "Hydro finished";
             break;
           }
         }
@@ -254,7 +251,7 @@ void BulkDynamicsManager::ExecTime()
 
       // In case the hydro is still running, check for produced hadrons and store them
       StoreHadronsFromSoftParticlization();
-      JSWARN << "Size of store_hadrons_soft_particlization_ = " << store_hadrons_soft_particlization_.size();
+      VERBOSE(3) << "Size of store_hadrons_soft_particlization_ = " << store_hadrons_soft_particlization_.size();
 
       // If the hydro is finished, then set SMASH as active again
       afterburner_in_progress_ = false;
@@ -262,19 +259,19 @@ void BulkDynamicsManager::ExecTime()
         for(auto it : GetTaskList()) {
           auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
           if(dynamic_pointer_cast<Afterburner>(module) && (module->GetId() == "SMASH")) {
-            JSWARN << "SetActive(true) = " << module->GetId();
+            VERBOSE(3) << "SetActive(true) = " << module->GetId();
             module->SetActive(true);
             afterburner_in_progress_ = true;
           } else {
-            JSWARN << "SetActive(false) = " << module->GetId();
+            VERBOSE(3) << "SetActive(false) = " << module->GetId();
             module->SetActive(false);
           }
         }
 
-        JSINFO << "Hydro is done, resetting time to " << IC_particle_extraction_tau_;
+        VERBOSE(3) << "Hydro is done, resetting time to " << IC_particle_extraction_tau_;
         GetMainClock()->ResetToTime(IC_particle_extraction_tau_);
-        JSWARN << "Time reset to " << GetMainClock()->GetCurrentTime();
-        JSWARN << "End of the next timestep is " << GetMainClock()->GetCurrentTime()+GetMainClock()->GetDeltaT();
+        VERBOSE(3) << "Time reset to " << GetMainClock()->GetCurrentTime();
+        VERBOSE(3) << "End of the next timestep is " << GetMainClock()->GetCurrentTime()+GetMainClock()->GetDeltaT();
       }
     }
 
@@ -311,12 +308,9 @@ void BulkDynamicsManager::ExecTime()
             << new_hadrons_for_timestep_.size();
 }
 
-void BulkDynamicsManager::InitPerEvent()
-{
+void BulkDynamicsManager::InitPerEvent() {
   VERBOSE(3) << "InitPerEvent Bulk Dynamics Manager when used per timestep ...";
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
-
-  JSWARN << "InitPerEvent Bulk Dynamics Manager when used per timestep ...";
   JetScapeModuleBase::InitPerEventTasks();
 
   /**
@@ -338,13 +332,13 @@ void BulkDynamicsManager::InitPerEvent()
     for(auto it : GetTaskList()) {
       auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
       if(dynamic_pointer_cast<SmashInitialConditionWrapper>(module)) {
-        JSWARN << "SetActive(true) = " << module->GetId();
+        VERBOSE(3) << "SetActive(true) = " << module->GetId();
         SMASH_IC_attached_ = true;
         SMASH_IC_in_progress_ = true;
         hydro_in_progress_ = false;
         afterburner_in_progress_ = false;
       } else {
-        JSWARN << "SetActive(false) = " << module->GetId();
+        VERBOSE(3) << "SetActive(false) = " << module->GetId();
         module->SetActive(false);
       }
     }
@@ -357,21 +351,17 @@ void BulkDynamicsManager::InitPerEvent()
   // JUST FOR CHECKING
   for (auto task : GetTaskList()) {
     if (auto hadronization = std::dynamic_pointer_cast<SoftParticlization>(task)) {
-      JSWARN << "Connection check HydroHyperSurfaceConnected InitPerEvent = " << hadronization->GetGetHydroHyperSurfaceConnected();
-      JSWARN << "Connection check ClearHydroHyperSurfaceConnected InitPerEvent = " << hadronization->GetClearHydroHyperSurfaceConnected();
+      VERBOSE(3) << "Connection check HydroHyperSurfaceConnected InitPerEvent = " << hadronization->GetGetHydroHyperSurfaceConnected();
+      VERBOSE(3) << "Connection check ClearHydroHyperSurfaceConnected InitPerEvent = " << hadronization->GetClearHydroHyperSurfaceConnected();
     }
   }
 
   CreateHadronicTimeEvolutionFileIfNecessary();
 }
 
-void BulkDynamicsManager::FinishPerEvent()
-{
+void BulkDynamicsManager::FinishPerEvent() {
   VERBOSE(3) << "FinishPerEvent Bulk Dynamics Manager when used per timestep ...";
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
-
-  JSWARN << "FinishPerEvent Bulk Dynamics Manager when used per timestep ...";
-  JSWARN << "Task Id = " << this_thread::get_id();
 
   JetScapeModuleBase::FinishPerEventTasks();
 
@@ -388,8 +378,8 @@ void BulkDynamicsManager::FinishPerEvent()
         std::transform(hadrons.begin(), hadrons.end(), std::back_inserter(shared_hadrons),
                     [](const Hadron& h) { return std::make_shared<Hadron>(h); });
         // print the number of hadrons in the event
-        JSWARN << "Number of hadrons in event in FinishPerEventTasks = " << shared_hadrons.size();
-        
+        VERBOSE(3) << "Number of hadrons in event in FinishPerEventTasks = " << shared_hadrons.size();
+
         // store the hadrons in the BDM_final_state_hadrons_ vector
         BDM_final_state_hadrons_.push_back(shared_hadrons);
       } catch (const linb::bad_any_cast& e) {
@@ -408,13 +398,39 @@ void BulkDynamicsManager::FinishPerEvent()
   store_source_term_hadrons_iso_tau_.clear();
   store_spectator_hadrons_iso_tau_.clear();
   store_hadrons_soft_particlization_.clear();
+  if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr_)) {
+    hadronic_liquefier_ptr_.lock()->ClearTask();
+  }
 
-  //JP: Quick fix, to be discussed, similar to writer, clear is only called for active tasks, so call here directly ...
-  ClearTask();
+  // Set all BDM attached modules back to active
+  for (auto it : GetTaskList()) {
+    auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+    if (dynamic_pointer_cast<SmashInitialConditionWrapper>(module) || 
+        dynamic_pointer_cast<FluidDynamics>(module) || 
+        dynamic_pointer_cast<SoftParticlization>(module) ||
+        dynamic_pointer_cast<Afterburner>(module)) {
+      module->SetActive(true);
+
+      // Set hydro status to NOT_START if it is a FluidDynamics module
+      if (dynamic_pointer_cast<FluidDynamics>(module)) {
+        dynamic_pointer_cast<FluidDynamics>(module)->SetHydroStatus(NOT_START);
+      }
+    }
+  }
+
+  int event_number = GetCurrentEvent();
+  int number_of_events = GetXMLElementInt({"jetscape", "nEvents"});
+  if (SMASH_IC_attached_ && event_number == number_of_events - 1) {
+    VERBOSE(3) << "Last event in BDM, clearing tasks ...";
+    ClearTask();
+  } else if (!SMASH_IC_attached_) {
+    //JP: Quick fix, to be discussed, similar to writer, clear is only called for active tasks, so call here directly ...
+    ClearTask();
+  }
 }
 
 void BulkDynamicsManager::WriteTask(weak_ptr<JetScapeWriter> w) {
-  JSWARN << "BDM hadron printout";
+  VERBOSE(3) << "BDM hadron printout";
   auto f = w.lock();
   if (!f) {
     return;
@@ -422,17 +438,15 @@ void BulkDynamicsManager::WriteTask(weak_ptr<JetScapeWriter> w) {
   if (SMASH_IC_attached_ && !hydro_Cartesian_) {
     // write BDM_final_state_hadrons_ hadrons for all events to file
     f->WriteComment("BDM final state hadrons");
-    for (const auto &event : BDM_final_state_hadrons_) {
-      int i = -1;
-      for (const auto hadron : event) {
-        //f->WriteWhiteSpace("[" + to_string(++i) + "] H");
-        f->Write(hadron);
-      }
+    int i = -1;
+    for (const auto hadron : BDM_final_state_hadrons_.back()) {
+      //f->WriteWhiteSpace("[" + to_string(++i) + "] H");
+      f->Write(hadron);
     }
   }
 }
 
-void BulkDynamicsManager::UpdateEnergyDepositFromModules(int t, double edop){
+void BulkDynamicsManager::UpdateEnergyDepositFromModules(int t, double edop) {
 
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk manager modules found ...";
@@ -443,7 +457,7 @@ void BulkDynamicsManager::UpdateEnergyDepositFromModules(int t, double edop){
   }
 }
 
-void BulkDynamicsManager::GetEnergyDensityFromModules(int t, double &edensity){
+void BulkDynamicsManager::GetEnergyDensityFromModules(int t, double &edensity) {
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk manager modules found ...";
     exit(-1);
@@ -454,7 +468,7 @@ void BulkDynamicsManager::GetEnergyDensityFromModules(int t, double &edensity){
 }
 
 void BulkDynamicsManager::GetHydroInfoFromModules(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
-						    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr){
+						    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr) {
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk manager modules found ...";
     exit(-1);
@@ -473,7 +487,7 @@ void BulkDynamicsManager::GetHydroInfoFromModules(Jetscape::real t, Jetscape::re
     GetBulkInfo(t,x,y,z,fluid_cell_info_ptr);
 }
 
-void BulkDynamicsManager::GetHydroStartTimeFromModules(double &tau0){
+void BulkDynamicsManager::GetHydroStartTimeFromModules(double &tau0) {
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk manager modules found ...";
     exit(-1);
@@ -484,7 +498,7 @@ void BulkDynamicsManager::GetHydroStartTimeFromModules(double &tau0){
 }
 
 void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
-                                                    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr){
+                                                    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr) {
 
   bool validHydro = false;
 
@@ -564,7 +578,7 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
 
 void BulkDynamicsManager::InfoWrapper(
   std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,
-  std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){
+  std::unique_ptr<BulkMediaInfo> &bulk_info_ptr) {
   fluid_cell_info_ptr = make_unique<FluidCellInfo>();
   fluid_cell_info_ptr->temperature = bulk_info_ptr->temperature;
   fluid_cell_info_ptr->pressure = bulk_info_ptr->pressure;
@@ -616,8 +630,8 @@ void BulkDynamicsManager::DetermineHadronsCrossingIsoTau(
       RemoveHadron(had);
     }
   }
-  //JSINFO << "Found " << i << " hadrons to remove from SMASH";
-  //JSINFO << "Size remove_hadrons_for_timestep_ = " << remove_hadrons_for_timestep_.size();
+  VERBOSE(3) << "Found " << i << " hadrons to remove from SMASH";
+  VERBOSE(3) << "Size remove_hadrons_for_timestep_ = " << remove_hadrons_for_timestep_.size();
 }
 
 void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool &AllHadronsCrossedIsoTau) {
@@ -715,7 +729,6 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
 
 void BulkDynamicsManager::CreateHadronicSourceTermsForHydroInitializationIsoTau() {
   if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr_)) {
-    //JSWARN << "Create a hydro source with " << store_source_term_hadrons_iso_tau_.size() << " hadrons";
     // Convert std::shared_ptr<Jetscape::Hadron> to raw pointers and store in a vector
     std::vector<Jetscape::Hadron> hadron_objects;
     for (const auto& ptr : store_source_term_hadrons_iso_tau_) {

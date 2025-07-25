@@ -1331,7 +1331,7 @@ void JetScape::Exec() {
     
     if (ClockUsed())
     {
-      JSWARN << "Clock is used and FinishPerEventTasks is called!";
+      VERBOSE(3) << "Clock is used and FinishPerEventTasks is called!";
       JetScapeModuleBase::FinishPerEventTasks();
     }
 
@@ -1340,14 +1340,14 @@ void JetScape::Exec() {
       auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
       if (module) {
         if (module->GetActive()) {
-          JSWARN << "IsActive(true) = " << module->GetId();
+          VERBOSE(3) << "IsActive(true) = " << module->GetId();
         } else {
-          JSWARN << "IsActive(false) = " << module->GetId();
+          VERBOSE(3) << "IsActive(false) = " << module->GetId();
         }
       }
     }
 
-    JSWARN << "Start the writing process ...";
+    VERBOSE(3) << "Start the writing process ...";
     // collect module header data
     for (auto w : vWriter) {
       auto f = w.lock();
@@ -1380,7 +1380,7 @@ void JetScape::Exec() {
     }
 
     // Now clean up, only affects active tasks
-    JSWARN << "Clearing tasks ...";
+    VERBOSE(3) << "Clearing tasks ...";
     JetScapeModuleBase::ClearTasks();
 
     //have to call this after writer and call explcitly the clear functions
@@ -1388,7 +1388,7 @@ void JetScape::Exec() {
     //have to think a bit more how to make this workflow more consistent ...
 
     IncrementCurrentEvent();
-    JSWARN << "End of Event " << i;
+    VERBOSE(3) << "End of Event " << i;
   }
 }
 

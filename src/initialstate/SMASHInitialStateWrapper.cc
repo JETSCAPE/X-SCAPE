@@ -168,7 +168,7 @@ void SmashInitialConditionWrapper::ExecuteTask() {
 }
 
 void SmashInitialConditionWrapper::InitPerEvent() {
-  JSWARN << "Initializing SMASH initial condition event...";
+  VERBOSE(3) << "Initializing SMASH initial condition event...";
   smash_collider_experiment_->initialize_new_event();
 }
 

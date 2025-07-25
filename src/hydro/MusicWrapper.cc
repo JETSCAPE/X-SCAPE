@@ -407,11 +407,11 @@ void MpiMusic::CalculateTime() {
 void MpiMusic::ExecTime() {
   VERBOSE(2) << "MpiMusic::ExecTime() main Clock = "
              << GetMainClock()->GetCurrentTime() << " fm/c ...";
-  JSWARN << "Energy sources =" << hydro_source_terms_ptr->get_total_E_of_sources();
+  VERBOSE(2) << "Energy sources =" << hydro_source_terms_ptr->get_total_E_of_sources();
   
   // Pass the FO surface for the current time step to framework
   if (hydro_status == INITIALIZED) {
-    JSINFO << "Passing hydro surface cells to JETSCAPE ... ";
+    VERBOSE(2) << "Passing hydro surface cells to JETSCAPE ... ";
     PassHydroSurfaceToFramework();
   }
 }
