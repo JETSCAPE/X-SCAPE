@@ -175,10 +175,17 @@ double HadronicLiquefier::compute_drop_kernel_normalization(
 
         const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
                                  pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
-        const double rapidity =
-            0.5 * log((pmu_i[0] + pmu_i[3]) / (pmu_i[0] - pmu_i[3]));
+        if (mass <= 1e-16) {
+          continue; // skip massless particles
+        }
         const double mT =
-            sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
+          sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
+        double rapidity;
+        if (mT >= 1e-16) {
+          rapidity = std::asinh(pmu_i[3] / mT);
+        } else {
+          rapidity = 0.5 * log((pmu_i[0] + pmu_i[3]) / (pmu_i[0] - pmu_i[3]));
+        }
 
         if (covariant_smearing_ && !hydro_Cartesian_) {
           const double ux = pmu_i[1] / mass;
@@ -250,10 +257,17 @@ void HadronicLiquefier::get_source_energy(
 
     const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
                              pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
-    const double rapidity =
-        0.5 * log((pmu_i[0] + pmu_i[3]) / (pmu_i[0] - pmu_i[3]));
+    if (mass <= 1e-16) {
+      continue; // skip massless particles
+    }
     const double mT =
         sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
+    double rapidity;
+    if (mT >= 1e-16) {
+      rapidity = std::asinh(pmu_i[3] / mT);
+    } else {
+      rapidity = 0.5 * log((pmu_i[0] + pmu_i[3]) / (pmu_i[0] - pmu_i[3]));
+    }
 
     if (covariant_smearing_ && !hydro_Cartesian_) {
       const double ux = pmu_i[1] / mass;
@@ -277,7 +291,12 @@ void HadronicLiquefier::get_source_energy(
     } else if (!covariant_smearing_ && hydro_Cartesian_) {
       value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff);
     }
-    value_kernel /= drop_i.get_normalization();
+    double norm = drop_i.get_normalization();
+    if (norm <= 0.0 || std::isnan(norm)) {
+      JSWARN << "Normalization is zero or NaN for a hadron droplet. Skipping.";
+      continue;
+    }
+    value_kernel /= norm;
 
     jmu[0] += value_kernel * mT * cosh(rapidity - eta);
     jmu[1] += value_kernel * pmu_i[1];
@@ -345,10 +364,17 @@ double HadronicLiquefier::get_source_quantity(const double tau,
 
     const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
                              pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
-    const double rapidity =
-        0.5 * log((pmu_i[0] + pmu_i[3]) / (pmu_i[0] - pmu_i[3]));
+    if (mass <= 1e-16) {
+      continue; // skip massless particles
+    }
     const double mT =
         sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
+    double rapidity;
+    if (mT >= 1e-16) {
+      rapidity = std::asinh(pmu_i[3] / mT);
+    } else {
+      rapidity = 0.5 * log((pmu_i[0] + pmu_i[3]) / (pmu_i[0] - pmu_i[3]));
+    }
 
     if (covariant_smearing_ && !hydro_Cartesian_) {
       const double ux = pmu_i[1] / mass;
@@ -372,7 +398,12 @@ double HadronicLiquefier::get_source_quantity(const double tau,
     } else if (!covariant_smearing_ && hydro_Cartesian_) {
       value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff);
     }
-    value_kernel /= drop_i.get_normalization();
+    double norm = drop_i.get_normalization();
+    if (norm <= 0.0 || std::isnan(norm)) {
+      JSWARN << "Normalization is zero or NaN for a hadron droplet. Skipping.";
+      continue;
+    }
+    value_kernel /= norm;
     result += value_kernel * quantity_smear;
   }
   return result;
