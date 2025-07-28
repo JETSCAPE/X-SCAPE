@@ -279,7 +279,7 @@ void BulkDynamicsManager::ExecTime() {
       // check the hadrons in store_spectator_hadrons_iso_tau_ and store_hadrons_soft_particlization_ if they have times larger than the current time
       // and smaller than the current time + deltaT, then add them to the new_hadrons_for_timestep_ list
       if (!ignore_spectator_hadrons_) {
-        for (const auto& had : store_source_term_hadrons_iso_tau_) {
+        for (const auto& had : store_spectator_hadrons_iso_tau_) {
           const FourVector r = had->x_in();
           const double t = r.t();
 
