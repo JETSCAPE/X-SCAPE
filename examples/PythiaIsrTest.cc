@@ -38,7 +38,8 @@
 #endif
 
 // User modules derived from jetscape framework clasess ...
-#include "Matter.h"
+// #include "Matter.h"
+#include "DummySplit.h"
 #include "Brick.h"
 #include "PythiaIsrGun.h"
 #include "iColoredHadronization.h"
@@ -148,9 +149,11 @@ int main(int argc, char** argv)
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
   jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax);
-  auto matter = make_shared<Matter> ();
+  // auto matter = make_shared<Matter> ();
+  auto dummySplit = make_shared<DummySplit> ();
 
-  jloss->Add(matter);
+  // jloss->Add(matter);
+  jloss->Add(dummySplit);
   jlossmanager->Add(jloss);
   jetscape->Add(jlossmanager);
 

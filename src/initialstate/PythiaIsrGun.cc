@@ -156,6 +156,10 @@ void PythiaIsrGun::InitTask() {
     throw std::runtime_error("Pythia init() failed.");
   }
 
+  // After initialization check pythia settings
+  std::cout << "Pythia settings after initialization:" << std::endl;
+  settings.listChanged();
+
     std::ofstream sigma_printer;
     sigma_printer.open(printer, std::ios::trunc);
 
