@@ -169,13 +169,13 @@ int main(int argc, char** argv)
   std::string outputFilename = jetscape->GetXMLElementText({"outputFilename"});
 
   auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
-  auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
+  // auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
   writer->SetOutputFileName(outputFilename + string("_final_state_partons.dat"));
-  writer2->SetOutputFileName(outputFilename + string("_final_state_hadrons.dat"));
+  // writer2->SetOutputFileName(outputFilename + string("_final_state_hadrons.dat"));
   writer->SetId("FinalStatePartonsAscii"); //for task search test ...
-  writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
+  // writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
   jetscape->Add(writer);
-  jetscape->Add(writer2);
+  // jetscape->Add(writer2);
 
   auto writerIsr= make_shared<JetScapeWriterIsrAscii> (outputFilename + "_isr.dat");
   writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
