@@ -145,6 +145,21 @@ void SmashWrapper::CalculateTimeTask() {
   VERBOSE(2) << "SMASH afterburner got " << hadrons_to_add.size()  << " hadrons in this timestep.";
   VERBOSE(2) << "SMASH afterburner removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
 
+  // Check if absolute value of position and momentum vectors can be computed without error in sqrt, otherwise remove hadrons from 
+  // hadrons_to_add and hadrons_to_remove, compute the absolute value of each jetscape hadron
+  hadrons_to_add.erase(
+    std::remove_if(hadrons_to_add.begin(), hadrons_to_add.end(),
+                   [](const std::shared_ptr<Jetscape::Hadron>& h) {
+                       return !h->has_valid_momentum();
+                   }),
+    hadrons_to_add.end());
+  hadrons_to_remove.erase(
+    std::remove_if(hadrons_to_remove.begin(), hadrons_to_remove.end(),
+                   [](const std::shared_ptr<Jetscape::Hadron>& h) {
+                       return !h->has_valid_momentum();
+                   }),
+    hadrons_to_remove.end());
+
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
   if (!only_final_decays_) {
     smash::ParticleList add_list = get_smash_plist_from_JS_hadrons(hadrons_to_add);

@@ -409,6 +409,7 @@ public:
   int baryon_number() const { return (baryon_number_); }
   int strangeness() const { return (strangeness_); }
   bool participant() const { return (participant_); }
+  bool has_valid_momentum() const;
 
 protected:
   double width_;
