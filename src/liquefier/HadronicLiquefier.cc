@@ -479,6 +479,30 @@ Jetscape::real HadronicLiquefier::get_dropletlist_total_energy() const {
   return (total_E);
 }
 
+Jetscape::real HadronicLiquefier::get_dropletlist_net_baryon_number() const {
+  Jetscape::real net_baryon_number = 0.0;
+  for (const auto &drop_i : hadron_droplets_list) {
+    net_baryon_number += drop_i.get_baryon_number();
+  }
+  return (net_baryon_number);
+}
+
+Jetscape::real HadronicLiquefier::get_dropletlist_net_electric_charge() const {
+  Jetscape::real net_electric_charge = 0.0;
+  for (const auto &drop_i : hadron_droplets_list) {
+    net_electric_charge += drop_i.get_electric_charge();
+  }
+  return (net_electric_charge);
+}
+
+Jetscape::real HadronicLiquefier::get_dropletlist_net_strangeness() const {
+  Jetscape::real net_strangeness = 0.0;
+  for (const auto &drop_i : hadron_droplets_list) {
+    net_strangeness += drop_i.get_strangeness();
+  }
+  return (net_strangeness);
+}
+
 void HadronicLiquefier::ClearTask() { hadron_droplets_list.clear(); }
 
 }; // namespace Jetscape

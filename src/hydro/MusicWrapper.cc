@@ -378,9 +378,17 @@ void MpiMusic::InitializeHydroEnergyProfile() {
   JSINFO << "Initial density profile dx = " << dx << " fm";
   hydro_status = INITIALIZED;
   JSINFO << "Number of source terms: "
-         << hydro_source_terms_ptr->get_number_of_sources()
-         << ", total E = " << hydro_source_terms_ptr->get_total_E_of_sources()
+         << hydro_source_terms_ptr->get_number_of_sources();
+  JSINFO << "Total E sources = "
+         << hydro_source_terms_ptr->get_total_E_of_sources()
          << " GeV.";
+  JSINFO << "Total net baryon number of sources = "
+         << hydro_source_terms_ptr->get_net_baryon_number_of_sources()
+         << ", total net electric charge = "
+         << hydro_source_terms_ptr->get_net_electric_charge_of_sources()
+         << ", total net strangeness = "
+         << hydro_source_terms_ptr->get_net_strangeness_of_sources()
+         << ".";
 }
 
 void MpiMusic::EvolveHydroUpto(const double tauEnd) {

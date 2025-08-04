@@ -229,7 +229,29 @@ public:
   */
   void clear_hadron_droplet_list() { hadron_droplets_list.clear(); }
 
+  /**
+   * Function to get the total energy of the droplets in the list.
+   * This is used to check the energy conservation in the hydro.
+  */
   Jetscape::real get_dropletlist_total_energy() const;
+
+  /**
+   * Function to get the net baryon number of the droplets in the list.
+   * This is used to check the baryon number conservation in the hydro.
+   */
+  Jetscape::real get_dropletlist_net_baryon_number() const;
+
+  /**
+   * Function to get the net electric charge of the droplets in the list.
+   * This is used to check the electric charge conservation in the hydro.
+   */
+  Jetscape::real get_dropletlist_net_electric_charge() const;
+
+  /**
+   * Function to get the net strangeness of the droplets in the list.
+   * This is used to check the strangeness conservation in the hydro.
+   */
+  Jetscape::real get_dropletlist_net_strangeness() const;
 
   virtual void ClearTask();
 };

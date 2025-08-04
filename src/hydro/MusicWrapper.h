@@ -89,6 +89,39 @@ public:
     return total_E;
   }
 
+  double get_net_baryon_number_of_sources() const {
+    double net_baryon_number = 0.0;
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      net_baryon_number += 0.0;
+    } else {
+      net_baryon_number += 
+                (hadronic_liquefier_ptr.lock()->get_dropletlist_net_baryon_number());
+    }
+    return net_baryon_number;
+  }
+
+  double get_net_electric_charge_of_sources() const {
+    double net_electric_charge = 0.0;
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      net_electric_charge += 0.0;
+    } else {
+      net_electric_charge += 
+                (hadronic_liquefier_ptr.lock()->get_dropletlist_net_electric_charge());
+    }
+    return net_electric_charge;
+  }
+
+  double get_net_strangeness_of_sources() const {
+    double net_strangeness = 0.0;
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      net_strangeness += 0.0;
+    } else {
+      net_strangeness += 
+                (hadronic_liquefier_ptr.lock()->get_dropletlist_net_strangeness());
+    }
+    return net_strangeness;
+  }
+
   //! this function returns the energy source term J^\mu at a given point
   //! (tau, x, y, eta_s)
   void get_hydro_energy_source(const double tau, const double x, const double y,
