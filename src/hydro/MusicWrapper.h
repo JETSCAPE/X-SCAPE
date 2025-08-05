@@ -250,6 +250,16 @@ public:
   bool update_music_input_parameter(const std::string& filename,
                                   const std::string& key,
                                   int new_value);
+
+  // Override the SetHydroStartTime function to set the initial time for MUSIC
+  void SetHydroStartTime(double tau0) {
+    VERBOSE(3) << "Setting hydro start time in MpiMusic to " << tau0;
+    FluidDynamics::SetHydroStartTime(tau0);
+    if (music_hydro_ptr) {
+      VERBOSE(3) << "Setting Initial_time_tau_0 in MUSIC to " << tau0;
+      music_hydro_ptr->set_parameter("Initial_time_tau_0", tau0);
+    }
+  }
 };
 
 #endif // MUSICWRAPPER_H

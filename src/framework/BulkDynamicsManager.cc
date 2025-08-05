@@ -227,6 +227,21 @@ void BulkDynamicsManager::ExecTime() {
       // SMASH IC run
       GetMainClock()->SetDeltaT(deltaT_main_clock_);
 
+      for(auto it : GetTaskList()) {
+        auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+        if (dynamic_pointer_cast<FluidDynamics>(module)) {
+          auto fluid_dynamics = dynamic_pointer_cast<FluidDynamics>(module);
+          if (fluid_dynamics) {
+            fluid_dynamics->SetHydroStartTime(
+              IC_particle_extraction_tau_-GetMainClock()->GetDeltaT()
+            );
+          } else {
+            JSWARN << "FluidDynamics module not found in task list!";
+            exit(1);
+          }
+        }
+      }
+
       VERBOSE(3) << "SMASH IC is empty, resetting time to " << IC_particle_extraction_tau_-GetMainClock()->GetDeltaT();
       GetMainClock()->ResetToTime(IC_particle_extraction_tau_-GetMainClock()->GetDeltaT());
       VERBOSE(3) << "Time reset to " << GetMainClock()->GetCurrentTime();
@@ -268,8 +283,8 @@ void BulkDynamicsManager::ExecTime() {
           }
         }
 
-        VERBOSE(3) << "Hydro is done, resetting time to " << IC_particle_extraction_tau_;
-        GetMainClock()->ResetToTime(IC_particle_extraction_tau_);
+        VERBOSE(3) << "Hydro is done, resetting time to " << IC_particle_extraction_tau_-GetMainClock()->GetDeltaT();
+        GetMainClock()->ResetToTime(IC_particle_extraction_tau_-GetMainClock()->GetDeltaT());
         VERBOSE(3) << "Time reset to " << GetMainClock()->GetCurrentTime();
         VERBOSE(3) << "End of the next timestep is " << GetMainClock()->GetCurrentTime()+GetMainClock()->GetDeltaT();
       }

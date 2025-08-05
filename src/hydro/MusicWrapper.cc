@@ -43,6 +43,7 @@ MpiMusic::MpiMusic() {
   SetId("MUSIC");
   hydro_source_terms_ptr =
       std::shared_ptr<HydroSourceJETSCAPE>(new HydroSourceJETSCAPE());
+  hydro_source_terms_ptr->set_source_tau_max(1000.0);
 }
 
 MpiMusic::~MpiMusic() {}

@@ -180,6 +180,11 @@ public:
      */
   void GetHydroStartTime(double &tau0) { tau0 = hydro_tau_0; }
 
+  /** Set the start time (or tau) for hydrodynamic evolution.
+     @param tau0 Start time (or tau) for hydrodynamic evolution.
+     */
+  virtual void SetHydroStartTime(double tau0) { hydro_tau_0 = tau0; }
+
   /** @return End time (or tau) for hydrodynamic evolution.
      */
   Jetscape::real GetHydroEndTime() const { return (hydro_tau_max); }
