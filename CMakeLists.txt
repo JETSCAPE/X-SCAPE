@@ -95,6 +95,8 @@ if (USE_SMASH)
   find_package(SMASH)
   if(${SMASH_FOUND})
     include_directories(${SMASH_INCLUDE_DIR})
+  else()
+    message(FATAL_ERROR "SMASH is not found. Ensure SMASH_DIR is properly set.")
   endif(${SMASH_FOUND})
 endif (USE_SMASH)
 
