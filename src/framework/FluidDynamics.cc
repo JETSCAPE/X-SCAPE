@@ -54,6 +54,8 @@ void FluidDynamics::Init() {
     exit(-1);
   }
   //Check if pre-equilibrium module is needed and set pointer
+  pre_eq_ptr =
+      JetScapeSignalManager::Instance()->GetPreEquilibriumPointer().lock();
   bool needs_pre_eq = true;
   if (GetId()=="MUSIC"){
     int hydro_profile = GetXMLElementDouble({"Hydro", "MUSIC", "InitialProfile"});
