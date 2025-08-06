@@ -422,7 +422,7 @@
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
-      <!--InitialProfile = 42 for Trento + Pre-equilibrium, 13 for the 3D Glauber initial condition-->
+      <!--InitialProfile = 42 for Trento + Pre-equilibrium or IPGlasma, 13 for the 3D Glauber initial condition-->
       <InitialProfile>42</InitialProfile>
       <!--beastMode = 0: double precision, constant time step-->
       <!--beastMode = 1: float precision, constant time step-->

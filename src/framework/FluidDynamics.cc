@@ -53,12 +53,24 @@ void FluidDynamics::Init() {
            << "jetscape->Add(trento);";
     exit(-1);
   }
-
+  //Check if pre-equilibrium module is needed and set pointer
   pre_eq_ptr =
       JetScapeSignalManager::Instance()->GetPreEquilibriumPointer().lock();
-  if (!pre_eq_ptr and GetId()!="Brick") {
-    JSWARN << "No Pre-equilibrium module";
-    exit(-1);
+  bool needs_pre_eq = true;
+  if (GetId()=="MUSIC"){
+    int hydro_profile = GetXMLElementDouble({"Hydro", "MUSIC", "InitialProfile"});
+    if (hydro_profile!=42){needs_pre_eq = false;} //Only 42 needs pre-equilibrium
+  }
+  else if (GetId()=="Brick"){needs_pre_eq = false;} 
+  else {
+    JSWARN << "Unrecognized hydro module id:" << GetId()
+           << "Assuming pre_equilibrium moudle is needed.";
+  }
+  // If pre-equilibrium module is needed but not attached, warn and exit
+  if (needs_pre_eq and !pre_eq_ptr){
+    JSWARN << "No pre-equilibrium module attached."
+           << "Check your Hydro InitialProfile.";
+           exit(-1);
   }
 
   InitializeHydro(parameter_list);
