@@ -123,6 +123,11 @@ void iMATTER::InitTask()
 
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
+    if (time < GetMaxT() - 1e-10) {
+        JSINFO << BOLDYELLOW << "iMatter::DoEnergyLoss called at time = " << time
+               << " but the maximum time is " << GetMaxT() << ", skipping this call.";
+        return;
+    }
     
     bool IsRotated = false;
 
