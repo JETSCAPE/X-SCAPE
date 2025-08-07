@@ -71,7 +71,7 @@ void PythiaIsrGun::InitTask() {
   //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
   //readString("HardQCD:qqbar2ccbar = on");
   readString("HadronLevel:Decay = off");
-  readString("HadronLevel:all = on");
+  readString("HadronLevel:all = off");
   readString("PartonLevel:ISR = off");
   readString("PartonLevel:MPI = on");
   //readString("PartonLevel:FSR = on");

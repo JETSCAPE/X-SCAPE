@@ -464,12 +464,16 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             // The direction is determined from the Direction of the current 
             // double SiblingPT2  = -(zb_frac * (( t1 + zb_frac * pT2) / z_frac - t ) + t2) / z_frac;
             // double SiblingPT2  = zb_frac / z_frac * t - zb_frac * t1 / (z_frac * z_frac) - t2 / z_frac - zb_frac * zb_frac * pT2 / (z_frac * z_frac);
-            double SiblingPT2  = -(zb_frac / z_frac / z_frac) * t1 + (zb_frac / z_frac) * t - t2 / z_frac;
+            // double SiblingPT2  = -(zb_frac / z_frac / z_frac) * t1 + (zb_frac / z_frac) * t - t2 / z_frac;
+            double SiblingPT2 = z_frac * zb_frac * t - zb_frac * t1 - z_frac * t2;
 
 
             
             double SiblingPT   = 0.0;
             if (SiblingPT2 > 0) SiblingPT = std::sqrt(SiblingPT2);
+            if (SiblingPT2 > 0 && SiblingPT2 < pz * pz) {
+                SiblingPT = std::sqrt(SiblingPT2);
+            }
             else{ 
                 if(NumbSampling > 100)
                 {
@@ -494,15 +498,16 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             double SiblingPy   = l_perp_y * SiblingPT;
             double ParentEn    =  e + SiblingEn;
             double ParentPz    = Direction * pz + SiblingPz;
-            double ParentPx    = SiblingPx;
-            double ParentPy    = SiblingPy;
+            double ParentPx    = 0.0;
+            double ParentPy    = 0.0;
 
 
             FourVector p_Sibling(SiblingPx,SiblingPy,SiblingPz,SiblingEn);
             FourVector p_Parent ( ParentPx, ParentPy, ParentPz, ParentEn);
             
             Current_Status = Current.pstat() + 900;
-            RotationVector = p_Parent;
+            // Rotation vector is the one that leads to Current parton have -SiblingPx - SiblingPy
+            RotationVector = FourVector(SiblingPx, SiblingPy, std::sqrt(pz * pz - SiblingPT2), 0.0);
 
             if( -pIn[in].plabel() < NPartonPerShower ){
                 Current_Label = NPartonPerShower * pIn[in].plabel() - 1;  
@@ -529,7 +534,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             Hard->SetNISRShower(Hard->GetNISRShower() + 1);
             // Hard->max_color += 1;
             MAX_COLOR += 1;
-            Parton Sibling(Current_Label+1, pid_Sib , 0 + Current_Status, p_Sibling, Current_Location) ;
+            Parton Sibling(Current_Label+1, pid_Sib , 0 + Current_Status + 1, p_Sibling, Current_Location) ;
             Sibling.set_max_color(Hard->GetMax_Color() + Hard->GetNISRShower() * Hard->GetMax_ColorPerShower());
             Sibling.set_color(Color_Sib);
             Sibling.set_anti_color(AntiColor_Sib);
@@ -544,7 +549,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             VERBOSE_OUTPUT("Sibling",Sibling);
 
 
-            Parton Parent(Current_Label, pid_Par , -900 + Current_Status, p_Parent, Current_Location) ;
+            Parton Parent(Current_Label, pid_Par , -900 + Current_Status + 1, p_Parent, Current_Location) ;
             Parent.set_max_color(MAX_COLOR);
             Parent.set_color(Color_Par);
             Parent.set_anti_color(AntiColor_Par);
@@ -577,9 +582,13 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 // std::cin >> blurb;
             } /// usual dump routine for naned out partons
 
-            pOut.push_back(pIn[in]);
+            // pOut.push_back(pIn[in]);
             pOut.push_back(Sibling);
             pOut.push_back(Parent);
+            // If The parton is the parent parton we set the latest parton
+            {
+                FinalRotation->SetLatestInitialParton(Parent.px(),Parent.py(),Parent.pz(),std::abs(Parent.pz()), Parent.plabel());
+            }
             
             int iout = pOut.size()-1 ;
             
@@ -644,11 +653,7 @@ bool iMATTER::RotateShower(Parton& pIn){
 
         velocity[0] = std::sqrt(std::pow(velocity[1], 2) + std::pow(velocity[2], 2) + std::pow(velocity[3], 2));
         pIn.set_jet_v(velocity);
-        if(std::abs(p_Parton.x()) < error && std::abs(p_Parton.y()) < error && pIn.pstat() + 899 == Current_Status) 
-        {
-            FinalRotation->SetLatestInitialParton(pIn.px(),pIn.py(),pIn.pz(),std::abs(pIn.pz()), pIn.plabel());
-        }
-        VERBOSE(1) << "After Rotation parton pstat = " << pIn.pstat() 
+        VERBOSE(0) << "After Rotation parton pstat = " << pIn.pstat() 
                    << " plabel = " << pIn.plabel()
                    << " px = " << pIn.px()
                    << " py = " << pIn.py()
@@ -724,7 +729,7 @@ double iMATTER::generate_Forward_virt(Parton p, FourVector location, double max_
     return(t);
 }
     
-double iMATTER::invert_Forward_sudakov( double value , double min_t, double max_t)
+double iMATTER::invert_Forward_sudakov( const double value , double min_t, double max_t)
 {
     
     
@@ -797,7 +802,7 @@ double iMATTER::invert_Forward_sudakov( double value , double min_t, double max_
     return(abs_t); // returning a time like virtuality t
     
 } 
-double iMATTER::invert_Backward_sudakov( double value , double min_t, double max_t)
+double iMATTER::invert_Backward_sudakov( const double value , double min_t, double max_t)
 {
     
     
@@ -911,7 +916,7 @@ double iMATTER::Backward_Sudakov(double t1, double t2)
     return Forward_Sudakov(t1,t2) / PDF(Current.pid(),x2,t2);
 }
 
-double iMATTER::invert_zDist( double value, std::function<double(double,double)> Dist, double t, double denom)
+double iMATTER::invert_zDist(const double value, std::function<double(double,double)> Dist, double t, double denom)
 {
     if ( (value<=0)||(value>=1) )
     {
