@@ -582,7 +582,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 // std::cin >> blurb;
             } /// usual dump routine for naned out partons
 
-            // pOut.push_back(pIn[in]);
+            pOut.push_back(pIn[in]);
             pOut.push_back(Sibling);
             pOut.push_back(Parent);
             // If The parton is the parent parton we set the latest parton
