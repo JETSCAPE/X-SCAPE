@@ -165,6 +165,7 @@ void iColoredHadronization::DoHadronization(
   }
   double NHardScatterings = double(ini->pTHat.size());
 
+  std::ofstream remnant_energies("remnant_energies.txt", std::ios::app);
   for (unsigned int ipart = 0; ipart < Remnants.size(); ++ipart) {
       auto Rem = Remnants[ipart];
       double Pz, Px, Py, En;
@@ -179,6 +180,7 @@ void iColoredHadronization::DoHadronization(
         Py = MCGsecond->Get_Targ_Remnant()[2] / double(NHardScatterings);
         Pz = MCGsecond->Get_Targ_Remnant()[3] / double(NHardScatterings);
       }
+      remnant_energies << GetCurrentEvent() << ", " << En << std::endl;
 
       // std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En = "<< En << " " << NHardScatterings <<  std::endl;
 
