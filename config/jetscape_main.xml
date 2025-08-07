@@ -428,6 +428,7 @@
           <covariant_kernel>1</covariant_kernel> <!-- 0: use Gaussian kernel, 1: use covariant kernel -->
           <sigma_transverse>0.5</sigma_transverse> <!-- smearing width in transverse direction -->
           <sigma_longitudinal>0.5</sigma_longitudinal> <!-- smearing width in longitudinal direction (only for Gaussian kernel) -->
+          <gamma_factor_max>100.0</gamma_factor_max> <!-- maximum gamma factor for the covariant kernel -->
       </HadronicLiquefier>
   </Liquefier>
 

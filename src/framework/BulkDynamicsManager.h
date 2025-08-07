@@ -169,6 +169,8 @@ private:
 
   /** Store the hadrons from the soft particlization, when the hydro runs in
    * Milne coordinates. Then they are fed into SMASH after the hydro has run.
+   * Add also hadrons that have a too large gamma factor to be added to the
+   * hydro evolution.
   */
   std::vector<shared_ptr<Hadron>> store_hadrons_soft_particlization_;
 
@@ -222,14 +224,6 @@ private:
   /** Function to print the hadronic content of the time evolution to the file
    */
   void PrintHadronicTimeEvolutionToFileIfNecessary();
-
-  /** Check if a hadron was added in the previous timestep.
-   * This function is needed for the rare case that SMASH can not find a hadron
-   * that is supposed to be removed and prevents the addition of the hadron to 
-   * source terms in subsequent timesteps.
-   */
-  bool CheckIfHadronWasAddedInPreviousTimestep(const shared_ptr<Hadron> &hadron,
-      const int list_to_check);
 
   /**
    * Is the hydro in cartesian or not? Needed to decide whether SMASH IC has to 

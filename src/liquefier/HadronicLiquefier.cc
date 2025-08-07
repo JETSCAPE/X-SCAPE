@@ -43,6 +43,7 @@ HadronicLiquefier::HadronicLiquefier(bool covariant, double sigma_transverse,
   dy_ = 2. * yMax_ / (Ny_-1.);
   dz_ = 2. * zMax_ / (Nz_-1.);
   hydro_Cartesian_ = hydro_Cartesian;
+  gamma_factor_max_ = 5.0;
 }
 
 void HadronicLiquefier::InitializeParameters() {
@@ -58,6 +59,9 @@ void HadronicLiquefier::InitializeParameters() {
       {"Liquefier", "HadronicLiquefier", "sigma_transverse"});
   sigma_longitudinal_ = JetScapeXML::Instance()->GetElementDouble(
       {"Liquefier", "HadronicLiquefier", "sigma_longitudinal"});
+
+  gamma_factor_max_ = JetScapeXML::Instance()->GetElementDouble(
+      {"Liquefier", "HadronicLiquefier", "gamma_factor_max"});
 
   // get the grid specifications from the initial state module, which are
   // also used in the hydro evolution
@@ -430,11 +434,71 @@ double HadronicLiquefier::get_source_rhos(const double tau, const double x,
   return get_source_quantity(tau, x, y, eta, qtype);
 }
 
-void HadronicLiquefier::add_hydro_sources_hadrons(std::vector<Hadron> &hIn) {
+bool HadronicLiquefier::gamma_factor_too_large_check(const Hadron &hadron) const {
+  auto x_init = hadron.x_in();
+  auto p_init = hadron.p_in();
+  // compute the hadron mass and rapidity
+  std::array<double, 4> pmu_i = {
+    static_cast<double>(p_init.t()),
+    static_cast<double>(p_init.x()),
+    static_cast<double>(p_init.y()),
+    static_cast<double>(p_init.z())};
+    
+  const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
+    pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
+  if (mass <= 1e-16) {
+    return true; // skip massless particles
+  }
+  const double eta_s =
+      0.5 * log((x_init.t() + x_init.z()) / (x_init.t() - x_init.z()));
+  const double mT =
+      sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
+  double rapidity;
+  if (mT >= 1e-16) {
+    rapidity = std::asinh(pmu_i[3] / mT);
+  } else {
+    rapidity = 0.5 * log((pmu_i[0] + pmu_i[3]) / (pmu_i[0] - pmu_i[3]));
+  }
+
+  double gamma = 1.0;
+  if (!hydro_Cartesian_) {
+    const double ux = pmu_i[1] / mass;
+    const double uy = pmu_i[2] / mass;
+    const double peta = mT * sinh(rapidity - eta_s);
+    const double ueta = peta / mass;
+    gamma = mT * cosh(rapidity - eta_s) / mass;
+  } else {
+    const double ux = pmu_i[1] / mass;
+    const double uy = pmu_i[2] / mass;
+    const double uz = pmu_i[3] / mass;
+    gamma = mT * cosh(rapidity - eta_s) / mass;
+  }
+
+  // Check if the gamma factor is larger than the maximum allowed value
+  if (gamma > gamma_factor_max_) {
+    VERBOSE(3) << "HadronicLiquefier: Gamma factor too large for hadron with "
+              << "mass " << mass << ", rapidity " << rapidity
+              << ", eta_s " << eta_s << ", and gamma " << gamma
+              << ". Not added to hydro sources.";
+    return true; // Too large gamma factor, do not add to hydro sources
+  }
+  return false; // Gamma factor is acceptable
+}
+
+std::vector<shared_ptr<Hadron>> HadronicLiquefier::add_hydro_sources_hadrons(std::vector<Hadron> &hIn) {
+  // Create vector to store hadrons not added to the hydro sources
+  std::vector<shared_ptr<Hadron>> hadrons_not_added;
+  
   // Create droplets from the hadrons
   for (const auto &hadron : hIn) {
     auto x_init = hadron.x_in();
     auto p_init = hadron.p_in();
+
+    // Check if the gamma factor is too large for covariant smearing
+    if (covariant_smearing_ && gamma_factor_too_large_check(hadron)) {
+      hadrons_not_added.push_back(make_shared<Hadron>(hadron));
+      continue;
+    }
 
     std::array<double, 4> x_hadron = {0.0, 0.0, 0.0, 0.0};
     if (hydro_Cartesian_) {
@@ -469,6 +533,7 @@ void HadronicLiquefier::add_hydro_sources_hadrons(std::vector<Hadron> &hIn) {
     hadron_droplet.set_normalization(norm);
     hadron_droplets_list.push_back(hadron_droplet);
   }
+  return hadrons_not_added;
 }
 
 Jetscape::real HadronicLiquefier::get_dropletlist_total_energy() const {

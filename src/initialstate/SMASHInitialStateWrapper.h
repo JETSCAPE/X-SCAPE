@@ -33,10 +33,16 @@ class SmashInitialConditionWrapper : public Transport {
 private:
 
   double end_time_ = -1.0;
+  double hadron_property_tolerance_ = 1e-3; // Tolerance for hadron properties
   shared_ptr<smash::Experiment<smash::ColliderModus>> smash_collider_experiment_;
 
   /// Convert Jetscape (JS) hadron list to smash particle list
   smash::ParticleList get_smash_plist_from_JS_hadrons(const std::vector<shared_ptr<Hadron>>& JS_hadrons);
+
+  /// Function to find SMASH hadrons and return the exact hadron list, needed
+  /// due to accuracy differences in momentum and position between SMASH and Jetscape
+  smash::ParticleList find_smash_hadrons_and_get_exact_hadron_list(
+    const std::vector<shared_ptr<Hadron>>& JS_hadrons);
 
   std::vector<shared_ptr<Hadron>> TestHadronList();
 

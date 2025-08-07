@@ -71,6 +71,7 @@ class HadronicLiquefier : public LiquefierBase{
 private:
   bool covariant_smearing_;
   bool hydro_Cartesian_;
+  double gamma_factor_max_;
 
   int Nx_, Ny_, Nz_;
   double dx_, dy_, dz_;
@@ -212,11 +213,14 @@ public:
    * In case the hydro runs in Cartesian coordinates, the position of the droplets
    * is given in the Cartesian coordinates. In case the hydro runs in Milne
    * coordinates, the position of the droplets is given in Milne coordinates.
+   * 
+   * Note: This function returns a vector of shared pointers to Hadron objects 
+   * that were not added to the hydro sources.
   */
-  void add_hydro_sources_hadrons(std::vector<Hadron> &hIn);
+  std::vector<shared_ptr<Hadron>> add_hydro_sources_hadrons(std::vector<Hadron> &hIn);
 
   /**
-   * Function to add a droplet to the list of droplets.
+   * Function to add a droplet to the list of droplets. If the droplet
   */
   void add_a_hadronic_droplet(HadronDroplet droplet_in) { 
     hadron_droplets_list.push_back(droplet_in);
@@ -254,6 +258,12 @@ public:
   Jetscape::real get_dropletlist_net_strangeness() const;
 
   virtual void ClearTask();
+
+  /**
+   * Function to check if the gamma factor of a hadron is too large and it 
+   * should not be added to the hydro sources.
+   */
+  bool gamma_factor_too_large_check(const Hadron &hadron) const;
 };
 
 }; // namespace Jetscape

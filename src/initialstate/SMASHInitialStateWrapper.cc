@@ -22,6 +22,7 @@
 
 #include "smash/particles.h"
 #include "smash/library.h"
+#include "smash/particledata.h"
 
 #include <math.h>
 #include <string>
@@ -176,19 +177,8 @@ void SmashInitialConditionWrapper::CalculateTimeTask() {
   std::vector<shared_ptr<Hadron>> hadrons_to_add = Transport::GetTimestepParticlizationHadrons();
   std::vector<shared_ptr<Hadron>> hadrons_to_remove = Transport::GetTimestepHadronsToRemove();
 
-  //VERBOSE(2) << "SMASH initial condition got " << hadrons_to_add.size()  << " hadrons in this timestep.";
-  //VERBOSE(2) << "SMASH initial condition removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
-  //JSINFO << "SMASH initial condition got " << hadrons_to_add.size()  << " hadrons in this timestep.";
-  //JSINFO << "SMASH initial condition removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
-
-  // print the properties of the hadrons to be added
-  /*for (const auto& hadron : hadrons_to_add) {
-    FourVector p = hadron->p_in();
-    FourVector r = hadron->x_in();
-    JSINFO << "Adding hadron: " << hadron->pid() << " at (x, y, z, t) = ("
-          << r.x() << ", " << r.y() << ", " << r.z() << ", " << r.t() << ") fm"
-          << " with (px, py, pz, E) = (" << p.x() << ", " << p.y() << ", " << p.z() << ", " << p.t() << ") GeV";
-  }*/
+  VERBOSE(3) << "SMASH initial condition got " << hadrons_to_add.size()  << " hadrons in this timestep.";
+  VERBOSE(3) << "SMASH initial condition removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
 
   // Check if absolute value of position and momentum vectors can be computed without error in sqrt, otherwise remove hadrons from 
   // hadrons_to_add and hadrons_to_remove, compute the absolute value of each jetscape hadron
@@ -206,11 +196,11 @@ void SmashInitialConditionWrapper::CalculateTimeTask() {
     hadrons_to_remove.end());
 
   const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
-  //JSINFO << "Propagating SMASH IC until t = " << until_time;
-  //JSINFO << "End time until which SMASH initial condition propagates is " << end_time_ << " fm/c";
+  VERBOSE(3) << "Propagating SMASH IC until t = " << until_time;
+  VERBOSE(3) << "End time until which SMASH initial condition propagates is " << end_time_ << " fm/c";
 
   smash::ParticleList add_list = get_smash_plist_from_JS_hadrons(hadrons_to_add);
-  smash::ParticleList remove_list = get_smash_plist_from_JS_hadrons(hadrons_to_remove);
+  smash::ParticleList remove_list = find_smash_hadrons_and_get_exact_hadron_list(hadrons_to_remove);
   smash_collider_experiment_->run_time_evolution(until_time,std::move(add_list),std::move(remove_list));
 }
 
@@ -293,6 +283,72 @@ smash::ParticleList SmashInitialConditionWrapper::get_smash_plist_from_JS_hadron
     new_particles.push_back(new_p);
   }
   return new_particles;
+}
+
+smash::ParticleList SmashInitialConditionWrapper::find_smash_hadrons_and_get_exact_hadron_list(
+    const std::vector<shared_ptr<Hadron>>& JS_hadrons) {
+  // Get the current SMASH particle list
+  smash::Particles* smash_particles = smash_collider_experiment_->first_ensemble();
+  // New particle list to store the exact hadron properties
+  // This will be filled with the exact hadron properties from SMASH
+  // based on the Jetscape hadron list
+  smash::ParticleList exact_hadron_list;
+
+  // This function finds the hadrons in the SMASH particle list and returns a new
+  // particle list with the exact hadron properties using the SMASH particles.
+  for (const auto& JS_had : JS_hadrons) {
+    // Get the pdg code and momentum/position from the Jetscape hadron
+    const int hadron_id = JS_had->pid();
+    const FourVector p = JS_had->p_in();
+    const FourVector r = JS_had->x_in();
+    bool found = false;
+
+    // Loop over the SMASH particles to find the matching hadron
+    for (auto& smash_particle : *smash_particles) {
+      // Check if the SMASH particle matches the Jetscape hadron
+      if (smash_particle.pdgcode().get_decimal() != hadron_id) {
+        continue; // Skip if the pdg code does not match
+      }
+
+      // Check if the momentum and position match within hadron_property_tolerance_
+      if (std::abs(smash_particle.momentum().x0() - p.t()) > hadron_property_tolerance_ ||
+          std::abs(smash_particle.momentum().x1() - p.x()) > hadron_property_tolerance_ ||
+          std::abs(smash_particle.momentum().x2() - p.y()) > hadron_property_tolerance_ ||
+          std::abs(smash_particle.momentum().x3() - p.z()) > hadron_property_tolerance_ ||
+          std::abs(smash_particle.position().x0() - r.t()) > hadron_property_tolerance_ ||
+          std::abs(smash_particle.position().x1() - r.x()) > hadron_property_tolerance_ ||
+          std::abs(smash_particle.position().x2() - r.y()) > hadron_property_tolerance_ ||
+          std::abs(smash_particle.position().x3() - r.z()) > hadron_property_tolerance_) {
+        continue; // Skip if the momentum or position does not match
+      }
+      // If we reach here, we have found a matching hadron, add this to the exact hadron list
+      double mass = smash_particle.effective_mass();
+      auto is_particle_stable_and_with_invalid_mass =
+        [&mass](const smash::ParticleData &p) {
+          return p.type().is_stable() &&
+                std::abs(mass - p.pole_mass()) > rounding_error;
+        };
+      smash::ParticleData exact_hadron{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
+      smash::FourVector p = smash_particle.momentum();
+      if (is_particle_stable_and_with_invalid_mass(smash_particle)) {
+        // This modifies the momentum of the SMASH internal hadron to be on-shell
+        // with the pole mass, but keeps the direction of the momentum
+        // This is needed to ensure that the hadron can be found, ugly but necessary
+        smash_particle.set_4momentum(smash_particle.pole_mass(), p.threevec());
+      }
+      smash::FourVector r = smash_particle.position();
+      exact_hadron.set_4position(r);
+      exact_hadron.set_4momentum(p);
+      exact_hadron_list.push_back(exact_hadron);
+      found = true;
+      break; // Break the loop since we found the matching hadron
+    }
+    // If no matching hadron was found, we can print a warning
+    if (!found) {
+      JSWARN<< "No matching hadron found for Jetscape hadron with ID: " << JS_had->pid();
+    }
+  }
+  return exact_hadron_list;
 }
 
 void SmashInitialConditionWrapper::fill_JS_hadrons_from_smash_particles(

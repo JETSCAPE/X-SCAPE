@@ -717,14 +717,8 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
     }
 
     if (add_hadron_to_source_term) {
-      if (CheckIfHadronWasAddedInPreviousTimestep(hadron, 0)) {
-        continue;
-      }
       store_source_term_hadrons_iso_tau_.push_back(hadron);
     } else {
-      if (CheckIfHadronWasAddedInPreviousTimestep(hadron, 1)) {
-        continue;
-      }
       store_spectator_hadrons_iso_tau_.push_back(hadron);
     }
   }
@@ -749,7 +743,16 @@ void BulkDynamicsManager::CreateHadronicSourceTermsForHydroInitializationIsoTau(
     for (const auto& ptr : store_source_term_hadrons_iso_tau_) {
       hadron_objects.push_back(*ptr);
     }
-    hadronic_liquefier_ptr_.lock()->add_hydro_sources_hadrons(hadron_objects);
+    std::vector<shared_ptr<Hadron>> non_fluidizable_hadrons = 
+      hadronic_liquefier_ptr_.lock()->add_hydro_sources_hadrons(hadron_objects);
+    if (!non_fluidizable_hadrons.empty()) {
+      // Add the non-fluidizable hadrons to store_hadrons_soft_particlization_
+      VERBOSE(3) << "Hadronic liquefier found " << non_fluidizable_hadrons.size() 
+                 << " non-fluidizable hadrons, adding them to store_hadrons_soft_particlization_";
+      for (const auto& hadron : non_fluidizable_hadrons) {
+        store_hadrons_soft_particlization_.push_back(hadron);
+      }
+    }
   } else {
     JSWARN << "Hadronic liquefier in BDM not initialized";
     exit(1);
@@ -838,71 +841,6 @@ void BulkDynamicsManager::PrintHadronicTimeEvolutionToFileIfNecessary() {
       }
     }
   }
-}
-
-bool BulkDynamicsManager::CheckIfHadronWasAddedInPreviousTimestep(
-    const shared_ptr<Hadron> &hadron, const int list_to_check) {
-  // Back propagate the hadron to the previous timestep and check if it was added
-  // in the previous timestep. If it was added, return true, otherwise false.
-  // list_to_check = 0: store_source_term_hadrons_iso_tau_
-  // list_to_check = 1: store_spectator_hadrons_iso_tau_
-  const int hadron_pid = hadron->pid();
-  const FourVector &hadron_position = hadron->x_in();
-  const FourVector &hadron_momentum = hadron->p_in();
-
-  double t = hadron_position.t();
-  double x = hadron_position.x();
-  double y = hadron_position.y();
-  double z = hadron_position.z();
-
-  double E = hadron_momentum.t();
-  double px = hadron_momentum.x();
-  double py = hadron_momentum.y();
-  double pz = hadron_momentum.z();
-
-  if (E == 0.0) return false;
-
-  // Back propagate the hadron position to the previous timestep
-  const double dtime = GetMainClock()->GetDeltaT();
-  double t_prime = t - dtime;
-  double x_prime = x - px * dtime / E;
-  double y_prime = y - py * dtime / E;
-  double z_prime = z - pz * dtime / E;
-
-  // Choose the appropriate list
-  const auto& hadron_list = (list_to_check == 0)
-      ? store_source_term_hadrons_iso_tau_
-      : store_spectator_hadrons_iso_tau_;
-
-  for (const auto& stored_hadron : hadron_list) {
-    if (stored_hadron->pid() != hadron_pid)
-      continue;
-
-    // Check back-propagated position
-    const FourVector& stored_position = stored_hadron->x_in();
-    const double dt = std::abs(stored_position.t() - t_prime);
-    const double dx = std::abs(stored_position.x() - x_prime);
-    const double dy = std::abs(stored_position.y() - y_prime);
-    const double dz = std::abs(stored_position.z() - z_prime);
-
-    if (dt > rounding_error || dx > rounding_error ||
-        dy > rounding_error || dz > rounding_error)
-      continue;
-
-    // Check momentum
-    const FourVector& stored_momentum = stored_hadron->p_in();
-    const double dE  = std::abs(stored_momentum.t() - E);
-    const double dpx = std::abs(stored_momentum.x() - px);
-    const double dpy = std::abs(stored_momentum.y() - py);
-    const double dpz = std::abs(stored_momentum.z() - pz);
-
-    if (dE < rounding_error && dpx < rounding_error &&
-        dpy < rounding_error && dpz < rounding_error) {
-      counter_hadrons_already_added_++;
-      return true;
-    }
-  }
-  return false; // Hadron was not added in the previous timestep
 }
 
 } // end namespace Jetscape
