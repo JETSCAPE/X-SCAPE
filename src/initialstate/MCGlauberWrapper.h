@@ -86,6 +86,7 @@ public:
     return(QCDStringList_);
 }
 
+double Get_total_hard_e() {return (proj_parton_e_ + targ_parton_e_);}
 std::shared_ptr<InitialState> ini;
 
 private:

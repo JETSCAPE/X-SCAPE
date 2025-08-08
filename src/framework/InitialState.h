@@ -40,6 +40,9 @@ public:
    */
   void Init() override;
   
+  //My own function
+  virtual double Get_total_hard_e();
+
   /** Default ExecuteTask() function. It can be overridden by other tasks.
       After this is run, GetNumBinaryCollisions and GetEntropyDensityDistribution should return sensible values.
    */

@@ -53,6 +53,10 @@ void MCGlauberGenStringWrapper::ExecuteTask() {
         Jetscape::JSWARN << err.what();
         std::exit(-1);
     }
+
+    // Print the total energy of the hard partons to file
+    std::ofstream hard_energy_file("hard_energy.txt", std::ios::app);
+    hard_energy_file << GetCurrentEvent() << "," << ini->Get_total_hard_e() << std::endl;
 }
 
 std::vector<double> MCGlauberGenStringWrapper::Get_Proj_Remnant() {

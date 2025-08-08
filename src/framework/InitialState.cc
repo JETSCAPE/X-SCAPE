@@ -21,6 +21,8 @@ namespace Jetscape {
 
 InitialState::~InitialState() {}
 
+double InitialState::Get_total_hard_e() {};
+
 void InitialState::Init() {
   JetScapeModuleBase::InitTask();
 
