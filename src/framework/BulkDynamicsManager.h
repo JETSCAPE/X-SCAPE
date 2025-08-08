@@ -108,6 +108,10 @@ public:
   */
   void ExtractHadronsFromTransportInitialConditionIsoTau(bool &AllHadronsCrossedIsoTau);
 
+  /** Propagate a hadron's position using free streaming to a given proper time.
+   */
+  void PropagateHadronFreeStreamingToTau(double tau, std::shared_ptr<Hadron> &hadron);
+
   /** Create hadronic source terms for hydro initialization from the hadrons
    * at an iso-tau surface.
   */

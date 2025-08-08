@@ -246,6 +246,15 @@ void BulkDynamicsManager::ExecTime() {
       GetMainClock()->ResetToTime(IC_particle_extraction_tau_-GetMainClock()->GetDeltaT());
       VERBOSE(3) << "Time reset to " << GetMainClock()->GetCurrentTime();
 
+      // Move hadrons in store_source_term_hadrons_iso_tau_ to the tau hyper surface
+      for (auto& hadron : store_source_term_hadrons_iso_tau_) {
+        PropagateHadronFreeStreamingToTau(IC_particle_extraction_tau_, hadron);
+      }
+      // Do the same for store_spectator_hadrons_iso_tau_ while we are here...
+      for (auto& hadron : store_spectator_hadrons_iso_tau_) {
+        PropagateHadronFreeStreamingToTau(IC_particle_extraction_tau_, hadron);
+      }
+
       // Create the hadronic source terms for the hydro
       CreateHadronicSourceTermsForHydroInitializationIsoTau();
     }
@@ -843,6 +852,69 @@ void BulkDynamicsManager::PrintHadronicTimeEvolutionToFileIfNecessary() {
           << py << " " << pz << " " << -1 << endl;
       }
     }
+  }
+}
+
+void BulkDynamicsManager::PropagateHadronFreeStreamingToTau(double tau, std::shared_ptr<Hadron> &hadron) {
+  // Get the hadrons four position and momentum
+  if (hadron) {
+    const FourVector& x_vec = hadron->x_in();
+    double t = x_vec.t();
+    double x = x_vec.x();
+    double y = x_vec.y();
+    double z = x_vec.z();
+    const double tau_initial = std::sqrt(t*t - z*z);
+    if (std::isnan(tau_initial) || std::abs(tau_initial - IC_particle_extraction_tau_) < rounding_error) {
+      return;
+    }
+    const FourVector& p = hadron->p_in();
+    const double E = p.t();
+    const double px = p.x();
+    const double py = p.y();
+    const double pz = p.z();
+    const double E_sqr = E * E;
+    const double p_sqr = px * px + py * py + pz * pz;
+    double mass;
+    if (std::abs(E_sqr - p_sqr) < rounding_error) {
+      // Massless particle, return
+      return;
+    } else {
+      mass = std::sqrt(E_sqr - p_sqr);
+    }
+    const double gamma = E / mass;
+    const double vel_x = px / E;
+    const double vel_y = py / E;
+    const double vel_z = pz / E;
+    // solve tau_h = sqrt(t(u)^2 - z(u)^2) with x^mu(u) = x_0^mu + u(p^mu/(gamma*m))
+    // Solve quadratic equation: tau_h^2 = (t_0+u)^2 - (z_0+vel_z*u)^2
+    const double a = 1.0 - vel_z * vel_z;
+    const double b = 2.0 * (t - z * vel_z);
+    const double tau_h_sqr = IC_particle_extraction_tau_ * IC_particle_extraction_tau_;
+    const double c = t * t - z * z - tau_h_sqr;
+    const double discriminant = b * b - 4 * a * c;
+    if (discriminant < 0) {
+      // No real solution, return
+      return;
+    }
+    const double u1 = (-b + std::sqrt(discriminant)) / (2 * a);
+    const double u2 = (-b - std::sqrt(discriminant)) / (2 * a);
+    // Choose the u that gives the smallest time, corresponding to backward propagation
+    const double time1 = t + u1;
+    const double time2 = t + u2;
+    const double u = (std::abs(time1 - IC_particle_extraction_tau_) < std::abs(time2 - IC_particle_extraction_tau_)) ? u1 : u2;
+
+    const double t_new = t + u;
+    const double x_new = x + vel_x * u;
+    const double y_new = y + vel_y * u;
+    const double z_new = z + vel_z * u;
+    // Set the new four position
+    double new_x[4] = {t_new, x_new, y_new, z_new};
+    hadron->set_x(new_x);
+
+    VERBOSE(5) << "Hadron tau after back propagation: " << std::sqrt(t_new*t_new - z_new*z_new) 
+           << " (should be " << IC_particle_extraction_tau_ << "), tau_initial = " << tau_initial;
+    VERBOSE(5) << "Hadron position before back propagation: " << t << " " << x << " " << y << " " << z;
+    VERBOSE(5) << "Hadron position after back propagation: " << t_new << " " << x_new << " " << y_new << " " << z_new;
   }
 }
 
