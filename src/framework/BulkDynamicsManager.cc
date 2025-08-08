@@ -663,13 +663,16 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
   DetermineHadronsCrossingIsoTau(shared_hadrons);
 
   for(const auto& hadron : remove_hadrons_for_timestep_) {
-    // If the tau of the hadron is larger than tau_iso+deltaT, then it will be 
+    // If the tau of the hadron is larger than tau_iso+2deltaT, then it will be 
     // ignored and not added to the source term or spectator list
+    // This is precaution for a case where a hadron can not be removed from SMASH
+    // (very rare case after the fix in the SMASHInitialStateWrapper, see
+    // find_smash_hadrons_and_get_exact_hadron_list() function)
     const FourVector r = hadron->x_in();
     const double t = r.t();
     const double z = r.z();
     const double tau = sqrt(t*t - z*z);
-    if(tau >= IC_particle_extraction_tau_ + GetMainClock()->GetDeltaT()) {
+    if(tau >= IC_particle_extraction_tau_ + 2.*GetMainClock()->GetDeltaT()) {
       counter_hadrons_already_added_++;
       continue;
     }
