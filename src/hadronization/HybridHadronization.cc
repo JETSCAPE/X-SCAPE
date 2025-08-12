@@ -373,15 +373,6 @@ void HybridHadronization::InitTask(){
 	  pythia.readString("ColourReconnection:timeDilationPar = 0.18");   //parameter used in causal interaction between strings (mode set above)(maybe try 0.073?)
     */
 
-    std::stringstream lines;
-    lines << GetXMLElementText({"JetHadronization", "LinesToRead"}, false);
-    while (std::getline(lines, s, '\n')) {
-      if (s.find_first_not_of(" \t\v\f\r") == s.npos)
-        continue; // skip empty lines
-      JSINFO << "Also reading in: " << s;
-      pythia.readString(s);
-    }
-
     // optional input of another pythia particle data xml file (higher excited states,...)
     xml_intin = GetXMLElementInt({"JetHadronization", "additional_pythia_particles"});
 	  if(xml_intin == 0 || xml_intin == 1){additional_pythia_particles = xml_intin;} xml_intin = -1;
@@ -390,6 +381,15 @@ void HybridHadronization::InitTask(){
       std::string additional_pythia_particle_file =
         GetXMLElementText({"JetHadronization", "additional_pythia_particles_path"});
       pythia.particleData.readXML(additional_pythia_particle_file,false);
+    }
+
+    std::stringstream lines;
+    lines << GetXMLElementText({"JetHadronization", "LinesToRead"}, false);
+    while (std::getline(lines, s, '\n')) {
+      if (s.find_first_not_of(" \t\v\f\r") == s.npos)
+        continue; // skip empty lines
+      JSINFO << "Also reading in: " << s;
+      pythia.readString(s);
     }
 
     // And initialize
@@ -455,6 +455,25 @@ void HybridHadronization::WriteTask(weak_ptr<JetScapeWriter> w){
 void HybridHadronization::DoHadronization(vector<vector<shared_ptr<Parton>>>& shower, vector<shared_ptr<Hadron>>& hOut, vector<shared_ptr<Parton>>& pOut){
   number_p_fake = 0;    //reset counter for the number of fake partons
   double energy_hadrons = 0.; //needed for the kinetic scaling of the negative hadrons
+
+  //initial hadron list
+  //pre existing hadrons
+  Initial_hadrons.clear();
+  if(hOut.size() > 0 and reco_hadrons_pythia){
+    for(vector<shared_ptr<Hadron>>::iterator hadIter = hOut.begin(); hadIter<hOut.end();){
+      if(hadIter->get()->pid() > 23){ //skipping leptons
+        HHhadron earlyHad;
+        earlyHad.set_id(hadIter->get()->pid());
+        earlyHad.P(hadIter->get()->p_in());
+        earlyHad.is_final(true);
+        earlyHad.is_recohad(false);
+        //earlyHad.status(hOut[i].get()->pstat());
+        Initial_hadrons.add(earlyHad);
+        hadIter = hOut.erase(hadIter);
+      }
+      else hadIter++;
+    }
+  }
 
   //JSINFO<<"Start Hybrid Hadronization using both Recombination and PYTHIA Lund string model.";
   pythia.event.reset(); HH_shower.clear();
@@ -6362,6 +6381,18 @@ bool HybridHadronization::invoke_py(){
 			    eve_to_had.push_back(i+1);
 		    }
       }
+
+      //initial hadrons
+      for(int i=0; i<Initial_hadrons.num(); ++i){
+        //to make sure mass is set appropriately
+        double massnow = Initial_hadrons[i].e()*Initial_hadrons[i].e() -
+                        (Initial_hadrons[i].px()*Initial_hadrons[i].px() + Initial_hadrons[i].py()*Initial_hadrons[i].py() + Initial_hadrons[i].pz()*Initial_hadrons[i].pz());
+        massnow = (massnow >= 0.) ? sqrt(massnow) : -sqrt(-massnow);
+        event.append(Initial_hadrons[i].id(),81,0,0,Initial_hadrons[i].px(),Initial_hadrons[i].py(),Initial_hadrons[i].pz(),Initial_hadrons[i].e(),massnow);
+        event[event.size()-1].vProd(Initial_hadrons[i].x(), Initial_hadrons[i].y(), Initial_hadrons[i].z(), Initial_hadrons[i].x_t());
+        eve_to_had.push_back(i+1);
+      }
+
       case4 &= pythia.next();
       set_spacetime_for_pythia_hadrons(event,size_input,eve_to_had,attempt,case4,true,true);
       event.reset();

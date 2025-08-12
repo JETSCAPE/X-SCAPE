@@ -272,6 +272,13 @@ void JetScape::DetermineTaskListFromXML() {
             JSINFO << "JetScape::DetermineTaskList() -- Initial State: Added "
                       "IPGlasma module to task list.";
           }
+        } else if (childElementName == "MCGlauber") {
+          auto mcglauber = JetScapeModuleFactory::createInstance("MCGlauber");
+          if (mcglauber) {
+            Add(mcglauber);
+            JSINFO << "JetScape::DetermineTaskList() -- Initial State: Added "
+                      "MCGlauber module to task list.";
+          }        
         } else if (childElementName == "initial_Ncoll_list") {
           auto initial =
               JetScapeModuleFactory::createInstance("NcollListFromFile");
@@ -332,6 +339,15 @@ void JetScape::DetermineTaskListFromXML() {
             Add(EpemGun);
             JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
                       "epemGun to task list.";
+          }
+        }
+        else if (childElementName == "EPGun") {
+          auto EPGun =
+              JetScapeModuleFactory::createInstance(childElementName);
+          if (EPGun) {
+            Add(EPGun);
+            JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
+                      "EPGun to task list.";
           }
         }
         else if (((int)childElementName.find("CustomModule") >= 0)) {

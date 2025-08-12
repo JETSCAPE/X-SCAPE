@@ -139,6 +139,7 @@ int iSpectraSamplerWrapper::getSurfCellVector() {
     iSS_surf_cell.Edec = surf_i.energy_density;
     iSS_surf_cell.Tdec = surf_i.temperature;
     iSS_surf_cell.Pdec = surf_i.pressure;
+    iSS_surf_cell.Bn = surf_i.baryon_density;
     iSS_surf_cell.muB = surf_i.mu_B;
     iSS_surf_cell.muQ = surf_i.mu_Q;
     iSS_surf_cell.muS = surf_i.mu_S;
@@ -156,7 +157,6 @@ int iSpectraSamplerWrapper::getSurfCellVector() {
     FOsurf_array.push_back(iSS_surf_cell);
   }
   iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
-  ClearHydroHyperSurface();
   return(nCells);
 }
 
@@ -220,6 +220,14 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   inputfile.close();
 
   int nCells = getSurfCellVector();
+  if (nCells == 0) {
+    int status = iSpectraSampler_ptr_->read_in_FO_surface();
+    if (status != 0) {
+      JSWARN << "Some errors happened in reading in the hyper-surface";
+      exit(-1);
+    }
+    nCells = 1;
+  }
   //int status = iSpectraSampler_ptr_->read_in_FO_surface();
   //if (status != 0) {
   //  JSWARN << "Some errors happened in reading in the hyper-surface";
@@ -309,6 +317,12 @@ void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
 }
 
 void iSpectraSamplerWrapper::PassHadronListToJetscape() {
+  // clear hadron list before passing new events
+  for (unsigned i = 0; i < Hadron_list_.size(); i++) {
+    Hadron_list_.at(i).clear();
+  }
+  Hadron_list_.clear();
+
   unsigned int nev = iSpectraSampler_ptr_->get_number_of_sampled_events();
   VERBOSE(2) << "Passing all sampled hadrons to the JETSCAPE framework";
   VERBOSE(4) << "number of events to pass : " << nev;
@@ -346,6 +360,9 @@ void iSpectraSamplerWrapper::PassHadronListToJetscape() {
                  << Hadron_list_.at(iev).size() << " particles.";
     }
   }
+
+  // clear iSS memory, particles have passed to the framework
+  iSpectraSampler_ptr_->clear();
 }
 
 void iSpectraSamplerWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {

@@ -41,6 +41,7 @@ class iMATTER : public JetEnergyLossModule<iMATTER>
    virtual ~iMATTER();
 
    double Q0;
+   double Lambda_QCD;
 
    void InitTask();
    void DoEnergyLoss(double deltaT,double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut);

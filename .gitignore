@@ -12,6 +12,7 @@
 .bash_history
 html/*
 build*/*
+.vscode/
 external_packages/LBT*
 external_packages/iSS*
 external_packages/3dMCGlauber*

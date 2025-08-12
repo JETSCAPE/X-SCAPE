@@ -35,7 +35,7 @@ class MCGlauberWrapper : public Jetscape::InitialState {
 public:
   MCGlauberWrapper();
   ~MCGlauberWrapper() {}
-  
+
   /** Reads the input parameters from the XML file under the tag  <IS>. Calls InitTask(); This explicit call of InitTask() can be used for actual initialization of modules such as @a Trento if attached as a @a polymorphic class. It also initializes the tasks within the current module.
       @sa Read about @a polymorphism in C++.
    */
@@ -71,7 +71,7 @@ public:
   void OutputHardCollisionPosition(double t, double x, double y, 
                                    double z);
   void OutputHardPartonMomentum(double E, double px, double py, double pz,
-                                                           int direction, double P_A);
+                                int direction, double P_A);
   void ClearHardPartonMomentum();
   void GetHardPartonPosAndMomentumProj();
   void GetHardPartonPosAndMomentumTarg();
@@ -82,22 +82,28 @@ public:
   std::vector<double> Get_remnant_proj();
   std::vector<double> Get_remnant_targ();
   void GenerateStrings();
-  
-  std::shared_ptr<InitialState> ini; 
-  
+  std::vector< std::vector<double> > GetQCDStringList() {
+    return(QCDStringList_);
+}
+
+std::shared_ptr<InitialState> ini;
+
 private:
   std::shared_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
+  std::vector< std::vector<double> > QCDStringList_;
   double hard_parton_x_, hard_parton_y_, hard_parton_z_, hard_parton_t_;
-  double targ_parton_px_ = 0.0, targ_parton_py_ = 0.0, targ_parton_pz_ = 0.0, targ_parton_e_ = 0.0;
-  double proj_parton_px_ = 0.0, proj_parton_py_ = 0.0, proj_parton_pz_ = 0.0, proj_parton_e_ = 0.0;
-  MCGlb::Parameters parameter_list_;
+  double targ_parton_px_ = 0.0, targ_parton_py_ = 0.0;
+  double targ_parton_pz_ = 0.0, targ_parton_e_ = 0.0;
+  double proj_parton_px_ = 0.0, proj_parton_py_ = 0.0;
+  double proj_parton_pz_ = 0.0, proj_parton_e_ = 0.0;
   std::shared_ptr<MCGlb::RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
+  bool generateOnlyPositions_ = false;
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberWrapper> reg;

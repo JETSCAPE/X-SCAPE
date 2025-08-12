@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+
+<jetscape>
+
+  <vlevel> 0 </vlevel>
+  <nEvents> 1 </nEvents>
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 1 </nReuseHydro>
+
+  <outputFilename>event</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+
+  <Random>
+    <seed>42</seed>
+  </Random>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <!-- x range [-grid_max_x, grid_max_x] -->
+    <!-- y range [-grid_max_y, grid_max_y]-->
+    <!-- longitudinal range [-grid_max_z, grid_max_z]-->
+    <!-- in units of [fm] -->
+    <grid_max_x> 15 </grid_max_x>
+    <grid_max_y> 15 </grid_max_y>
+    <grid_max_z> 8  </grid_max_z>
+    <grid_step_x> 0.3 </grid_step_x>
+    <grid_step_y> 0.3 </grid_step_y>
+    <grid_step_z> 0.2 </grid_step_z>
+
+    <MCGlauber>
+      <!--Collision system definitions-->
+      <projectile>p</projectile> <!--Projectile name-->
+      <target>p</target> <!--Target name-->
+      <sqrts>5020</sqrts> <!--Center of mass energy in GeV-->
+      <b_min>0.0</b_min> <!--Minimum impact parameter in fm-->
+      <b_max>0.1</b_max> <!--Maximum impact parameter in fm-->
+      <cenMin>0.0</cenMin> <!--Minimum centrality in %-->
+      <cenMax>100.0</cenMax> <!--Maximum centrality in %-->
+      <nucleon_configuration_from_file>0</nucleon_configuration_from_file> <!--0: generate nucleon configuration, 1: read from file-->
+      <useQuarks>1</useQuarks> <!--Switch to use valence quarks-->
+      <Q2>1.0</Q2> <!--Scale when evaluating the PDF-->
+      <shadowing_factor>0.6</shadowing_factor> <!--Shadowing factor for producing strings from multiple scatterings-->
+      <baryon_junctions>1</baryon_junctions> <!--0: baryon number assumed to be at string end, 1: baryon number transported assuming baryon junctions (at smaller x) see arXiv:nucl-th/9602027-->
+      <N_sea_partons>1</N_sea_partons> <!--Number of allowed soft partons-->
+      <d_min>0.9</d_min> <!--Minimum distance between two nucleons in fm-->
+      <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
+      <BG>16</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
+      <Subtract_hard_momentum>1</Subtract_hard_momentum>
+      <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
+      <baryonInStringProb>0.2</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
+      <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> <!--Fluctuate number of strings produced per NN collision-->
+      <QCD_string_production_mode>1</QCD_string_production_mode> <!--1: strings are produced randomly in the binary collision list, 2: strings are produced at the last binary collision-->
+      <!--Rapidity loss parameters (only mode 4 supported in XML, other modes have to be set in mcglauber.input)-->
+      <rapidity_loss_method>4</rapidity_loss_method>
+      <ylossParam4At2>1.666</ylossParam4At2>
+      <ylossParam4At4>2.10</ylossParam4At4>
+      <ylossParam4At6>21.20</ylossParam4At6>
+      <ylossParam4At10>2.30</ylossParam4At10>
+      <ylossParam4var>0.555</ylossParam4var>
+      <remnant_energy_loss_fraction>0.5</remnant_energy_loss_fraction> <!--Nucleon remnant's energy loss fraction (fraction of string's y_loss) [0, 1]-->
+      <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
+      <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
+      <!--string evolution mode, tau_form = tau_form_mean [fm]-->
+      <!--1: deceleration with fixed (90%) rapidity loss (m/sigma = 1 fm, dtau = tau_form)-->
+      <!--2: deceleration with LEXUS/parameterized rapidity loss (both dtau and sigma fluctuate)-->
+      <!--3: deceleration with LEXUS/parameterized rapidity loss (m/sigma = 1 fm, dtau fluctuates)-->
+      <!--4: deceleration with LEXUS/parameterized rapidity loss (dtau = tau_form, m/sigma fluctuates)-->
+      <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
+      <tau_form_mean>0.5</tau_form_mean> <!--Mean value for tau_form [fm]-->
+      <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> <!--Fluctuation parameter for the gamma distribution-->
+    </MCGlauber>
+  </IS>
+
+  <!--Preequilibrium Dynamics Module -->
+  <Preequilibrium>
+    <NullPreDynamics> </NullPreDynamics>
+  </Preequilibrium>
+
+  <!-- Hydro  Module  -->
+  <!-- In the user XML file the Hydro section should be placed before Eloss -->
+  <Hydro>
+    <!-- MUSIC  -->
+    <MUSIC>
+      <name>MUSIC</name>
+      <MUSIC_input_file>music_input</MUSIC_input_file>
+      <!--InitialProfile = 42 for Trento + Pre-equilibrium, 13 for the 3D Glauber initial condition-->
+      <InitialProfile>13</InitialProfile>
+      <!--beastMode = 0: double precision, constant time step-->
+      <!--beastMode = 1: float precision, constant time step-->
+      <!--beastMode = 2: float precision, increased time step after 4 fm/ (can be used for soft sector only runs, otherwise the change in stepsize will lead to errors)-->
+      <beastMode>1</beastMode>
+      <!--evolution output/storage parameters-->
+      <output_evolution_to_file>0</output_evolution_to_file>
+      <output_evolution_to_memory>1</output_evolution_to_memory>
+      <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
+      <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
+      <surface_in_memory>1</surface_in_memory>
+      <!--freeze-out parameters-->
+      <use_eps_for_freeze_out>1</use_eps_for_freeze_out>
+      <eps_switch>0.3</eps_switch>
+      <!--source term parameters for InitialProfile 13-->
+      <string_source_sigma_x>0.5</string_source_sigma_x>
+      <string_source_sigma_eta>0.5</string_source_sigma_eta>
+      <stringPreEqFlowFactor>0.13</stringPreEqFlowFactor>
+    </MUSIC>
+  </Hydro>
+
+  <SoftParticlization>
+    <iSS>
+      <hydro_mode>3</hydro_mode>
+      <number_of_repeated_sampling>1</number_of_repeated_sampling>
+    </iSS>
+  </SoftParticlization>
+
+  <!-- Hadronic Afterburner  -->
+  <Afterburner>
+    <!-- only the afterburner hadrons are written to a file -->
+    <!-- if fragmentation hadrons are not included in the afterburner they are also written  -->
+    <output_only_final_state_hadrons>1</output_only_final_state_hadrons>
+    <!-- SMASH -->
+    <SMASH>
+      <!-- time in fm/c in the computational frame, when the simulation shoud be ended -->
+      <end_time>2000.0</end_time>
+    </SMASH>
+  </Afterburner>
+
+</jetscape>

@@ -1,0 +1,48 @@
+name: test nPDF build
+
+on:
+  pull_request:
+    branches:
+      - main
+      - XSCAPE-1.2-RC
+  push:
+    branches:
+      - main
+      - XSCAPE-1.2-RC
+
+env:
+  REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  build:
+    name: build nPDF
+    runs-on: ubuntu-latest
+
+    container:
+      image: jetscape/base:v1.11
+      options: --user root
+      
+    steps:
+  
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        path: ${{ github.event.repository.name }}
+  
+    - name: Build Application
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}
+        mkdir build
+        cd build
+        cmake ..
+        make -j2
+
+    - name: Download nPDF set
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
+        ./get_lhapdf.sh JAM20-SIDIS_PDF_proton_nlo
+
+    - name: Run JETSCAPE with nPDF
+      run: |
+        cd ${GITHUB_WORKSPACE}/${REPO_NAME}/build
+        ./runJetscape ../config/jetscape_user_nPDF_test.xml
