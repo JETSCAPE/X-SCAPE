@@ -479,7 +479,8 @@ bool HadronicLiquefier::gamma_factor_too_large_check(const Hadron &hadron) const
     VERBOSE(3) << "HadronicLiquefier: Gamma factor too large for hadron with "
               << "mass " << mass << ", rapidity " << rapidity
               << ", eta_s " << eta_s << ", and gamma " << gamma
-              << ". Not added to hydro sources.";
+              << ". Not added to hydro sources. Maximum allowed gamma = "
+              << gamma_factor_max_;
     return true; // Too large gamma factor, do not add to hydro sources
   }
   return false; // Gamma factor is acceptable
@@ -533,6 +534,7 @@ std::vector<shared_ptr<Hadron>> HadronicLiquefier::add_hydro_sources_hadrons(std
     hadron_droplet.set_normalization(norm);
     hadron_droplets_list.push_back(hadron_droplet);
   }
+  //exit(0);
   return hadrons_not_added;
 }
 
