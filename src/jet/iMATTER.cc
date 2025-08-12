@@ -72,6 +72,7 @@ void iMATTER::InitTask()
     // alpha_s = 0.2;
     Q0 = GetXMLElementDouble({"Eloss", "Matter", "Q0"});
     vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
+    Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
 
     RealP_A = GetXMLElementDouble({"Hard","PythiaGun","eCM"})/2.0;  /// Assuming symmetric system
     
@@ -122,7 +123,12 @@ void iMATTER::InitTask()
 
 void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
 {
-    
+     if (time < GetMaxT() - 1e-10) {
+        JSINFO << BOLDYELLOW << "iMatter::DoEnergyLoss called at time = " << time
+               << " but the maximum time is " << GetMaxT() << ", skipping this call.";
+        return;
+    }
+   
     bool IsRotated = false;
 
     double blurb; // used all the time for testing
