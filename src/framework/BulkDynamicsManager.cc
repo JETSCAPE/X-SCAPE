@@ -685,6 +685,10 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
       counter_hadrons_already_added_++;
       continue;
     }
+    const int pid_abs = std::abs(hadron->pid());
+    if (pid_abs < 100) {
+        continue; // Only consider hadrons
+    }
 
     bool participant = hadron->participant();
     bool add_hadron_to_source_term = false;
@@ -694,7 +698,7 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
       if (enforce_pT_cut_) {
         // Check if the hadron has a pT larger than the cut
         const FourVector p = hadron->p_in();
-        const double pT = sqrt(p.x()*p.x() + p.y()*p.y());
+        const double pT = std::sqrt(p.x()*p.x() + p.y()*p.y());
         if (pT > pT_cut_) {
           hadron_above_pT_cut_threshold = true;
         }
@@ -703,7 +707,7 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(bool
       if (enforce_rapidity_cut_) {
         // Check if the hadron has a rapidity larger than the cut
         const FourVector p = hadron->p_in();
-        const double rapidity = 0.5*log((p.t()+p.z())/(p.t()-p.z()));
+        const double rapidity = 0.5*std::log((p.t()+p.z())/(p.t()-p.z()));
         if (abs(rapidity) > rapidity_cut_) {
           hadron_above_rapidity_cut_threshold = true;
         }

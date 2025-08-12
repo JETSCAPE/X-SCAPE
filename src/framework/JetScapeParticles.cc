@@ -548,8 +548,8 @@ bool Hadron::has_valid_momentum() const {
   const double p2 = p.x() * p.x() + p.y() * p.y() + p.z() * p.z();
   const double e2 = p.t() * p.t();
   const double E2minusp2 = e2 - p2;
-  if (E2minusp2 < rounding_error) {
-    JSWARN << "Invalid momentum for hadron with label " << plabel() 
+  if ((E2minusp2 < rounding_error) && pid() != 22) {
+    JSWARN << "Invalid momentum for hadron with label " << plabel()
            << ", id " << pid() << ": E^2 - p^2 = " << E2minusp2;
     return false;
   }

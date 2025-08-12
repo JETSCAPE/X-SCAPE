@@ -185,13 +185,13 @@ void SmashInitialConditionWrapper::CalculateTimeTask() {
   hadrons_to_add.erase(
     std::remove_if(hadrons_to_add.begin(), hadrons_to_add.end(),
                    [](const std::shared_ptr<Jetscape::Hadron>& h) {
-                       return !h->has_valid_momentum();
+                       return (!h->has_valid_momentum() || h->pid() == 22);
                    }),
     hadrons_to_add.end());
   hadrons_to_remove.erase(
     std::remove_if(hadrons_to_remove.begin(), hadrons_to_remove.end(),
                    [](const std::shared_ptr<Jetscape::Hadron>& h) {
-                       return !h->has_valid_momentum();
+                       return (!h->has_valid_momentum() || h->pid() == 22);
                    }),
     hadrons_to_remove.end());
 
