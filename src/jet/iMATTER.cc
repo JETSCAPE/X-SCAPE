@@ -475,7 +475,6 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             
             double SiblingPT   = 0.0;
-            if (SiblingPT2 > 0) SiblingPT = std::sqrt(SiblingPT2);
             if (SiblingPT2 > 0 && SiblingPT2 < pz * pz) {
                 SiblingPT = std::sqrt(SiblingPT2);
             }
