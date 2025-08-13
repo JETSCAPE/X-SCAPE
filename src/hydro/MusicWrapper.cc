@@ -323,7 +323,14 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
         GetXMLElementDouble({"Hydro", "MUSIC", "eps_switch"});
     music_hydro_ptr->set_parameter("eps_switch", eps_switch);
   }
-  
+  int freezeout_lowtemp_flag = GetXMLElementInt(
+    {"Hydro", "MUSIC", "Do_FreezeOut_lowtemp"});
+  music_hydro_ptr->set_parameter("Do_FreezeOut_lowtemp", freezeout_lowtemp_flag);
+  int average_surface_over_this_many_time_steps = GetXMLElementInt(
+    {"Hydro", "MUSIC", "average_surface_over_this_many_time_steps"});
+  music_hydro_ptr->set_parameter("average_surface_over_this_many_time_steps", 
+    average_surface_over_this_many_time_steps);
+
   music_hydro_ptr->check_parameters();
 }
 
@@ -396,6 +403,7 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
   if (hydro_status == NOT_START) {
     InitializeHydroEnergyProfile();
     music_hydro_ptr->prepare_run_hydro_one_time_step();
+    hydro_source_terms_ptr->set_source_tau_max(GetSourceTermTauMax());
   }
 
   if (hydro_status != FINISHED) {
@@ -551,7 +559,7 @@ void MpiMusic::SetHydroGridInfo() {
 void MpiMusic::PassHydroSurfaceToFramework() {
   JSINFO << "Passing hydro surface cells to JETSCAPE ... ";
   auto number_of_cells = music_hydro_ptr->get_number_of_surface_cells();
-  JSINFO << "Total number of MUSIC fluid cells: " << number_of_cells;
+  JSINFO << "Total number of MUSIC surface cells: " << number_of_cells;
   SurfaceCell surfaceCell_i;
   for (int i = 0; i < number_of_cells; i++) {
     SurfaceCellInfo surface_cell_info;

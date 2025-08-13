@@ -66,6 +66,7 @@ protected:
   double eta;
   bool boost_invariant_;
   Parameter parameter_list;
+  double source_term_tau_max;
 
   // How to store this data? In memory or hard disk?
   // 3D hydro may eat out the memory,
@@ -188,11 +189,21 @@ public:
   /** @return End time (or tau) for hydrodynamic evolution.
      */
   Jetscape::real GetHydroEndTime() const { return (hydro_tau_max); }
+
   /** @return Freeze-out temperature.
      */
   Jetscape::real GetHydroFreezeOutTemperature() const {
     return (hydro_freeze_out_temperature);
   }
+
+  /** Get the maximum time for a hydrodynamic source term
+   * @return source_term_tau_max The maximum time for a hydrodynamic source term.
+   */
+  double GetSourceTermTauMax() const { return source_term_tau_max; }
+
+  /** Set the maximum time for a hydrodynamic source term
+   */
+  void SetSourceTermTauMax(double time) { source_term_tau_max = time; }
 
   /** Retrieves the hydro information at a given space-time point.
      * It throws a InvalidSpaceTimeRange message when

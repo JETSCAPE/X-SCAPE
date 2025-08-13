@@ -556,6 +556,8 @@
       <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
       <freezeout_temperature>0.15</freezeout_temperature>
       <eps_switch>0.3</eps_switch>
+      <Do_FreezeOut_lowtemp>1</Do_FreezeOut_lowtemp>
+      <average_surface_over_this_many_time_steps>5</average_surface_over_this_many_time_steps>
       <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
       <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
       <!--source term parameters for InitialProfile 13-->

@@ -15,7 +15,7 @@
 
 # using a commit from the MUSIC repository that is compatible with the current X-SCAPE version
 folderName="music"
-commitHash="ec033cfaf080c24d214c1ab6e90847a90ebdc6bf"
+commitHash="c95ef8d27b8f8981a8491337b90aebaf517f0c98"
 
 git clone https://github.com/MUSIC-fluid/MUSIC.git -b XSCAPE $folderName
 cd $folderName

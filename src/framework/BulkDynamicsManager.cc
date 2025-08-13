@@ -370,6 +370,20 @@ void BulkDynamicsManager::InitPerEvent() {
     if(!weak_ptr_is_uninitialized(hadronic_liquefier_ptr_)) {
       hadronic_liquefier_ptr_.lock()->clear_hadron_droplet_list();
     }
+
+    for(auto it : GetTaskList()) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (dynamic_pointer_cast<FluidDynamics>(module)) {
+        auto fluid_dynamics = dynamic_pointer_cast<FluidDynamics>(module);
+        if (fluid_dynamics) {
+          double dtau = fluid_dynamics->get_bulk_info().dtau;
+          fluid_dynamics->SetSourceTermTauMax(IC_particle_extraction_tau_);
+        } else {
+          JSWARN << "FluidDynamics module not found in task list!";
+          exit(1);
+        }
+      }
+    }
   }
 
   // JUST FOR CHECKING
