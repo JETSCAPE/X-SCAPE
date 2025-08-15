@@ -243,7 +243,6 @@ void HadronicLiquefier::get_source_energy(
         || (xmu_i[0] >= tau + 0.5 * dtau_))) {
       continue;
     }
-    auto pmu_i = drop_i.get_pmu();
 
     double x_diff = x - xmu_i[1];
     if (abs(x_diff) > skip_dis_x) {
@@ -259,6 +258,7 @@ void HadronicLiquefier::get_source_energy(
       continue;
     }
 
+    auto pmu_i = drop_i.get_pmu();
     const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
                              pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
     if (mass <= 1e-16) {
@@ -350,7 +350,6 @@ double HadronicLiquefier::get_source_quantity(const double tau,
           || (xmu_i[0] >= tau + 0.5 * dtau_))) {
       continue;
     }
-    auto pmu_i = drop_i.get_pmu();
 
     double x_diff = x - xmu_i[1];
     if (abs(x_diff) > skip_dis_x) {
@@ -366,6 +365,7 @@ double HadronicLiquefier::get_source_quantity(const double tau,
       continue;
     }
 
+    auto pmu_i = drop_i.get_pmu();
     const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
                              pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
     if (mass <= 1e-16) {
@@ -435,7 +435,6 @@ double HadronicLiquefier::get_source_rhos(const double tau, const double x,
 }
 
 bool HadronicLiquefier::gamma_factor_too_large_check(const Hadron &hadron) const {
-  auto x_init = hadron.x_in();
   auto p_init = hadron.p_in();
   // compute the hadron mass and rapidity
   std::array<double, 4> pmu_i = {
@@ -449,6 +448,7 @@ bool HadronicLiquefier::gamma_factor_too_large_check(const Hadron &hadron) const
   if (mass <= 1e-16) {
     return true; // skip massless particles
   }
+  auto x_init = hadron.x_in();
   const double eta_s =
       0.5 * log((x_init.t() + x_init.z()) / (x_init.t() - x_init.z()));
   const double mT =
@@ -492,15 +492,13 @@ std::vector<shared_ptr<Hadron>> HadronicLiquefier::add_hydro_sources_hadrons(std
   
   // Create droplets from the hadrons
   for (const auto &hadron : hIn) {
-    auto x_init = hadron.x_in();
-    auto p_init = hadron.p_in();
-
     // Check if the gamma factor is too large for covariant smearing
     if (covariant_smearing_ && gamma_factor_too_large_check(hadron)) {
       hadrons_not_added.push_back(make_shared<Hadron>(hadron));
       continue;
     }
-
+    auto x_init = hadron.x_in();
+    auto p_init = hadron.p_in();
     std::array<double, 4> x_hadron = {0.0, 0.0, 0.0, 0.0};
     if (hydro_Cartesian_) {
       x_hadron = {
@@ -524,17 +522,13 @@ std::vector<shared_ptr<Hadron>> HadronicLiquefier::add_hydro_sources_hadrons(std
       static_cast<double>(p_init.y()),
       static_cast<double>(p_init.z())};
 
-    int baryon_number = hadron.baryon_number();
-    int electric_charge = hadron.charge();
-    int strangeness = hadron.strangeness();
     HadronDroplet hadron_droplet = HadronDroplet(x_hadron, p_hadron, 
-                          baryon_number, electric_charge, strangeness);
+      hadron.baryon_number(), hadron.charge(), hadron.strangeness());
 
     double norm = compute_drop_kernel_normalization(x_hadron[0], hadron_droplet);
     hadron_droplet.set_normalization(norm);
     hadron_droplets_list.push_back(hadron_droplet);
   }
-  //exit(0);
   return hadrons_not_added;
 }
 
