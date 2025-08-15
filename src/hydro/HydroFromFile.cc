@@ -22,6 +22,8 @@
 #include <cmath>
 #include <iostream>
 
+
+
 #include "JetScapeLogger.h"
 
 #include "HydroFromFile.h"
@@ -149,8 +151,10 @@ void HydroFromFile::read_in_hydro_event(string MUSIC_input_file,
 }
 
 void HydroFromFile::EvolveHydro() {
+
   clean_hydro_event();
   hydro_event_idx_ = ini->GetEventId();
+
 
   if (hydro_type_ == 1) {
     string filename;
@@ -160,7 +164,7 @@ void HydroFromFile::EvolveHydro() {
       string folder =
           GetXMLElementText({"Hydro", "hydro_from_file", "hydro_files_folder"});
       std::ostringstream hydro_filename;
-      hydro_filename << folder << "/event-" << hydro_event_idx_
+      hydro_filename << folder << "/hydro_results_" << hydro_event_idx_
                      << "/JetData.h5";
       filename = hydro_filename.str();
     }
@@ -181,18 +185,39 @@ void HydroFromFile::EvolveHydro() {
     } else {
       string folder = GetXMLElementText(
               {"Hydro", "hydro_from_file", "hydro_files_folder"});
+     /*
+     if (matching_indices.empty()){
+       for (const auto& entry : std::filesystem::directory_iterator(folder)) {
+         std::string prefix_ = "hydro_results_";
+         if (entry.is_directory()) {
+           std::string name = entry.path().filename().string();
+           if (name.rfind(prefix_, 0) == 0) { // starts with "hydro_results_"
+             std::string suffix = name.substr(prefix_.length());
+             int idx = std::stoi(suffix);
+             matching_indices.push_back(idx);
+           }
+          }
+        }
+      }
+      hydro_event_idx_ = matching_indices[hydro_event_idx_];  */
+      //hydro_event_idx_ = ini->GetEventId();
+      //JSINFO<<"hydro idx "<<hydro_event_idx_;
       std::ostringstream input_filename;
       std::ostringstream hydro_filename;
-      input_filename << folder << "/event-" << hydro_event_idx_
+      input_filename << folder << "/hydro_results_" << hydro_event_idx_
                      << "/MUSIC_input";
-      hydro_filename << folder << "/event-" << hydro_event_idx_
-                     << "/MUSIC_evo.dat";
+      //hydro_filename << folder << "/hydro_results_" << hydro_event_idx_
+      //               << "/MUSIC_evo.dat";
+      hydro_filename << folder << "/hydro_results_" << hydro_event_idx_
+                     << "/evolution_all_xyeta.dat";
       input_file = input_filename.str();
       hydro_ideal_file = hydro_filename.str();
     }
+    JSINFO<<"hydro status before read_in "<<hydro_status;
     read_in_hydro_event(input_file, hydro_ideal_file, nskip_tau_);
     hydro_tau_0 = hydroinfo_MUSIC_ptr->get_hydro_tau0();
     hydro_tau_max = hydroinfo_MUSIC_ptr->get_hydro_tau_max();
+    JSINFO<<"hydro status after read_in "<<hydro_status;
   } else if (hydro_type_ < 9) {
     string input_file = "music";
     string PreEq_file;
@@ -207,10 +232,12 @@ void HydroFromFile::EvolveHydro() {
               {"Hydro", "hydro_from_file", "hydro_files_folder"});
       std::ostringstream preEq_filename;
       std::ostringstream hydro_filename;
-      preEq_filename << folder << "/event-" << hydro_event_idx_
+      preEq_filename << folder << "/hydro_results_" << hydro_event_idx_
                      << "/PreEq_evo.dat";
-      hydro_filename << folder << "/event-" << hydro_event_idx_
-                     << "/MUSIC_evo.dat";
+      //hydro_filename << folder << "/hydro_results_" << hydro_event_idx_
+      //                 << "/MUSIC_evo.dat";
+      hydro_filename << folder << "/hydro_results_" << hydro_event_idx_
+                     << "/evolution_all_xyeta.dat";
       PreEq_file = preEq_filename.str();
       hydro_ideal_file = hydro_filename.str();
     }
@@ -304,6 +331,8 @@ void HydroFromFile::GetHydroInfo(
                                             temp_fluid_cell_ptr);
     }
   }
+   if (abs(t_local-1.3)<0.01 && abs(x_local+3.97262)<0.01 && abs(y_local-5.44029)<0.01 && abs(z_local-0.423842)<0.01){std::cout<<"hurray!!!"<<std::endl;}
+
 
   // assign all the quantites to JETSCAPE output
   // thermodyanmic quantities
@@ -352,7 +381,7 @@ double HydroFromFile::GetEventPlaneAngle() {
     std::ostringstream angle_filename;
     string folder =
         GetXMLElementText({"Hydro", "hydro_from_file", "hydro_files_folder"});
-    angle_filename << folder << "/event-" << hydro_event_idx_
+    angle_filename << folder << "/hydro_results_" << hydro_event_idx_
                    << "/EventPlanesFrzout.dat";
     std::ifstream inputfile(angle_filename.str().c_str());
     string dummy;
@@ -365,8 +394,8 @@ double HydroFromFile::GetEventPlaneAngle() {
     std::ostringstream angle_filename;
     string folder =
         GetXMLElementText({"Hydro", "hydro_from_file", "hydro_files_folder"});
-    angle_filename << folder << "/event-" << hydro_event_idx_
-                   << "/Qn_vectors.dat";
+    angle_filename << folder << "/hydro_results_" << hydro_event_idx_
+                   << "/Qn_vectors_0.dat";
     std::ifstream inputfile(angle_filename.str().c_str());
     string dummy;
     std::getline(inputfile, dummy);
