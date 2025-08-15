@@ -36,6 +36,7 @@ void Hydroinfo_MUSIC::clean_hydro_event() {
         lattice_3D.clear();
         lattice_3D_ideal.clear();
     }
+    idx_map_.clear();
 }
 
 void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
@@ -110,6 +111,8 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
         }
         configuration.close();
         hydroDx = 2.*hydroXmax/(ixmax - 1.);
+        hydroDy = hydroDx;
+        hydroYmax = hydroXmax;
         hydroDeta = 2.*hydro_eta_max/(static_cast<double>(ietamax));
     }
 
@@ -126,6 +129,7 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
         boost_invariant = false;
 
         ixmax = static_cast<int>(2.*hydroXmax/hydroDx + 0.001);
+        iymax = ixmax;
         ietamax = static_cast<int>(2.*hydro_eta_max/hydroDeta + 0.001);
 
         // read in temperature, QGP fraction , flow velocity
@@ -171,6 +175,7 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
              << "from standard MUSIC ..." << endl;
 
         ixmax = static_cast<int>(2.*hydroXmax/hydroDx + 0.001);
+        iymax = ixmax;
         ietamax = 1;
         nskip_tau = nskip_tau_in;
 
@@ -364,6 +369,7 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
 
         nskip_tau = nskip_tau_in;
         ixmax = static_cast<int>(2.*hydroXmax/hydroDx + 0.001);
+        iymax = ixmax;
 
         int n_eta = 1;
         // number of fluid cell in the transverse plane
@@ -563,6 +569,9 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
         ixmax = static_cast<int>(header[2]);
         hydroDx = header[3];
         hydroXmax = std::abs(header[4]);
+        iymax = static_cast<int>(header[5]);
+        hydroDy = header[6];
+        hydroYmax = std::abs(header[7]);
         ietamax = static_cast<int>(header[8]);
         hydroDeta = header[9];
         hydro_eta_max = std::abs(header[10]);
@@ -622,12 +631,12 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
         std::fclose(fin);
         itaumax = itau_max;
         // create the index map
-        long long ncells = (itaumax + 1)*ixmax*ixmax*ietamax;
+        long long ncells = (itaumax + 1)*iymax*ixmax*ietamax;
         idx_map_.resize(ncells, 0);
-        for (int i = 0; i < lattice_3D_ideal.size(); i++) {
+        for (long long i = 0; i < lattice_3D_ideal.size(); i++) {
             const auto cell_i = lattice_3D_ideal[i];
             long long cell_idx = (
-                (  (cell_i.itau*ietamax + cell_i.ieta)*ixmax
+                (  (cell_i.itau*ietamax + cell_i.ieta)*iymax
                  + cell_i.iy)*ixmax + cell_i.ix);
             idx_map_[cell_idx] = i;
         }
@@ -662,6 +671,8 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
     cout << "hydry_dtau = " << hydroDtau << " fm" << endl;
     cout << "hydro_Xmax = " << hydroXmax << " fm" << endl;
     cout << "hydro_dx = " << hydroDx << " fm" << endl;
+    cout << "hydro_Ymax = " << hydroYmax << " fm" << endl;
+    cout << "hydro_dy = " << hydroDy << " fm" << endl;
     cout << "hydro_eta_max = " << hydro_eta_max << endl;
     cout << "hydro_deta = " << hydroDeta << endl;
 }
@@ -690,16 +701,15 @@ void Hydroinfo_MUSIC::getHydroValues(double x, double y,
         eta = z;
     }
 
-    int ieta = floor((hydro_eta_max+eta)/hydroDeta + 0.0001);
-    int itau = floor((tau-hydroTau0)/hydroDtau + 0.0001);
-    int ix = floor((hydroXmax+x)/hydroDx + 0.0001);
-    int iy = floor((hydroXmax+y)/hydroDx + 0.0001);
+    int ieta = static_cast<int>((eta + hydro_eta_max)/hydroDeta + 0.0001); // hydro_eta_min = - hydro_eta_max
+    int itau = static_cast<int>((tau - hydroTau0)/hydroDtau + 0.0001);
+    int ix = static_cast<int>((x + hydroXmax)/hydroDx + 0.0001);   // hydroXmin = - hydroXmax
+    int iy = static_cast<int>((y + hydroYmax)/hydroDy + 0.0001);   // hydroYmin = - hydroYmax
 
-    double xfrac = (x - (static_cast<double>(ix)*hydroDx - hydroXmax))/hydroDx;
-    double yfrac = (y - (static_cast<double>(iy)*hydroDx - hydroXmax))/hydroDx;
-    double etafrac = (eta/hydroDeta - static_cast<double>(ieta)
-                      + 0.5*static_cast<double>(ietamax));
-    double taufrac = (tau - hydroTau0)/hydroDtau - static_cast<double>(itau);
+    double xfrac = (x + hydroXmax)/hydroDx - ix;
+    double yfrac = (y + hydroYmax)/hydroDy - iy;
+    double etafrac = (eta + hydro_eta_max)/hydroDeta - ieta;
+    double taufrac = (tau - hydroTau0)/hydroDtau - itau;
 
     if (boost_invariant) {
         ieta = 0;
@@ -723,11 +733,11 @@ void Hydroinfo_MUSIC::getHydroValues(double x, double y,
         info->vz = 0.0;
         return;
     }
-    if (iy < 0 || iy >= ixmax) {
+    if (iy < 0 || iy >= iymax) {
         if (verbose_ > 7) {
             cout << "[Hydroinfo_MUSIC::getHydroValues]: "
                  << "WARNING - y out of range, y=" << y << ", iy="  << iy
-                 << ", iymax=" << ixmax << endl;
+                 << ", iymax=" << iymax << endl;
             cout << "x=" << x << " y=" << y << " eta=" << eta
                  << " ix=" << ix << " iy=" << iy << " ieta=" << ieta << endl;
             cout << "t=" << t << " tau=" << tau
@@ -771,7 +781,7 @@ void Hydroinfo_MUSIC::getHydroValues(double x, double y,
     }
 
     // The array of positions on the 4-dimensional rectangle:
-    int position[2][2][2][2];
+    long long position[2][2][2][2];
     for (int ipx = 0; ipx < 2; ipx++) {
         int px;
         if (ipx == 0 || ix == ixmax-1) {
@@ -781,7 +791,7 @@ void Hydroinfo_MUSIC::getHydroValues(double x, double y,
         }
         for (int ipy = 0; ipy < 2; ipy++) {
             int py;
-            if (ipy == 0 || iy == ixmax-1) {
+            if (ipy == 0 || iy == iymax-1) {
                 py = iy;
             } else {
                 py = iy + 1;
@@ -801,7 +811,7 @@ void Hydroinfo_MUSIC::getHydroValues(double x, double y,
                         ptau = itau + 1;
                     }
                     position[ipx][ipy][ipeta][iptau] = (
-                                px + ixmax*(py + ixmax*(peta + ietamax*ptau)));
+                                px + ixmax*(py + iymax*(peta + ietamax*ptau)));
                 }
             }
         }
