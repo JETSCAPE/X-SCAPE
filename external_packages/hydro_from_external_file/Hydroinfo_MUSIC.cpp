@@ -36,6 +36,7 @@ void Hydroinfo_MUSIC::clean_hydro_event() {
         lattice_3D.clear();
         lattice_3D_ideal.clear();
     }
+    idx_map_.clear();
 }
 
 void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
