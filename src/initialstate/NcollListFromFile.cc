@@ -17,6 +17,7 @@
 #include <fstream>
 #include "NcollListFromFile.h"
 
+
 // Register the module with the base class
 RegisterJetScapeModule<NcollListFromFile> NcollListFromFile::reg(
         "NcollListFromFile");
@@ -24,6 +25,7 @@ RegisterJetScapeModule<NcollListFromFile> NcollListFromFile::reg(
 NcollListFromFile::NcollListFromFile() {
   SetId("NcollListFromFile");
   event_id_ = -1;
+  event_id_d = -1;
 }
 
 NcollListFromFile::~NcollListFromFile() {}
@@ -35,9 +37,27 @@ void NcollListFromFile::ExecuteTask() {
     std::string initialProfilePath =
         GetXMLElementText({"IS", "initial_Ncoll_list"});
 
-    event_id_++;
+     event_id_d++;
+     	
+     if (matching_indices.empty()){
+       for (const auto& entry : std::filesystem::directory_iterator(initialProfilePath)) {
+         std::string prefix_ = "hydro_results_";
+         if (entry.is_directory()) {
+           std::string name = entry.path().filename().string();
+           if (name.rfind(prefix_, 0) == 0) { // starts with "hydro_results_"
+             std::string suffix = name.substr(prefix_.length());
+             int idx = std::stoi(suffix);
+             matching_indices.push_back(idx);
+           }
+          }
+        }
+      }
+     
+    event_id_ = matching_indices[event_id_d];
+//    event_id_ = 5250;//valuesidx[event_id_d];
+    
     std::ostringstream path_with_filename;
-    path_with_filename << initialProfilePath << "/event-" << event_id_
+    path_with_filename << initialProfilePath << "/hydro_results_" << event_id_
                        << "/NcollList.dat";
     JSINFO << "External initial profile path is" << path_with_filename.str();
 

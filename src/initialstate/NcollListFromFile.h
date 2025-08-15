@@ -24,6 +24,7 @@
 #include "JetScapeModuleBase.h"
 #include "InitialState.h"
 #include "JetScapeLogger.h"
+#include <filesystem>
 
 using namespace Jetscape;
 
@@ -34,7 +35,7 @@ class NcollListFromFile : public Jetscape::InitialState {
 public:
   NcollListFromFile();
   ~NcollListFromFile();
-
+  std::vector<int> matching_indices;
   void ExecuteTask();
   void ClearTask();
 
@@ -51,7 +52,7 @@ private:
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
-
+  int event_id_d;
   double ncoll_ = -1;
 
   // Allows the registration of the module so that it is available to be used
