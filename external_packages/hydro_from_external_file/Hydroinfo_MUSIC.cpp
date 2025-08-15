@@ -630,9 +630,9 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
         std::fclose(fin);
         itaumax = itau_max;
         // create the index map
-        long long ncells = (itaumax + 1)*ixmax*ixmax*ietamax;
+        long long ncells = (itaumax + 1)*iymax*ixmax*ietamax;
         idx_map_.resize(ncells, 0);
-        for (int i = 0; i < lattice_3D_ideal.size(); i++) {
+        for (long long i = 0; i < lattice_3D_ideal.size(); i++) {
             const auto cell_i = lattice_3D_ideal[i];
             long long cell_idx = (
                 (  (cell_i.itau*ietamax + cell_i.ieta)*iymax
@@ -780,7 +780,7 @@ void Hydroinfo_MUSIC::getHydroValues(double x, double y,
     }
 
     // The array of positions on the 4-dimensional rectangle:
-    int position[2][2][2][2];
+    long long position[2][2][2][2];
     for (int ipx = 0; ipx < 2; ipx++) {
         int px;
         if (ipx == 0 || ix == ixmax-1) {
