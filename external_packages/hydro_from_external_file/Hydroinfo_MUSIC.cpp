@@ -635,7 +635,7 @@ void Hydroinfo_MUSIC::readHydroData(int whichHydro, int nskip_tau_in,
         for (int i = 0; i < lattice_3D_ideal.size(); i++) {
             const auto cell_i = lattice_3D_ideal[i];
             long long cell_idx = (
-                (  (cell_i.itau*ietamax + cell_i.ieta)*ixmax
+                (  (cell_i.itau*ietamax + cell_i.ieta)*iymax
                  + cell_i.iy)*ixmax + cell_i.ix);
             idx_map_[cell_idx] = i;
         }
