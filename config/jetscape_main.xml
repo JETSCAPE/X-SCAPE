@@ -546,7 +546,7 @@
       <bulk_viscosity_10_width_high>0.08</bulk_viscosity_10_width_high>
       <bulk_viscosity_10_width_low>0.010</bulk_viscosity_10_width_low>
       <bulk_viscosity_10_T_peak>0.17</bulk_viscosity_10_T_peak>
-      <bulk_viscosity_10_T_peak_muBcurve>-0.15</bulk_viscosity_10_T_peak_muBcurve>
+      <bulk_viscosity_10_T_peak_muBcurv>-0.15</bulk_viscosity_10_T_peak_muBcurv>
       <!--higher order transport coefficients-->
       <Include_second_order_terms>1</Include_second_order_terms>
       <!--Conserved charge settings-->

@@ -182,13 +182,13 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     if (muB_dependent_Shear_to_S_ratio == 10) {
       double shear_muBDep_alpha = GetXMLElementDouble(
             {"Hydro", "MUSIC", "shear_10_muBDep_alpha"});
-      music_hydro_ptr->set_parameter("shear_muBDep_alpha", shear_muBDep_alpha);
+      music_hydro_ptr->set_parameter("shear_10_muBDep_alpha", shear_muBDep_alpha);
       double shear_muBDep_slope = GetXMLElementDouble(
             {"Hydro", "MUSIC", "shear_10_muBDep_slope"});
-      music_hydro_ptr->set_parameter("shear_muBDep_slope", shear_muBDep_slope);
+      music_hydro_ptr->set_parameter("shear_10_muBDep_slope", shear_muBDep_slope);
       double shear_muBDep_scale = GetXMLElementDouble(
             {"Hydro", "MUSIC", "shear_10_muBDep_scale"});
-      music_hydro_ptr->set_parameter("shear_muBDep_scale", shear_muBDep_scale);
+      music_hydro_ptr->set_parameter("shear_10_muBDep_scale", shear_muBDep_scale);
     } else if (muB_dependent_Shear_to_S_ratio == 7) {
       double shear_muBf0p4 = GetXMLElementDouble(
             {"Hydro", "MUSIC", "shear_7_muBf0p4"});
@@ -196,14 +196,14 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
         // set to 1
         shear_muBf0p4 = 1.0;
       }
-      music_hydro_ptr->set_parameter("shear_muBf0p4", shear_muBf0p4);
+      music_hydro_ptr->set_parameter("shear_7_muBf0p4", shear_muBf0p4);
       double shear_muBf0p2 = GetXMLElementDouble(
             {"Hydro", "MUSIC", "shear_7_muBf0p2"});
       if (shear_muBf0p2 < 0) {
         // set to (shear_muBf0p4 + 1) / 2
         shear_muBf0p2 = (shear_muBf0p4 + 1) / 2.;
       }
-      music_hydro_ptr->set_parameter("shear_muBf0p2", shear_muBf0p2);
+      music_hydro_ptr->set_parameter("shear_7_muBf0p2", shear_muBf0p2);
     }
   }
 
@@ -285,10 +285,10 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
             {"Hydro", "MUSIC", "bulk_viscosity_10_T_peak"});
       music_hydro_ptr->set_parameter("bulk_viscosity_10_T_peak", 
                                       bulk_viscosity_10_T_peak);
-      double bulk_viscosity_10_T_peak_muBcurve = GetXMLElementDouble(
-            {"Hydro", "MUSIC", "bulk_viscosity_10_T_peak_muBcurve"});
-      music_hydro_ptr->set_parameter("bulk_viscosity_10_T_peak_muBcurve", 
-                                      bulk_viscosity_10_T_peak_muBcurve);
+      double bulk_viscosity_10_T_peak_muBcurv = GetXMLElementDouble(
+            {"Hydro", "MUSIC", "bulk_viscosity_10_T_peak_muBcurv"});
+      music_hydro_ptr->set_parameter("bulk_viscosity_10_T_peak_muBcurv", 
+                                      bulk_viscosity_10_T_peak_muBcurv);
     }
   }
 
