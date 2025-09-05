@@ -48,7 +48,10 @@ void MCGlauberGenStringWrapper::ExecuteTask() {
     try {
         ini->GetHardPartonPosAndMomentumProj();
         ini->GetHardPartonPosAndMomentumTarg();
-        ini->GenerateStrings();// generate strings for the MUSIC
+
+        // generate strings for MUSIC with wounded nucleons
+        // for ISR setup (wound_nucleons=true) 
+        ini->GenerateStrings(true);
     } catch (std::exception &err) {
         Jetscape::JSWARN << err.what();
         std::exit(-1);
