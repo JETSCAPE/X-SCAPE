@@ -261,7 +261,8 @@ void MCGlauberWrapper::ExecuteTask() {
             event_id_++;
             //Do not wound nucleons in Glauber code for case there is no
             //energy subtraction in JETSCAPE mode (wound_nucleons=false)
-            ini->GenerateStrings(false, event_id_ - 1);
+            bool hardCollisionFlag = false;
+            ini->GenerateStrings(hardCollisionFlag, event_id_ - 1);
         } catch (std::exception &err) {
             Jetscape::JSWARN << err.what();
             std::exit(-1);
