@@ -161,7 +161,14 @@ jobs:
         echo "This is SMASH_DIR: "
         echo ${SMASH_DIR}
         ls ${SMASH_DIR}
-        cmake .. -DUSE_3DGlauber=ON -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON
+        cmake .. \
+          -DUSE_3DGlauber=ON \
+          -DUSE_MUSIC=ON \
+          -DUSE_ISS=ON \
+          -DUSE_FREESTREAM=ON \
+          -DUSE_SMASH=ON \
+          -DCMAKE_PREFIX_PATH="$BOOST_ROOT" \
+          -DBoost_NO_BOOST_CMAKE=ON
         make -j2
 
     - name: Test Run
