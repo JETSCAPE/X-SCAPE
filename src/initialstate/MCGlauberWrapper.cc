@@ -261,7 +261,7 @@ void MCGlauberWrapper::ExecuteTask() {
             event_id_++;
             //Do not wound nucleons in Glauber code for case there is no
             //energy subtraction in JETSCAPE mode (wound_nucleons=false)
-            ini->GenerateStrings(false);
+            ini->GenerateStrings(false, event_id_ - 1);
         } catch (std::exception &err) {
             Jetscape::JSWARN << err.what();
             std::exit(-1);
@@ -420,10 +420,10 @@ void MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
                                targ_parton_py_, targ_parton_pz_);
 }
 
-void MCGlauberWrapper::GenerateStrings(bool wound_nucleons) {
+void MCGlauberWrapper::GenerateStrings(bool wound_nucleons, int event_id) {
     // generate strings from 3D Glauber for MUSIC
     QCDStringList_.clear();
-    auto stringList = mc_gen_->generate_strings(wound_nucleons);
+    auto stringList = mc_gen_->generate_strings(wound_nucleons, event_id);
     for (auto string_i: stringList) {
         std::vector<double> string_temp;
         for (auto ii: string_i) {
