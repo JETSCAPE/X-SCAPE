@@ -5,11 +5,13 @@ on:
     branches:
       - main
       - XSCAPE-1.2.1-RC
+      - latessa/macos_workflow_boost_pin
 
   push:
     branches:
       - main
       - XSCAPE-1.2.1-RC
+      - latessa/macos_workflow_boost_pin
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -35,7 +37,7 @@ jobs:
         brew install --formula hdf5
         brew install --formula open-mpi
         brew install --formula gsl
-        brew install --formula boost
+        brew install --formula boost@1.78
         brew install --formula zlib
         brew install --formula gcc
         . /opt/homebrew/bin/thisroot.sh
@@ -155,6 +157,7 @@ jobs:
         mkdir build
         cd build
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
+        BOOST_ROOT="$(brew --prefix boost@1.78)"
         echo "This is SMASH_DIR: "
         echo ${SMASH_DIR}
         ls ${SMASH_DIR}
