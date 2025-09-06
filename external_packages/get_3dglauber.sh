@@ -14,7 +14,7 @@
 ##############################################################################
 
 folderName="3dMCGlauber"
-commitHash="c6bd46c15567f2bb1d577852fd37f0b899a9d6d9" # for xscape 1.2.1
+commitHash="c2f77fc413d6a669c485a4cef00edd6915158501"
 # download the code package
 rm -fr $folderName
 git clone https://github.com/chunshen1987/3dMCGlauber.git --branch JETSCAPE $folderName
