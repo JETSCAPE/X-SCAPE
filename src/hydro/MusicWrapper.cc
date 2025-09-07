@@ -245,7 +245,7 @@ int MpiMusic::InitializeHydroEnergyProfile() {
   if (initialProfile_ == 13 || initialProfile_ == 131) {
     auto QCDStringList = ini->GetQCDStringList();
     if (QCDStringList.size() == 0) {
-        status = 1;
+        status = -1;
     } else {
         music_hydro_ptr->generate_hydro_source_terms(ini->GetQCDStringList());
         music_hydro_ptr->initialize_hydro_xscape();
