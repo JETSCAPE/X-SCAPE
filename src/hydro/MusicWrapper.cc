@@ -314,6 +314,9 @@ void MpiMusic::EvolveHydro() {
     int ini_status = InitializeHydroEnergyProfile();
     if (ini_status != 0) {
         hydro_status = FINISHED;
+        if (flag_surface_in_memory == 1) {
+            clearSurfaceCellVector();
+        }
         return;
     }
   }
