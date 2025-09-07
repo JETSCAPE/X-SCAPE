@@ -317,6 +317,9 @@ void MpiMusic::EvolveHydro() {
         if (flag_surface_in_memory == 1) {
             clearSurfaceCellVector();
         }
+        if (flag_output_evo_to_memory == 1) {
+            clear_up_evolution_data();
+        }
         return;
     }
   }
