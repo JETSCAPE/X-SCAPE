@@ -18,10 +18,33 @@
 // -----------------------------------------------------------------------------
 
 #include "SMASHNucleusWrapper.h"
+#include "smash/input_keys.h"
 #include "smash/particles.h"
 #include "smash/library.h"
 
 #include <iterator>
+
+namespace YAML {
+template <>
+struct convert<smash::PdgCode> {
+  static Node encode(const smash::PdgCode &pdg) {
+    // encode as string, e.g., "pdg:221"
+    // assuming you can convert it to string via operator<< or some method
+    std::stringstream ss;
+    ss << pdg;  // if operator<< is implemented
+    return Node(ss.str());
+  }
+
+  static bool decode(const Node &node, smash::PdgCode &pdg) {
+    if (!node.IsScalar()) return false;
+
+    // parse integer from string
+    int code = std::stoi(node.as<std::string>());
+    pdg = smash::PdgCode(code);
+    return true;
+  }
+};
+}  // namespace YAML
 
 namespace Jetscape {
 
@@ -64,8 +87,8 @@ void SMASHNucleusWrapper::InitTask() {
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
-  config1.set_value({"General", "Randomseed"}, random_seed);
-  config2.set_value({"General", "Randomseed"}, random_seed);
+  config1.set_value(smash::InputKeys::gen_randomseed, random_seed);
+  config2.set_value(smash::InputKeys::gen_randomseed, random_seed);
 
   int smash_projectile_protons =
       GetXMLElementInt({"IS", "SMASHNucleus", "Protons"});
@@ -82,12 +105,20 @@ void SMASHNucleusWrapper::InitTask() {
     exit(1);
   }
 
+  auto to_pdg_map = [](const std::map<int,int>& input) {
+    std::map<smash::PdgCode,int> output;
+    for (const auto& [pdg_int, count] : input) {
+      output.emplace(smash::PdgCode(pdg_int), count);
+    }
+    return output;
+  };
   std::map<int, int> smash_projectile{{2212, smash_projectile_protons},
                                       {2112, smash_projectile_neutrons}};
-  config1.set_value({"Modi", "Collider", "Projectile", "Particles"},
-                    smash_projectile);
-  config2.set_value({"Modi", "Collider", "Projectile", "Particles"},
-                    smash_projectile);
+  std::map<smash::PdgCode,int> projectile_pdg = to_pdg_map(smash_projectile);
+  config1.set_value(smash::InputKeys::modi_collider_projectile_particles,
+                    projectile_pdg);
+  config2.set_value(smash::InputKeys::modi_collider_projectile_particles,
+                    projectile_pdg);
 
   // Check if the tabulations directory exists, if not initialize particles and
   // decays
@@ -98,9 +129,11 @@ void SMASHNucleusWrapper::InitTask() {
 
   // Try to get the Collider configuration sub-configuration
   smash::Configuration modus_config1 =
-      config1.extract_sub_configuration({"Modi"});
+      config1.extract_complete_sub_configuration(
+        smash::InputSections::m_collider);
   smash::Configuration modus_config2 =
-      config2.extract_sub_configuration({"Modi"});
+      config2.extract_complete_sub_configuration(
+        smash::InputSections::m_collider);
 
   smash_nucleus_ = make_shared<NucleusModus>(std::move(modus_config1),
                                              std::move(modus_config2));
