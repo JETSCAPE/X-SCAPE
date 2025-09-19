@@ -491,7 +491,7 @@
       <MUSIC_input_file>music_input</MUSIC_input_file>
       <!--EOS used for the hydro evolution: 91 hotQCD EOS, 20 NEOS-4D-->
       <EOS>91</EOS>
-      <!--InitialProfile = 42 for Trento + Pre-equilibrium, 13 for the 3D Glauber initial condition-->
+      <!--InitialProfile = 42 for Trento + Pre-equilibrium or IPGlasma, 13 for the 3D Glauber initial condition-->
       <InitialProfile>42</InitialProfile>
       <!--beastMode = 0: double precision, constant time step-->
       <!--beastMode = 1: float precision, constant time step-->
@@ -625,9 +625,9 @@
        <weak_decays>depracted</weak_decays> <!-- use the parameters pythia_decays and tau0Max, this parameter is only a dummy to make old xml files work-->
        <!-- You can add any number of additional lines to initialize pythia hadronization here -->
        <!-- Note that if the tag exists it cannot be empty (tinyxml produces a segfault) -->
-       <!-- <LinesToRead> -->
-       <!--   111:mayDecay = off  -->
-       <!-- </LinesToRead> -->
+       <LinesToRead>
+          Init:showProcesses = off 
+       </LinesToRead> 
        <reco_hadrons_in_pythia>1</reco_hadrons_in_pythia>
        <!-- Switch to include more pythia particles from an additional xml file with particle information -->
        <additional_pythia_particles>0</additional_pythia_particles>

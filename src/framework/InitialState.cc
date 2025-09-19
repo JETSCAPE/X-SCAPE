@@ -173,7 +173,7 @@ std::vector<double> InitialState::Get_Targ_Remnant() {
     return Temp;
 }
 
-void InitialState::GenerateStrings() {
+void InitialState::GenerateStrings(bool wound_nucleons, int event_id) {
   // Do whatever is needed to figure out the internal temp...
   std::cout<<"Call the wrong GenerateStrings function..."<<std::endl;
 }

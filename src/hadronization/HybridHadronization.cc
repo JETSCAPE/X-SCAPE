@@ -373,15 +373,6 @@ void HybridHadronization::InitTask(){
 	  pythia.readString("ColourReconnection:timeDilationPar = 0.18");   //parameter used in causal interaction between strings (mode set above)(maybe try 0.073?)
     */
 
-    std::stringstream lines;
-    lines << GetXMLElementText({"JetHadronization", "LinesToRead"}, false);
-    while (std::getline(lines, s, '\n')) {
-      if (s.find_first_not_of(" \t\v\f\r") == s.npos)
-        continue; // skip empty lines
-      JSINFO << "Also reading in: " << s;
-      pythia.readString(s);
-    }
-
     // optional input of another pythia particle data xml file (higher excited states,...)
     xml_intin = GetXMLElementInt({"JetHadronization", "additional_pythia_particles"});
 	  if(xml_intin == 0 || xml_intin == 1){additional_pythia_particles = xml_intin;} xml_intin = -1;
@@ -390,6 +381,15 @@ void HybridHadronization::InitTask(){
       std::string additional_pythia_particle_file =
         GetXMLElementText({"JetHadronization", "additional_pythia_particles_path"});
       pythia.particleData.readXML(additional_pythia_particle_file,false);
+    }
+
+    std::stringstream lines;
+    lines << GetXMLElementText({"JetHadronization", "LinesToRead"}, false);
+    while (std::getline(lines, s, '\n')) {
+      if (s.find_first_not_of(" \t\v\f\r") == s.npos)
+        continue; // skip empty lines
+      JSINFO << "Also reading in: " << s;
+      pythia.readString(s);
     }
 
     // And initialize
