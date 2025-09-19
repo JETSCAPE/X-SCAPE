@@ -226,14 +226,15 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
         GetXMLElementDouble({"Hydro", "MUSIC", "eps_switch"});
     music_hydro_ptr->set_parameter("eps_switch", eps_switch);
   }
-  
+
   music_hydro_ptr->check_parameters();
   music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
 }
 
-void MpiMusic::InitializeHydroEnergyProfile() {
+int MpiMusic::InitializeHydroEnergyProfile() {
   VERBOSE(8);
   JSINFO << "Initialize density profiles in MUSIC ...";
+  int status = 0;
   std::vector<double> entropy_density = ini->GetEntropyDensityDistribution();
   double dx = ini->GetXStep();
   double dz = ini->GetZStep();
@@ -242,8 +243,13 @@ void MpiMusic::InitializeHydroEnergyProfile() {
 
   // need further improvement to accept multiple source term objects
   if (initialProfile_ == 13 || initialProfile_ == 131) {
-    music_hydro_ptr->generate_hydro_source_terms(ini->GetQCDStringList());
-    music_hydro_ptr->initialize_hydro_xscape();
+    auto QCDStringList = ini->GetQCDStringList();
+    if (QCDStringList.size() == 0) {
+        status = -1;
+    } else {
+        music_hydro_ptr->generate_hydro_source_terms(ini->GetQCDStringList());
+        music_hydro_ptr->initialize_hydro_xscape();
+    }
   } else {
     music_hydro_ptr->generate_hydro_source_terms();
     double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
@@ -270,16 +276,22 @@ void MpiMusic::InitializeHydroEnergyProfile() {
   }
 
   JSINFO << "Initial density profile dx = " << dx << " fm";
-  hydro_status = INITIALIZED;
   JSINFO << "Number of source terms: "
          << hydro_source_terms_ptr->get_number_of_sources()
          << ", total E = " << hydro_source_terms_ptr->get_total_E_of_sources()
          << " GeV.";
+  if (status == 0)
+    hydro_status = INITIALIZED;
+  return(status);
 }
 
 void MpiMusic::EvolveHydroUpto(const double tauEnd) {
   if (hydro_status == NOT_START) {
-    InitializeHydroEnergyProfile();
+    int ini_status = InitializeHydroEnergyProfile();
+    if (ini_status != 0) {
+        hydro_status = FINISHED;
+        return;
+    }
     music_hydro_ptr-> prepare_run_hydro_one_time_step();
   }
   music_hydro_ptr->run_hydro_upto(tauEnd);
@@ -299,7 +311,17 @@ void MpiMusic::ExecTime() {
 
 void MpiMusic::EvolveHydro() {
   if (hydro_status == NOT_START) {
-    InitializeHydroEnergyProfile();
+    int ini_status = InitializeHydroEnergyProfile();
+    if (ini_status != 0) {
+        hydro_status = FINISHED;
+        if (flag_surface_in_memory == 1) {
+            clearSurfaceCellVector();
+        }
+        if (flag_output_evo_to_memory == 1) {
+            clear_up_evolution_data();
+        }
+        return;
+    }
   }
 
   has_source_terms = false;

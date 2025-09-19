@@ -151,7 +151,6 @@ void HydroFromFile::read_in_hydro_event(string MUSIC_input_file,
 void HydroFromFile::EvolveHydro() {
   clean_hydro_event();
   hydro_event_idx_ = ini->GetEventId();
-  
 
   if (hydro_type_ == 1) {
     string filename;

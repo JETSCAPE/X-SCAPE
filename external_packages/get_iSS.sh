@@ -15,7 +15,7 @@
 
 # using a commit from the iSS repository that is compatible with the current X-SCAPE version
 folderName="iSS"
-commitHash="db176d4cfaf804c9963f6927577d540f5f8be530"
+commitHash="444410c34f8159fc126a2b3f68f8f78e3ee5cbad"
 
 git clone https://github.com/chunshen1987/iSS -b JETSCAPE iSS
 cd $folderName
