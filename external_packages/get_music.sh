@@ -16,7 +16,7 @@
 
 # using a commit from the MUSIC repository that is compatible with the current X-SCAPE version
 folderName="music"
-commitHash="132448235467999067f1c01f340736139499ce16"
+commitHash="72b2e0c3ee2bbd1ec5873c8e4d363d4abce51944"
 
 git clone https://github.com/MUSIC-fluid/MUSIC.git -b JETSCAPE $folderName
 cd $folderName
