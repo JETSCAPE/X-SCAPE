@@ -509,9 +509,6 @@ endif (USE_MUSIC AND USE_ISS )
 #target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
 
 if ( USE_SMASH )
-    add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
-    target_link_libraries(SMASHTest JetScape )
-
     add_executable(SMASHInitialCondition ./examples/custom_examples/SMASHInitialCondition.cc)
     target_link_libraries(SMASHInitialCondition JetScape )
 
