@@ -23,8 +23,8 @@
   <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
 
   <!--  JetScape Writer Settings -->
-  <outputFilename>test_out</outputFilename>
-  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <outputFilename>test_SMASH_IC</outputFilename>
+  <JetScapeWriterAscii> off </JetScapeWriterAscii>
   <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
 
   <Random>
@@ -32,12 +32,12 @@
   </Random>
 
   <BDM>
-    <energy_density_criterion>1</energy_density_criterion>
-    <ec>0.35</ec>
+    <Tc>0.155</Tc>
     <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
     <!--Optional pT and momentum rapidity cuts for particles considered to go into the hydro evolution (set to 0 for no cut)-->
-    <pT_cut>0.0</pT_cut>
-    <rapidity_cut>0.0</rapidity_cut>
+    <pT_cut>0</pT_cut>
+    <rapidity_cut>0</rapidity_cut>
+    <!--Spectator hadrons are always ignored for source terms in hydro, this switch is for the afterburner phase-->
     <ignore_spectator_hadrons>1</ignore_spectator_hadrons>
     <CreateHadronicTimeEvolutionOutput> false </CreateHadronicTimeEvolutionOutput>
   </BDM>
@@ -67,7 +67,7 @@
 
       <!-- time in fm/c in the computational frame, when the simulation should be ended -->
       <end_time>1000</end_time>
-      <Sqrtsnn>200</Sqrtsnn>
+      <Sqrtsnn>200.0</Sqrtsnn>
       <FermiMotion>frozen</FermiMotion>
       <CollisionsWithinNucleus>0</CollisionsWithinNucleus>
 
@@ -76,9 +76,14 @@
         <!-- Pick the mode for the impact parameter -->
         <!-- Mode=0 : Value has to be set -->
         <!-- Mode=1 : Sample (uniform, quadratic) with ImpactMin, ImpactMax have to be set -->
-        <Mode>0</Mode>
-        <Value>6.0</Value>
+        <Mode>1</Mode>
+        <Value>0.0</Value>
+        <Sample>quadratic</Sample>
+        <ImpactMin>6.0</ImpactMin>
+        <ImpactMax>8.0</ImpactMax>
       </Impact>
+      <!--Smaller timestep here gives more accuracy in the iso-tau hypersurface extraction-->
+      <Delta_Time>0.002</Delta_Time>
     </SMASH>
   </IS>
 
@@ -119,12 +124,14 @@
       <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
 
       <temperature_dependent_bulk_viscosity>10</temperature_dependent_bulk_viscosity>
+      <bulk_viscosity_10_max>0.10</bulk_viscosity_10_max>
+      <!-- The following two parameters are set automatically to bulk_viscosity_10_max and (max+max_muB0p4)/2. if the values are -1 here-->
       <bulk_viscosity_10_max_muB0p4>-1</bulk_viscosity_10_max_muB0p4>
       <bulk_viscosity_10_max_muB0p2>-1</bulk_viscosity_10_max_muB0p2>
       <bulk_viscosity_10_width_high>0.08</bulk_viscosity_10_width_high>
       <bulk_viscosity_10_width_low>0.010</bulk_viscosity_10_width_low>
-      <bulk_viscosity_10_T_peak>0.1</bulk_viscosity_10_T_peak>
-      <bulk_viscosity_10_T_peak_muBcurve>-0.15</bulk_viscosity_10_T_peak_muBcurve>
+      <bulk_viscosity_10_T_peak>0.17</bulk_viscosity_10_T_peak>
+      <bulk_viscosity_10_T_peak_muBcurv>-0.15</bulk_viscosity_10_T_peak_muBcurv>
 
       <muB_dependent_Shear_to_S_ratio>10</muB_dependent_Shear_to_S_ratio>
       <shear_10_muBDep_alpha>0.7</shear_10_muBDep_alpha>
@@ -175,6 +182,11 @@
 
   <!-- Hadronic Afterburner  -->
   <Afterburner>
+    <!-- fragmentation hadrons in the afterburner only possible with hybrid hadronization-->
+    <include_fragmentation_hadrons>0</include_fragmentation_hadrons>
+    <!-- only the afterburner hadrons are written to a file -->
+    <!-- if fragmentation hadrons are not included in the afterburner they are also written  -->
+    <output_only_final_state_hadrons>1</output_only_final_state_hadrons>
     <!-- SMASH -->
     <SMASH>
       <name>SMASH</name>
@@ -183,6 +195,8 @@
       <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
       <!-- time in fm/c in the computational frame, when the simulation shoud be ended -->
       <end_time>1000.0</end_time>
+      <!-- 0 - run the full afterburner, 1 - only decay the resonances without even propagation -->
+      <only_decays>0</only_decays>
     </SMASH>
   </Afterburner>
 
