@@ -658,6 +658,7 @@
 
       <include_deltaf_shear>1</include_deltaf_shear>
       <include_deltaf_bulk>1</include_deltaf_bulk>
+      <!--20: Grad 22 moment, 21: CE-->
       <deltaf_type>20</deltaf_type>
       <number_of_repeated_sampling>1</number_of_repeated_sampling>
       <Perform_resonance_decays>0</Perform_resonance_decays>
