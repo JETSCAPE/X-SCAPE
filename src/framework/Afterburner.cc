@@ -147,9 +147,8 @@ std::vector<std::vector<std::shared_ptr<Hadron>>> Afterburner::GatherAfterburner
 std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimestepParticlizationHadrons() {
   auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
   if (!bdm) {
-    JSWARN << "No BulkDynamicsManager module found. It is necessary to provide"
-           << " a hadron list for upcoming timesteps.";
-    exit(1);
+    JSWARN << "No BulkDynamicsManager module found. Returning empty hadron list.";
+    return {};
   }
   return bdm->GetNewHadronsAndClear();
 }
@@ -157,9 +156,8 @@ std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimestepParticlizationHadro
 std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimestepHadronsToRemove() {
   auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
   if (!bdm) {
-    JSWARN << "No BulkDynamicsManager module found. It is necessary to provide"
-           << " a hadron list for upcoming timesteps.";
-    exit(1);
+    JSWARN << "No BulkDynamicsManager module found. Returning empty hadron list.";
+    return {};
   }
   return bdm->GetHadronsToRemoveAndClear();
 }
