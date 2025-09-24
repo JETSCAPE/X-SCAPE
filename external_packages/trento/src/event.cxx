@@ -348,15 +348,15 @@ void Event::compute_observables() {
       e2.wt += t * r2;
 
       e3.re += t * (x3 - 3.*x*y2);
-      e3.im += t * y*(3. - 4.*y2);
+      e3.im += t * y*(3.*x2 - y2);
       e3.wt += t * r2*r;
 
       e4.re += t * (x4 + y4 - 6.*x2y2);
-      e4.im += t * 4.*xy*(1. - 2.*y2);
+      e4.im += t * 4.*xy*(x2 - y2);
       e4.wt += t * r4;
 
-      e5.re += t * x*(x4 - 10.*x2y2 - 5.*y4);
-      e5.im += t * y*(1. - 12.*x2 + 16.*x4);
+      e5.re += t * x*(x4 - 10.*x2y2 + 5.*y4);
+      e5.im += t * y*(y4 + 5.*x4 - 10.*x2*y2);
       e5.wt += t * r4*r;
     }
   }
