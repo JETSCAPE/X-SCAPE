@@ -78,7 +78,7 @@ void SmashWrapper::InitTask() {
                                                      tabulations_path);
   }
 
-  const double delta_t_sm = GetXMLElementDouble({"IS", "SMASH", "Delta_Time"});
+  const double delta_t_sm = GetXMLElementDouble({"Afterburner", "SMASH", "Delta_Time"});
   config.set_value({"General", "Delta_Time"}, delta_t_sm);
 
   // Enforce timestep compatibility (temporarily)
