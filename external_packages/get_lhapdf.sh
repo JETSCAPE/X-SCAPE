@@ -14,7 +14,7 @@
 ##############################################################################
 
 # default LHAPATH environment variable
-export LHAPATH='/home/jetscape-user/.local/share/LHAPDF'
+export LHAPATH='/wsu/home/hl/hl97/hl9735/X-SCAPE/external_packages/LHAPDF/'
 
 # create the LHAPATH if it doesn't exist
 if [ ! -d "$LHAPATH" ]; then
