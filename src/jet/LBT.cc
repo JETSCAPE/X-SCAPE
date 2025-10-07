@@ -300,7 +300,7 @@ void LBT::TestQhatMod(){
     filer.close();
   }
 */
-void LBT::Init() {
+void LBT::InitTask() {
   JSINFO << "Initialize LBT ...";
 
   //...Below is added by Shanshan
@@ -402,6 +402,7 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
 
   //DEBUG:
   //cout<<" ---> "<<pIn.size()<<endl;
+  GetHydroTau0Signal(tStart);
   for (int i = 0; i < pIn.size(); i++) {
 
     // Reject photons

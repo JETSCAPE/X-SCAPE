@@ -30,7 +30,6 @@
 using namespace Jetscape;
 using namespace std;
 
-const double QS = 0.9;
 
 // Register the module with the base class
 RegisterJetScapeModule<Matter> Matter::reg("Matter");
@@ -87,6 +86,7 @@ Matter::Matter() {
   initEner = 0.;
   Q00 = 0.;
   Q0 = 0.;
+  QS = 0.;
   T0 = 0.;
   iEvent = 0;
   NUM1 = 0;
@@ -94,7 +94,7 @@ Matter::Matter() {
 
 Matter::~Matter() { VERBOSE(8); }
 
-void Matter::Init() {
+void Matter::InitTask() {
   JSINFO << "Initialize Matter ...";
 
   in_vac = false;
@@ -103,6 +103,7 @@ void Matter::Init() {
 
   qhat = 0.0;
   Q00 = 1.0;    // virtuality separation scale
+  QS = 0.9;
   qhat0 = 2.0;  // GeV^2/fm for gluon at s = 96 fm^-3
   alphas = 0.3; // only useful when qhat0 is a negative number
   tscale=1;
@@ -131,6 +132,7 @@ void Matter::Init() {
   broadening_on = GetXMLElementInt({"Eloss", "Matter", "broadening_on"});
   brick_med = GetXMLElementInt({"Eloss", "Matter", "brick_med"});
   Q00 = GetXMLElementDouble({"Eloss", "Matter", "Q0"});
+  QS = GetXMLElementDouble({"Eloss", "Matter", "QS"});
   T0 = GetXMLElementDouble({"Eloss", "Matter", "T0"});
   alphas = GetXMLElementDouble({"Eloss", "Matter", "alphas"});
   qhatA = GetXMLElementDouble({"Eloss", "Matter", "qhatA"});
@@ -144,6 +146,7 @@ void Matter::Init() {
   brick_length = GetXMLElementDouble({"Eloss", "Matter", "brick_length"});
   vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
   initial_virtuality_pT = GetXMLElementInt({"Eloss", "Matter", "initial_virtuality_pT"});
+  Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
 
   ModificationFactor = GetXMLElementDouble({"Eloss", "ModificationFactor"});
 
@@ -153,6 +156,14 @@ void Matter::Init() {
   }
   if (!initial_virtuality_pT) {
     cout << "Reminder: initial energy will be used as initial t_max" << endl;
+  }
+  if(QS < 2.*Lambda_QCD + 0.05){
+    JSWARN << "QS too low; will be set to 2*LambdaQCD + 0.05";
+    QS = 2.*Lambda_QCD + 0.05;
+  } 
+  if(QS > Q00){
+    JSWARN << "QS too high; will be set to Q0";
+    QS = Q00;
   }
 
   MaxColor = 101; // MK:recomb
@@ -268,7 +279,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
   qhat = qhat0;
 
   VERBOSE(8) << " qhat0 = " << qhat0 << " qhat = " << qhat;
-
+  GetHydroTau0Signal(tStart);
   for (int i = 0; i < pIn.size(); i++) {
 
     // Reject photons
@@ -296,6 +307,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       return;
     }
+    if (pIn[i].time() > time) return; // ignore partons that havent formed yet.
 
     VERBOSE(2) << BOLDYELLOW
                << " *  parton formation spacetime point= " << pIn[i].x_in().t()
@@ -433,7 +445,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
     // if(now_R0^2-now_Ri^2<0) print out pIn info and exit
 
     if (std::isinf(now_R0) || std::isnan(now_R0) || std::isinf(now_Rz) ||
-        std::isnan(now_Rz) || std::abs(now_Rz) > now_R0) {
+        std::isnan(now_Rz) || (std::abs(now_Rz) > now_R0 && initR0 > 0)) {
       JSINFO << BOLDYELLOW << "First instance";
       JSINFO << BOLDYELLOW << "now_R for vector is:" << now_R0 << ", " << now_Rx
              << ", " << now_Ry << ", " << now_Rz;
@@ -475,7 +487,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
            (pIn[i].form_time() > -0.1 + rounding_error))) {
         JSWARN << " parton with a negative virtuality was sent to MATTER and "
                   "will now have its virtuality reset!, press 1 and return to "
-                  "proceed... ";
+                  "proceed... pstat "<< pIn[i].pstat() << " virt "<< pIn[i].t();
         // cin >> blurb; //remove the input to prevent an error caused by heavy quark from pythia (by Chathuranga)
       }
 
@@ -1470,6 +1482,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                  << k_perp1[1];
           JSINFO << MAGENTA << newp[0] << " " << newp[1] << " " << newp[2]
                  << " " << newp[3];
+          Dump_pIn_info(i,pIn);
           cin >> blurb;
         }
 

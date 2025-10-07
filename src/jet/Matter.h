@@ -21,20 +21,19 @@
 
 using namespace Jetscape;
 
-class Matter : public JetEnergyLossModule<
-                   Matter> //, public std::enable_shared_from_this<Matter>
+class Matter : public JetEnergyLossModule<Matter> //, public std::enable_shared_from_this<Matter>
 {
 public:
   Matter();
   virtual ~Matter();
 
-  void Init();
-  //void Exec();
+  void InitTask();
+  //void ExecuteTask();
   //void DoEnergyLoss(double deltaT, double Q2, const vector<Parton>& pIn, vector<Parton>& pOut);
   void DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton> &pIn,
                     vector<Parton> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
-  void Dump_pIn_info(int i, vector<Parton> &pIn);
+  static void Dump_pIn_info(int i, vector<Parton> &pIn);
 
   double generate_L(double form_time);
   double sudakov_Pgg(double g0, double g1, double loc_c, double E);
@@ -108,7 +107,8 @@ public:
   double hydro_Tc, qhat0, alphas, brick_length, vir_factor;
   double initR0, initRx, initRy, initRz, initVx, initVy, initVz, initRdotV,
       initVdotV, initEner;
-  double Q00, Q0, T0;
+  double Q00, Q0, T0, QS;
+  double Lambda_QCD;
 
   static const int dimQhatTab = 151;
   double qhatTab1D[dimQhatTab] = {0.0};
