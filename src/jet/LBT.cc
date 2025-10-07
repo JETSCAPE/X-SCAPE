@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- *
+ * 
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -83,8 +83,224 @@ LBT::LBT() {
 }
 
 LBT::~LBT() { VERBOSE(8); }
+/*void LBT::RadiationTest(){
+  std::ofstream filer;
+  filer.open("Radiation.txt");
+  for (int i = 0; i < t_gn; i++){
+    int time_num = i;
+    for (int j = 0; j < HQener_gn; j++){
+      int HQenergy_num = j;
+      for (int k = 0; k < temp_gn; k++){
+        int temp_num = k;
+        filer << i << " " << j << " " << k << " " << dNg_over_dt_g[time_num][temp_num][HQenergy_num] << " "<<dNg_over_dt_q[time_num][temp_num][HQenergy_num] << "\n";
+    }
+  }
+}
+  filer.close();
+}
 
-void LBT::InitTask() {
+void LBT::TestTwoScattering(){
+  std::ofstream filer;
+  ModificationFactor = 9.27;
+  int num_processes= 10000;
+  int time_step = 10000;
+  double p0temp[4];
+  double p1[4];
+  double p2[4];
+  double p3[4];
+  double p4[4];
+  double Holder[4];
+  double vc0[4] = {0.0, 0.0, 0.0, 0.0};
+  int pid2, pid3;
+  bool DiditScatter;
+  int pid1 = enter_pid;
+  int hpid;
+  int rpid;
+  double qhat_ = 0;
+  double Temperature = 0;
+  double RTE = 0.0;
+  double T1, T2, E1, E2;
+  int iT1, iT2, iE1, iE2;
+  double probCol, PLen;
+  int CT;
+  double qt = 0.0;
+  double qhat0_ = 0.0; 
+  alphas = 0.3;
+  std::string name = filename + ".txt";
+  filer.open(name);
+  for (int u_ = 1; u_ <= 3; u_++){
+    Temperature = 0.1 + u_ * 0.1;
+    ModificationCorr = 1.0 + 1.0 / ModificationFactor / Temperature;
+    for (int k = 0; k< 40; k++){
+      double energy = 5.0 + k * 5.0;
+      for(int i=0;i<num_processes;i++){
+        //JSINFO<<"Event "<<i<<", Temperature = "<<Temperature<<", energy = "<<energy;
+        p1[0] = energy;
+        p1[1] = 0.0;
+        p1[2] = 0.0; 
+        p1[3] = energy;
+        
+        p2[0] = 0;
+        p2[1] = 0;
+        p2[2] = 0;
+        p2[3] = 0;
+
+        p3[0] = 0;
+        p3[1] = 0;
+        p3[2] = 0;
+        p3[3] = 0;
+
+        p4[0] = 0;
+        p4[1] = 0;
+        p4[2] = 0;
+        p4[3] = 0;
+        int num_scatter = 0;    
+        pid1 = enter_pid;
+        for(int j=1; j <= time_step; j++){
+          PLen = sqrt(p1[1] * p1[1] + p1[2] * p1[2] + p1[3] * p1[3]);
+          lam(pid1, RTE, PLen, Temperature, T1, T2, E1, E2, iT1, iT2, iE1,
+            iE2);
+          scaleMu2 = 2.0*PLen*Temperature;
+          if(scaleMu2 < 1.0) {
+                scaleMu2 = 1.0;
+                runAlphas = alphas;
+            } else {
+                double lambdaQCD2 = exp(-4.0*pi/9.0/alphas);
+                runAlphas = 4.0*pi/9.0/log(scaleMu2/lambdaQCD2);
+            }
+          runKT = runAlphas/0.3;
+          probCol = 1.0 * 0.1 * RTE * runKT;// / 0.1970;
+          probCol = (1.0 - exp(-probCol));
+          if (ZeroOneDistribution(*GetMt19937Generator()) < probCol){
+              num_scatter++;
+              qhat0_ = 6.0 * M_PI * 0.3 * Temperature * Temperature; 
+              if (ModificationFactor > 0.0){
+                qhat0_/=pow(ModificationCorr, 2.0);
+              }
+              flavor(CT, pid1, rpid, hpid, RTE, PLen, Temperature, T1, T2, E1, E2, iT1,iT2, iE1, iE2);
+              colljet22(CT, Temperature, qhat0_, vc0, p1, p2, p3, p4, qt);
+              //       iT2, iE1, iE2);
+              if (p1[0] < p2[0] && abs(pid1) != 4 && abs(pid1) != 5) { //disable switch for heavy quark, only allow switch for identical particles
+              for (int k = 0; k <= 3; k++) {
+                p0temp[k] = p2[k];
+                p2[k] = p1[k];
+                p1[k] = p0temp[k];
+              }
+              pid1 = rpid;
+              }
+            } 
+          if (num_scatter == 1 && OneScatter == 1) {
+            filer<<Temperature<<" "<<energy<<" "<<j * 0.1<<" "<< pow(p1[1], 2.0) + pow(p1[2], 2.0)<<" "<<energy - p1[0]<<"\n";	
+            break;
+          }      
+        }
+        if (num_scatter > 0 && OneScatter == 0) {
+          //JSINFO<<Temperature<<" "<<energy<<" "<<time_step * TimeStep<<" "<<pow(Holder.comp(1),2) + pow(Holder.comp(2),2)<<"\n";
+          filer<<Temperature<<" "<<energy<<" "<<time_step * 0.1<<" "<< pow(p1[1], 2.0) + pow(p1[2], 2.0)<<" "<<energy - p1[0]<<"\n";
+        }        
+      }
+    }
+  }
+  filer.close();   
+}  
+*/
+/*
+void LBT::TestQhatMod(){
+        std::ofstream filer;
+        std::string name = filename + "QhatMod.txt";
+        JSINFO<<name;
+        filer.open(name);
+        int KATTC0 = enter_pid;
+        double PLen;
+        int iT1, iT2, iE1, iE2;
+        double T1, T2, E1, E2;
+        double RTE, RTE1, RTE2;
+        double qhatTP;
+        alphas = 0.3;
+        for (int u_ = 0; u_ < 25; u_++){
+          double Temperature = 0.12 + u_ * 0.02;
+          for (int v_ = 0; v_ < 20; v_ ++){
+            double energy = 5.0 + v_ * 5.0;
+            if(run_alphas==1) {
+            //runKT=4.0*pi/9.0/log(2.0*E*T/0.04)/0.3;
+              fixedLog = log(5.7 * energy / 4.0 / 6.0 / pi / 0.3 / Temperature);
+              scaleMu2 = 2.0 * energy * Temperature;
+              if(scaleMu2 < 1.0) {
+                scaleMu2 = 1.0;
+                runAlphas = alphas;
+            } else {
+                double lambdaQCD2 = exp(-4.0*pi/9.0/alphas);
+                runAlphas = 4.0*pi/9.0/log(scaleMu2/lambdaQCD2);
+            }
+            runKT = runAlphas/0.3;
+            runLog = log(scaleMu2/6.0/pi/pow(Temperature, 2.0)/alphas)/fixedLog;
+            if (ModificationFactor > 0.0){
+              ModificationCorr = 1.0 + 1.0 / ModificationFactor / Temperature;
+              runLog = log(scaleMu2 * pow(ModificationCorr, 2.0) /6.0/pi/pow(Temperature, 2.0) /alphas)/fixedLog;
+            }
+            }    
+
+            PLen = energy;
+            lam(KATTC0, RTE, PLen, Temperature, T1, T2, E1, E2, iT1, iT2, iE1,
+              iE2); //modified: use P instead
+            preKT = alphas / 0.3;
+
+            // calculate p,T-dependence K factor
+            KPfactor = 1.0 + KPamp * exp(-PLen * PLen / 2.0 / KPsig / KPsig);
+            KTfactor = 1.0 + KTamp * exp(-pow((temp0 - hydro_Tc), 2) / 2.0 / KTsig /
+                                     KTsig);
+
+          if(run_alphas==1) {
+            Kfactor = KPfactor * KTfactor * KTfactor * runKT * preKT * runLog; // K factor for qhat
+          } else {
+           Kfactor = KPfactor * KTfactor * KTfactor * preKT * preKT; // K factor for qhat
+          if (ModificationFactor > 0.0){
+            ModificationCorr = 1.0 + 1.0 / ModificationFactor / Temperature;
+            fixedLog = log(5.7*energy/4.0/6.0/pi/0.3/Temperature);
+            if (KATTC0 == 21) {
+              runLog = log(1.56 * energy * pow(ModificationCorr, 2.0) /4.0/6.0/pi/0.3/Temperature) / fixedLog;
+            } else {
+              runLog = log(0.89 * energy * pow(ModificationCorr, 2.0) /4.0/6.0/pi/0.3/Temperature) / fixedLog;
+            }
+            Kfactor *= runLog; // K factor for qhat
+          }
+        }
+
+       
+
+        // get qhat from table
+        if (KATTC0 == 21) {
+          RTE1 = (qhatG[iT2][iE1] - qhatG[iT1][iE1]) * (Temperature - T1) / (T2 - T1) +
+                 qhatG[iT1][iE1];
+          RTE2 = (qhatG[iT2][iE2] - qhatG[iT1][iE2]) * (Temperature - T1) / (T2 - T1) +
+                 qhatG[iT1][iE2];
+        } else if (KATTC0 == 4 || KATTC0 == -4 || KATTC0 == 5 || KATTC0 == -5) {
+          RTE1 = (qhatHQ[iT2][iE1] - qhatHQ[iT1][iE1]) * (Temperature - T1) / (T2 - T1) +
+                 qhatHQ[iT1][iE1];
+          RTE2 = (qhatHQ[iT2][iE2] - qhatHQ[iT1][iE2]) * (Temperature - T1) / (T2 - T1) +
+                 qhatHQ[iT1][iE2];
+        } else {
+          RTE1 = (qhatLQ[iT2][iE1] - qhatLQ[iT1][iE1]) * (Temperature - T1) / (T2 - T1) +
+                 qhatLQ[iT1][iE1];
+          RTE2 = (qhatLQ[iT2][iE2] - qhatLQ[iT1][iE2]) * (Temperature - T1) / (T2 - T1) +
+                 qhatLQ[iT1][iE2];
+        }
+
+        qhatTP = (RTE2 - RTE1) * (PLen - E1) / (E2 - E1) + RTE1;
+
+        qhatTP = qhatTP * Kfactor;
+
+        if (ModificationFactor > 0.0){
+          ModificationCorr = 1.0 + 1.0 / ModificationFactor / Temperature;
+          qhatTP = qhatTP / pow(ModificationCorr, 3.0); 
+        }
+        filer<<Temperature<<" "<<energy<<" "<<qhatTP<<"\n";
+      }
+    }
+    filer.close();
+  }
+*/
+void LBT::Init() {
   JSINFO << "Initialize LBT ...";
 
   //...Below is added by Shanshan
@@ -123,6 +339,13 @@ void LBT::InitTask() {
   fixAlphas = GetXMLElementDouble({"Eloss", "Lbt", "alphas"});
   hydro_Tc = GetXMLElementDouble({"Eloss", "Lbt", "hydro_Tc"});
   tStart = GetXMLElementDouble({"Eloss", "tStart"});
+  ModificationFactor = GetXMLElementDouble({"Eloss", "ModificationFactor"});
+
+  filename = GetXMLElementText({"Eloss", "Lbt", "filename"});
+  enter_pid = GetXMLElementInt({"Eloss", "Lbt", "enter_pid"});
+  enter_temp = GetXMLElementDouble({"Eloss", "Lbt", "enter_temp"});
+  OneScatter = GetXMLElementInt({"Eloss", "Lbt","OneScatter"});
+
   JSINFO << MAGENTA << "LBT parameters -- in_med: " << vacORmed
          << " Q0: " << Q00 << "  only_leading: " << Kprimary
          << "  alpha_s: " << fixAlphas << "  hydro_Tc: " << hydro_Tc<<", tStart="<<tStart;
@@ -156,7 +379,10 @@ void LBT::WriteTask(weak_ptr<JetScapeWriter> w) {
 
 void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
                        vector<Parton> &pIn, vector<Parton> &pOut) {
-
+  //TestQhatMod();
+  //exit(1);
+  //RadiationTest();
+  //exit(1);
   double z = 0.5;
 
   //  if (Q2>5)
@@ -176,9 +402,6 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
 
   //DEBUG:
   //cout<<" ---> "<<pIn.size()<<endl;
-
-  GetHydroTau0Signal(tStart);
-
   for (int i = 0; i < pIn.size(); i++) {
 
     // Reject photons
@@ -190,7 +413,6 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
       }
       return;
     }
-
     if (pIn[0].pstat()==101) {
       // pOut.push_back(pIn[0]);
        // JSINFO << BOLDYELLOW << " broadenend parton rejected by LBT ";
@@ -683,6 +905,10 @@ void LBT::LBT0(int &n, double &ti) {
         if (hydro_ctl0 == 0 && temp00 >= hydro_Tc) {
 
           qhat00 = DebyeMass2(Kqhat0, alphas, temp00);
+          if (ModificationFactor > 0.0){
+            ModificationCorr = 1.0 + 1.0 / ModificationFactor / temp00;
+            qhat00 /= pow(ModificationCorr, 2.0);
+          }
           fraction0 = 1.0;
 
           Vfrozen0[0][i] = ti;
@@ -795,6 +1021,10 @@ void LBT::LBT0(int &n, double &ti) {
             alphas = alphas0(Kalphas, temp0);
             //...Debye Mass square
             qhat0 = DebyeMass2(Kqhat0, alphas, temp0);
+            if (ModificationFactor > 0.0){
+              ModificationCorr = 1.0 + 1.0 / ModificationFactor / temp0;
+              qhat0 /= pow(ModificationCorr, 2.0);
+            }
 
             fraction = 1.0;
             Vfrozen[0][i] = ti;
@@ -846,9 +1076,12 @@ void LBT::LBT0(int &n, double &ti) {
         pc0[2] = P[2][i];
         pc0[3] = P[3][i];
         pc0[0] = P[0][i];
+        double Vitual = pc0[0] * pc0[0] - (pc0[1] * pc0[1] + pc0[2] * pc0[2] +
+                                      pc0[3] * pc0[3]);
+        if (Vitual < 0.0) {Vitual =  0.0;} //JSWARN << "Negative virtuality: " << Vitual;
+
         trans(vc0, pc0);
-        E = pc0
-            [0]; //  p4-the initial 4-momentum of the jet parton in the local rest frame
+        E = pc0[0]; //  p4-the initial 4-momentum of the jet parton in the local rest frame
         PLen = sqrt(pc0[1] * pc0[1] + pc0[2] * pc0[2] + pc0[3] * pc0[3]);
         transback(vc0, pc0);
 
@@ -870,8 +1103,15 @@ void LBT::LBT0(int &n, double &ti) {
                 runAlphas = 4.0*pi/9.0/log(scaleMu2/lambdaQCD2);
             }
             runKT = runAlphas/0.3;
-            runLog = log(scaleMu2/6.0/pi/T/T/alphas)/fixedLog;
-        }
+            
+            if (ModificationFactor > 0.0){
+              ModificationCorr = 1.0 + 1.0 / ModificationFactor / T;
+              runLog = log(scaleMu2 * pow(ModificationCorr, 2.0) /6.0/pi/T/T/alphas)/fixedLog;
+            }
+            else{
+              runLog = log(scaleMu2/6.0/pi/T/T/alphas)/fixedLog;
+            }
+        }    
 
         lam(KATTC0, RTE, PLen, T, T1, T2, E1, E2, iT1, iT2, iE1,
             iE2); //modified: use P instead
@@ -887,7 +1127,18 @@ void LBT::LBT0(int &n, double &ti) {
            Kfactor = KPfactor * KTfactor * KTfactor * runKT * preKT * runLog; // K factor for qhat
         } else {
            Kfactor = KPfactor * KTfactor * KTfactor * preKT * preKT; // K factor for qhat
+          if (ModificationFactor > 0.0){
+            ModificationCorr = 1.0 + 1.0 / ModificationFactor / T;
+            fixedLog = log(5.7*E/4.0/6.0/pi/0.3/T);
+            if (KATTC0 == 21) {
+              runLog = log(5.6 * E * pow(ModificationCorr, 1.0) /4.0/6.0/pi/0.3/T) / fixedLog;
+            } else {
+              runLog = log(5.8 * E * pow(ModificationCorr, 1.0) /4.0/6.0/pi/0.3/T) / fixedLog;
+            }
+            Kfactor *= runLog; // K factor for qhat
+          }
         }
+
        
 
         // get qhat from table
@@ -911,6 +1162,11 @@ void LBT::LBT0(int &n, double &ti) {
         qhatTP = (RTE2 - RTE1) * (PLen - E1) / (E2 - E1) + RTE1;
 
         qhatTP = qhatTP * Kfactor;
+
+        if (ModificationFactor > 0.0){
+          ModificationCorr = 1.0 + 1.0 / ModificationFactor / T;
+          qhatTP = qhatTP / pow(ModificationCorr, 3.0); 
+        }
 
         ////reset by hand for unit test
         ////              RTE=0.09747;
@@ -1063,6 +1319,7 @@ void LBT::LBT0(int &n, double &ti) {
         } else {
             probCol = probCol * KPfactor * KTfactor * preKT;
         }
+
         probCol = (1.0 - exp(-probCol)) *
                   (1.0 - probRad); // probability of pure elastic scattering
         if (KINT0 == 2)
@@ -1383,7 +1640,7 @@ void LBT::LBT0(int &n, double &ti) {
           //........................................................................................................
 
           //CAT!!!
-          /*
+          /*			  
 	   */
           //for(int m=nnpp+1;m<=np0;m++) { // only put recoil parton CAT as 2, radiated gluons do not count
           //  if(CAT[i]==2) {
@@ -1500,8 +1757,11 @@ void LBT::read_tables() { // intialize various tables for LBT
     ifstream f12("LBT-tables/dNg_over_dt_cD6.dat");
     ifstream f13("LBT-tables/dNg_over_dt_qD6.dat");
     ifstream f14("LBT-tables/dNg_over_dt_gD6.dat");
-    if (!f12.is_open() || !f13.is_open() || !f14.is_open()) {
+    ifstream f15("LBT-tables/dNg_over_dt_qD7.dat");
+    ifstream f16("LBT-tables/dNg_over_dt_gD7.dat");
+    if (!f12.is_open() || !f13.is_open() || !f14.is_open()||!f15.is_open() || !f16.is_open()) {
       cout << "Erro openning HQ radiation table file!\n";
+      exit(EXIT_FAILURE);
     } else {
       for (int k = 1; k <= t_gn; k++) {
         char dummyChar[100];
@@ -1509,6 +1769,8 @@ void LBT::read_tables() { // intialize various tables for LBT
         f12 >> dummyChar >> dummyChar >> dummyChar >> dummyChar;
         f13 >> dummyChar >> dummyChar >> dummyChar >> dummyChar;
         f14 >> dummyChar >> dummyChar >> dummyChar >> dummyChar;
+        f15 >> dummyChar >> dummyChar >> dummyChar >> dummyChar;
+        f16 >> dummyChar >> dummyChar >> dummyChar >> dummyChar;
         for (int i = 1; i <= temp_gn; i++) {
           dNg_over_dt_c[k + 1][i][0] = 0.0;
           dNg_over_dt_q[k + 1][i][0] = 0.0;
@@ -1517,9 +1779,15 @@ void LBT::read_tables() { // intialize various tables for LBT
           max_dNgfnc_q[k + 1][i][0] = 0.0;
           max_dNgfnc_g[k + 1][i][0] = 0.0;
           for (int j = 1; j <= HQener_gn; j++) {
-            f12 >> dNg_over_dt_c[k + 1][i][j] >> max_dNgfnc_c[k + 1][i][j];
-            f13 >> dNg_over_dt_q[k + 1][i][j] >> max_dNgfnc_q[k + 1][i][j];
-            f14 >> dNg_over_dt_g[k + 1][i][j] >> max_dNgfnc_g[k + 1][i][j];
+            if (i <= 6){
+              f15 >> dNg_over_dt_q[k + 1][i][j] >> max_dNgfnc_q[k + 1][i][j];
+              f16 >> dNg_over_dt_g[k + 1][i][j] >> max_dNgfnc_g[k + 1][i][j];
+            }
+            else{
+              f12 >> dNg_over_dt_c[k + 1][i][j] >> max_dNgfnc_c[k + 1][i][j];
+              f13 >> dNg_over_dt_q[k + 1][i][j] >> max_dNgfnc_q[k + 1][i][j];
+              f14 >> dNg_over_dt_g[k + 1][i][j] >> max_dNgfnc_g[k + 1][i][j];
+            }
           }
         }
       }
@@ -1530,6 +1798,8 @@ void LBT::read_tables() { // intialize various tables for LBT
     f12.close();
     f13.close();
     f14.close();
+    f15.close();
+    f16.close();
 
     for (int i = 1; i <= temp_gn; i++) {
       for (int j = 1; j <= HQener_gn; j++) {
@@ -1777,6 +2047,10 @@ void LBT::lam(int KATT0, double &RTE, double E, double T, double &T1,
         (Rq[iT2][iE2] - Rq[iT1][iE2]) * (T - T1) / (T2 - T1) + Rq[iT1][iE2];
     RTE = (RTE2 - RTE1) * (E - E1) / (E2 - E1) + RTE1;
     //          cout<<"RTE2,RTE1,E,E1,E2,RTE: "<<RTE2<<"  "<<RTE1<<"  "<<E<<"  "<<E1<<"  "<<E2<<"  "<<RTE<<endl;
+  }
+  if (ModificationFactor > 0.0){
+       ModificationCorr = 1.0 + 1.0 / ModificationFactor / T;
+       RTE /= ModificationCorr;
   }
 }
 
@@ -2039,6 +2313,20 @@ void LBT::linear(int KATT, double E, double T, double &T1, double &T2,
     //	  RTE1=(qhatLQ[iT2][iE1]-qhatLQ[iT1][iE1])*(T-T1)/(T2-T1)+qhatLQ[iT1][iE1];
     //	  RTE2=(qhatLQ[iT2][iE2]-qhatLQ[iT1][iE2])*(T-T1)/(T2-T1)+qhatLQ[iT1][iE2];
     //	  qhatTP=(RTE2-RTE1)*(E-E1)/(E2-E1)+RTE1;
+  }
+  if (ModificationFactor > 0.0){
+       ModificationCorr = 1.0 + 1.0 / ModificationFactor / T;
+       RTEg1 /= ModificationCorr;
+       RTEg2 /= ModificationCorr;
+       RTEg3 /= ModificationCorr;
+       RTEq3 /= ModificationCorr;
+       RTEq4 /= ModificationCorr;
+       RTEq5 /= ModificationCorr;
+       RTEq6 /= ModificationCorr;
+       RTEq7 /= ModificationCorr;
+       RTEq8 /= ModificationCorr;
+       RTEHQ11 /= ModificationCorr;
+       RTEHQ12 /= ModificationCorr;
   }
 }
 
@@ -2392,9 +2680,16 @@ void LBT::colljet22(int CT, double temp, double qhat0ud, double v0[4],
 
     } while ((tt < qhat0ud) || (tt > (ss - qhat0ud)));
 
-    f1 = pow(xw, 3) / (exp(xw) - 1) / 1.4215;
-    f2 = pow(xw, 3) / (exp(xw) + 1) / 1.2845;
-
+    double f1max_y = 1.4215;
+    double f2max_y = 1.2845;
+    if (ModificationFactor > 0.0){
+      ModificationCorr = 1.0 + 1.0 / ModificationFactor / temp;
+      f1max_y /= pow(ModificationCorr, 3.0);
+      f2max_y /= pow(ModificationCorr, 3.0);
+    }
+    f1 = pow(xw, 3) / (exp(xw) - 1) / f1max_y;
+    f2 = pow(xw, 3) / (exp(xw) + 1) / f2max_y;
+ 
     uu = ss - tt;
 
     if (CT == 1) {

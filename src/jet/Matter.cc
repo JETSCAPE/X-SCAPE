@@ -30,6 +30,8 @@
 using namespace Jetscape;
 using namespace std;
 
+const double QS = 0.9;
+
 // Register the module with the base class
 RegisterJetScapeModule<Matter> Matter::reg("Matter");
 
@@ -85,7 +87,6 @@ Matter::Matter() {
   initEner = 0.;
   Q00 = 0.;
   Q0 = 0.;
-  QS = 0.;
   T0 = 0.;
   iEvent = 0;
   NUM1 = 0;
@@ -93,7 +94,7 @@ Matter::Matter() {
 
 Matter::~Matter() { VERBOSE(8); }
 
-void Matter::InitTask() {
+void Matter::Init() {
   JSINFO << "Initialize Matter ...";
 
   in_vac = false;
@@ -102,7 +103,6 @@ void Matter::InitTask() {
 
   qhat = 0.0;
   Q00 = 1.0;    // virtuality separation scale
-  QS = 0.9;
   qhat0 = 2.0;  // GeV^2/fm for gluon at s = 96 fm^-3
   alphas = 0.3; // only useful when qhat0 is a negative number
   tscale=1;
@@ -131,7 +131,6 @@ void Matter::InitTask() {
   broadening_on = GetXMLElementInt({"Eloss", "Matter", "broadening_on"});
   brick_med = GetXMLElementInt({"Eloss", "Matter", "brick_med"});
   Q00 = GetXMLElementDouble({"Eloss", "Matter", "Q0"});
-  QS = GetXMLElementDouble({"Eloss", "Matter", "QS"});
   T0 = GetXMLElementDouble({"Eloss", "Matter", "T0"});
   alphas = GetXMLElementDouble({"Eloss", "Matter", "alphas"});
   qhatA = GetXMLElementDouble({"Eloss", "Matter", "qhatA"});
@@ -145,7 +144,8 @@ void Matter::InitTask() {
   brick_length = GetXMLElementDouble({"Eloss", "Matter", "brick_length"});
   vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
   initial_virtuality_pT = GetXMLElementInt({"Eloss", "Matter", "initial_virtuality_pT"});
-  Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
+
+  ModificationFactor = GetXMLElementDouble({"Eloss", "ModificationFactor"});
 
   if(vir_factor < 0.0) {
     JSWARN << "vir_factor should not be negative";
@@ -154,14 +154,6 @@ void Matter::InitTask() {
   if (!initial_virtuality_pT) {
     cout << "Reminder: initial energy will be used as initial t_max" << endl;
   }
-  if(QS < 2.*Lambda_QCD + 0.05){
-    JSWARN << "QS too low; will be set to 2*LambdaQCD + 0.05";
-    QS = 2.*Lambda_QCD + 0.05;
-  } 
-  if(QS > Q00){
-    JSWARN << "QS too high; will be set to Q0";
-    QS = Q00;
-  }
 
   MaxColor = 101; // MK:recomb
 
@@ -169,8 +161,7 @@ void Matter::InitTask() {
   JSINFO << MAGENTA << "matter shower on: " << matter_on;
   JSINFO << MAGENTA << "in_vac: " << in_vac << "  brick_med: " << brick_med
          << "  recoil_on: " << recoil_on<<", tStart ="<<tStart;
-  JSINFO << MAGENTA << "Lambda_QCD: " << Lambda_QCD;
-  JSINFO << MAGENTA << "Q0: " << Q00 << " QS: " << QS << " vir_factor: " << vir_factor
+  JSINFO << MAGENTA << "Q0: " << Q00 << " vir_factor: " << vir_factor 
          << " initial_virtuality_pT: " << initial_virtuality_pT
          << "  qhat0: " << qhat0 << " alphas: " << alphas << ", QhatParametrizationType="<<QhatParametrizationType
          << "  qhatA: " << qhatA << " qhatB:  " <<qhatB  << "  qhatC: " << qhatC << " qhatD:  " <<qhatD
@@ -192,7 +183,7 @@ void Matter::InitTask() {
   //srand((unsigned)time(NULL));
   //NUM1 = -1 * rand();
   //    NUM1=-33;
-  NUM1=-1*static_cast<int>(ZeroOneDistribution(*GetMt19937Generator())*RAND_MAX);
+  NUM1=-1*static_cast<int>(ZeroOneDistribution(*GetMt19937Generator())*RAND_MAX);	
   iEvent = 0;
 }
 
@@ -212,20 +203,18 @@ void Matter::Dump_pIn_info(int i, vector<Parton> &pIn) {
          << " px = " << pIn[i].p(1) << " py = " << pIn[i].p(2)
          << "  pz = " << pIn[i].p(3) << " virtuality = " << pIn[i].t()
          << " form_time in fm = " << pIn[i].form_time()
-         << " split time = " << pIn[i].form_time() + pIn[i].x_in().t()
-         << " plabel = " << pIn[i].plabel();
+         << " split time = " << pIn[i].form_time() + pIn[i].x_in().t();
 }
 
 void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                           vector<Parton> &pIn, vector<Parton> &pOut) {
-  
+
   if (std::isnan(pIn[0].e()) || std::isnan(pIn[0].px()) ||
       std::isnan(pIn[0].py()) || std::isnan(pIn[0].pz()) ||
       std::isnan(pIn[0].t()) || std::isnan(pIn[0].form_time())) {
     JSINFO << BOLDYELLOW << "Parton on entry busted on time step " << time;
     Dump_pIn_info(0, pIn);
   }
-  
 
   double z = 0.5;
   double blurb, zeta, tQ2;
@@ -250,16 +239,15 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   std::unique_ptr<FluidCellInfo> check_fluid_info_ptr;
 
-  // JSINFO << MAGENTA << " the time in fm is " << time
-  //            << " The time in GeV-1 is " << Time;
-  // JSINFO << MAGENTA << "pid = " << pIn[0].pid()  << " status = " << pIn[0].pstat()
-  //            << " E = " << pIn[0].e()
-  //            << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2)
-  //            << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t()
-  //            << " form_time in fm = " << pIn[0].form_time()
-  //            << " split time = " << pIn[0].form_time() + pIn[0].x_in().t();
-  // VERBOSE(8) << " color = " << pIn[0].color()
-  //            << " anti-color = " << pIn[0].anti_color();
+  VERBOSE(8) << MAGENTA << " the time in fm is " << time
+             << " The time in GeV-1 is " << Time;
+  VERBOSE(8) << MAGENTA << "pid = " << pIn[0].pid() << " E = " << pIn[0].e()
+             << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2)
+             << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t()
+             << " form_time in fm = " << pIn[0].form_time()
+             << " split time = " << pIn[0].form_time() + pIn[0].x_in().t();
+  VERBOSE(8) << " color = " << pIn[0].color()
+             << " anti-color = " << pIn[0].anti_color();
 
   unsigned int ShowerMaxColor = pIn[0].max_color();
   unsigned int CurrentMaxColor;
@@ -280,8 +268,6 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
   qhat = qhat0;
 
   VERBOSE(8) << " qhat0 = " << qhat0 << " qhat = " << qhat;
-
-  GetHydroTau0Signal(tStart);
 
   for (int i = 0; i < pIn.size(); i++) {
 
@@ -310,12 +296,8 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       return;
     }
-      
-      if (pIn[i].time() > time) return; // ignore partons that havent formed yet.
-      
-      
 
-    VERBOSE(4) << BOLDYELLOW
+    VERBOSE(2) << BOLDYELLOW
                << " *  parton formation spacetime point= " << pIn[i].x_in().t()
                << "  " << pIn[i].x_in().x() << "  " << pIn[i].x_in().y() << "  "
                << pIn[i].x_in().z();
@@ -348,7 +330,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
       Dump_pIn_info(i, pIn);
       //assert(velocityMod < 1.0 + rounding_error);
     }
-    VERBOSE(4) << BOLDYELLOW << " velocityMod = " << velocityMod;
+    VERBOSE(2) << BOLDYELLOW << " velocityMod = " << velocityMod;
 
     if (pIn[i].form_time() < 0.0)
       pIn[i].set_jet_v(velocity); // jet velocity is set only once
@@ -450,10 +432,8 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
     // if(now_R0^2-now_Ri^2<0) print out pIn info and exit
 
-    // I.S :
-    // added the check initR0 > 0 to make sure the warning only happens for final state radiation
     if (std::isinf(now_R0) || std::isnan(now_R0) || std::isinf(now_Rz) ||
-        std::isnan(now_Rz) || (std::abs(now_Rz) > now_R0 && initR0 > 0 )) {
+        std::isnan(now_Rz) || std::abs(now_Rz) > now_R0) {
       JSINFO << BOLDYELLOW << "First instance";
       JSINFO << BOLDYELLOW << "now_R for vector is:" << now_R0 << ", " << now_Rx
              << ", " << now_Ry << ", " << now_Rz;
@@ -495,7 +475,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
            (pIn[i].form_time() > -0.1 + rounding_error))) {
         JSWARN << " parton with a negative virtuality was sent to MATTER and "
                   "will now have its virtuality reset!, press 1 and return to "
-                  "proceed... pstat "<< pIn[i].pstat() << "  virt "<< pIn[i].t();
+                  "proceed... ";
         // cin >> blurb; //remove the input to prevent an error caused by heavy quark from pythia (by Chathuranga)
       }
 
@@ -511,10 +491,10 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       double max_vir;
       if(initial_virtuality_pT) {
-        max_vir = vir_factor
+        max_vir = vir_factor 
             * (pIn[i].p(1) * pIn[i].p(1) + pIn[i].p(2) * pIn[i].p(2));
       } else {
-        max_vir = vir_factor
+        max_vir = vir_factor 
             * (pIn[i].e() * pIn[i].e() - pIn[i].restmass() * pIn[i].restmass());
       }
 
@@ -572,9 +552,11 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
       double ft = generate_L(pIn[i].mean_form_time());
       pIn[i].set_form_time(ft);
 
+
       pIn[i].set_min_color(pIn[i].color());
       pIn[i].set_min_anti_color(pIn[i].anti_color());
       MaxColor = pIn[i].max_color();
+
 
       // VERBOSE OUTPUT ON INITIAL STATUS OF PARTICLE:
       VERBOSE(8);
@@ -819,11 +801,17 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
           // Calculate the proability of elastic scattering in time delta t in fluid rest frame
           muD2 = 6.0 * pi * soln_alphas * tempLoc * tempLoc;
+
+          if (ModificationFactor > 0.0){
+            ModificationCorr = 1.0 + 1.0 / ModificationFactor / tempLoc;
+            muD2 = muD2 / pow(ModificationCorr, 2.0);
+          }
+
           prob_el = 42.0 * zeta3 * el_CR  * tempLoc / 6.0 / pi /
                     pi * dt_lrf / 0.1973;
 
-	  prob_el=prob_el*ModifiedProbability(QhatParametrizationType, tempLoc, sdLoc, enerLoc, pIn[i].t());
-
+	        prob_el=prob_el*ModifiedProbability(QhatParametrizationType, tempLoc, sdLoc, enerLoc, pIn[i].t());
+          prob_el /= ModificationCorr;
           el_rand = ZeroOneDistribution(*GetMt19937Generator());
 
           //cout << "  qhat: " << qhatLoc << "  alphas: " << soln_alphas << "  ener: " << enerLoc << "  prob_el: " << prob_el << "  " << el_rand << endl;
@@ -1351,7 +1339,6 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                                                     pow(pIn[i].jet_v().y(), 2));
 
         VERBOSE(8) << BOLDYELLOW
-                   << " v_x = "<< pIn[i].jet_v().x() << " v_y = " << pIn[i].jet_v().y() << " v_z = " << pIn[i].jet_v().z()
                    << " Jet direction w.r.t. beam: theta = " << std::acos(c_t)
                    << " phi = " << std::acos(c_p);
 
@@ -1415,12 +1402,11 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
         int iout = pOut.size() - 1;
 
         if (std::isnan(newp[1]) || std::isnan(newp[2]) || std::isnan(newp[3])) {
-          JSWARN << plong << " " << s_t << " " << c_p << " "
+          JSINFO << MAGENTA << plong << " " << s_t << " " << c_p << " "
                  << k_perp1[1];
 
-          JSWARN << newp[0] << " " << newp[1] << " " << newp[2]
+          JSINFO << MAGENTA << newp[0] << " " << newp[1] << " " << newp[2]
                  << " " << newp[3];
-          Dump_pIn_info(i,pIn);
           cin >> blurb;
         }
         pOut[iout].set_jet_v(velocity_jet); // use initial jet velocity
@@ -1484,7 +1470,6 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                  << k_perp1[1];
           JSINFO << MAGENTA << newp[0] << " " << newp[1] << " " << newp[2]
                  << " " << newp[3];
-          Dump_pIn_info(i,pIn);
           cin >> blurb;
         }
 
@@ -1695,17 +1680,17 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
               energy -= drag;
               pOut[iout].reset_momentum(px, py, pz, energy);
             }
-            pOut[iout].set_stat(101);
+            pOut[iout].set_stat(101);   
             VERBOSE(8) << BOLDYELLOW << " p after b & d, E = " << energy
                        << " pz = " << pz << " px = " << px << " py = " << py;
           }
           else{
             pOut.push_back(pIn[i]);
-          }
+          }	  
         } // end if(broadening_on)
         else{
           pOut.push_back(pIn[i]);
-        }
+        } 
       }
     } else { // virtuality too low lets broaden it
 
@@ -1855,12 +1840,12 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
             energy -= drag;
             pOut[iout].reset_momentum(px, py, pz, energy);
           }
-          pOut[iout].set_stat(101);
+          pOut[iout].set_stat(101);   
           VERBOSE(8) << BOLDYELLOW << " p after b & d, E = " << energy
                      << " pz = " << pz << " px = " << px << " py = " << py;
         }
         //pOut.push_back(pIn[i]);
-      }
+      } 
     }
 
   } // particle loop
@@ -4085,12 +4070,11 @@ double Matter::ModifiedProbability(int QhatParametrization, double tempLoc, doub
       ModifiedAlphas = solve_alphas(qhatLoc, enerLoc, tempLoc);
       break;
 
-      //HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
-      //Function is 1/(1+A*pow(log(Q^2),2)+B*pow(log(Q^2),4))
+      //For HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
+      //Function is 1 / (1+A*pow(log(Q^2),2)+B*pow(log(Q^2),4))
     case 5:
       ModifiedAlphas = RunningAlphaS(ScaleNet)*VirtualityQhatFunction(5,  enerLoc, muSquare) ;
       break;
-
       //HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale dependent q-hat
       //Function is int^{1}_{xB} e^{-ax} / (1+A*pow(log(Q^2),1)+B*pow(log(Q^2),2))
     case 6:
@@ -4498,7 +4482,7 @@ void Matter::colljet22(int CT, double temp, double qhat0ud, double v0[4],
   double vc[4] = {0.0};
 
   int ct1_loop, ct2_loop, flag1, flag2;
-
+  double f1max_x, f1max_y, f2max_x, f2max_y;
   flag1 = 0;
   flag2 = 0;
 
@@ -4560,9 +4544,16 @@ void Matter::colljet22(int CT, double temp, double qhat0ud, double v0[4],
       //		cout << ic << endl;
 
     } while ((tt < qhat0ud) || (tt > (ss - qhat0ud)));
-
-    f1 = pow(xw, 3) / (exp(xw) - 1) / 1.4215;
-    f2 = pow(xw, 3) / (exp(xw) + 1) / 1.2845;
+    //    use (s^2+u^2)/(t+qhat0ud)^2 as scattering cross section in 
+    f1max_y = 1.4215;
+    f2max_y = 1.2845;
+    if (ModificationFactor > 0.0){
+      ModificationCorr = 1.0 + 1.0 / ModificationFactor / temp;
+      f1max_y = 1.4215 /pow(ModificationCorr, 3.0);
+      f2max_y = 1.2845 /pow(ModificationCorr, 3.0);
+    }
+    f1 = pow(xw, 3) / (exp(xw) - 1) / f1max_y;
+    f2 = pow(xw, 3) / (exp(xw) + 1) / f2max_y;
 
     uu = ss - tt;
 

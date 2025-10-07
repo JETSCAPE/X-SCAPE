@@ -2,7 +2,7 @@
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- *
+ * 
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -21,19 +21,20 @@
 
 using namespace Jetscape;
 
-class Matter : public JetEnergyLossModule<Matter> //, public std::enable_shared_from_this<Matter>
+class Matter : public JetEnergyLossModule<
+                   Matter> //, public std::enable_shared_from_this<Matter>
 {
 public:
   Matter();
   virtual ~Matter();
 
-  void InitTask();
-  //void ExecuteTask();
+  void Init();
+  //void Exec();
   //void DoEnergyLoss(double deltaT, double Q2, const vector<Parton>& pIn, vector<Parton>& pOut);
   void DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton> &pIn,
                     vector<Parton> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
-  static void Dump_pIn_info(int i, vector<Parton> &pIn)  ;
+  void Dump_pIn_info(int i, vector<Parton> &pIn);
 
   double generate_L(double form_time);
   double sudakov_Pgg(double g0, double g1, double loc_c, double E);
@@ -107,8 +108,7 @@ public:
   double hydro_Tc, qhat0, alphas, brick_length, vir_factor;
   double initR0, initRx, initRy, initRz, initVx, initVy, initVz, initRdotV,
       initVdotV, initEner;
-  double Q00, Q0, T0, QS;
-  double Lambda_QCD;
+  double Q00, Q0, T0;
 
   static const int dimQhatTab = 151;
   double qhatTab1D[dimQhatTab] = {0.0};
@@ -150,10 +150,10 @@ public:
   double GeneralQhatFunction(int QhatParametrization, double Temperature, double EntropyDensity, double FixAlphas, double Qhat0, double E, double muSquare);
   double RunningAlphaS(double muSquare);
   double VirtualityQhatFunction(int QhatParametrization,  double enerLoc, double muSquare);
-  double ModifiedProbability(int QhatParametrization, double tempLoc, double sdLoc, double enerLoc, double muSquare);
+  double ModifiedProbability(int QhatParametrization, double tempLoc, double sdLoc, double enerLoc, double muSquare);  
   double IntegralPDF(double xB, double a, double b);
   double qhatA, qhatB, qhatC, qhatD;
-
+  
   //SC: for elastic scattering
   void flavor(int &CT, int &KATT0, int &KATT2, int &KATT3,
               unsigned int &max_color, unsigned int &color0,
@@ -178,7 +178,8 @@ public:
   double Mqc2qc(double s, double t, double M);
   void collHQ22(int CT, double temp, double qhat0ud, double v0[4], double p0[4],
                 double p2[4], double p3[4], double p4[4], double &qt);
-
+  double ModificationCorr;
+  double ModificationFactor;
 protected:
   uniform_real_distribution<double> ZeroOneDistribution;
 
