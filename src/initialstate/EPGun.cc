@@ -405,6 +405,7 @@ void EPGun::ExecuteTask() {
 
       //JSINFO << Q2factor;
       max_vir *= pow(Q2/(info.s()),Q2pow) * Q2factor/sqrt(x);
+      max_vir = Q2;
       std::cout << "Q2 " << Q2 << " infos " << info.s() << " Q2pow " << Q2pow << " quotient " << Q2/(info.s()) << " power " << pow(Q2/(info.s()),Q2pow) << endl;
       std::cout << "Q2factor " << Q2factor << " sqrtx " << sqrt(x) << " quotient " << Q2factor/sqrt(x) << endl;
       std::cout << "MAXVIR3 " << max_vir << endl;
@@ -448,8 +449,11 @@ void EPGun::ExecuteTask() {
             tQ2 = matterHelper.generate_vac_t(particle.id(), nu, QS * QS / 2.0,
                                 max_vir, 0, iSplit);
 
+            std::cout << "light quark virtuality" << " max_vir = " << max_vir << endl;            
+
         }
 
+        std::cout << "tQ2 " << tQ2 << endl;
         //tQ2 = test_vir;
         //catching virtualitiies that are too high
         if(sqrt(tQ2) > particle.pAbs() /*or sqrt(tQ2) > partp.pAbs()*/) tQ2 = min_vir;
