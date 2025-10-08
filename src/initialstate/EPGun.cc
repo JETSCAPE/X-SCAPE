@@ -354,7 +354,11 @@ void EPGun::ExecuteTask() {
   Pythia8::Vec4 peIn    = event[4].p();
   Pythia8::Vec4 peOut   = event[6].p();
   Pythia8::Vec4 pPhoton = peIn - peOut;
+  std::cout << "peIn " << peIn << endl;
+  std::cout << "peOut " << peOut << endl;
+  std::cout << "pPhoton " << pPhoton << endl;
   double Q2    = - pPhoton.m2Calc();
+  std::cout << "Q2 " << Q2 << endl;
   double W2    = (pProton + pPhoton).m2Calc();
   double x     = Q2 / (2. * pProton * pPhoton);
   double y     = (pProton * pPhoton) / (pProton * peIn);
@@ -389,16 +393,21 @@ void EPGun::ExecuteTask() {
     if(breitVir and particle.status() == 62 and !photoproduction){
       //setting up max vir
       double max_vir = (partp.pAbs() * partp.pAbs() - mass*mass) * vir_factor;
+      std::cout << "MAXVIR1 " << max_vir << endl;
       double min_vir = (QS * QS / 2.0) * (1.0 + std::sqrt(1.0 + 4.0 * particle.m() * particle.m() / QS / QS));
       double tQ2 = 0.;
 
       //using z axis for pT since thats the axis the photon quark collision happens on
       if(initial_virtuality_pT){
         max_vir = (partp.pz() * partp.pz()) * vir_factor;
+        std::cout << "MAXVIR2 " << max_vir << endl;
       }
 
       //JSINFO << Q2factor;
       max_vir *= pow(Q2/(info.s()),Q2pow) * Q2factor/sqrt(x);
+      std::cout << "Q2 " << Q2 << " infos " << info.s() << " Q2pow " << Q2pow << " quotient " << Q2/(info.s()) << " power " << pow(Q2/(info.s()),Q2pow) << endl;
+      std::cout << "Q2factor " << Q2factor << " sqrtx " << sqrt(x) << " quotient " << Q2factor/sqrt(x) << endl;
+      std::cout << "MAXVIR3 " << max_vir << endl;
       //JSINFO << max_vir;
 
       int iSplit = 0; // quark
@@ -410,9 +419,12 @@ void EPGun::ExecuteTask() {
       }
 
       //evaluating virtuality for different cases
+      std::cout << "MAXVIR " << max_vir << " QS2 " << QS*QS << endl;
       if (max_vir <= QS * QS){
+        std::cout << "NO VIRTUALITY, NOT HIGH ENOUGH ------------------------" << endl;
         tQ2 = 0.0;
       }else{
+        std::cout << "VIRTUALITY HIGH ENOUGH !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
         double nu = (partp.e() + partp.pAbs())/sqrt(2.0);
 
         if (abs(particle.id()) == 4 || abs(particle.id()) == 5) {
@@ -486,6 +498,8 @@ void EPGun::ExecuteTask() {
       ptn->set_jet_v(velocity);
     }
 
+    std::cout << ptn->px() << " " << ptn->py() << " " << ptn->pz() << " " << ptn->e() << " " << ptn->t() << endl;
+      
     AddParton(ptn);
   }
 
