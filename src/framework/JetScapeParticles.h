@@ -16,7 +16,7 @@
 /** Provides JetScapeParticleBase and derived classes Parton, Hadron
 
     \class Jetscape::JetScapeParticleBase
-    * A JetScapeParticleBase derives PRIVARTELY from FastJet PseudoJet and has additional information:
+    * A JetScapeParticleBase derives PRIVATELY from FastJet PseudoJet and has additional information:
     *  - PID (from PDG) and rest mass (these should eventually be coupled and only PID kept track of internally)
     *  - A location (creation point) 4-vector
     *  - a label and a status 
@@ -377,6 +377,11 @@ public:
   Hadron(int label, int id, int stat, const FourVector &p, const FourVector &x,
          double mass);
   Hadron(const Hadron &srh);
+  Hadron(int label, int id, int stat, const FourVector &p, const FourVector &x, 
+        double mass, int charge, int baryon_number, int strangeness);
+  Hadron(int label, int id, int stat, const FourVector &p, const FourVector &x, 
+        double mass, int charge, int baryon_number, int strangeness,
+        bool participant);
 
   Hadron &operator=(Hadron &c);
   Hadron &operator=(const Hadron &c);
@@ -393,8 +398,25 @@ public:
   /// Returns true when all x entries of the hadrons are (close to) 0
   bool has_no_position();
 
+  /// Setter functions for conserved charges 
+  void set_charge(int charge) { charge_ = charge; }
+  void set_baryon_number(int baryon_number) { baryon_number_ = baryon_number; }
+  void set_strangeness(int strangeness) { strangeness_ = strangeness; }
+  void set_participant(bool participant) { participant_ = participant; }
+
+  /// Getter functions for conserved charges
+  int charge() const { return (charge_); }
+  int baryon_number() const { return (baryon_number_); }
+  int strangeness() const { return (strangeness_); }
+  bool participant() const { return (participant_); }
+  bool has_valid_momentum() const;
+
 protected:
   double width_;
+  int charge_ = 0;
+  int baryon_number_ = 0;
+  int strangeness_ = 0;
+  bool participant_ = false;
 };
 
 class Photon : public Parton {

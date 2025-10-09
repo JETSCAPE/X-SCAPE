@@ -22,8 +22,7 @@
 #include <cfloat>
 
 namespace Jetscape {
-    
-    
+
 CausalLiquefier::CausalLiquefier(){
     VERBOSE(8);
     dtau = 0.6;
@@ -34,17 +33,12 @@ CausalLiquefier::CausalLiquefier(){
     time_relax = 0.1;
     d_diff = 0.08;
     width_delta = 0.1;
-    InitTask();// Get values of parameters from XML
+    InitializeParameters();// Get values of parameters from XML
     c_diff = sqrt(d_diff/time_relax);
     gamma_relax = 0.5/time_relax;
     if( c_diff > 1.0 ){
         JSWARN << "Bad Signal Velocity in CausalLiquefier";
     }
-//    else{
-//        //for debug
-//        JSINFO << "c_diff = " << c_diff;
-//    }
-
 }
 
 CausalLiquefier::CausalLiquefier(double dtau_in, double dx_in, double dy_in, double deta_in){
@@ -58,7 +52,7 @@ CausalLiquefier::CausalLiquefier(double dtau_in, double dx_in, double dy_in, dou
     time_relax = 0.1;
     d_diff = 0.08;
     width_delta = 0.1;
-    
+
     c_diff = sqrt(d_diff/time_relax);
     gamma_relax = 0.5/time_relax;
 
@@ -76,7 +70,7 @@ CausalLiquefier::CausalLiquefier(double dtau_in, double dx_in, double dy_in, dou
     << width_delta <<" fm";
 }
 
-void CausalLiquefier::InitTask(){
+void CausalLiquefier::InitializeParameters(){
 
     // Initialize parameter with values in XML
     JSINFO<<"Initialize CausalLiquefier ...";
@@ -89,26 +83,22 @@ void CausalLiquefier::InitTask(){
     time_relax = JetScapeXML::Instance()->GetElementDouble({"Liquefier", "CausalLiquefier", "time_relax"});// in [fm]
     d_diff = JetScapeXML::Instance()->GetElementDouble({"Liquefier", "CausalLiquefier", "d_diff"});// in [fm]
     width_delta = JetScapeXML::Instance()->GetElementDouble({"Liquefier", "CausalLiquefier", "width_delta"});// in [fm]
-    
+
     // for debug
-//    JSINFO
-//    << "<CausalLiquefier> Fluid Time Step and Cell Size: dtau="
-//    << dtau << " fm, dx="
-//    << dx << " fm, dy="
-//    << dy << " fm, deta="
-//    << deta;
-//    JSINFO
-//    << "<CausalLiquefier> Parameters: tau_delay="
-//    << tau_delay << " fm, time_relax="
-//    << time_relax << " fm, d_diff="
-//    << d_diff << " fm, width_delta="
-//    << width_delta <<" fm";
-    
+    //    JSINFO
+    //    << "<CausalLiquefier> Fluid Time Step and Cell Size: dtau="
+    //    << dtau << " fm, dx="
+    //    << dx << " fm, dy="
+    //    << dy << " fm, deta="
+    //    << deta;
+    //    JSINFO
+    //    << "<CausalLiquefier> Parameters: tau_delay="
+    //    << tau_delay << " fm, time_relax="
+    //    << time_relax << " fm, d_diff="
+    //    << d_diff << " fm, width_delta="
+    //    << width_delta <<" fm";
 }
 
-//CausalLiquefier::~CausalLiquefier(){};
-    
-    
 void CausalLiquefier::smearing_kernel(
         Jetscape::real tau, Jetscape::real x, Jetscape::real y,
         Jetscape::real eta, const Droplet drop_i,
@@ -117,7 +107,7 @@ void CausalLiquefier::smearing_kernel(
     jmu = {0., 0, 0, 0};//source in tau-eta coordinates
 
     const auto p_drop = drop_i.get_pmu();
-    auto x_drop = drop_i.get_xmu();// position of the doloplet in the Cartesian coodinates
+    auto x_drop = drop_i.get_xmu();// position of the droplet in the Cartesian coordinates
     double tau_drop = x_drop[0];
     double eta_drop = x_drop[3];
     x_drop[0] = get_t(tau_drop, eta_drop);
@@ -125,8 +115,8 @@ void CausalLiquefier::smearing_kernel(
 
     if( tau - 0.5*dtau <= tau_drop + tau_delay &&
        tau + 0.5*dtau > tau_drop + tau_delay ){
-        
-        double t = get_t(tau, eta);// position in the fluid in the Cartesian coodinates
+
+        double t = get_t(tau, eta);// position in the fluid in the Cartesian coordinates
         double z = get_z(tau, eta);
 
         double delta_t = t - x_drop[0];
@@ -142,7 +132,7 @@ void CausalLiquefier::smearing_kernel(
         }
         // get flux for the constant-tau surface
         double jtau = get_ptau(jt, jz, eta);
-                
+
         // get source in tau-eta coordinates
         jmu[0] = jtau*get_ptau(p_drop[0], p_drop[3], eta);
         jmu[1] = jtau*p_drop[1];
@@ -208,21 +198,20 @@ double CausalLiquefier::rho_delta(double t, double r) const {
     if( c_diff*t <= width_delta ){
         r_w = c_diff*t;
     }
-    
+
     if( r >= c_diff*t - r_w && r < c_diff*t ){
         double x = gamma_relax*t;
         return (1.0 + x + x*x/2.0)/r_w/r/r;
     }else{
         return 0.0;
     }
-    
 }
 
 //Wave front component of j
 double CausalLiquefier::j_delta(double t, double r) const {
     return c_diff*rho_delta(t, r);
 }
-    
+
 //Get Cartesian time t from tau and eta
 double CausalLiquefier::get_t(double tau, double eta)const{
     return tau*cosh(eta);
@@ -232,7 +221,7 @@ double CausalLiquefier::get_t(double tau, double eta)const{
 double CausalLiquefier::get_z(double tau, double eta)const{
         return tau*sinh(eta);
 }
-    
+
 //Lorentz Transformation to get tau component of four vector
 double CausalLiquefier::get_ptau(double p0, double p3, double eta)const{
         return p0*cosh(eta) - p3*sinh(eta);

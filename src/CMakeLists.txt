@@ -65,6 +65,10 @@ endif()
 FILE(GLOB liquefiersources liquefier/*.cc)
 set (SOURCES  ${SOURCES}  ${liquefiersources} )
 
+#hadronic EMT
+FILE(GLOB hadronicEMTsources hadronicEMT/*.cc)
+set (SOURCES  ${SOURCES}  ${hadronicEMTsources} )
+
 #hydro
 FILE(GLOB hydrosources hydro/*.cc)
 set (SOURCES  ${SOURCES}  ${hydrosources} )

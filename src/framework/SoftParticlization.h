@@ -66,6 +66,8 @@ public:
 
   std::vector<std::vector<shared_ptr<Hadron>>> Hadron_list_;
 
+  void ClearHadronList() { Hadron_list_.clear(); };
+
   bool boost_invariance;
   bool check_boost_invariance();
 };

@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+
+<!-- Copyright (c) The JETSCAPE Collaboration, 2018 -->
+<!-- Modular, task-based framework for simulating all aspects of heavy-ion collisions -->
+<!-- For the list of contributors see AUTHORS. -->
+<!-- Report issues at https://github.com/JETSCAPE/JETSCAPE/issues -->
+<!-- or via email to bugs.jetscape@gmail.com -->
+<!-- Distributed under the GNU General Public License 3.0 (GPLv3 or later). -->
+<!-- See COPYING for details. -->
+
+ <jetscape>
+
+  <!-- General settings -->
+  <nEvents> 1 </nEvents>
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 0 </nReuseHydro>
+  <nEvents_printout> 1 </nEvents_printout>
+
+  <!-- Technical settings -->
+  <debug> off </debug>
+  <remark> off </remark>
+  <vlevel> 0 </vlevel>
+  <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
+
+  <!--  JetScape Writer Settings -->
+  <outputFilename>test_out</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+
+  <Random>
+    <seed>42</seed>
+  </Random>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <!-- Creates a nucleus configuration from SMASH -->
+    <SMASHNucleus>
+      <SMASH_config_file>../external_packages/smash/smash_config_nucleus.yaml</SMASH_config_file>
+      <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+      <Protons>82</Protons>
+      <Neutrons>126</Neutrons>
+      <FermiMomenta>0</FermiMomenta>
+    </SMASHNucleus>
+  </IS>
+
+ </jetscape>
