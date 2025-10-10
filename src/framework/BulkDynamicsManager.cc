@@ -355,7 +355,7 @@ void BulkDynamicsManager::InitPerEvent() {
 
     for(auto it : GetTaskList()) {
       auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-      if(dynamic_pointer_cast<SmashInitialConditionWrapper>(module)) {
+      if(module->GetId() == "SMASHInitialState") {
         VERBOSE(3) << "SetActive(true) = " << module->GetId();
         SMASH_IC_attached_ = true;
         SMASH_IC_in_progress_ = true;
@@ -443,7 +443,7 @@ void BulkDynamicsManager::FinishPerEvent() {
   // Set all BDM attached modules back to active
   for (auto it : GetTaskList()) {
     auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-    if (dynamic_pointer_cast<SmashInitialConditionWrapper>(module) || 
+    if (module->GetId() == "SMASHInitialState" || 
         dynamic_pointer_cast<FluidDynamics>(module) || 
         dynamic_pointer_cast<SoftParticlization>(module) ||
         dynamic_pointer_cast<Afterburner>(module)) {
@@ -566,7 +566,7 @@ void BulkDynamicsManager::GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetsca
     bool SMASH_Afterburner_active = false;
     for(auto it : GetTaskList()) {
       auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
-      if(dynamic_pointer_cast<SmashInitialConditionWrapper>(module)) {
+      if(module->GetId() == "SMASHInitialState") {
         SMASH_IC_active = true;
       }
       if(dynamic_pointer_cast<Afterburner>(module) && (module->GetId() == "SMASH")) {

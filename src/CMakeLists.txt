@@ -86,8 +86,8 @@ set (SOURCES  ${SOURCES}  ${afterburnersources} )
 ## Take care of options
 if(NOT "${USE_SMASH}")
   list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/afterburner/SmashWrapper.cc)
-  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/afterburner/SMASHInitialStateWrapper.cc)
-  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/afterburner/SMASHNucleusWrapper.cc)
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/SMASHInitialStateWrapper.cc)
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/SMASHNucleusWrapper.cc)
 endif()
 
 #jet

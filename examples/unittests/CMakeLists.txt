@@ -36,4 +36,8 @@ add_unittest(causal_liquifier)
 add_unittest(LiquifierBase)
 add_unittest(hadronic_EMT)
 add_unittest(hadronic_liquefier)
-add_unittest(smash_nucleus)
+# if SMASH is used, include the related tests
+if(USE_SMASH)
+   add_unittest(smash_nucleus)
+endif()
+

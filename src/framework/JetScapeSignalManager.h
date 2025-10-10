@@ -20,7 +20,7 @@
 
 #include "Afterburner.h"
 #include "Transport.h"
-#ifndef USE_SMASH
+#ifdef USE_SMASH
 #include "SMASHInitialStateWrapper.h"
 #include "SMASHNucleusWrapper.h"
 #endif
@@ -59,6 +59,7 @@ public:
   }
   weak_ptr<InitialState> GetInitialStatePointer() { return initial_state; }
 
+#ifdef USE_SMASH
   void SetSMASHInitialStatePointer(shared_ptr<SmashInitialConditionWrapper> m_SMASH_initial) {
     transport_initial_state = m_SMASH_initial;
   }
@@ -72,7 +73,7 @@ public:
   weak_ptr<SMASHNucleusWrapper> GetSMASHNucleusPointer() { 
     return smash_nucleus;
   }
-
+#endif
   void SetPreEquilibriumPointer(shared_ptr<PreequilibriumDynamics> m_pre_eq) {
     pre_equilibrium = m_pre_eq;
   }
@@ -178,8 +179,10 @@ private:
 
   weak_ptr<InitialState> initial_state;
   weak_ptr<PreequilibriumDynamics> pre_equilibrium;
+#ifdef USE_SMASH
   weak_ptr<SmashInitialConditionWrapper> transport_initial_state;
   weak_ptr<SMASHNucleusWrapper> smash_nucleus;
+#endif
   weak_ptr<FluidDynamics> hydro;
   weak_ptr<BulkDynamicsManager> bulk;
   weak_ptr<JetEnergyLossManager> jloss;
