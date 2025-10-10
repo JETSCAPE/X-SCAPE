@@ -4,14 +4,12 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-1.2.1-RC
-      - latessa/macos_workflow_boost_pin
+      - XSCAPE-2.0.0-RC
 
   push:
     branches:
       - main
-      - XSCAPE-1.2.1-RC
-      - latessa/macos_workflow_boost_pin
+      - XSCAPE-2.0.0-RC
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
