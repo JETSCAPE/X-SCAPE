@@ -354,27 +354,63 @@ void EPGun::ExecuteTask() {
   Pythia8::Vec4 peIn    = event[4].p();
   Pythia8::Vec4 peOut   = event[6].p();
   Pythia8::Vec4 pPhoton = peIn - peOut;
-  std::cout << "peIn " << peIn << endl;
-  std::cout << "peOut " << peOut << endl;
-  std::cout << "pPhoton " << pPhoton << endl;
+  // std::cout << "peIn " << peIn << endl;
+  // std::cout << "peOut " << peOut << endl;
+  // std::cout << "pPhoton " << pPhoton << endl;
   double Q2    = - pPhoton.m2Calc();
-  std::cout << "Q2 " << Q2 << endl;
+  // std::cout << "Q2 " << Q2 << endl;
   double W2    = (pProton + pPhoton).m2Calc();
   double x     = Q2 / (2. * pProton * pPhoton);
   double y     = (pProton * pPhoton) / (pProton * peIn);
   //Pythia8::Vec4 pBreit  = 2*x*pProton + pPhoton;
   Pythia8::Vec4 pQuark  = 2*x*pProton;
   Pythia8::Vec4 pBreit2  = 2*x*pProton + pPhoton;
-  Pythia8::RotBstMatrix breitBoost = Pythia8::toCMframe(pQuark,pPhoton);
+
+  // Pythia8::RotBstMatrix breitBoost = Pythia8::toCMframe(pQuark,pPhoton);
   Pythia8::Vec4 pQuarkI= event[3].p();
   Pythia8::Vec4 pQuarkF= event[5].p();
-  pQuarkI.rotbst(breitBoost);
-  pQuarkF.rotbst(breitBoost);
+  // std::cout << "I QUARK" << pQuarkI << " IDK " << event[3].px() << endl;
+  // std::cout << "F QUARK" << pQuarkF <<endl;
 
-  //test statements
-  pBreit2.rotbst(breitBoost);
-  pQuark.rotbst(breitBoost);
-  pPhoton.rotbst(breitBoost);
+  // quark initially heading in the +-z dir
+  // if final quark has +-z then it was kicked <90 degrees
+  // if -+z then >90 degrees
+  // either way compute the acute angle
+  double recoilAngle;
+  double pQuarkIpz = event[3].pz();
+  double pQuarkFpz = event[5].pz();
+  if (pQuarkFpz == 0) { // exactly in xy plane
+    recoilAngle = M_PI/2.;
+  }
+  else { //need to calculate an angle
+    double pQuarkFp = std::sqrt(pQuarkF[1]*pQuarkF[1] + pQuarkF[2]*pQuarkF[2] + pQuarkF[3]*pQuarkF[3]);
+    recoilAngle = std::acos(std::abs(pQuarkFpz)/pQuarkFp);
+    if (pQuarkIpz * pQuarkFpz < 0) { //facing different ways
+      // std::cout << "FLIPPED" << endl;
+      recoilAngle = M_PI - recoilAngle;
+    }
+
+    // std::cout << recoilAngle << " " << pQuarkFpz << " " << pQuarkFp << " " << std::abs(pQuarkFpz)/pQuarkFp << " " << std::acos(std::abs(pQuarkFpz)/pQuarkFp) << endl;
+    // std::cout << pQuarkF[1] << " " << pQuarkF[2] << " " << pQuarkF[3] << endl;
+  }
+
+  ofstream myfile("./Qangtest/Q2angles.csv", std::ofstream::out | std::ofstream::app);
+  if (myfile.is_open()) {
+    myfile << Q2 << "," << recoilAngle << endl;
+    myfile.close();
+  } 
+  else { std::cout << "Unable to open file"; }
+  
+
+  // std::cout << "RECOIL ANGLE " << recoilAngle << endl;
+  
+  // pQuarkI.rotbst(breitBoost);
+  // pQuarkF.rotbst(breitBoost);
+
+  // //test statements
+  // pBreit2.rotbst(breitBoost);
+  // pQuark.rotbst(breitBoost);
+  // pPhoton.rotbst(breitBoost);
   //JSINFO << "pQuark Initial: " << pQuarkI.px() << " " << pQuarkI.py() << " " << pQuarkI.pz() << " ";
   //JSINFO << "pQuark Final: " << pQuarkF.px() << " " << pQuarkF.py() << " " << pQuarkF.pz() << " ";
   //JSINFO << "pPhoton: " << pPhoton.px() << " " << pPhoton.py() << " " << pPhoton.pz() << " ";
@@ -385,91 +421,95 @@ void EPGun::ExecuteTask() {
   for (int np = 0; np < p62.size(); ++np) {
     Pythia8::Particle &particle = p62.at(np);
     Pythia8::Vec4 partp = particle.p();
-    partp.rotbst(breitBoost);
+    // partp.rotbst(breitBoost);
     double mass = particle.m();
     double eCM = info.eCM();
 
     //only doing vir setting for DIS
-    if(breitVir and particle.status() == 62 and !photoproduction){
-      //setting up max vir
-      double max_vir = (partp.pAbs() * partp.pAbs() - mass*mass) * vir_factor;
-      std::cout << "MAXVIR1 " << max_vir << endl;
-      double min_vir = (QS * QS / 2.0) * (1.0 + std::sqrt(1.0 + 4.0 * particle.m() * particle.m() / QS / QS));
-      double tQ2 = 0.;
+    // if(breitVir and particle.status() == 62 and !photoproduction){
+    //   //setting up max vir
+    //   double max_vir = (partp.pAbs() * partp.pAbs() - mass*mass) * vir_factor;
+    //   std::cout << "MAXVIR1 " << max_vir << endl;
+    //   double min_vir = (QS * QS / 2.0) * (1.0 + std::sqrt(1.0 + 4.0 * particle.m() * particle.m() / QS / QS));
+    //   double tQ2 = 0.;
 
-      //using z axis for pT since thats the axis the photon quark collision happens on
-      if(initial_virtuality_pT){
-        max_vir = (partp.pz() * partp.pz()) * vir_factor;
-        std::cout << "MAXVIR2 " << max_vir << endl;
-      }
+    //   //using z axis for pT since thats the axis the photon quark collision happens on
+    //   if(initial_virtuality_pT){
+    //     max_vir = (partp.pz() * partp.pz()) * vir_factor;
+    //     std::cout << "MAXVIR2 " << max_vir << endl;
+    //   }
 
-      //JSINFO << Q2factor;
-      max_vir *= pow(Q2/(info.s()),Q2pow) * Q2factor/sqrt(x);
-      max_vir = Q2;
-      std::cout << "Q2 " << Q2 << " infos " << info.s() << " Q2pow " << Q2pow << " quotient " << Q2/(info.s()) << " power " << pow(Q2/(info.s()),Q2pow) << endl;
-      std::cout << "Q2factor " << Q2factor << " sqrtx " << sqrt(x) << " quotient " << Q2factor/sqrt(x) << endl;
-      std::cout << "MAXVIR3 " << max_vir << endl;
-      //JSINFO << max_vir;
+    //   //JSINFO << Q2factor;
+    //   max_vir *= pow(Q2/(info.s()),Q2pow) * Q2factor/sqrt(x);
+    //   max_vir = Q2;
+    //   std::cout << "Q2 " << Q2 << " infos " << info.s() << " Q2pow " << Q2pow << " quotient " << Q2/(info.s()) << " power " << pow(Q2/(info.s()),Q2pow) << endl;
+    //   std::cout << "Q2factor " << Q2factor << " sqrtx " << sqrt(x) << " quotient " << Q2factor/sqrt(x) << endl;
+    //   std::cout << "MAXVIR3 " << max_vir << endl;
+    //   //JSINFO << max_vir;
 
-      int iSplit = 0; // quark
-      if (particle.id() == gid) {
-        JSDEBUG << " parton is a gluon ";
-        iSplit = 1; // gluon
-      } else {
-        JSDEBUG << " parton is a quark ";
-      }
+    //   int iSplit = 0; // quark
+    //   if (particle.id() == gid) {
+    //     JSDEBUG << " parton is a gluon ";
+    //     iSplit = 1; // gluon
+    //   } else {
+    //     JSDEBUG << " parton is a quark ";
+    //   }
 
-      //evaluating virtuality for different cases
-      std::cout << "MAXVIR " << max_vir << " QS2 " << QS*QS << endl;
-      if (max_vir <= QS * QS){
-        std::cout << "NO VIRTUALITY, NOT HIGH ENOUGH ------------------------" << endl;
-        tQ2 = 0.0;
-      }else{
-        std::cout << "VIRTUALITY HIGH ENOUGH !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
-        double nu = (partp.e() + partp.pAbs())/sqrt(2.0);
+    //   //evaluating virtuality for different cases
+    //   std::cout << "MAXVIR " << max_vir << " QS2 " << QS*QS << endl;
+    //   if (max_vir <= QS * QS){
+    //     std::cout << "NO VIRTUALITY, NOT HIGH ENOUGH ------------------------" << endl;
+    //     tQ2 = 0.0;
+    //   }else{
+    //     std::cout << "VIRTUALITY HIGH ENOUGH !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << endl;
+    //     double nu = (partp.e() + partp.pAbs())/sqrt(2.0);
 
-        if (abs(particle.id()) == 4 || abs(particle.id()) == 5) {
-          if (max_vir > min_vir) {
-              tQ2 =
-                  matterHelper.generate_vac_t_w_M(particle.id(), particle.m(), nu,
-                                    QS * QS / 2.0, max_vir, 0, iSplit);
-            } else {
-              tQ2 = QS * QS;
-            }
-            //  std::ofstream tdist;
-            //  tdist.open("tdist_heavy.dat", std::ios::app);
-            //  tdist << tQ2 << endl;
-            //  tdist.close();
+    //     if (abs(particle.id()) == 4 || abs(particle.id()) == 5) {
+    //       std::cout << "heavy virtuality" << " max_vir = " << max_vir << endl;  
+    //       if (max_vir > min_vir) {
+    //           tQ2 =
+    //               matterHelper.generate_vac_t_w_M(particle.id(), particle.m(), nu,
+    //                                 QS * QS / 2.0, max_vir, 0, iSplit);
+    //         } else {
+    //           tQ2 = QS * QS;
+    //         }
+    //         //  std::ofstream tdist;
+    //         //  tdist.open("tdist_heavy.dat", std::ios::app);
+    //         //  tdist << tQ2 << endl;
+    //         //  tdist.close();
 
-            VERBOSE(8) << BOLDYELLOW << " virtuality calculated as = " << tQ2;
-        } else if (particle.id() == gid) {
-            tQ2 = matterHelper.generate_vac_t_w_M(particle.id(), particle.m(), nu,
-                                    QS * QS / 2.0, max_vir, 0, iSplit);
-        } else {
-            tQ2 = matterHelper.generate_vac_t(particle.id(), nu, QS * QS / 2.0,
-                                max_vir, 0, iSplit);
+    //         VERBOSE(8) << BOLDYELLOW << " virtuality calculated as = " << tQ2;
+    //     } else if (particle.id() == gid) {
+    //         std::cout << "gluon virtuality" << " max_vir = " << max_vir << endl;  
+    //         tQ2 = matterHelper.generate_vac_t_w_M(particle.id(), particle.m(), nu,
+    //                                 QS * QS / 2.0, max_vir, 0, iSplit);
+    //     } else {
+    //         tQ2 = matterHelper.generate_vac_t(particle.id(), nu, QS * QS / 2.0,
+    //                             max_vir, 0, iSplit);
 
-            std::cout << "light quark virtuality" << " max_vir = " << max_vir << endl;            
+    //         std::cout << "light quark virtuality" << " max_vir = " << max_vir << endl;            
+    //         std::cout << "sanity check " << matterHelper.generate_vac_t(particle.id(), nu, QS * QS / 2.0,
+    //                             max_vir, 0, iSplit) << endl;
+    //     }
 
-        }
+    //     std::cout << "tQ2 " << tQ2 << endl;
+    //     //tQ2 = test_vir;
+    //     //catching virtualitiies that are too high
+    //     if(sqrt(tQ2) > particle.pAbs() /*or sqrt(tQ2) > partp.pAbs()*/) tQ2 = min_vir;
+    //     std::cout << "tQ2 " << tQ2 << endl;
+    //   }
 
-        std::cout << "tQ2 " << tQ2 << endl;
-        //tQ2 = test_vir;
-        //catching virtualitiies that are too high
-        if(sqrt(tQ2) > particle.pAbs() /*or sqrt(tQ2) > partp.pAbs()*/) tQ2 = min_vir;
-      }
+    //   //applying virtuality change to the parton
+    //   //JSINFO << BOLDYELLOW << "Particle with ID: " << particle.id();
+    //   //JSINFO << BOLDYELLOW << "initial momentum: " << particle.px() << " " << particle.py() << " " << particle.pz();
+    //   //JSINFO << BOLDYELLOW << "breit momentum: " << partp.px() << " " << partp.py() << " " << partp.pz();
+    //   //JSINFO << BOLDYELLOW << "Virtuality: " << sqrt(tQ2) << " ";
 
-      //applying virtuality change to the parton
-      //JSINFO << BOLDYELLOW << "Particle with ID: " << particle.id();
-      //JSINFO << BOLDYELLOW << "initial momentum: " << particle.px() << " " << particle.py() << " " << particle.pz();
-      //JSINFO << BOLDYELLOW << "breit momentum: " << partp.px() << " " << partp.py() << " " << partp.pz();
-      //JSINFO << BOLDYELLOW << "Virtuality: " << sqrt(tQ2) << " ";
-
-      double scale = sqrt(particle.e()*particle.e() - tQ2 - particle.m2())/particle.pAbs();
-      particle.px(particle.px()*scale);
-      particle.py(particle.py()*scale);
-      particle.pz(particle.pz()*scale);
-    }
+    //   double scale = sqrt(particle.e()*particle.e() - tQ2 - particle.m2())/particle.pAbs();
+    //   particle.px(particle.px()*scale);
+    //   particle.py(particle.py()*scale);
+    //   particle.pz(particle.pz()*scale);
+    // }
 
     VERBOSE(7) << "Adding particle with pid = " << particle.id()
                << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
@@ -485,24 +525,24 @@ void EPGun::ExecuteTask() {
     ptn->set_anti_color(particle.acol());
     ptn->set_max_color(1000 * (np + 1));
 
-    //adding mean formtime for partons that need it set
-    if(breitVir and particle.status() == 62 and !photoproduction){
-      double mean_form_time = (2.*ptn->e()) / (ptn->e()*ptn->e()
-                            - ptn->px()*ptn->px() - ptn->py()*ptn->py()
-                            - ptn->pz()*ptn->pz() - ptn->restmass()*ptn->restmass()
-                            + rounding_error) / fmToGeVinv;
-      ptn->set_form_time(mean_form_time);
-      ptn->set_mean_form_time();
+    // //adding mean formtime for partons that need it set
+    // if(breitVir and particle.status() == 62 and !photoproduction){
+    //   double mean_form_time = (2.*ptn->e()) / (ptn->e()*ptn->e()
+    //                         - ptn->px()*ptn->px() - ptn->py()*ptn->py()
+    //                         - ptn->pz()*ptn->pz() - ptn->restmass()*ptn->restmass()
+    //                         + rounding_error) / fmToGeVinv;
+    //   ptn->set_form_time(mean_form_time);
+    //   ptn->set_mean_form_time();
 
-      double velocity[4];
-      velocity[0] = 1.0;
-      for (int j = 1; j <= 3; j++) {
-        velocity[j] = ptn->p(j) / ptn->e();
-      }
-      ptn->set_jet_v(velocity);
-    }
+    //   double velocity[4];
+    //   velocity[0] = 1.0;
+    //   for (int j = 1; j <= 3; j++) {
+    //     velocity[j] = ptn->p(j) / ptn->e();
+    //   }
+    //   ptn->set_jet_v(velocity);
+    // }
 
-    std::cout << ptn->px() << " " << ptn->py() << " " << ptn->pz() << " " << ptn->e() << " " << ptn->t() << endl;
+    // std::cout << ptn->px() << " " << ptn->py() << " " << ptn->pz() << " " << ptn->e() << " " << ptn->t() << endl;
       
     AddParton(ptn);
   }
