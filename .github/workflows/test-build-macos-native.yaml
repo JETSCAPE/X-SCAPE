@@ -115,7 +115,7 @@ jobs:
     - name: set more variables
       run: |
         echo "JETSCAPE_DIR=${GITHUB_WORKSPACE}/${REPO_NAME}" >> $GITHUB_ENV
-        echo "PYTHIA8DIR=${GITHUB_WORKSPACE}/pythia8309" >> $GITHUB_ENV
+        echo "PYTHIA8DIR=${GITHUB_WORKSPACE}/pythia8310" >> $GITHUB_ENV
 
     - name: Checkout JETSCAPE Repository
       uses: actions/checkout@v4
