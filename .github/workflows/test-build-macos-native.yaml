@@ -103,12 +103,12 @@ jobs:
         curl -SLOk http://pythia.org/download/pythia83/pythia8309.tgz
         ls -l
 
-    - name: Build and Install Pythia 8309
+    - name: Build and Install Pythia 8310
       run: |
-        tar -xzf pythia8309.tgz
+        tar -xzf pythia8310.tgz
         ls -l
-        cd pythia8309
-        ./configure --enable-shared --prefix=${GITHUB_WORKSPACE}/pythia8309 --with-hepmc3=${GITHUB_WORKSPACE}/hepmc3-install
+        cd pythia8310
+        ./configure --enable-shared --prefix=${GITHUB_WORKSPACE}/pythia8310 --with-hepmc3=${GITHUB_WORKSPACE}/hepmc3-install
         make
         make install
 
