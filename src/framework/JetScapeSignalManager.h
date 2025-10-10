@@ -20,8 +20,10 @@
 
 #include "Afterburner.h"
 #include "Transport.h"
+#ifndef USE_SMASH
 #include "SMASHInitialStateWrapper.h"
 #include "SMASHNucleusWrapper.h"
+#endif
 #include "InitialState.h"
 #include "JetEnergyLoss.h"
 #include "JetEnergyLossManager.h"
