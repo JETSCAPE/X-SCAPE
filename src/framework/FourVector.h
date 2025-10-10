@@ -183,6 +183,13 @@ public:
     return (*this);
   };
 
+  bool operator==(const FourVector& a) {
+    return tv == a.t() 
+        && xv == a.x() 
+        && yv == a.y() 
+        && zv == a.z();
+  }
+
   void rotate_around_x(double theta) {
     double new_zv, new_yv;
 

@@ -23,6 +23,8 @@
 #include "PreequilibriumDynamics.h"
 #include "JetEnergyLoss.h"
 #include "CausalLiquefier.h"
+#include "HadronicLiquefier.h"
+#include "HadronicEMT.h"
 
 #include "QueryHistory.h"
 
@@ -47,7 +49,8 @@ namespace Jetscape {
    */
 JetScape::JetScape()
     : JetScapeModuleBase(), n_events(1), n_events_printout(100), reuse_hydro_(false), n_reuse_hydro_(1),
-      liquefier(nullptr), fEnableAutomaticTaskListDetermination(true) {
+      liquefier(nullptr), hadronicLiquefier(nullptr), hadronicEMT(nullptr),
+      fEnableAutomaticTaskListDetermination(true) {
   VERBOSE(8);
   SetId("primary");
 }
@@ -210,7 +213,7 @@ void JetScape::ReadGeneralParametersFromXML() {
 void JetScape::DetermineTaskListFromXML() {
 
   // First, check for Liquefier and create it if so (since it needs to be passed to other modules)
-  VERBOSE(2) << "Checking if Liquifier should be created...";
+  VERBOSE(2) << "Checking if CausalLiquefier should be created...";
   tinyxml2::XMLElement *elementXML =
       (tinyxml2::XMLElement *)JetScapeXML::Instance()
           ->GetXMLRootUser()
@@ -222,6 +225,36 @@ void JetScape::DetermineTaskListFromXML() {
       JSINFO << "Created liquefier.";
     }
     elementXML = elementXML->NextSiblingElement();
+  }
+
+  // Check if the HadronicLiquefier should be created
+  VERBOSE(2) << "Checking if HadronicLiquefier should be created...";
+  tinyxml2::XMLElement *elementXML1 =
+      (tinyxml2::XMLElement *)JetScapeXML::Instance()
+          ->GetXMLRootUser()
+          ->FirstChildElement();
+  while (elementXML1) {
+    std::string elementName = elementXML1->Name();
+    if (elementName == "Liquefier") {
+      hadronicLiquefier = make_shared<HadronicLiquefier>();
+      JSINFO << "Created HadronicLiquefier.";
+    }
+    elementXML1 = elementXML1->NextSiblingElement();
+  }
+
+  // Check for HadronicEMT and create it if so
+  VERBOSE(2) << "Checking if HadronicEMT should be created...";
+  tinyxml2::XMLElement *elementXML2 =
+      (tinyxml2::XMLElement *)JetScapeXML::Instance()
+          ->GetXMLRootUser()
+          ->FirstChildElement();
+  while (elementXML2) {
+    std::string elementName = elementXML2->Name();
+    if (elementName == "HadronicEMT") {
+      hadronicEMT = make_shared<HadronicEMT>();
+      JSINFO << "Created HadronicEMT.";
+    }
+    elementXML2 = elementXML2->NextSiblingElement();
   }
 
   // Loop through and create all modules
@@ -425,7 +458,7 @@ void JetScape::DetermineTaskListFromXML() {
     else if (elementName == "Hydro") {
 
       // First, check if liquefier should be added (Note: Can't use GetXMLElementText(), since that only works for unique tags)
-      VERBOSE(2) << "Checking if liquefer should be added: Hydro";
+      VERBOSE(2) << "Checking if liquefier should be added: Hydro";
       bool bAddLiquefier = false;
       tinyxml2::XMLElement *childElementLiquefier =
           (tinyxml2::XMLElement *)element->FirstChildElement();
@@ -442,6 +475,26 @@ void JetScape::DetermineTaskListFromXML() {
           }
         }
         childElementLiquefier = childElementLiquefier->NextSiblingElement();
+      }
+
+      // Check if hadronic_liquefier should be added
+      VERBOSE(2) << "Checking if hadronic_liquefier should be added: Hydro";
+      bool bAddHadronicLiquefier = false;
+      tinyxml2::XMLElement *childElementHadronicLiquefier =
+          (tinyxml2::XMLElement *)element->FirstChildElement();
+      while (childElementHadronicLiquefier) {
+        std::string childElementName = childElementHadronicLiquefier->Name();
+        VERBOSE(2) << "Parsing childElementHadronicLiq: " << childElementName;
+        if (childElementName == "AddHadronicLiquefier") {
+          std::string strAddLiquefier = childElementHadronicLiquefier->GetText();
+          if ((int)strAddLiquefier.find("true") >= 0) {
+            bAddHadronicLiquefier = true;
+            VERBOSE(1) << "Add hadronic_liquefier to Hydro: True.";
+          } else {
+            VERBOSE(1) << "Add hadronic_liquefier to Hydro: False.";
+          }
+        }
+        childElementHadronicLiquefier = childElementHadronicLiquefier->NextSiblingElement();
       }
 
       // Loop through elements to look for specific hydro module
@@ -465,6 +518,12 @@ void JetScape::DetermineTaskListFromXML() {
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to Brick.";
             }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to Brick.";
+            }
           }
         }
         //   - Gubser
@@ -480,6 +539,12 @@ void JetScape::DetermineTaskListFromXML() {
                   liquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to Gubser.";
+            }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to Gubser.";
             }
           }
         }
@@ -497,6 +562,12 @@ void JetScape::DetermineTaskListFromXML() {
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to hydro_from_file.";
             }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to hydro_from_file.";
+            }
           }
         }
         //   - MUSIC
@@ -513,6 +584,12 @@ void JetScape::DetermineTaskListFromXML() {
                   liquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to MUSIC.";
+            }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to MUSIC.";
             }
           }
 #else
@@ -546,6 +623,12 @@ void JetScape::DetermineTaskListFromXML() {
                   ->add_a_liquefier(liquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "liquefier to CustomModule.";
+            }
+            if (bAddHadronicLiquefier) {
+              dynamic_pointer_cast<FluidDynamics>(customModule)->add_a_hadronic_liquefier(
+                hadronicLiquefier);
+              JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
+                        "hadronic liquefier to CustomModule.";
             }
           }
         }
@@ -1144,36 +1227,6 @@ void JetScape::Exec() {
     // -- all other Write()'s are being called
     // the result still confuses me. It's in the best possible order but it shouldn't be.
 
-    // collect module header data
-    for (auto w : vWriter) {
-      auto f = w.lock();
-      if (f) {
-        JetScapeTask::CollectHeaders(w);
-      }
-    }
-    // official header
-    for (auto w : vWriter) {
-      auto f = w.lock();
-      if (f) {
-        f->WriteHeaderToFile();
-      }
-    }
-
-    // event data
-    for (auto w : vWriter) {
-      auto f = w.lock();
-      if (f) {
-        JetScapeTask::WriteTasks(w);
-      }
-    }
-
-    // Finalize
-    for (auto w : vWriter) {
-      auto f = w.lock();
-      if (f) {
-        f->WriteEvent();
-      }
-    }
 
     // JP: If task not active then per time step is active (see above), which could lead to issues with hydro resuse. Follow up!
     // JS: New is timestepped flag should resolve this issue. Anything to undo below?
@@ -1275,17 +1328,67 @@ void JetScape::Exec() {
         }
       }
     }
+    
+    if (ClockUsed())
+    {
+      VERBOSE(3) << "Clock is used and FinishPerEventTasks is called!";
+      JetScapeModuleBase::FinishPerEventTasks();
+    }
+
+    // print all tasks and if they are active or not
+    for (auto it : GetTaskList()) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module) {
+        if (module->GetActive()) {
+          VERBOSE(3) << "IsActive(true) = " << module->GetId();
+        } else {
+          VERBOSE(3) << "IsActive(false) = " << module->GetId();
+        }
+      }
+    }
+
+    VERBOSE(3) << "Start the writing process ...";
+    // collect module header data
+    for (auto w : vWriter) {
+      auto f = w.lock();
+      if (f) {
+        JetScapeTask::CollectHeaders(w);
+      }
+    }
+    // official header
+    for (auto w : vWriter) {
+      auto f = w.lock();
+      if (f) {
+        f->WriteHeaderToFile();
+      }
+    }
+
+    // event data
+    for (auto w : vWriter) {
+      auto f = w.lock();
+      if (f) {
+        JetScapeTask::WriteTasks(w);
+      }
+    }
+
+    // Finalize
+    for (auto w : vWriter) {
+      auto f = w.lock();
+      if (f) {
+        f->WriteEvent();
+      }
+    }
 
     // Now clean up, only affects active tasks
+    VERBOSE(3) << "Clearing tasks ...";
     JetScapeModuleBase::ClearTasks();
 
-    //have to call this after writer and call explciitly the clear functions
+    //have to call this after writer and call explcitly the clear functions
     //in finish per event, because like writer, clear only for active tasks ...
     //have to think a bit more how to make this workflow more consistent ...
-    if (ClockUsed())
-      JetScapeModuleBase::FinishPerEventTasks();
 
     IncrementCurrentEvent();
+    VERBOSE(3) << "End of Event " << i;
   }
 }
 

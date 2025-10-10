@@ -34,6 +34,7 @@
 #include "BulkMediaInfo.h"
 #include "FluidEvolutionHistory.h"
 #include "LiquefierBase.h"
+#include "HadronicLiquefier.h"
 #include "SurfaceCellInfo.h"
 
 namespace Jetscape {
@@ -65,6 +66,7 @@ protected:
   double eta;
   bool boost_invariant_;
   Parameter parameter_list;
+  double source_term_tau_max;
 
   // How to store this data? In memory or hard disk?
   // 3D hydro may eat out the memory,
@@ -74,6 +76,7 @@ protected:
   std::vector<SurfaceCellInfo> surfaceCellVector_;
 
   std::weak_ptr<LiquefierBase> liquefier_ptr;
+  std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr;
 
 public:
   /** Default constructor. task ID as "FluidDynamics",
@@ -84,7 +87,7 @@ public:
   /** Default destructor. */
   virtual ~FluidDynamics();
 
-  /** Reads the input parameters from the XML file under the tag <Hydro>. Uses JetScapeSingnalManager Instance to retrive the Initial State Physics information. Calls InitializeHydro(parameter_list) and InitTask(); This explicit call can be used for actual initialization of modules such as @a Brick, @a MpiMusic, or @a OSU-HYDRO if attached as a @a polymorphic class. It also initializes the tasks within the current module.
+  /** Reads the input parameters from the XML file under the tag <Hydro>. Uses JetScapeSignalManager Instance to retrieve the Initial State Physics information. Calls InitializeHydro(parameter_list) and InitTask(); This explicit call can be used for actual initialization of modules such as @a Brick, @a MpiMusic, or @a OSU-HYDRO if attached as a @a polymorphic class. It also initializes the tasks within the current module.
 	@sa Read about @a polymorphism in C++. Override Init (not InitTask) here as sub-tasks are called as well.
     */
   void Init() override;
@@ -150,6 +153,10 @@ public:
   /** @return Status of the hydrodynamics (NOT_START, INITIALIZED, EVOLVING, FINISHED, ERROR). */
   int GetHydroStatus() const { return (hydro_status); }
 
+  void SetHydroStatus(HydroStatus status) {
+    hydro_status = status;
+  }
+
   void StoreHydroEvolutionHistory(
       std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr) {
     bulk_info.data.push_back(*fluid_cell_info_ptr);
@@ -174,14 +181,29 @@ public:
      */
   void GetHydroStartTime(double &tau0) { tau0 = hydro_tau_0; }
 
+  /** Set the start time (or tau) for hydrodynamic evolution.
+     @param tau0 Start time (or tau) for hydrodynamic evolution.
+     */
+  virtual void SetHydroStartTime(double tau0) { hydro_tau_0 = tau0; }
+
   /** @return End time (or tau) for hydrodynamic evolution.
      */
   Jetscape::real GetHydroEndTime() const { return (hydro_tau_max); }
+
   /** @return Freeze-out temperature.
      */
   Jetscape::real GetHydroFreezeOutTemperature() const {
     return (hydro_freeze_out_temperature);
   }
+
+  /** Get the maximum time for a hydrodynamic source term
+   * @return source_term_tau_max The maximum time for a hydrodynamic source term.
+   */
+  double GetSourceTermTauMax() const { return source_term_tau_max; }
+
+  /** Set the maximum time for a hydrodynamic source term
+   */
+  void SetSourceTermTauMax(double time) { source_term_tau_max = time; }
 
   /** Retrieves the hydro information at a given space-time point.
      * It throws a InvalidSpaceTimeRange message when
@@ -221,7 +243,7 @@ public:
   void PrintFluidCellInformation(FluidCellInfo *fluid_cell_info_ptr);
 
   // this function returns hypersurface for Cooper-Frye or recombination
-  // the detailed implementation is left to the hydro developper
+  // the detailed implementation is left to the hydro developer
   /** @return Default function to get the hypersurface for Cooper-Frye or recombination model. It can overridden by different modules.
      */
   void FindAConstantTemperatureSurface(
@@ -305,6 +327,10 @@ public:
     liquefier_ptr = new_liquefier;
   }
 
+  virtual void add_a_hadronic_liquefier(std::shared_ptr<HadronicLiquefier> new_liquefier) {
+    hadronic_liquefier_ptr = new_liquefier;
+  }
+
   void get_source_term(Jetscape::real tau, Jetscape::real x, Jetscape::real y,
                        Jetscape::real eta,
                        std::array<Jetscape::real, 4> jmu) const;
@@ -316,6 +342,14 @@ public:
 
   // get a reference to the bulk_info object
   const EvolutionHistory& get_bulk_info() const { return bulk_info; }
+
+  // get the liquefier pointer
+  std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
+
+  // get the hadronic liquefier pointer
+  std::weak_ptr<HadronicLiquefier> get_hadronic_liquefier() {
+    return (hadronic_liquefier_ptr);
+  }
 
 }; // end class FluidDynamics
 

@@ -4,14 +4,12 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-1.2.1-RC
-      - latessa/macos_workflow_boost_pin
+      - XSCAPE-2.0.0-RC
 
   push:
     branches:
       - main
-      - XSCAPE-1.2.1-RC
-      - latessa/macos_workflow_boost_pin
+      - XSCAPE-2.0.0-RC
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -99,25 +97,25 @@ jobs:
         make
         make install
 
-    - name: Download Pythia 8309
+    - name: Download Pythia 8310
       run: |
         cd ${GITHUB_WORKSPACE}
-        curl -SLOk http://pythia.org/download/pythia83/pythia8309.tgz
+        curl -SLOk http://pythia.org/download/pythia83/pythia8310.tgz
         ls -l
 
-    - name: Build and Install Pythia 8309
+    - name: Build and Install Pythia 8310
       run: |
-        tar -xzf pythia8309.tgz
+        tar -xzf pythia8310.tgz
         ls -l
-        cd pythia8309
-        ./configure --enable-shared --prefix=${GITHUB_WORKSPACE}/pythia8309 --with-hepmc3=${GITHUB_WORKSPACE}/hepmc3-install
+        cd pythia8310
+        ./configure --enable-shared --prefix=${GITHUB_WORKSPACE}/pythia8310 --with-hepmc3=${GITHUB_WORKSPACE}/hepmc3-install
         make
         make install
 
     - name: set more variables
       run: |
         echo "JETSCAPE_DIR=${GITHUB_WORKSPACE}/${REPO_NAME}" >> $GITHUB_ENV
-        echo "PYTHIA8DIR=${GITHUB_WORKSPACE}/pythia8309" >> $GITHUB_ENV
+        echo "PYTHIA8DIR=${GITHUB_WORKSPACE}/pythia8310" >> $GITHUB_ENV
 
     - name: Checkout JETSCAPE Repository
       uses: actions/checkout@v4

@@ -34,6 +34,8 @@ public:
   Jetscape::real temperature;     //!< Local temperature [GeV].
   Jetscape::real pressure;        //!< Thermal pressure [GeV/fm^3].
   Jetscape::real baryon_density;  //!< net baryon density [1/fm^3].
+  Jetscape::real electric_charge_density; //!< net electric charge density [1/fm^3].
+  Jetscape::real strangeness_density; //!< net strange density [1/fm^3].
   Jetscape::real mu_B;       //!< Net baryon chemical potential [GeV].
   Jetscape::real mu_Q;       //!< Net charge chemical potential [GeV].
   Jetscape::real mu_S;       //!< Net strangeness chemical potential [GeV].

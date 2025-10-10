@@ -67,7 +67,19 @@
 
   <!--Bulk Dynamics Manager -->
   <BDM>
-    <Tc>0.250</Tc>
+    <!-- energy_density_criterion = 1: use energy density criterion for switching media, 0: use temperature criterion -->
+    <!-- This criterion is only used to access the bulk media, not for the FO in the hydro, this has to be set separately in the hydro section-->
+    <energy_density_criterion>0</energy_density_criterion>
+    <Tc>0.155</Tc>
+    <ec>0.35</ec>
+    <IC_particle_extraction_tau>0.5</IC_particle_extraction_tau>
+    <!--Optional pT and momentum rapidity cuts for particles considered to go into the hydro evolution (set to 0 for no cut)-->
+    <pT_cut>0.0</pT_cut>
+    <rapidity_cut>0.0</rapidity_cut>
+    <!--Spectator hadrons are always ignored for source terms in hydro, this switch is for the afterburner phase-->
+    <ignore_spectator_hadrons>0</ignore_spectator_hadrons>
+    <!-- CreateHadronicTimeEvolutionOutput: To create a movie for one event, not recommended for production runs -->
+    <CreateHadronicTimeEvolutionOutput> false </CreateHadronicTimeEvolutionOutput>
   </BDM>
 
   <!-- Inital State Module  -->
@@ -109,6 +121,7 @@
     <!-- Options to read initial conditions from saved file -->
     <initial_profile_path>../examples/test_hydro_files</initial_profile_path>
     <initial_Ncoll_list>../examples/test_hydro_files</initial_Ncoll_list>
+
     <MCGlauber>
       <!--0: generates full event with binary collisions and strings-->
       <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
@@ -154,6 +167,50 @@
       <tau_form_mean>0.5</tau_form_mean> <!--Mean value for tau_form [fm]-->
       <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> <!--Fluctuation parameter for the gamma distribution-->
     </MCGlauber>
+
+    <SMASH>
+      <SMASH_config_file>../external_packages/smash/smash_config_initial_condition.yaml</SMASH_config_file>
+      <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+
+      <ProjectileProtons>79</ProjectileProtons>
+      <ProjectileNeutrons>118</ProjectileNeutrons>
+      <TargetProtons>79</TargetProtons>
+      <TargetNeutrons>118</TargetNeutrons>
+
+      <!-- time in fm/c in the computational frame, when the simulation should be ended -->
+      <!-- This time should coincide with the time used in the afterburner module-->
+      <end_time>1000.0</end_time>
+      <Sqrtsnn>200.0</Sqrtsnn>
+      <FermiMotion>frozen</FermiMotion>
+      <CollisionsWithinNucleus>0</CollisionsWithinNucleus>
+      <Impact>
+        <RandomReactionPlane>0</RandomReactionPlane>
+        <!-- Pick the mode for the impact parameter -->
+        <!-- Mode=0 : Value has to be set -->
+        <!-- Mode=1 : Sample (uniform, quadratic) with ImpactMin, ImpactMax have to be set -->
+        <Mode>0</Mode>
+        <Value>0.0</Value>
+        <Sample>quadratic</Sample>
+        <ImpactMin>0.0</ImpactMin>
+        <ImpactMax>3.0</ImpactMax>
+      </Impact>
+      <!--Smaller timestep here gives more accuracy in the iso-tau hypersurface extraction-->
+      <Delta_Time>0.01</Delta_Time>
+    </SMASH>
+
+    <!-- Creates a nucleus configuration from SMASH -->
+    <SMASHNucleus>
+      <SMASH_config_file>../external_packages/smash/smash_config_nucleus.yaml</SMASH_config_file>
+      <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+      <Protons>82</Protons>
+      <Neutrons>126</Neutrons>
+      <FermiMomenta>0</FermiMomenta>
+      <!--Black disk nucleon radius (fm) for checks if a nucleon is at a specific position-->
+      <NucleonRadiusBlackDisk>0.6</NucleonRadiusBlackDisk>
+    </SMASHNucleus>
+
     <!-- In case IP-Glasma is used as initial condition, the parameters need to be specified in the 'ipglasma.input' file -->
     <IPGlasma> </IPGlasma>
   </IS>
@@ -364,6 +421,15 @@
           <d_diff>0.08</d_diff><!-- in [fm] -->
           <width_delta>0.1</width_delta><!-- in [fm] -->
       </CausalLiquefier>
+
+      <!-- HadronicLiquefier-->
+      <HadronicLiquefier>
+          <name>HadronicLiquefier</name>
+          <covariant_kernel>1</covariant_kernel> <!-- 0: use Gaussian kernel, 1: use covariant kernel -->
+          <sigma_transverse>0.5</sigma_transverse> <!-- smearing width in transverse direction -->
+          <sigma_longitudinal>0.5</sigma_longitudinal> <!-- smearing width in longitudinal direction (only for Gaussian kernel) -->
+          <gamma_factor_max>100.0</gamma_factor_max> <!-- maximum gamma factor for the covariant kernel -->
+      </HadronicLiquefier>
   </Liquefier>
 
   <!-- Hydro  Module  -->
@@ -371,6 +437,7 @@
   <Hydro>
 
     <AddLiquefier> false </AddLiquefier>
+    <CartesianHydro> false </CartesianHydro>
 
     <!-- Test Brick if bjorken_expansion_on="true", T(t) = T * (start_time[fm]/t)^{1/3} -->
     <Brick bjorken_expansion_on="false" start_time="0.6">
@@ -422,6 +489,8 @@
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
+      <!--EOS used for the hydro evolution: 91 hotQCD EOS, 20 NEOS-4D-->
+      <EOS>91</EOS>
       <!--InitialProfile = 42 for Trento + Pre-equilibrium or IPGlasma, 13 for the 3D Glauber initial condition-->
       <InitialProfile>42</InitialProfile>
       <!--beastMode = 0: double precision, constant time step-->
@@ -448,6 +517,16 @@
       <shear_viscosity_3_at_kink>0.08</shear_viscosity_3_at_kink>
       <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
       <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
+      <!--mu_B dependent shear viscosity settings-->
+      <muB_dependent_Shear_to_S_ratio>0</muB_dependent_Shear_to_S_ratio>
+      <!-- Parameters for parametrization 7, piecewise linear-->
+      <!-- If set to -1, then shear_7_muBf0p4=1 and shear_7_muBf0p2=(1+shear_7_muBf0p4)/2-->
+      <shear_7_muBf0p2>-1</shear_7_muBf0p2>
+      <shear_7_muBf0p4>-1</shear_7_muBf0p4>
+      <!-- Parameters for parametrization 10, power law-->
+      <shear_10_muBDep_alpha>0.7</shear_10_muBDep_alpha>
+      <shear_10_muBDep_slope>2.0</shear_10_muBDep_slope>
+      <shear_10_muBDep_scale>0.6</shear_10_muBDep_scale>
       <!--bulk viscosity settings-->
       <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
       <!-- Parameters for parametrization 2-->
@@ -459,12 +538,26 @@
       <bulk_viscosity_3_T_peak_in_GeV>0.17</bulk_viscosity_3_T_peak_in_GeV>
       <bulk_viscosity_3_width_in_GeV>0.02</bulk_viscosity_3_width_in_GeV>
       <bulk_viscosity_3_lambda_asymm>0.1</bulk_viscosity_3_lambda_asymm>
+      <!-- Parameters for parametrization 10-->
+      <bulk_viscosity_10_max>0.10</bulk_viscosity_10_max>
+      <!-- The following two parameters are set automatically to bulk_viscosity_10_max and (max+max_muB0p4)/2. if the values are -1 here-->
+      <bulk_viscosity_10_max_muB0p4>-1</bulk_viscosity_10_max_muB0p4>
+      <bulk_viscosity_10_max_muB0p2>-1</bulk_viscosity_10_max_muB0p2>
+      <bulk_viscosity_10_width_high>0.08</bulk_viscosity_10_width_high>
+      <bulk_viscosity_10_width_low>0.010</bulk_viscosity_10_width_low>
+      <bulk_viscosity_10_T_peak>0.17</bulk_viscosity_10_T_peak>
+      <bulk_viscosity_10_T_peak_muBcurv>-0.15</bulk_viscosity_10_T_peak_muBcurv>
       <!--higher order transport coefficients-->
       <Include_second_order_terms>1</Include_second_order_terms>
+      <!--Conserved charge settings-->
+      <Include_Rhob>0</Include_Rhob>
+      <Include_QS>0</Include_QS>
       <!--freeze-out parameters-->
       <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
       <freezeout_temperature>0.15</freezeout_temperature>
       <eps_switch>0.3</eps_switch>
+      <Do_FreezeOut_lowtemp>1</Do_FreezeOut_lowtemp>
+      <average_surface_over_this_many_time_steps>5</average_surface_over_this_many_time_steps>
       <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
       <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
       <!--source term parameters for InitialProfile 13-->
@@ -565,11 +658,19 @@
 
       <include_deltaf_shear>1</include_deltaf_shear>
       <include_deltaf_bulk>1</include_deltaf_bulk>
+      <!--20: Grad 22 moment, 21: CE-->
       <deltaf_type>20</deltaf_type>
       <number_of_repeated_sampling>1</number_of_repeated_sampling>
       <Perform_resonance_decays>0</Perform_resonance_decays>
     </iSS>
   </SoftParticlization>
+
+  <!-- Create hadronic energy-momentum tensor -->
+  <HadronicEMT>
+    <smearing_covariant>1</smearing_covariant> <!-- 0: use Gaussian kernel, 1: use covariant kernel -->
+    <sigma_transverse>0.5</sigma_transverse>
+    <sigma_longitudinal>0.5</sigma_longitudinal>
+  </HadronicEMT>
 
   <!-- Hadronic Afterburner  -->
   <Afterburner>
@@ -588,6 +689,8 @@
       <end_time>1000.0</end_time>
       <!-- 0 - run the full afterburner, 1 - only decay the resonances without even propagation -->
       <only_decays>0</only_decays>
+      <!-- time steps in the SMASH afterburner -->
+      <Delta_Time>0.05</Delta_Time>
     </SMASH>
   </Afterburner>
 </jetscape>
