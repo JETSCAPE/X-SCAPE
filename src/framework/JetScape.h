@@ -20,6 +20,8 @@
 #include "JetScapeTaskSupport.h"
 #include "JetScapeModuleBase.h"
 #include "CausalLiquefier.h"
+#include "HadronicLiquefier.h"
+#include "HadronicEMT.h"
 #include <unordered_map>
 
 namespace Jetscape {
@@ -38,7 +40,7 @@ public:
   virtual ~JetScape();
 
   /** This function initializes the main task of the JetScape framework.
-   * As it calls JetScapeTask::InitTasks() function specifcally to initialize
+   * As it calls JetScapeTask::InitTasks() function specifically to initialize
    * the attached modules/tasks Init (not InitTask) is used here.
   */
   void Init() override;
@@ -105,7 +107,7 @@ protected:
   per event -> per timestep -> per event
    */
   void SetPerEventExecFlags(bool start_of_event);
-  /** Function to reset the per event execution active flags to its orginal state
+  /** Function to reset the per event execution active flags to its original state
    */
   void ResetPerEventExecFlags();
 
@@ -118,6 +120,8 @@ protected:
   unsigned int n_reuse_hydro_;
 
   std::shared_ptr<CausalLiquefier> liquefier;
+  std::shared_ptr<HadronicLiquefier> hadronicLiquefier;
+  std::shared_ptr<HadronicEMT> hadronicEMT;
 
  // Option to automatically determine the task list from the XML file,
  // rather than manually calling JetScapeTask::Add() in the run macro.

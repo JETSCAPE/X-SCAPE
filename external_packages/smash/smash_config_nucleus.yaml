@@ -1,0 +1,21 @@
+Logging:
+    default: INFO
+
+General:
+    Modus:          Collider    # Dummy, but some value has to be present
+    Time_Step_Mode: Fixed
+    Delta_Time:     0.01
+    End_Time:       1000.0       # Dummy
+    Randomseed:     -1          # Reset from the JetScape xml config
+    Nevents:        1           # Dummy
+
+Output:
+    Output_Interval: 1.0
+
+Modi:
+    Collider:
+        Sqrtsnn: 200.0 # Dummy
+        Projectile:
+            Particles: {2212: 79, 2112: 118} # Reset from the JetScape xml config
+        Target:
+            Particles: {2212: 79, 2112: 118} # Dummy

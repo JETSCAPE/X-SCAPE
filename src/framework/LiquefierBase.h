@@ -38,10 +38,10 @@ public:
     xmu = x_in;
     pmu = p_in;
   }
+
   ~Droplet(){};
 
   std::array<Jetscape::real, 4> get_xmu() const { return (xmu); }
-
   std::array<Jetscape::real, 4> get_pmu() const { return (pmu); }
 };
 
@@ -72,6 +72,8 @@ public:
                                           std::vector<Parton> &pOut);
   void filter_partons(std::vector<Parton> &pOut);
   void add_hydro_sources(std::vector<Parton> &pIn, std::vector<Parton> &pOut);
+  // add hydro sources for hadrons is overriden in derived HadronicLiquefier class
+  void add_hydro_sources_hadrons(std::vector<Hadron> &hIn) {};
 
   //! Core signal to receive information from the medium
   sigslot::signal5<double, double, double, double,
@@ -100,6 +102,23 @@ public:
 
   void get_source(Jetscape::real tau, Jetscape::real x, Jetscape::real y,
                   Jetscape::real eta, std::array<Jetscape::real, 4> &jmu) const;
+
+
+  // Functions for the hadronic droplet sources, overriden in derived
+  // HadronicLiquefier class
+  void get_source_energy(const double tau, const double x, const double y,
+                         const double eta,
+                         std::array<double, 4> &jmu) const 
+                         { jmu = {0.0, 0.0, 0.0, 0.0}; };
+  
+  double get_source_rhob(const double tau, const double x, const double y,
+                         const double eta) const {return 0.0;};
+  
+  double get_source_rhoq(const double tau, const double x, const double y,
+                          const double eta) const {return 0.0;};
+
+  double get_source_rhos(const double tau, const double x, const double y,
+                          const double eta) const {return 0.0;};
 
   virtual void ClearTask();
 };

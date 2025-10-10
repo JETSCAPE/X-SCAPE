@@ -13,14 +13,18 @@
 # See COPYING for details.
 ##############################################################################
 
-
 # using a commit from the MUSIC repository that is compatible with the current X-SCAPE version
 folderName="music"
-commitHash="72b2e0c3ee2bbd1ec5873c8e4d363d4abce51944"
+commitHash="cfcc26455450588961e81139045dc0eef387437c"
 
-git clone https://github.com/MUSIC-fluid/MUSIC.git -b JETSCAPE $folderName
+git clone https://github.com/MUSIC-fluid/MUSIC.git -b XSCAPE $folderName
 cd $folderName
 git checkout $commitHash
+cd EOS
+bash download_hotQCD.sh SMASH_binary
+
+# Download the 4D EoS tables (only needed for EOS 20, only download if necessary, large files)
+bash download_Neos4D.sh UrQMD
 
 ### ALTERNATIVE VERSION
 ### Download a zipped snapshot

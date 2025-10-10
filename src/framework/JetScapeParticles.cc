@@ -460,6 +460,10 @@ bool Parton::isPhoton(int pid) {
 Hadron::Hadron(const Hadron &srh)
     : JetScapeParticleBase::JetScapeParticleBase(srh) {
   width_ = srh.width_;
+  charge_ = srh.charge_;
+  baryon_number_ = srh.baryon_number_;
+  strangeness_ = srh.strangeness_;
+  participant_ = srh.participant_;
 }
 
 Hadron::Hadron(int label, int id, int stat, const FourVector &p,
@@ -485,6 +489,29 @@ Hadron::Hadron(int label, int id, int stat, const FourVector &p,
     : JetScapeParticleBase::JetScapeParticleBase(label, id, stat, p, x, mass) {
   assert(CheckOrForceHadron(id, mass));
   set_restmass(mass);
+}
+
+Hadron::Hadron(int label, int id, int stat, const FourVector &p,
+                const FourVector &x, double mass, int charge, int baryon_number,
+                int strangeness)
+    : JetScapeParticleBase::JetScapeParticleBase(label, id, stat, p, x, mass) {
+  assert(CheckOrForceHadron(id, mass));
+  set_restmass(mass);
+  set_charge(charge);
+  set_baryon_number(baryon_number);
+  set_strangeness(strangeness);
+}
+
+Hadron::Hadron(int label, int id, int stat, const FourVector &p,
+                const FourVector &x, double mass, int charge, int baryon_number,
+                int strangeness, bool participant)
+    : JetScapeParticleBase::JetScapeParticleBase(label, id, stat, p, x, mass) {
+  assert(CheckOrForceHadron(id, mass));
+  set_restmass(mass);
+  set_charge(charge);
+  set_baryon_number(baryon_number);
+  set_strangeness(strangeness);
+  set_participant(participant);
 }
 
 bool Hadron::CheckOrForceHadron(const int id, const double mass) {
@@ -515,15 +542,37 @@ bool Hadron::has_no_position(){
          (x_in_.z() < 1e-6);
 }
 
+bool Hadron::has_valid_momentum() const {
+  // Check if the hadron has a valid momentum to compute the invariant mass.
+  const FourVector &p = this->p_in();
+  const double p2 = p.x() * p.x() + p.y() * p.y() + p.z() * p.z();
+  const double e2 = p.t() * p.t();
+  const double E2minusp2 = e2 - p2;
+  if ((E2minusp2 < rounding_error) && pid() != 22) {
+    JSWARN << "Invalid momentum for hadron with label " << plabel()
+           << ", id " << pid() << ": E^2 - p^2 = " << E2minusp2;
+    return false;
+  }
+  return true;
+}
+
 Hadron &Hadron::operator=(Hadron &c) {
   JetScapeParticleBase::operator=(c);
   width_ = c.width_;
+  charge_ = c.charge_;
+  baryon_number_ = c.baryon_number_;
+  strangeness_ = c.strangeness_;
+  participant_ = c.participant_;
   return *this;
 }
 
 Hadron &Hadron::operator=(const Hadron &c) {
   JetScapeParticleBase::operator=(c);
   width_ = c.width_;
+  charge_ = c.charge_;
+  baryon_number_ = c.baryon_number_;
+  strangeness_ = c.strangeness_;
+  participant_ = c.participant_;
   return *this;
 }
 

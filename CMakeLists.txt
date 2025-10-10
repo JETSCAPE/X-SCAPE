@@ -88,7 +88,7 @@ if (USE_ISS)
   include_directories(./external_packages/iSS ./external_packages/iSS/src)
 endif (USE_ISS)
 
-# SMASH afterburner. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON -DSMASH=ON'.
+# SMASH afterburner. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_SMASH=ON'.
 option(USE_SMASH "Build tests for SMASH" OFF)
 if (USE_SMASH)
   message("SMASH includes and library ...")
@@ -192,7 +192,7 @@ install(
   "${CMAKE_SOURCE_DIR}/external_packages/music/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/trento/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper/"
-  "${CMAKE_SOURCE_DIR}/external_packages/smash/src/"
+  "${CMAKE_SOURCE_DIR}/external_packages/smash/smash_code/src/"
   "${CMAKE_SOURCE_DIR}/external_packages/googletest/googletest/src/"
   DESTINATION "include" # target directory
   FILES_MATCHING # install only matched files
@@ -343,6 +343,7 @@ include_directories(./src/framework )
 include_directories(./src/initialstate )
 include_directories(./src/preequilibrium )
 include_directories(./src/liquefier )
+include_directories(./src/hadronicEMT )
 include_directories(./src/hydro )
 include_directories(./src/hadronization )
 include_directories(./src/afterburner )
@@ -508,11 +509,11 @@ endif (USE_MUSIC AND USE_ISS )
 #target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
 
 if ( USE_SMASH )
-    add_executable(SMASHTest ./examples/custom_examples/SMASHTest.cc)
-    target_link_libraries(SMASHTest JetScape )
+    add_executable(SMASHInitialCondition ./examples/custom_examples/SMASHInitialCondition.cc)
+    target_link_libraries(SMASHInitialCondition JetScape )
 
-    # add_executable(ConcurrencyTest ./examples/custom_examples/ConcurrencyTest.cc)
-    # target_link_libraries(ConcurrencyTest JetScape )
+    add_executable(SMASHNucleusTest ./examples/custom_examples/SMASHNucleusTest.cc)
+    target_link_libraries(SMASHNucleusTest JetScape )
 endif (USE_SMASH )
 
 

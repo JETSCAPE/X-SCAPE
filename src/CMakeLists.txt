@@ -65,6 +65,10 @@ endif()
 FILE(GLOB liquefiersources liquefier/*.cc)
 set (SOURCES  ${SOURCES}  ${liquefiersources} )
 
+#hadronic EMT
+FILE(GLOB hadronicEMTsources hadronicEMT/*.cc)
+set (SOURCES  ${SOURCES}  ${hadronicEMTsources} )
+
 #hydro
 FILE(GLOB hydrosources hydro/*.cc)
 set (SOURCES  ${SOURCES}  ${hydrosources} )
@@ -82,6 +86,8 @@ set (SOURCES  ${SOURCES}  ${afterburnersources} )
 ## Take care of options
 if(NOT "${USE_SMASH}")
   list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/afterburner/SmashWrapper.cc)
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/SMASHInitialStateWrapper.cc)
+  list (REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/initialstate/SMASHNucleusWrapper.cc)
 endif()
 
 #jet

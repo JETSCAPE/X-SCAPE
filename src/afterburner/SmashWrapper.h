@@ -101,6 +101,8 @@ public:
   void FinishPerEvent() override;
 
   std::vector<Hadron> GetCurrentHadronList() const override;
+
+  virtual any GetHistory() {return GetCurrentHadronList();}
 };
 
 #endif // SMASHWRAPPER_H

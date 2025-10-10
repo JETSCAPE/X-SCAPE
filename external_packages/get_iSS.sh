@@ -15,8 +15,15 @@
 
 # using a commit from the iSS repository that is compatible with the current X-SCAPE version
 folderName="iSS"
-commitHash="444410c34f8159fc126a2b3f68f8f78e3ee5cbad"
+commitHash="d242555306930f813881caca500f0e6f82036b2e"
 
-git clone https://github.com/chunshen1987/iSS -b JETSCAPE iSS
+git clone https://github.com/chunshen1987/iSS -b XSCAPE iSS
 cd $folderName
 git checkout $commitHash
+
+# Additional tables needed for 4D EoS (download only if necessary, large files)
+cd iSS_tables/EOS_tables
+bash download_HRG4D.sh
+
+cd ../deltaf_tables/urqmd
+bash download_NEoS4D_deltafCoeffs.sh

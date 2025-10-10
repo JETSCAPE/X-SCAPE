@@ -1,4 +1,4 @@
-# X-SCAPE 1.2.1
+# X-SCAPE 2.0.0
 
 The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (X-SCAPE) is the enhanced (and 2nd) project of the JETSCAPE
 collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions.
@@ -6,7 +6,7 @@ The new framework allows for novel functionality such as the ability of the main
 state and final state evolution. It allows for multiple bulk event generators to run concurrently while exchanging information via a new Bulk Dynamics Manager.
 The X-SCAPE framework can be run using the new functionality or in JETSCAPE mode allowing for full backwards compatibility. New modules can also run in a hybrid fashion,
 choosing to use or not use the new clock functionality. More documentation of the new X-SCAPE framework capabilities will be provided in the near future.
-For now, test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory (for example in `PythiaBDMTes.cc` and `PythiaBrickTest.cc`).
+For now, test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory (for example in `PythiaBDMTest.cc` and `PythiaBrickTest.cc`).
 
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
@@ -20,10 +20,15 @@ Please see the [Installation Instructions](https://github.com/JETSCAPE/X-SCAPE/w
 
 ## Running X-SCAPE/JETSCAPE
 
-Running the new X-SCAPE module(s) (see below) is currently not supported vi the XML configuration (will be included in X-SCAPE 1.x). The small system physics (via 3d Glauber and iMatter ISR shower) provides its own executable:
+Running the new X-SCAPE module(s) (see below) is currently not supported via the XML configuration (will be included in X-SCAPE 2.x). The small system physics (via 3d Glauber and iMatter ISR shower) provides its own executable:
 
 ```bash
 ./PythiaIsrTest
+```
+Similarly the SMASH initial condition module can be run via
+
+```bash
+./SMASHInitialCondition
 ```
 
 More test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory.
@@ -80,8 +85,8 @@ which reads in the generated showers does some DFS search and shows the output. 
 ## JETSCAPE Tunes
 
 There are several JETSCAPE tunes from publications available.
-The XML files to reproduce the results are available in the `config/publications_config` directory.
-Please see [JETSCAPE Tunes](config/publications_config/README.md) for more information.
+The XML files to reproduce the results are available in the [Default-tunes](https://github.com/JETSCAPE/Default-tunes) repository.
+Please see [JETSCAPE Tunes](https://github.com/JETSCAPE/Default-tunes/blob/main/README.md) for more information.
 
 Several example hydro profiles can be downloaded using `examples/get_hydroSample*`.
 
@@ -141,6 +146,12 @@ After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest`
 
 X-SCAPE includes an electron-proton gun capable of recreating both Deep-Inelastic Scattering (DIS) and photoproduction events. It should be run in photoproduction mode for when the virtuality of the exchanged photon (normally called Q^2) is under 1 GeV^2, and in DIS mode when it is larger. The photoproduction mode works well for all HERA energies and DIS can be run down to HERMES energies. It should not be run under this.
 
+### SMASH Initial Condition
+
+The SMASH Initial Condition module provides a hadronic initial state for heavy-ion collisions at low and intermediate energies. It can be used to provide the initial state for hydrodynamic evolution with MUSIC. The module is based on the SMASH hadronic transport approach, which is also used as a hadronic afterburner in JETSCAPE. For more details on how to install the SMASH Initial Condition module, see the [SMASH section](#smash-hadronic-afterburner) below.
+For example XML files have a look at the [JETSCAPE tunes](#jetscape-tunes) section above.
+For running with the SMASH initial condition, please use the example `./SMASHInitialCondition` in the build directory using example XML files provided in the aforementioned directory. The default XML file is `config/jetscape_user_SMASHInitialCondition.xml`.
+
 ## JETSCAPE modules
 
 Since X-SCAPE is fully backwards compatible, all JETSCAPE modules can be used in X-SCAPE utilizing the JETSCAPE like per-event execution. Additional functions have to be implemented to extend towards per-time-step execution (normally achieved by refactoring the per-event code) using the new clock feature, allowing full concurrent running of all physics modules. More details will be provided in [CONTRIBUTING](CONTRIBUTING.md).
@@ -156,8 +167,8 @@ MUSIC can be integrated into the JETSCAPE framework. To download the latest vers
 ```
 
 This shell script will clone the latest version of MUSIC to external_packages folder.
-It also setup the enviroment variables for MUSIC to run. Specifically, MUSIC
-needs the folder path for the EOS tables. Please make sure the enviroment
+It also setup the environment variables for MUSIC to run. Specifically, MUSIC
+needs the folder path for the EOS tables. Please make sure the environment
 variable HYDROPROGRAMPATH to be set to the path for MUSIC code package.
 
 When compiling MUSIC with JETSCAPE, please turn on the MUSIC support option
@@ -178,7 +189,7 @@ To run JETSCAPE with MUSIC, one needs to use MPI commands,
 ### iSS support
 
 iSS is a Monte Carlo sampler code after the hydrodynamics and can be integrated
-into the JETSCAPE framework. To download the lastest
+into the JETSCAPE framework. To download the latest
 version of iSS, one can run the shell script under the external_packages folder,
 
 ```bash
@@ -220,20 +231,23 @@ you will need to install AMD APP SDK.
 
 SMASH [https://smash-transport.github.io] is a hadronic transport approach
 developed at Frankfurt University and GSI by the group of
-Prof. H. Elfner (nee Petersen).  In JetScape SMASH can
-serve as an afterburner, useful to compute soft observables.
+Prof. H. Elfner (nee Petersen). In JetScape SMASH can
+serve as an afterburner (and in X-SCAPE as initial condition), useful to 
+compute soft observables.
 
 ### Installing SMASH
 
 SMASH is published on github at https://github.com/smash-transport/smash.
 See SMASH Readme for libraries required by SMASH and how to install them.
+When using the docker container, SMASH should be installed inside, since it 
+relies on external libraries available in the container. 
 
 ```bash
   export EIGEN3_ROOT=<eigen install directory>/include/eigen3/
   export GSL_ROOT_DIR=$(gsl-config --prefix)
   export BOOST_ROOT=<boost install directory>
-  export PYTHIA8DIR=${PYTHIAINSTALLDIR}/pythia8235
-  export PYTHIA8_ROOT_DIR=${PYTHIAINSTALLDIR}/pythia8235
+  export PYTHIA8DIR=${PYTHIAINSTALLDIR}/pythia8310
+  export PYTHIA8_ROOT_DIR=${PYTHIAINSTALLDIR}/pythia8310
 
   export JETSCAPE_DIR=${HOME}/JETSCAPE-COMP
   export SMASH_DIR=${JETSCAPE_DIR}/external_packages/smash/smash_code
@@ -241,6 +255,9 @@ See SMASH Readme for libraries required by SMASH and how to install them.
   cd ${JETSCAPE_DIR}/external_packages
   ./get_smash.sh
 ```
+
+To set the `SMASH_DIR` variable directly when using the docker container, one 
+can run `source get_smash.sh`.
 
 ### Compiling JetScape with SMASH
 
