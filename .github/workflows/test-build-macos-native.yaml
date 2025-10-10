@@ -97,10 +97,10 @@ jobs:
         make
         make install
 
-    - name: Download Pythia 8309
+    - name: Download Pythia 8310
       run: |
         cd ${GITHUB_WORKSPACE}
-        curl -SLOk http://pythia.org/download/pythia83/pythia8309.tgz
+        curl -SLOk http://pythia.org/download/pythia83/pythia8310.tgz
         ls -l
 
     - name: Build and Install Pythia 8310
