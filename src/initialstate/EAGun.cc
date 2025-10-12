@@ -64,7 +64,7 @@ void EAGun::InitTask() {
 
   // initial kinematics
   eElectron = GetXMLElementDouble({"Hard", "EAGun", "electron_energy"});
-  EAroton = GetXMLElementDouble({"Hard", "EAGun", "proton_energy"});
+  eProton = GetXMLElementDouble({"Hard", "EAGun", "proton_energy"});
   use_positron = GetXMLElementInt({"Hard", "EAGun", "use_positron"});
   photoproduction = GetXMLElementInt({"Hard", "EAGun", "photoproduction"});
   breitVir = GetXMLElementInt({"Hard", "EAGun", "breit_vir"});
@@ -106,14 +106,16 @@ void EAGun::InitTask() {
     readString("Photon:ProcessType = 0");
     readString("SoftQCD:nonDiffractive = on");
   }
-  else{
+  else
+  {
     // Set up DIS process within some phase space.
     // Neutral current (with gamma/Z interference).
-    readString("WeakBosonExchange:ff2ff(t:gmZ) = on");
+      readString("WeakBosonExchange:ff2ff(t:gmZ) = on");
     // Uncomment to allow charged current.
     //readString("WeakBosonExchange:ff2ff(t:W) = on");
     // Phase-space cut: minimal Q2 of process.
-    settings.parm("PhaseSpace:Q2Min", Q2min);
+      settings.parm("PhaseSpace:Q2Min", Q2min);
+      settings.parm("PhaseSpace:Q2Max", Q2max);
 
     // Set dipole recoil on. Necessary for DIS + shower.
     readString("SpaceShower:dipoleRecoil = on");
@@ -124,8 +126,8 @@ void EAGun::InitTask() {
 
     // QED radiation off lepton not handled yet by the new procedure.
     readString("TimeShower:QEDshowerByL = off");
-    readString("PartonShowers:model = 1");
-    readString("TimeShower:pTmaxMatch = 1");
+    //readString("PartonShowers:model = 1");
+    //readString("TimeShower:pTmaxMatch = 1");
 
     //special PDF
     readString("PDF:lepton = off");
@@ -157,7 +159,7 @@ void EAGun::InitTask() {
   } else {
     JSWARN << "No <Random> element found in xml, seeding to 0";
   }
-  VERBOSE(7) << "Seeding pythia to " << seed;
+  JSINFO << BOLDYELLOW << "Seeding pythia to " << seed;
   numbi << seed;
   readString(numbi.str());
 
@@ -327,6 +329,8 @@ void EAGun::ExecuteTask() {
     xLoc[i] = 0.0;
   };
 
+
+    
   // // Roll for a starting point
   // // See: https://stackoverflow.com/questions/15039688/random-generator-from-vector-with-probability-distribution-in-c
   // std::random_device device;
@@ -342,6 +346,7 @@ void EAGun::ExecuteTask() {
     xLoc[2] = y;
   }
 
+   /*
   // Loop through particles
 
   // Only top two
@@ -440,7 +445,13 @@ void EAGun::ExecuteTask() {
 
         //tQ2 = test_vir;
         //catching virtualitiies that are too high
-        if(sqrt(tQ2) > particle.pAbs() /*or sqrt(tQ2) > partp.pAbs()*/) tQ2 = min_vir;
+        if(sqrt(tQ2) > particle.pAbs()
+    
+    or sqrt(tQ2) > partp.pAbs()
+    
+    */
+    /*
+     ) tQ2 = min_vir;
       }
 
       //applying virtuality change to the parton
@@ -448,7 +459,8 @@ void EAGun::ExecuteTask() {
       //JSINFO << BOLDYELLOW << "initial momentum: " << particle.px() << " " << particle.py() << " " << particle.pz();
       //JSINFO << BOLDYELLOW << "breit momentum: " << partp.px() << " " << partp.py() << " " << partp.pz();
       //JSINFO << BOLDYELLOW << "Virtuality: " << sqrt(tQ2) << " ";
-
+*/
+/*
       double scale = sqrt(particle.e()*particle.e() - tQ2 - particle.m2())/particle.pAbs();
       particle.px(particle.px()*scale);
       particle.py(particle.py()*scale);
@@ -464,30 +476,39 @@ void EAGun::ExecuteTask() {
 
     VERBOSE(7) << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
 
-    auto ptn = make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.eta(),particle.phi(), particle.e(), xLoc);
-    ptn->set_color(particle.col());
-    ptn->set_anti_color(particle.acol());
-    ptn->set_max_color(1000 * (np + 1));
+*/
 
-    //adding mean formtime for partons that need it set
-    if(breitVir and particle.status() == 62 and !photoproduction){
-      double mean_form_time = (2.*ptn->e()) / (ptn->e()*ptn->e()
+    int hCounter = 0;
+    for (int np = 0; np < p62.size(); ++np)
+    {
+        Pythia8::Particle &particle = p62.at(np);
+        auto ptn = make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.eta(),particle.phi(), particle.e(), xLoc);
+        ptn->set_color(particle.col());
+        ptn->set_anti_color(particle.acol());
+        ptn->set_max_color(1000 * (np + 1));
+
+        //adding mean formtime for partons that need it set
+        /*if(breitVir and particle.status() == 62 and !photoproduction)
+        {
+            double mean_form_time = (2.*ptn->e()) / (ptn->e()*ptn->e()
                             - ptn->px()*ptn->px() - ptn->py()*ptn->py()
                             - ptn->pz()*ptn->pz() - ptn->restmass()*ptn->restmass()
                             + rounding_error) / fmToGeVinv;
-      ptn->set_form_time(mean_form_time);
-      ptn->set_mean_form_time();
+            ptn->set_form_time(mean_form_time);
+            ptn->set_mean_form_time();
 
-      double velocity[4];
-      velocity[0] = 1.0;
-      for (int j = 1; j <= 3; j++) {
-        velocity[j] = ptn->p(j) / ptn->e();
-      }
-      ptn->set_jet_v(velocity);
+            double velocity[4];
+            velocity[0] = 1.0;
+            for (int j = 1; j <= 3; j++)
+            {
+                velocity[j] = ptn->p(j) / ptn->e();
+            }
+            ptn->set_jet_v(velocity);
+        }
+         */
+
+        AddParton(ptn);
     }
-
-    AddParton(ptn);
-  }
 
   VERBOSE(8) << GetNHardPartons();
 
