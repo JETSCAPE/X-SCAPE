@@ -4,12 +4,12 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-1.2-RC
+      - XSCAPE-2.0.0-RC
 
   push:
     branches:
       - main
-      - XSCAPE-1.2-RC
+      - XSCAPE-2.0.0-RC
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -35,7 +35,7 @@ jobs:
         brew install --formula hdf5
         brew install --formula open-mpi
         brew install --formula gsl
-        brew install --formula boost
+        brew install --formula boost@1.85
         brew install --formula zlib
         brew install --formula gcc
         . /opt/homebrew/bin/thisroot.sh
@@ -97,25 +97,25 @@ jobs:
         make
         make install
 
-    - name: Download Pythia 8309
+    - name: Download Pythia 8310
       run: |
         cd ${GITHUB_WORKSPACE}
-        curl -SLOk http://pythia.org/download/pythia83/pythia8309.tgz
+        curl -SLOk http://pythia.org/download/pythia83/pythia8310.tgz
         ls -l
 
-    - name: Build and Install Pythia 8309
+    - name: Build and Install Pythia 8310
       run: |
-        tar -xzf pythia8309.tgz
+        tar -xzf pythia8310.tgz
         ls -l
-        cd pythia8309
-        ./configure --enable-shared --prefix=${GITHUB_WORKSPACE}/pythia8309 --with-hepmc3=${GITHUB_WORKSPACE}/hepmc3-install
+        cd pythia8310
+        ./configure --enable-shared --prefix=${GITHUB_WORKSPACE}/pythia8310 --with-hepmc3=${GITHUB_WORKSPACE}/hepmc3-install
         make
         make install
 
     - name: set more variables
       run: |
         echo "JETSCAPE_DIR=${GITHUB_WORKSPACE}/${REPO_NAME}" >> $GITHUB_ENV
-        echo "PYTHIA8DIR=${GITHUB_WORKSPACE}/pythia8309" >> $GITHUB_ENV
+        echo "PYTHIA8DIR=${GITHUB_WORKSPACE}/pythia8310" >> $GITHUB_ENV
 
     - name: Checkout JETSCAPE Repository
       uses: actions/checkout@v4
@@ -155,10 +155,18 @@ jobs:
         mkdir build
         cd build
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
+        BOOST_ROOT="$(brew --prefix boost@1.85)"
         echo "This is SMASH_DIR: "
         echo ${SMASH_DIR}
         ls ${SMASH_DIR}
-        cmake .. -DUSE_3DGlauber=ON -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON
+        cmake .. \
+          -DUSE_3DGlauber=ON \
+          -DUSE_MUSIC=ON \
+          -DUSE_ISS=ON \
+          -DUSE_FREESTREAM=ON \
+          -DUSE_SMASH=ON \
+          -DCMAKE_PREFIX_PATH="$BOOST_ROOT" \
+          -DBoost_NO_BOOST_CMAKE=ON
         make -j2
 
     - name: Test Run

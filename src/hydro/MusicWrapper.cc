@@ -334,9 +334,10 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   music_hydro_ptr->check_parameters();
 }
 
-void MpiMusic::InitializeHydroEnergyProfile() {
+int MpiMusic::InitializeHydroEnergyProfile() {
   VERBOSE(8);
   JSINFO << "Initialize density profiles in MUSIC ...";
+  int status = 0;
   std::vector<double> entropy_density = ini->GetEntropyDensityDistribution();
   double dx = ini->GetXStep();
   double dy = ini->GetYStep();
@@ -356,8 +357,13 @@ void MpiMusic::InitializeHydroEnergyProfile() {
     hydro_source_terms_ptr->set_hydro_dtau(
       music_hydro_ptr->get_hydro_dtau_grid());
   } else if (initialProfile_ == 13 || initialProfile_ == 131) {
-    music_hydro_ptr->generate_hydro_source_terms(ini->GetQCDStringList());
-    music_hydro_ptr->initialize_hydro_xscape(nx,ny,nz,dx,dy,dz);
+    auto QCDStringList = ini->GetQCDStringList();
+    if (QCDStringList.size() == 0) {
+        status = -1;
+    } else {
+        music_hydro_ptr->generate_hydro_source_terms(ini->GetQCDStringList());
+        music_hydro_ptr->initialize_hydro_xscape(nx,ny,nz,dx,dy,dz);
+    }
   } else {
     music_hydro_ptr->generate_hydro_source_terms();
     double tau0 = pre_eq_ptr->GetPreequilibriumEndTime();
@@ -384,7 +390,6 @@ void MpiMusic::InitializeHydroEnergyProfile() {
   }
 
   JSINFO << "Initial density profile dx = " << dx << " fm";
-  hydro_status = INITIALIZED;
   JSINFO << "Number of source terms: "
          << hydro_source_terms_ptr->get_number_of_sources();
   JSINFO << "Total E sources = "
@@ -397,12 +402,19 @@ void MpiMusic::InitializeHydroEnergyProfile() {
          << ", total net strangeness = "
          << hydro_source_terms_ptr->get_net_strangeness_of_sources()
          << ".";
+  if (status == 0)
+    hydro_status = INITIALIZED;
+  return(status);
 }
 
 void MpiMusic::EvolveHydroUpto(const double tauEnd) {
   if (hydro_status == NOT_START) {
-    InitializeHydroEnergyProfile();
-    music_hydro_ptr->prepare_run_hydro_one_time_step();
+    int ini_status = InitializeHydroEnergyProfile();
+    if (ini_status != 0) {
+      hydro_status = FINISHED;
+      return;
+    }
+    music_hydro_ptr-> prepare_run_hydro_one_time_step();
     hydro_source_terms_ptr->set_source_tau_max(GetSourceTermTauMax());
   }
 
@@ -435,7 +447,17 @@ void MpiMusic::ExecTime() {
 
 void MpiMusic::EvolveHydro() {
   if (hydro_status == NOT_START) {
-    InitializeHydroEnergyProfile();
+    int ini_status = InitializeHydroEnergyProfile();
+    if (ini_status != 0) {
+        hydro_status = FINISHED;
+        if (flag_surface_in_memory == 1) {
+            clearSurfaceCellVector();
+        }
+        if (flag_output_evo_to_memory == 1) {
+            clear_up_evolution_data();
+        }
+        return;
+    }
   }
 
   has_source_terms = false;

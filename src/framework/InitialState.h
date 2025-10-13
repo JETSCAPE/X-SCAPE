@@ -171,8 +171,9 @@ public:
   virtual std::vector< std::vector<double> > GetQCDStringList() {
     return(QCDStringList_);
 }
-
-  virtual void GenerateStrings();
+  /** Used only for 3DMcGlauber. Overwritten in McGlauberWrapper.cc
+   */
+  virtual void GenerateStrings(bool wound_nucleons, int event_id);
   /**  @return The maximum value of coordinate "x" in the nuclear profile of a nucleus.
    */
   inline double GetXMax() { return grid_max_x_; }

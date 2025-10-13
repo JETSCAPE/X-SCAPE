@@ -95,7 +95,7 @@ void SmashWrapper::InitTask() {
     }
   }
 
-  JSINFO << "Seting up SMASH Experiment object";
+  JSINFO << "Setting up SMASH Experiment object";
   smash_experiment_ =
       make_shared<smash::Experiment<AfterburnerModus>>(config, output_path);
   config.clear();
