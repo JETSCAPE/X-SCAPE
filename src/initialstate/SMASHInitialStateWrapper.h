@@ -20,6 +20,13 @@
 #ifndef SMASHINITIALSTATEWRAPPER_H
 #define SMASHINITIALSTATEWRAPPER_H
 
+// Forward declare to_string for PdgCode so SMASH's YAML conversion sees it
+#include <string>
+namespace smash {
+class PdgCode;
+std::string to_string(const PdgCode &code);
+}
+
 #include "smash/input_keys.h"
 #include "smash/configuration.h"
 #include "smash/experiment.h"

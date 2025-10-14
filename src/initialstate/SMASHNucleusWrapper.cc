@@ -23,28 +23,15 @@
 #include "smash/library.h"
 
 #include <iterator>
+#include <string>
 
-namespace YAML {
-template <>
-struct convert<smash::PdgCode> {
-  static Node encode(const smash::PdgCode &pdg) {
-    // encode as string, e.g., "pdg:221"
-    // assuming you can convert it to string via operator<< or some method
-    std::stringstream ss;
-    ss << pdg;  // if operator<< is implemented
-    return Node(ss.str());
-  }
-
-  static bool decode(const Node &node, smash::PdgCode &pdg) {
-    if (!node.IsScalar()) return false;
-
-    // parse integer from string
-    int code = std::stoi(node.as<std::string>());
-    pdg = smash::PdgCode(code);
-    return true;
-  }
-};
-}  // namespace YAML
+// Provide to_string overload for smash::PdgCode so SMASH's YAML conversion can encode keys
+namespace smash {
+inline std::string to_string(const PdgCode &code) {
+  // Use the decimal representation as string, e.g., "2212"
+  return std::to_string(code.get_decimal());
+}
+}  // namespace smash
 
 namespace Jetscape {
 
@@ -107,8 +94,9 @@ void SMASHNucleusWrapper::InitTask() {
 
   auto to_pdg_map = [](const std::map<int,int>& input) {
     std::map<smash::PdgCode,int> output;
-    for (const auto& [pdg_int, count] : input) {
-      output.emplace(smash::PdgCode(pdg_int), count);
+    for (const auto& [pdg_dec, count] : input) {
+      // SMASH PdgCode expects hex or specific format; convert from decimal safely
+      output.emplace(smash::PdgCode::from_decimal(pdg_dec), count);
     }
     return output;
   };
@@ -127,16 +115,16 @@ void SMASHNucleusWrapper::InitTask() {
                                                        tabulations_path);
   }
 
-  // Try to get the Collider configuration sub-configuration
-  smash::Configuration modus_config1 =
-      config1.extract_complete_sub_configuration(
-        smash::InputSections::m_collider);
-  smash::Configuration modus_config2 =
-      config2.extract_complete_sub_configuration(
-        smash::InputSections::m_collider);
+  // Pass only the 'Modi' section to ColliderModus (like SMASH does), so no
+  // unused top-level keys (e.g., General/Output) remain in the passed config.
+  smash::Configuration modus_cfg1 =
+    config1.extract_complete_sub_configuration(smash::InputSections::modi);
+  smash::Configuration modus_cfg2 =
+    config2.extract_complete_sub_configuration(smash::InputSections::modi);
 
-  smash_nucleus_ = make_shared<NucleusModus>(std::move(modus_config1),
-                                             std::move(modus_config2));
+  smash_nucleus_ = make_shared<NucleusModus>(std::move(modus_cfg1),
+                                             std::move(modus_cfg2));
+  // Clear the originals to avoid 'unused keys' on destruction
   config1.clear();
   config2.clear();
   JSINFO << "Finish initializing SMASH nucleus creation";

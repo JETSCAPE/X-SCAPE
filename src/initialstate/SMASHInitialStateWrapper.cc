@@ -31,27 +31,13 @@
 
 #include <boost/lexical_cast.hpp>
 
-namespace YAML {
-template <>
-struct convert<smash::PdgCode> {
-  static Node encode(const smash::PdgCode &pdg) {
-    // encode as string, e.g., "pdg:221"
-    // assuming you can convert it to string via operator<< or some method
-    std::stringstream ss;
-    ss << pdg;  // if operator<< is implemented
-    return Node(ss.str());
-  }
-
-  static bool decode(const Node &node, smash::PdgCode &pdg) {
-    if (!node.IsScalar()) return false;
-
-    // parse integer from string
-    int code = std::stoi(node.as<std::string>());
-    pdg = smash::PdgCode(code);
-    return true;
-  }
-};
-}  // namespace YAML
+// Provide to_string overload for smash::PdgCode so SMASH's YAML conversion can encode keys
+namespace smash {
+inline std::string to_string(const PdgCode &code) {
+  // Use the decimal representation as string, e.g., "2212"
+  return std::to_string(code.get_decimal());
+}
+}  // namespace smash
 
 using namespace Jetscape;
 
@@ -110,7 +96,7 @@ void SmashInitialConditionWrapper::InitTask() {
   auto to_pdg_map = [](const std::map<int,int>& input) {
     std::map<smash::PdgCode,int> output;
     for (const auto& [pdg_int, count] : input) {
-      output.emplace(smash::PdgCode(pdg_int), count);
+      output.emplace(smash::PdgCode::from_decimal(pdg_int), count);
     }
     return output;
   };
