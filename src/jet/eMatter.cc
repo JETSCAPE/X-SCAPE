@@ -676,6 +676,12 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       VERBOSE(8) << " splitTime = " << splitTime;
       VERBOSE(8) << " qhat before splitime loop = " << qhat;
 
+      if (ini) {
+        double t,x, y,z;
+        ini->SampleABinaryCollisionPoint(t,x, y,z);
+        std::cout << "Hey I'm in matter and I just sampled " << t << " " << x << " " << y << " " << z << endl;
+      }
+
       if (splitTime <
           time) // it is time to split and calculate the effect of scattering
       {
