@@ -28,14 +28,14 @@
   
   <!--Eloss Modules -->
   <Eloss>
-    <Matter> 
+    <eMatter> 
       <Q0> 1.0 </Q0>
       <in_vac> 1 </in_vac>
       <vir_factor> 0.25 </vir_factor>
       <recoil_on> 0 </recoil_on>
       <broadening_on> 0 </broadening_on>
       <brick_med> 0 </brick_med>
-    </Matter>
+    </eMatter>
   </Eloss>
   
   <!-- Jet Hadronization Module -->

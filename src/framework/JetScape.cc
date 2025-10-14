@@ -596,6 +596,16 @@ void JetScape::DetermineTaskListFromXML() {
                       "Eloss list.";
           }
         }
+        //   - eMatter
+        else if (childElementName == "eMatter") {
+          auto eMatter = JetScapeModuleFactory::createInstance(childElementName);
+          if (eMatter) {
+            jloss->Add(
+                eMatter); // go to 3rd party and ./get_lbtTab before adding this module
+            JSINFO << "JetScape::DetermineTaskList() -- Eloss: Added eMatter to "
+                      "Eloss list.";
+          }
+        }
         //   - LBT
         else if (childElementName == "Lbt") {
           auto lbt = JetScapeModuleFactory::createInstance(childElementName);
