@@ -19,6 +19,7 @@
 #include "SmashWrapper.h"
 #include "Transport.h"
 
+#include "smash/input_keys.h"
 #include "smash/particles.h"
 #include "smash/library.h"
 
@@ -56,14 +57,14 @@ void SmashWrapper::InitTask() {
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
-  config.set_value({"General","Randomseed"}, random_seed);
+  config.set_value(smash::InputKeys::gen_randomseed, random_seed);
   // Read in the rest of configuration
   if (IsTimeStepped()) {
     end_time_ = GetMainClock()->GetEndTime();
   } else {
     end_time_ = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
   }
-  config.set_value({"General","End_Time"}, end_time_);
+  config.set_value(smash::InputKeys::gen_endTime, end_time_);
   JSINFO << "End time until which SMASH propagates is " << end_time_ << " fm/c";
   only_final_decays_ =
       GetXMLElementInt({"Afterburner", "SMASH", "only_decays"});
@@ -79,12 +80,12 @@ void SmashWrapper::InitTask() {
   }
 
   const double delta_t_sm = GetXMLElementDouble({"Afterburner", "SMASH", "Delta_Time"});
-  config.set_value({"General", "Delta_Time"}, delta_t_sm);
+  config.set_value(smash::InputKeys::gen_deltaTime, delta_t_sm);
 
   // Enforce timestep compatibility (temporarily)
   if (IsTimeStepped()) {
     const double delta_t_js = GetMainClock()->GetDeltaT();
-    const double delta_t_sm = config.read({"General", "Delta_Time"});
+    const double delta_t_sm = config.read(smash::InputKeys::gen_deltaTime);
     const double ts_rem = std::remainder(delta_t_js, delta_t_sm);
     const double ts_frac = delta_t_js / delta_t_sm;
     if (!(ts_rem < 1E-6 && ts_frac > 1.0)) {
