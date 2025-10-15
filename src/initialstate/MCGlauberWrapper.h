@@ -72,6 +72,12 @@ public:
                                    double z);
   void OutputHardPartonMomentum(double E, double px, double py, double pz,
                                 int direction, double P_A);
+  std::vector<std::array<real, 4>> GetProjectileNucleonPositions() {
+    mc_gen_->MCGlb_projectile_nucleon_xyz();
+  }
+  std::vector<std::array<real, 4>> GetTargetNucleonPositions() {
+    mc_gen_->MCGlb_target_nucleon_xyz();
+  }
   void ClearHardPartonMomentum();
   void GetHardPartonPosAndMomentumProj();
   void GetHardPartonPosAndMomentumTarg();
@@ -84,7 +90,7 @@ public:
   void GenerateStrings(bool wound_nucleons, int event_id);
   std::vector< std::vector<double> > GetQCDStringList() {
     return(QCDStringList_);
-}
+  }
 
 std::shared_ptr<InitialState> ini;
 
