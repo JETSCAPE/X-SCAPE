@@ -169,7 +169,15 @@ jobs:
           -DBoost_NO_BOOST_CMAKE=ON
         make -j2
 
+    - name: Checkout Default-tunes
+      uses: actions/checkout@v4
+      with:
+        repository: JETSCAPE/Default-tunes
+        ref: main
+        path: Default-tunes
+
     - name: Test Run
+
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/build
-        ./runJetscape ../config/publications_config/arXiv_1910.05481/jetscape_user_PP_1910.05481.xml
+        ./runJetscape ../../Default-tunes/publications_config/arXiv_1910.05481/jetscape_user_PP_1910.05481.xml
