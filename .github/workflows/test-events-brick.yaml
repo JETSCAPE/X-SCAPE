@@ -4,12 +4,12 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-2.0.0-RC
+      - XSCAPE-2.0.1-RC
 
   push:
     branches:
       - main
-      - XSCAPE-2.0.0-RC
+      - XSCAPE-2.0.1-RC
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v1.12
+      image: jetscape/base:v1.13
       options: --user root
 
     steps:
@@ -47,7 +47,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: JETSCAPE/TEST-EXAMPLES
-        ref: main
+        ref: xscape-2.0.1
         path: TEST-EXAMPLES
 
     - name: Run Brick Matter Lbt tests
