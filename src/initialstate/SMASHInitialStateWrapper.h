@@ -20,6 +20,14 @@
 #ifndef SMASHINITIALSTATEWRAPPER_H
 #define SMASHINITIALSTATEWRAPPER_H
 
+// Forward declare to_string for PdgCode so SMASH's YAML conversion sees it
+#include <string>
+namespace smash {
+class PdgCode;
+std::string to_string(const PdgCode &code);
+}
+
+#include "smash/input_keys.h"
 #include "smash/configuration.h"
 #include "smash/experiment.h"
 #include "smash/collidermodus.h"
@@ -62,6 +70,18 @@ public:
   void InitPerEvent() override;
   void CalculateTimeTask() override;
   void FinishPerEvent() override;
+
+  /**
+   * Parse the Fermi motion string from the XML configuration and convert it 
+   * to the corresponding smash::FermiMotion enum value.
+   */
+  smash::FermiMotion ParseFermiMotion(const std::string &s);
+
+  /**
+   * Parse the Impact Parameter Sampling string from the XML configuration and 
+   * convert it to the corresponding smash::Sampling enum value.
+   */
+  smash::Sampling ParseImpactParameterSampling(const std::string &s);
 
   std::vector<Hadron> GetCurrentHadronList() const override;
 

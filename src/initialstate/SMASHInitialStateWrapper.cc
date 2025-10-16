@@ -31,6 +31,14 @@
 
 #include <boost/lexical_cast.hpp>
 
+// Provide to_string overload for smash::PdgCode so SMASH's YAML conversion can encode keys
+namespace smash {
+inline std::string to_string(const PdgCode &code) {
+  // Use the decimal representation as string, e.g., "2212"
+  return std::to_string(code.get_decimal());
+}
+}  // namespace smash
+
 using namespace Jetscape;
 
 // Register the module with the base class
@@ -65,14 +73,14 @@ void SmashInitialConditionWrapper::InitTask() {
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
-  config.set_value({"General","Randomseed"}, random_seed);
+  config.set_value(smash::InputKeys::gen_randomseed, random_seed);
   // Read in the rest of configuration
   if (IsTimeStepped()) {
     end_time_ = GetMainClock()->GetEndTime();
   } else {
     end_time_ = GetXMLElementDouble({"IS", "SMASH", "End_Time"});
   }
-  config.set_value({"General","End_Time"}, end_time_);
+  config.set_value(smash::InputKeys::gen_endTime, end_time_);
   JSINFO << "End time until which SMASH initial condition propagates is " 
         << end_time_ << " fm/c";
 
@@ -85,30 +93,44 @@ void SmashInitialConditionWrapper::InitTask() {
   int smash_target_neutrons =
       GetXMLElementInt({"IS", "SMASH", "TargetNeutrons"});
 
-  std::map<int, int> smash_projectile{{2212, smash_projectile_protons}, 
-                                      {2112, smash_projectile_neutrons}};
-  config.set_value({"Modi","Collider","Projectile","Particles"},
-                    smash_projectile);
+  auto to_pdg_map = [](const std::map<int,int>& input) {
+    std::map<smash::PdgCode,int> output;
+    for (const auto& [pdg_int, count] : input) {
+      output.emplace(smash::PdgCode::from_decimal(pdg_int), count);
+    }
+    return output;
+  };
 
-  std::map<int, int> smash_target{{2212, smash_target_protons}, 
-                                  {2112, smash_target_neutrons}};
-  config.set_value({"Modi","Collider","Target","Particles"},smash_target);
+  std::map<int, int> smash_projectile{
+    {2212, smash_projectile_protons}, 
+    {2112, smash_projectile_neutrons}
+  };
+  config.set_value(smash::InputKeys::modi_collider_projectile_particles,
+                    to_pdg_map(smash_projectile));
+
+  std::map<int, int> smash_target{
+    {2212, smash_target_protons}, 
+    {2112, smash_target_neutrons}
+  };
+  config.set_value(smash::InputKeys::modi_collider_target_particles,
+                    to_pdg_map(smash_target));
 
   double smash_sqrtsnn = GetXMLElementDouble({"IS", "SMASH", "Sqrtsnn"});
-  config.set_value({"Modi","Collider","Sqrtsnn"}, smash_sqrtsnn);
+  config.set_value(smash::InputKeys::modi_collider_sqrtSNN, smash_sqrtsnn);
 
   std::string smash_FermiMotion = 
         GetXMLElementText({"IS", "SMASH", "FermiMotion"});
-  config.set_value({"Modi","Collider","Fermi_Motion"},smash_FermiMotion);
+  smash::FermiMotion fm = ParseFermiMotion(smash_FermiMotion);
+  config.set_value(smash::InputKeys::modi_collider_fermiMotion, fm);
 
   bool smash_CollisionsWithinNucleus = 
         GetXMLElementInt({"IS", "SMASH", "CollisionsWithinNucleus"});
-  config.set_value({"Modi","Collider","Collisions_Within_Nucleus"},
+  config.set_value(smash::InputKeys::modi_collider_collisionWithinNucleus,
                     smash_CollisionsWithinNucleus);
 
   bool smash_impact_react_plane = 
           GetXMLElementInt({"IS", "SMASH", "Impact", "RandomReactionPlane"});
-  config.set_value({"Modi","Collider","Impact","Random_Reaction_Plane"},
+  config.set_value(smash::InputKeys::modi_collider_impact_randomReactionPlane,
                     smash_impact_react_plane);
 
   int smash_impact_param_mode = 
@@ -123,12 +145,15 @@ void SmashInitialConditionWrapper::InitTask() {
                       GetXMLElementDouble({"IS", "SMASH", "Impact", "ImpactMax"});
 
   if (smash_impact_param_mode == 0) {
-    config.set_value({"Modi","Collider","Impact","Value"}, smash_impact_val);
+    config.set_value(smash::InputKeys::modi_collider_impact_value, 
+      smash_impact_val);
   } else if (smash_impact_param_mode == 1) {
-    config.set_value({"Modi","Collider","Impact","Sample"},smash_impact_sample);
+    smash::Sampling sample = ParseImpactParameterSampling(smash_impact_sample);
+    config.set_value(smash::InputKeys::modi_collider_impact_sample, sample);
     const std::array<double, 2> smash_impact_range = {smash_impact_valMin,
                                                       smash_impact_valMax};
-    config.set_value({"Modi","Collider","Impact","Range"}, smash_impact_range);
+    config.set_value(smash::InputKeys::modi_collider_impact_range, 
+      smash_impact_range);
   } else {
     JSWARN << "This SMASH impact parameter mode does not exist in Jetscape";
     exit(1);
@@ -142,7 +167,7 @@ void SmashInitialConditionWrapper::InitTask() {
   }
 
   const double delta_t_sm = GetXMLElementDouble({"IS", "SMASH", "Delta_Time"});
-  config.set_value({"General", "Delta_Time"}, delta_t_sm);
+  config.set_value(smash::InputKeys::gen_deltaTime, delta_t_sm);
 
   // Enforce timestep compatibility (temporarily)
   if (IsTimeStepped()) {
@@ -159,6 +184,30 @@ void SmashInitialConditionWrapper::InitTask() {
       make_shared<smash::Experiment<smash::ColliderModus>>(config, output_path);
   config.clear();
   JSINFO << "Finish initializing SMASH initial condition";
+}
+
+smash::FermiMotion SmashInitialConditionWrapper::ParseFermiMotion(
+  const std::string &s) {
+    std::string lower = s;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+    if (lower == "off")    return smash::FermiMotion::Off;
+    if (lower == "on")     return smash::FermiMotion::On;
+    if (lower == "frozen") return smash::FermiMotion::Frozen;
+
+    throw std::runtime_error("Invalid FermiMotion string: " + s);
+}
+
+smash::Sampling SmashInitialConditionWrapper::ParseImpactParameterSampling(
+  const std::string &s) {
+    std::string lower = s;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+    if (lower == "uniform")   return smash::Sampling::Uniform;
+    if (lower == "quadratic") return smash::Sampling::Quadratic;
+    if (lower == "custom")    return smash::Sampling::Custom;
+
+    throw std::runtime_error("Invalid Sampling string: " + s);
 }
 
 void SmashInitialConditionWrapper::ExecuteTask() {

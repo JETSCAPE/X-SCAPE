@@ -20,6 +20,13 @@
 #ifndef SMASHNUCLEUSWRAPPER_H
 #define SMASHNUCLEUSWRAPPER_H
 
+// Forward declare to_string for PdgCode so SMASH's YAML conversion sees it
+#include <string>
+namespace smash {
+class PdgCode;
+std::string to_string(const PdgCode &code);
+}
+
 #include "smash/configuration.h"
 #include "smash/collidermodus.h"
 #include "smash/experiment.h"
@@ -66,12 +73,21 @@ private:
     * @param modus_config The configuration for the projectile nucleus.
     */
   void initialize_projectile(smash::Configuration &modus_config) {
-    smash::Configuration collider_cfg =
-        modus_config.extract_sub_configuration({"Collider"});
+    // Mirror SMASH collidermodus: extract full-labeled sections and then
+    // pass the Projectile sub-config to Nucleus.
+    smash::Configuration modus_cfg =
+        modus_config.extract_complete_sub_configuration(
+            smash::InputSections::m_collider);
     smash::Configuration proj_cfg =
-        collider_cfg.extract_sub_configuration({"Projectile"});
+        modus_cfg.extract_complete_sub_configuration(
+            smash::InputSections::m_c_projectile);
+
+    // Construct projectile nucleus
     projectile_ = std::make_unique<smash::Nucleus>(proj_cfg, 1);
-    collider_cfg.clear();
+
+    // Ensure no unused keys remain to avoid destructor exceptions
+    proj_cfg.clear();
+    modus_cfg.clear();
     modus_config.clear();
   }
 
