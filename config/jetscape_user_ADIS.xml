@@ -5,13 +5,30 @@
   <nEvents> 1 </nEvents>
   
   <Random>
-    <seed>1</seed>
+    <seed>0</seed>
   </Random>
   
   <outputFilename>test_out</outputFilename>
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
   <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
-  
+
+  <!-- Initial condition  Module  -->
+  <IS>
+    <MCGlauber>
+      <!--0: generates full event with binary collisions and strings-->
+      <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
+      <generateOnlyPositions>1</generateOnlyPositions>
+      <projectile>p</projectile> <!--Projectile name-->
+      <target>p</target> <!--Target name-->
+      <sqrts>5020</sqrts> <!--Center of mass energy in GeV-->
+      <ylossParam4At2> 1.666 </ylossParam4At2>
+      <ylossParam4At4> 2.10 </ylossParam4At4>
+      <ylossParam4At6> 2.20 </ylossParam4At6>
+      <ylossParam4At10> 2.30 </ylossParam4At10>
+      <ylossParam4var> 0.555 </ylossParam4var>
+    </MCGlauber>
+  </IS>
+
   <!-- Hard Process -->
   <Hard>
     <EAGun>

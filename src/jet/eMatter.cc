@@ -677,9 +677,25 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       VERBOSE(8) << " qhat before splitime loop = " << qhat;
 
       if (ini) {
-        double t,x, y,z;
-        ini->SampleABinaryCollisionPoint(t,x, y,z);
-        std::cout << "Hey I'm in matter and I just sampled " << t << " " << x << " " << y << " " << z << endl;
+        // double t,x, y,z;
+        // ini->SampleABinaryCollisionPoint(t,x, y,z);
+        
+        std::cout << "Procced matter" << endl;
+
+        std::ofstream fdensity;
+        fdensity.open("eMatter_densities.csv", std::ofstream::out | std::ios::trunc);
+        for (int t=-5; t<=5; t++) {
+          for (int x=-5; x<=5; x++) {
+            for (int y=-5; y<=5; y++) {
+              for (int z=-5; z<=5; z++) {
+                fdensity << t << "," << x << "," << y << "," << z << ";" << ini->Get_target_nucleon_density_lab(t,x,y,z) << endl;
+              }
+            }
+          }
+        }
+        fdensity.close();
+
+        // cout << "xmu = <0,0,0,0> in eMatter: " << ini->Get_target_nucleon_density_lab(0,0,0,0) << endl;
       }
 
       if (splitTime <

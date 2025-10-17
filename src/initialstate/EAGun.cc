@@ -340,10 +340,24 @@ void EAGun::ExecuteTask() {
     VERBOSE(1) << "No initial state module, setting the starting location to "
                   "0. Make sure to add e.g. trento before EAGun.";
   } else {
-    double t,x, y,z;
-    ini->SampleABinaryCollisionPoint(t,x, y,z);
-    xLoc[1] = x;
-    xLoc[2] = y;
+    // double t,x,y,z;
+    // ini->SampleABinaryCollisionPoint(t,x, y,z);
+    // xLoc[1] = x;
+    // xLoc[2] = y;
+
+    std::ofstream fdensity;
+    fdensity.open("EAgun_densities.csv", std::ofstream::out | std::ios::trunc);
+    for (int t=-5; t<=5; t++) {
+      for (int x=-5; x<=5; x++) {
+        for (int y=-5; y<=5; y++) {
+          for (int z=-5; z<=5; z++) {
+            fdensity << t << "," << x << "," << y << "," << z << ";" << ini->Get_target_nucleon_density_lab(t,x,y,z) << endl;
+          }
+        }
+      }
+    }
+    // cout << "xmu = <0,0,0,0> in EAgun: " << ini->Get_target_nucleon_density_lab(0,0,0,0) << endl;
+    fdensity.close();
   }
 
    /*
@@ -507,6 +521,7 @@ void EAGun::ExecuteTask() {
         }
          */
 
+        std::cout << "Particle " << particle.id() << " " << particle.e() << endl;
         AddParton(ptn);
     }
 
