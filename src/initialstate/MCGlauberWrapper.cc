@@ -270,6 +270,14 @@ void MCGlauberWrapper::ExecuteTask() {
     }
 }
 
+std::vector<std::array<real, 4>> MCGlauberWrapper::GetProjectileNucleonPositions() {
+    mc_gen_->MCGlb_projectile_nucleon_xyz();
+}
+
+std::vector<std::array<real, 4>> MCGlauberWrapper::GetTargetNucleonPositions() {
+    mc_gen_->MCGlb_target_nucleon_xyz();
+}
+
 void MCGlauberWrapper::SampleABinaryCollisionPoint(
         double &t, double &x, double &y, double &z) {
     const int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());

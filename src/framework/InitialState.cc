@@ -109,6 +109,21 @@ void InitialState::GetHardPartonPosAndMomentumProj() {}
 
 void InitialState::GetHardPartonPosAndMomentumTarg() {}
 
+std::vector<std::array<real, 4>> InitialState::GetProjectileNucleonPositions() {
+   std::vector<std::array<real, 4>> temp_nucleonxyz;
+   std::array<real, 4> temp = {0., 0., 0., 0.};
+   temp_nucleonxyz.push_back(temp);
+   return temp_nucleonxyz;
+}
+
+
+std::vector<std::array<real, 4>> InitialState::GetTargetNucleonPositions() {
+   std::vector<std::array<real, 4>> temp_nucleonxyz;
+   std::array<real, 4> temp = {0., 0., 0., 0.};
+   temp_nucleonxyz.push_back(temp);
+   return temp_nucleonxyz;
+}
+
 std::vector<double> InitialState::Get_projectile_nucleon_z_lab() {
     std::vector<double> Temp;
     for (int i = 0; i != 8; i++) {
