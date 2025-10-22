@@ -271,11 +271,11 @@ void MCGlauberWrapper::ExecuteTask() {
 }
 
 std::vector<std::array<real, 4>> MCGlauberWrapper::GetProjectileNucleonPositions() {
-    mc_gen_->MCGlb_projectile_nucleon_xyz();
+    return mc_gen_->MCGlb_projectile_nucleon_xyz();
 }
 
 std::vector<std::array<real, 4>> MCGlauberWrapper::GetTargetNucleonPositions() {
-    mc_gen_->MCGlb_target_nucleon_xyz();
+    return mc_gen_->MCGlb_target_nucleon_xyz();
 }
 
 void MCGlauberWrapper::SampleABinaryCollisionPoint(
