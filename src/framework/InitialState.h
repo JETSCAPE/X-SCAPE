@@ -169,8 +169,8 @@ public:
   virtual void GetHardPartonPosAndMomentumProj();
   virtual void GetHardPartonPosAndMomentumTarg();
 
-  virtual std::vector<std::array<real, 4>> GetProjectileNucleonPositions();
-  virtual std::vector<std::array<real, 4>> GetTargetNucleonPositions();
+  virtual std::vector<std::array<double, 4>> GetProjectileNucleonPositions();
+  virtual std::vector<std::array<double, 4>> GetTargetNucleonPositions();
   virtual std::vector< std::vector<double> > GetQCDStringList() {
     return(QCDStringList_);
 }

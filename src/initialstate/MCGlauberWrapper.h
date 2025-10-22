@@ -81,8 +81,8 @@ public:
   std::vector<double> Get_quarks_pos_targ_lab();
   std::vector<double> Get_remnant_proj();
   std::vector<double> Get_remnant_targ();
-  std::vector<std::array<real, 4>> GetProjectileNucleonPositions();
-  std::vector<std::array<real, 4>> GetTargetNucleonPositions();
+  std::vector<std::array<double, 4>> GetProjectileNucleonPositions();
+  std::vector<std::array<double, 4>> GetTargetNucleonPositions();
   void GenerateStrings(bool wound_nucleons, int event_id);
   std::vector< std::vector<double> > GetQCDStringList() {
     return(QCDStringList_);
