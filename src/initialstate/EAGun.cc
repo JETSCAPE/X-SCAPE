@@ -359,7 +359,11 @@ void EAGun::ExecuteTask() {
     // cout << "xmu = <0,0,0,0> in EAgun: " << ini->Get_target_nucleon_density_lab(0,0,0,0) << endl;
     fdensity.close();
     
-    //ini->GetTargetNucleonPositions(); //segfault?
+    auto TargetNucleonPosition = ini->GetTargetNucleonPositions(); //segfault?
+    for(int i=0; i<TargetNucleonPosition.size(); i++) {
+        std::cout << TargetNucleonPosition[i][0] << "  " << TargetNucleonPosition[i][3] <<std::endl;
+    }
+
   }
 
    /*
