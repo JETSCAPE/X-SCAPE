@@ -190,6 +190,8 @@ void EPGun::InitTask() {
 
   // Initialize random number distribution
   ZeroOneDistribution = uniform_real_distribution<double>{0.0, 1.0};
+
+  matterHelper.Init();
 }
 
 void EPGun::ExecuteTask() {
@@ -398,7 +400,7 @@ void EPGun::ExecuteTask() {
       }
 
       //JSINFO << Q2factor;
-      max_vir *= pow(Q2/(info.s()),Q2pow) * Q2factor/sqrt(x);
+      //max_vir *= pow(Q2/(info.s()),Q2pow) * Q2factor/sqrt(x);
       //JSINFO << max_vir;
 
       int iSplit = 0; // quark
@@ -413,7 +415,10 @@ void EPGun::ExecuteTask() {
       if (max_vir <= QS * QS){
         tQ2 = 0.0;
       }else{
-        double nu = (partp.e() + partp.pAbs())/sqrt(2.0);
+        //double nu = (partp.e() + partp.pAbs())/sqrt(2.0);
+        double ptemp[4] = {partp.pz(), 0, partp.pT(), partp.e()}; //specifically flipping pz because breit frame
+        auto tempptn = make_shared<Parton>(0, particle.id(), 0, ptemp, xLoc);
+        double nu = tempptn->nu();
 
         if (abs(particle.id()) == 4 || abs(particle.id()) == 5) {
           if (max_vir > min_vir) {
@@ -447,7 +452,9 @@ void EPGun::ExecuteTask() {
       //JSINFO << BOLDYELLOW << "Particle with ID: " << particle.id();
       //JSINFO << BOLDYELLOW << "initial momentum: " << particle.px() << " " << particle.py() << " " << particle.pz();
       //JSINFO << BOLDYELLOW << "breit momentum: " << partp.px() << " " << partp.py() << " " << partp.pz();
-      //JSINFO << BOLDYELLOW << "Virtuality: " << sqrt(tQ2) << " ";
+      //JSINFO << BOLDYELLOW << "Min Virtuality: " << sqrt(min_vir) << " ";
+      //JSINFO << BOLDYELLOW << "Max Virtuality: " << sqrt(max_vir) << " ";
+      //JSINFO << BOLDYELLOW << "Actual Virtuality: " << sqrt(tQ2) << " ";
 
       double scale = sqrt(particle.e()*particle.e() - tQ2 - particle.m2())/particle.pAbs();
       particle.px(particle.px()*scale);
@@ -464,7 +471,7 @@ void EPGun::ExecuteTask() {
 
     VERBOSE(7) << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
 
-    auto ptn = make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.eta(),particle.phi(), particle.e(), xLoc);
+    auto ptn = make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.eta(), particle.phi(), particle.e(), xLoc);
     ptn->set_color(particle.col());
     ptn->set_anti_color(particle.acol());
     ptn->set_max_color(1000 * (np + 1));
