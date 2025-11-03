@@ -442,7 +442,7 @@ void TrentoInitial::ExecuteTask() {
       -GetXMax() + tmp_event.mass_center_index().first * tmp_event.dxy();
   info_.ymid =
       -GetYMax() + tmp_event.mass_center_index().second * tmp_event.dxy();
-  JSINFO << "b\tnpart\tncoll\tET\t(x-com, y-com) (fm)";
+  JSINFO << "b\t\tnpart\tncoll\tET\t(x-com, y-com) (fm)";
   JSINFO << info_.impact_parameter << "\t" << info_.num_participant << "\t"
          << info_.num_binary_collisions << "\t" << info_.total_entropy << "\t"
          << "(" << info_.xmid << ", " << info_.ymid << ")";

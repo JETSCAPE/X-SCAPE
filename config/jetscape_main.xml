@@ -139,6 +139,7 @@
       <pTHatMin>100</pTHatMin>
       <pTHatMax>120</pTHatMax>
       <eCM>5020</eCM>
+      <min_bias>0</min_bias>
       <!-- The soft momentum cutoff in GeV removes partons from the pythia gun. The default matches the PP19 setup. -->
       <softMomentumCutoff>2.0</softMomentumCutoff>
       <!-- You can add any number of additional lines to initialize pythia here -->

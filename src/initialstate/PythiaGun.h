@@ -35,6 +35,7 @@ private:
   double softMomentumCutoff;
   bool FSR_on;
   bool softQCD;
+  bool minBias = false;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<PythiaGun> reg;

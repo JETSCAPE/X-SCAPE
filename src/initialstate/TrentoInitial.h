@@ -68,6 +68,9 @@ public:
 
   double GetEventCentrality() { return(static_cast<double>(info_.event_centrality)); };
 
+  /** Generated number of binary collisions.*/
+  double GetNcoll() { return(static_cast<double>(info_.num_binary_collisions)); }
+
   struct RangeFailure : public std::runtime_error {
     using std::runtime_error::runtime_error;
   };
