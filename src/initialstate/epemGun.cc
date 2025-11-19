@@ -142,7 +142,6 @@ void epemGun::InitTask() {
 
   Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
   QS = GetXMLElementDouble({"Eloss", "Matter", "QS"});
-  JSINFO << "QS: " << QS;
 
   // Initialize random number distribution
   ZeroOneDistribution = uniform_real_distribution<double>{0.0, 1.0};
