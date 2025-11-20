@@ -168,6 +168,8 @@ public:
 
   virtual void GetHardPartonPosAndMomentumProj();
   virtual void GetHardPartonPosAndMomentumTarg();
+  virtual void Output_Coll_Proj_parton();
+  virtual void Output_Coll_Targ_parton();
   virtual std::vector< std::vector<double> > GetQCDStringList() {
     return(QCDStringList_);
 }

@@ -207,6 +207,14 @@ void MCGlauberWrapper::ClearTask() {
     binary_collision_y_.clear();
     binary_collision_z_.clear();
     QCDStringList_.clear();
+    Coll_Proj_parton_x_.clear();
+    Coll_Proj_parton_y_.clear();
+    Coll_Proj_parton_z_.clear();
+    Coll_Proj_parton_e_.clear();
+    Coll_Targ_parton_x_.clear();
+    Coll_Targ_parton_y_.clear();
+    Coll_Targ_parton_z_.clear();
+    Coll_Targ_parton_e_.clear();
 }
 
 
@@ -371,6 +379,19 @@ void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, 
 
 }
 
+void MCGlauberWrapper::Output_Coll_Proj_parton( double x, double y, double z, double e) {
+    Coll_Proj_parton_x_.push_back(x);
+    Coll_Proj_parton_y_.push_back(y);
+    Coll_Proj_parton_z_.push_back(z);
+    Coll_Proj_parton_e_.push_back(e);
+}
+
+void MCGlauberWrapper::Output_Coll_Targ_parton( double x, double y, double z, double e) {
+    Coll_Targ_parton_x_.push_back(x);
+    Coll_Targ_parton_y_.push_back(y);
+    Coll_Targ_parton_z_.push_back(z);
+    Coll_Targ_parton_e_.push_back(e);
+}
 
 std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab() {
     // get the x, y, z of the three valence quarks of colliding projectile

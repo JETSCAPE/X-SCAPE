@@ -75,6 +75,8 @@ public:
   void ClearHardPartonMomentum();
   void GetHardPartonPosAndMomentumProj();
   void GetHardPartonPosAndMomentumTarg();
+  void Output_Coll_Proj_parton();
+  void Output_Coll_Targ_parton();
   std::vector<double> Get_projectile_nucleon_z_lab();
   std::vector<double> Get_target_nucleon_z_lab();
   std::vector<double> Get_quarks_pos_proj_lab();
@@ -94,6 +96,15 @@ private:
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
+  std::vector<double> Coll_Proj_parton_x_;
+  std::vector<double> Coll_Proj_parton_y_;
+  std::vector<double> Coll_Proj_parton_z_;
+  std::vector<double> Coll_Proj_parton_e_;
+  std::vector<double> Coll_Targ_parton_x_;
+  std::vector<double> Coll_Targ_parton_y_;
+  std::vector<double> Coll_Targ_parton_z_;
+  std::vector<double> Coll_Targ_parton_e_;
+  
   std::vector< std::vector<double> > QCDStringList_;
   double hard_parton_x_, hard_parton_y_, hard_parton_z_, hard_parton_t_;
   double targ_parton_px_ = 0.0, targ_parton_py_ = 0.0;

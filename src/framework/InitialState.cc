@@ -109,6 +109,9 @@ void InitialState::GetHardPartonPosAndMomentumProj() {}
 
 void InitialState::GetHardPartonPosAndMomentumTarg() {}
 
+void InitialState::Output_Coll_Proj_parton() {}
+void InitialState::Output_Coll_Targ_parton() {}
+
 std::vector<double> InitialState::Get_projectile_nucleon_z_lab() {
     std::vector<double> Temp;
     for (int i = 0; i != 8; i++) {
