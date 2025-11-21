@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -e
 
 ###############################################################################
 # Copyright (c) The JETSCAPE Collaboration, 2018
@@ -22,12 +21,7 @@ git clone --depth=1 https://github.com/smash-transport/smash.git --branch SMASH-
 cd smash/smash_code
 mkdir build
 cd build
-if [ -n "$Eigen3_DIR" ]; then
-    echo "Eigen3_DIR is set to $Eigen3_DIR"
-    cmake .. -DPythia_CONFIG_EXECUTABLE=${PYTHIA8DIR}/bin/pythia8-config -DEigen3_DIR=$Eigen3_DIR
-else
-    cmake .. -DPythia_CONFIG_EXECUTABLE=${PYTHIA8DIR}/bin/pythia8-config
-fi
+cmake .. -DPythia_CONFIG_EXECUTABLE=${PYTHIA8DIR}/bin/pythia8-config
 num_cores=${1:-1}
 echo "Compiling SMASH using ${num_cores} cores."
 make -j${num_cores} smash_shared

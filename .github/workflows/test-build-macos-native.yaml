@@ -151,6 +151,7 @@ jobs:
 
     - name: Download SMASH
       run: |
+        brew uninstall --ignore-dependencies eigen
         export Eigen3_DIR=${GITHUB_WORKSPACE}/eigen3_install/share/eigen3/cmake
         echo "JETSCAPE_DIR is $JETSCAPE_DIR"
         echo "PYTHIA8DIR is $PYTHIA8DIR"
