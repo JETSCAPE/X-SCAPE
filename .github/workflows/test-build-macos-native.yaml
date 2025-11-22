@@ -153,6 +153,12 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
         ./get_3dglauber.sh
 
+    - name: Confirm Eigen path
+      run: ls -l /opt/homebrew/include/eigen3
+
+    - name: Confirm SMASH libraries
+      run: ls -l ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code/lib
+
     - name: Build Application
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
@@ -170,7 +176,7 @@ jobs:
           -DUSE_FREESTREAM=ON \
           -DUSE_SMASH=ON \
           -DSMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code" \
-          -DCMAKE_PREFIX_PATH="$BOOST_ROOT;/opt/homebrew" \
+          -DCMAKE_PREFIX_PATH="$BOOST_ROOT;/opt/homebrew;${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code" \
           -DBoost_NO_BOOST_CMAKE=ON
         make -j2
 
