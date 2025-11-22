@@ -132,13 +132,6 @@ jobs:
         ls -la /opt/homebrew/include/eigen3 || true
         ls -la /opt/homebrew/opt/eigen/share/eigen3/cmake || true
 
-    - name: Configure CMake (point to Homebrew Eigen)
-      run: |
-        cmake -S . -B build \
-          -DCMAKE_PREFIX_PATH="/opt/homebrew/opt/eigen:${CMAKE_PREFIX_PATH}" \
-          -DEigen3_DIR="/opt/homebrew/opt/eigen/share/eigen3/cmake" \
-          -DEIGEN3_INCLUDE_DIR="/opt/homebrew/include/eigen3"
-
     - name: Download MUSIC
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
