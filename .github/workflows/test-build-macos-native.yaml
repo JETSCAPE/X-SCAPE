@@ -38,6 +38,7 @@ jobs:
         brew install --formula open-mpi
         brew install --formula gsl
         brew install --formula boost@1.85
+        brew install --formula eigen
         brew install --formula zlib
         brew install --formula gcc
         . /opt/homebrew/bin/thisroot.sh
@@ -48,6 +49,13 @@ jobs:
         export PATH="$ROOTSYS/bin:\$PATH"
         export LD_LIBRARY_PATH="$ROOTSYS/lib:$LD_LIBRARY_PATH"
         export PYTHONPATH="$ROOTSYS/lib"
+
+    - name: Install Eigen and set EIGEN3_ROOT
+      run: |
+        # Ensure Eigen is installed and expose its include path to subsequent steps
+        brew install --formula eigen || true
+        echo "EIGEN3_ROOT=$(brew --prefix eigen)/include/eigen3" >> $GITHUB_ENV
+        echo "EIGEN3_ROOT is set to $(brew --prefix eigen)/include/eigen3"
 
     - name: Download CMake 3.31.6
       run: |
