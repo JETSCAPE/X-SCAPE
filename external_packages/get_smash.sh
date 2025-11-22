@@ -21,19 +21,7 @@ git clone --depth=1 https://github.com/smash-transport/smash.git --branch SMASH-
 cd smash/smash_code
 mkdir build
 cd build
-
-# If running on macOS, try to use Homebrew's Eigen installation for CMake
-EIGEN_OPTION=""
-if [[ "$(uname)" == "Darwin" ]]; then
-    if command -v brew >/dev/null 2>&1; then
-        PREFIX="$(brew --prefix eigen 2>/dev/null || true)"
-        if [[ -n "${PREFIX}" ]]; then
-            EIGEN_OPTION="-DEigen3_DIR=${PREFIX}/share/eigen3/cmake"
-        fi
-    fi
-fi
-
-cmake .. ${EIGEN_OPTION} -DPythia_CONFIG_EXECUTABLE=${PYTHIA8DIR}/bin/pythia8-config
+cmake .. -DPythia_CONFIG_EXECUTABLE=${PYTHIA8DIR}/bin/pythia8-config
 num_cores=${1:-1}
 echo "Compiling SMASH using ${num_cores} cores."
 make -j${num_cores} smash_shared

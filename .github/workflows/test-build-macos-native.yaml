@@ -40,8 +40,6 @@ jobs:
         brew install --formula boost@1.85
         brew install --formula zlib
         brew install --formula gcc
-        brew install --formula eigen
-        brew install --formula yaml-cpp
         . /opt/homebrew/bin/thisroot.sh
 
     - name: set environment variables
@@ -126,12 +124,6 @@ jobs:
       with:
         path: ${{ github.event.repository.name }}
 
-    - name: Debug Eigen install (verify Homebrew eigen)
-      run: |
-        brew info eigen
-        ls -la /opt/homebrew/include/eigen3 || true
-        ls -la /opt/homebrew/opt/eigen/share/eigen3/cmake || true
-
     - name: Download MUSIC
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
@@ -159,20 +151,6 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
         ./get_3dglauber.sh
 
-    - name: Confirm Eigen path
-      run: ls -l /opt/homebrew/include/eigen3
-
-    - name: Confirm SMASH libraries
-      run: ls -l ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code/lib
-
-    - name: Show SMASH lib dir (non-fatal)
-      run: |
-        if [ -d "./external_packages/smash/smash_code/lib" ]; then
-          ls -la "./external_packages/smash/smash_code/lib"
-        else
-          echo "SMASH lib directory not present (submodule might not be initialized yet)"
-        fi
-
     - name: Build Application
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
@@ -180,17 +158,17 @@ jobs:
         cd build
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
         BOOST_ROOT="$(brew --prefix boost@1.85)"
+        echo "This is SMASH_DIR: "
+        echo ${SMASH_DIR}
+        ls ${SMASH_DIR}
         cmake .. \
           -DUSE_3DGlauber=ON \
           -DUSE_MUSIC=ON \
           -DUSE_ISS=ON \
           -DUSE_FREESTREAM=ON \
           -DUSE_SMASH=ON \
-          -DSMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code" \
-          -DCMAKE_PREFIX_PATH="$BOOST_ROOT;/opt/homebrew;${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code" \
-          -DBoost_NO_BOOST_CMAKE=ON \
-          -DEigen3_DIR=$(brew --prefix eigen)/share/eigen3/cmake \
-          -DEIGEN3_INCLUDE_DIR="$(brew --prefix eigen)/include/eigen3"
+          -DCMAKE_PREFIX_PATH="$BOOST_ROOT" \
+          -DBoost_NO_BOOST_CMAKE=ON
         make -j2
 
     - name: Checkout Default-tunes
