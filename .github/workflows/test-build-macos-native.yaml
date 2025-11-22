@@ -40,6 +40,8 @@ jobs:
         brew install --formula boost@1.85
         brew install --formula zlib
         brew install --formula gcc
+        brew install --formula eigen
+        brew install --formula yaml-cpp
         . /opt/homebrew/bin/thisroot.sh
 
     - name: set environment variables
@@ -124,16 +126,6 @@ jobs:
       with:
         path: ${{ github.event.repository.name }}
 
-    - name: Install Eigen 3.4.0
-      run: |
-        wget https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
-        tar xzf eigen-3.4.0.tar.gz
-        cd eigen-3.4.0
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=${GITHUB_WORKSPACE}/eigen3_install
-        make install
-
     - name: Download MUSIC
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
@@ -151,8 +143,6 @@ jobs:
 
     - name: Download SMASH
       run: |
-        brew uninstall --ignore-dependencies eigen
-        export Eigen3_DIR=${GITHUB_WORKSPACE}/eigen3_install/share/eigen3/cmake
         echo "JETSCAPE_DIR is $JETSCAPE_DIR"
         echo "PYTHIA8DIR is $PYTHIA8DIR"
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
@@ -168,7 +158,6 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
-        export Eigen3_DIR=${GITHUB_WORKSPACE}/eigen3_install/share/eigen3/cmake
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
         BOOST_ROOT="$(brew --prefix boost@1.85)"
         echo "This is SMASH_DIR: "
