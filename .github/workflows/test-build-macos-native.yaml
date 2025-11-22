@@ -126,11 +126,6 @@ jobs:
       with:
         path: ${{ github.event.repository.name }}
 
-    - name: Initialize submodules
-      run: |
-        git submodule sync --recursive
-        git submodule update --init --recursive
-
     - name: Debug Eigen install (verify Homebrew eigen)
       run: |
         brew info eigen
