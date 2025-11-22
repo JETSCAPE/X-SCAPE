@@ -169,7 +169,8 @@ jobs:
           -DUSE_ISS=ON \
           -DUSE_FREESTREAM=ON \
           -DUSE_SMASH=ON \
-          -DCMAKE_PREFIX_PATH="$BOOST_ROOT" \
+          -DSMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code" \
+          -DCMAKE_PREFIX_PATH="$BOOST_ROOT;/opt/homebrew" \
           -DBoost_NO_BOOST_CMAKE=ON
         make -j2
 
