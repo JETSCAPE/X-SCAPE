@@ -201,7 +201,8 @@ jobs:
           -DSMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code" \
           -DCMAKE_PREFIX_PATH="$BOOST_ROOT;/opt/homebrew;${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code" \
           -DBoost_NO_BOOST_CMAKE=ON \
-          -DEigen3_DIR=$(brew --prefix eigen)/share/eigen3/cmake
+          -DEigen3_DIR=$(brew --prefix eigen)/share/eigen3/cmake \
+          -DEIGEN3_INCLUDE_DIR="$(brew --prefix eigen)/include/eigen3"
         make -j2
 
     - name: Checkout Default-tunes
