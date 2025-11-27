@@ -18,7 +18,7 @@ git clone --depth=1 https://github.com/smash-transport/smash.git --branch SMASH-
 
 # 2) Compile SMASH
 (
-(cd smash/smash_code
+cd smash/smash_code
 
 # Inject patched FindEigen3.cmake to handle Eigen >=5 before configuring
 cat > cmake/FindEigen3.cmake <<'EOF'
