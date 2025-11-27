@@ -21,7 +21,7 @@ git clone --depth=1 https://github.com/smash-transport/smash.git --branch SMASH-
 cd smash/smash_code
 mkdir build
 cd build
-cmake .. -DPythia_CONFIG_EXECUTABLE=${PYTHIA8DIR}/bin/pythia8-config
+cmake .. -DPythia_CONFIG_EXECUTABLE=${PYTHIA8DIR}/bin/pythia8-config -DCMAKE_PREFIX_PATH="${HEPMC3_DIR};${EIGEN3_ROOT}"
 num_cores=${1:-1}
 echo "Compiling SMASH using ${num_cores} cores."
 make -j${num_cores} smash_shared
