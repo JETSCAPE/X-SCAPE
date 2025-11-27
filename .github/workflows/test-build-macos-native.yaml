@@ -106,6 +106,8 @@ jobs:
           ../hepmc3-source
         make
         make install
+        echo "HEPMC3_DIR=${GITHUB_WORKSPACE}/hepmc3-install" >> $GITHUB_ENV
+        echo "Set HEPMC3_DIR=${GITHUB_WORKSPACE}/hepmc3-install"
 
     - name: Download Pythia 8315
       run: |
@@ -176,7 +178,8 @@ jobs:
           -DUSE_FREESTREAM=ON \
           -DUSE_SMASH=ON \
           -DCMAKE_PREFIX_PATH="$BOOST_ROOT" \
-          -DBoost_NO_BOOST_CMAKE=ON
+          -DBoost_NO_BOOST_CMAKE=ON \
+          -DEIGEN3_ROOT="$EIGEN3_ROOT"
         make -j2
 
     - name: Checkout Default-tunes
