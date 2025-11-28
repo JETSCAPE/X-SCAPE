@@ -5,13 +5,13 @@ on:
     branches:
       - main
       - XSCAPE-2.0.1-RC
-      - latessa/mac_eigen_fix
+      - latessa/MacOS_Build_Issue
 
   push:
     branches:
       - main
       - XSCAPE-2.0.1-RC
-      - latessa/mac_eigen_fix
+      - latessa/MacOS_Build_Issue
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
