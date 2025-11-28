@@ -140,7 +140,7 @@ jobs:
       with:
         path: ${{ github.event.repository.name }}
 
-    - name: Install Eigen 3.4.0
+    - name: Install Eigen 3.4.1
       run: |
         wget https://gitlab.com/libeigen/eigen/-/archive/3.4.1/eigen-3.4.1.tar.gz
         tar xzf eigen-3.4.1.tar.gz
