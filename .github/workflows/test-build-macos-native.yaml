@@ -15,6 +15,12 @@ on:
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
+  EIGEN3_INSTALL_DIR: ${{ github.workspace }}/eigen3_install
+  EIGEN3_CMAKE_DIR: ${{ github.workspace }}/eigen3_install/share/eigen3/cmake
+  EIGEN3_INCLUDE_DIR: ${{ github.workspace }}/eigen3_install/include/eigen3
+  Eigen3_DIR: ${{ github.workspace }}/eigen3_install/share/eigen3/cmake
+  EIGEN3_ROOT: ${{ github.workspace }}/eigen3_install/include
+  EIGEN3_ROOT_DIR: ${{ github.workspace }}/eigen3_install/include
 
 jobs:
   build:
@@ -134,6 +140,16 @@ jobs:
       with:
         path: ${{ github.event.repository.name }}
 
+    - name: Install Eigen 3.4.0
+      run: |
+        wget https://gitlab.com/libeigen/eigen/-/archive/3.4.1/eigen-3.4.1.tar.gz
+        tar xzf eigen-3.4.1.tar.gz
+        cd eigen-3.4.1
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_INSTALL_PREFIX=${EIGEN3_INSTALL_DIR}
+        make install
+
     - name: Download MUSIC
       run: |
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
@@ -151,6 +167,7 @@ jobs:
 
     - name: Download SMASH
       run: |
+        export CMAKE_PREFIX_PATH="${EIGEN3_CMAKE_DIR}:$CMAKE_PREFIX_PATH"
         echo "JETSCAPE_DIR is $JETSCAPE_DIR"
         echo "PYTHIA8DIR is $PYTHIA8DIR"
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
@@ -167,6 +184,7 @@ jobs:
         mkdir build
         cd build
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
+        export CMAKE_PREFIX_PATH="${EIGEN3_CMAKE_DIR}:$CMAKE_PREFIX_PATH"
         BOOST_ROOT="$(brew --prefix boost@1.85)"
         echo "This is SMASH_DIR: "
         echo ${SMASH_DIR}
@@ -177,9 +195,8 @@ jobs:
           -DUSE_ISS=ON \
           -DUSE_FREESTREAM=ON \
           -DUSE_SMASH=ON \
-          -DCMAKE_PREFIX_PATH="$BOOST_ROOT" \
-          -DBoost_NO_BOOST_CMAKE=ON \
-          -DEIGEN3_ROOT="$EIGEN3_ROOT"
+          -DCMAKE_PREFIX_PATH="$BOOST_ROOT;$EIGEN3_CMAKE_DIR" \
+          -DBoost_NO_BOOST_CMAKE=ON
         make -j2
 
     - name: Checkout Default-tunes
