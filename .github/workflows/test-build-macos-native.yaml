@@ -5,22 +5,16 @@ on:
     branches:
       - main
       - XSCAPE-2.0.1-RC
-      - latessa/mac_eigen_fix
+      - latessa/MacOS_Build_Issue
 
   push:
     branches:
       - main
       - XSCAPE-2.0.1-RC
-      - latessa/mac_eigen_fix
+      - latessa/MacOS_Build_Issue
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
-  EIGEN3_INSTALL_DIR: ${{ github.workspace }}/eigen3_install
-  EIGEN3_CMAKE_DIR: ${{ github.workspace }}/eigen3_install/share/eigen3/cmake
-  EIGEN3_INCLUDE_DIR: ${{ github.workspace }}/eigen3_install/include/eigen3
-  Eigen3_DIR: ${{ github.workspace }}/eigen3_install/share/eigen3/cmake
-  EIGEN3_ROOT: ${{ github.workspace }}/eigen3_install/include
-  EIGEN3_ROOT_DIR: ${{ github.workspace }}/eigen3_install/include
 
 jobs:
   build:
@@ -51,17 +45,21 @@ jobs:
 
     - name: set environment variables
       run: |
-        export ROOTSYS="/usr/local/root"
-        export PATH="$ROOTSYS/bin:\$PATH"
-        export LD_LIBRARY_PATH="$ROOTSYS/lib:$LD_LIBRARY_PATH"
-        export PYTHONPATH="$ROOTSYS/lib"
+        echo "ROOTSYS=/usr/local/root" >> $GITHUB_ENV
+        echo "PATH=/usr/local/root/bin:$PATH" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=/usr/local/root/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+        echo "PYTHONPATH=/usr/local/root/lib" >> $GITHUB_ENV
 
-    - name: Install Eigen and set EIGEN3_ROOT
+    - name: Capture Eigen paths
       run: |
-        # Ensure Eigen is installed and expose its include path to subsequent steps
-        brew install --formula eigen || true
-        echo "EIGEN3_ROOT=$(brew --prefix eigen)/include/eigen3" >> $GITHUB_ENV
-        echo "EIGEN3_ROOT is set to $(brew --prefix eigen)/include/eigen3"
+        EIGEN_PREFIX="$(brew --prefix eigen)"
+        echo "EIGEN3_PREFIX=${EIGEN_PREFIX}" >> $GITHUB_ENV
+        echo "EIGEN3_ROOT=${EIGEN_PREFIX}/include" >> $GITHUB_ENV
+        echo "EIGEN3_INCLUDE_DIR=${EIGEN_PREFIX}/include/eigen3" >> $GITHUB_ENV
+        echo "EIGEN3_CMAKE_DIR=${EIGEN_PREFIX}/share/eigen3/cmake" >> $GITHUB_ENV
+        echo "Eigen3_DIR=${EIGEN_PREFIX}/share/eigen3/cmake" >> $GITHUB_ENV
+        echo "EIGEN3_ROOT_DIR=${EIGEN_PREFIX}/include" >> $GITHUB_ENV
+        echo "Eigen paths registered from ${EIGEN_PREFIX}"
 
     - name: Download CMake 3.31.6
       run: |
@@ -139,16 +137,6 @@ jobs:
       uses: actions/checkout@v4
       with:
         path: ${{ github.event.repository.name }}
-
-    - name: Install Eigen 3.4.1
-      run: |
-        wget https://gitlab.com/libeigen/eigen/-/archive/3.4.1/eigen-3.4.1.tar.gz
-        tar xzf eigen-3.4.1.tar.gz
-        cd eigen-3.4.1
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=${EIGEN3_INSTALL_DIR}
-        make install
 
     - name: Download MUSIC
       run: |

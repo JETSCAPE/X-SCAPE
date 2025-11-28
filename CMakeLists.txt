@@ -24,11 +24,6 @@ cmake_policy(SET CMP0054 NEW)
 # Tell cmake where to find modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmakemodules")
 
-# Enable modern find_package behavior for *_ROOT variables (Eigen3, etc.) if available.
-if(POLICY CMP0144)
-  cmake_policy(SET CMP0144 NEW)
-endif()
-
 ###########################
 ### Parse options       ###
 ###########################
