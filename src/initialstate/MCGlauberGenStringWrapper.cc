@@ -58,11 +58,11 @@ void MCGlauberGenStringWrapper::ExecuteTask() {
     }
 }
 
-std::vector<double> MCGlauberGenStringWrapper::Get_Proj_Remnant() {
+std::vector<std::vector<double>> MCGlauberGenStringWrapper::Get_remnant_proj() {
     return(ini->Get_remnant_proj());
 }
 
-std::vector<double> MCGlauberGenStringWrapper::Get_Targ_Remnant() {
+std::vector<std::vector<double>> MCGlauberGenStringWrapper::Get_remnant_targ() {
     return(ini->Get_remnant_targ());
 }
 

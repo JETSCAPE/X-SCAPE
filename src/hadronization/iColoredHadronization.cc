@@ -169,15 +169,15 @@ void iColoredHadronization::DoHadronization(
       auto Rem = Remnants[ipart];
       double Pz, Px, Py, En;
       if(Rem.pz() >=0){
-        En = MCGsecond->Get_Proj_Remnant()[0] / double(NHardScatterings);
-        Px = MCGsecond->Get_Proj_Remnant()[1] / double(NHardScatterings);
-        Py = MCGsecond->Get_Proj_Remnant()[2] / double(NHardScatterings);
-        Pz = MCGsecond->Get_Proj_Remnant()[3] / double(NHardScatterings);
+        En = MCGsecond->Get_remnant_proj()[0][0] / double(NHardScatterings);
+        Px = MCGsecond->Get_remnant_proj()[0][1] / double(NHardScatterings);
+        Py = MCGsecond->Get_remnant_proj()[0][2] / double(NHardScatterings);
+        Pz = MCGsecond->Get_remnant_proj()[0][3] / double(NHardScatterings);
       } else {
-        En = MCGsecond->Get_Targ_Remnant()[0] / double(NHardScatterings);
-        Px = MCGsecond->Get_Targ_Remnant()[1] / double(NHardScatterings);
-        Py = MCGsecond->Get_Targ_Remnant()[2] / double(NHardScatterings);
-        Pz = MCGsecond->Get_Targ_Remnant()[3] / double(NHardScatterings);
+        En = MCGsecond->Get_remnant_targ()[0][0] / double(NHardScatterings);
+        Px = MCGsecond->Get_remnant_targ()[0][1] / double(NHardScatterings);
+        Py = MCGsecond->Get_remnant_targ()[0][2] / double(NHardScatterings);
+        Pz = MCGsecond->Get_remnant_targ()[0][3] / double(NHardScatterings);
       }
 
       // std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En = "<< En << " " << NHardScatterings <<  std::endl;

@@ -160,13 +160,8 @@ public:
   virtual std::vector<double> Get_quarks_pos_proj_lab();
   virtual std::vector<double> Get_quarks_pos_targ_lab();
 
-  virtual std::vector<double> Get_remnant_proj();
-  virtual std::vector<double> Get_remnant_targ();
-
-  virtual std::vector<int> Get_Hard_p_tag();
-
-  virtual std::vector<double> Get_Proj_Remnant();
-  virtual std::vector<double> Get_Targ_Remnant();
+  virtual std::vector<std::vector<double>> Get_remnant_proj();
+  virtual std::vector<std::vector<double>> Get_remnant_targ();
 
   virtual void GetHardPartonPosAndMomentumProj();
   virtual void GetHardPartonPosAndMomentumTarg();

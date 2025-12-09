@@ -141,44 +141,17 @@ std::vector<double> InitialState::Get_quarks_pos_targ_lab() {
     return Temp;
 }
 
-std::vector<double> InitialState::Get_remnant_proj() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
+std::vector<std::vector<double>> InitialState::Get_remnant_proj() {
+    std::vector<std::vector<double>> Temp;
+    std::vector<double> Temp1 = {-1, -1, -1, -1};
+    Temp.push_back(Temp1);
     return Temp;
 }
 
-std::vector<double> InitialState::Get_remnant_targ() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
-}
-
-std::vector<int> InitialState::Get_Hard_p_tag() {
-    std::vector<int> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
-}
-
-
-std::vector<double> InitialState::Get_Proj_Remnant() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
-}
-
-std::vector<double> InitialState::Get_Targ_Remnant() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
+std::vector<std::vector<double>> InitialState::Get_remnant_targ() {
+    std::vector<std::vector<double>> Temp;
+    std::vector<double> Temp1 = {-1, -1, -1, -1};
+    Temp.push_back(Temp1);
     return Temp;
 }
 
