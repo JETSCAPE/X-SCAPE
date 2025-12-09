@@ -14,7 +14,7 @@
 ##############################################################################
 
 folderName="3dMCGlauber"
-commitHash="a7d050cb84488ebaabe324ce0d8cc79f336a1329"
+commitHash="78741f79dd7d29a9bd9519a8e7f64198027ecc27"
 # download the code package
 rm -fr $folderName
 git clone https://github.com/chunshen1987/3dMCGlauber.git --branch JETSCAPE $folderName
