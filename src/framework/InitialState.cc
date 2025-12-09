@@ -157,6 +157,15 @@ std::vector<double> InitialState::Get_remnant_targ() {
     return Temp;
 }
 
+std::vector<int> InitialState::Get_Hard_p_tag() {
+    std::vector<int> Temp;
+    for (int i = 0; i != 4; i++) {
+        Temp.push_back(-1.);
+    }
+    return Temp;
+}
+
+
 std::vector<double> InitialState::Get_Proj_Remnant() {
     std::vector<double> Temp;
     for (int i = 0; i != 4; i++) {

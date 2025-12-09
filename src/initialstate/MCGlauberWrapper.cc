@@ -394,6 +394,7 @@ std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab() {
 }
 
 
+
 std::vector<double> MCGlauberWrapper::Get_remnant_proj() {
     // get the fout-momentum (E, px, py, pz) of the remnant in projectile
     return(mc_gen_->GetRemMom_Proj());
@@ -405,7 +406,10 @@ std::vector<double> MCGlauberWrapper::Get_remnant_targ() {
     return(mc_gen_->GetRemMom_Targ());
 }
 
-
+std::vector<int> MCGlauberWrapper::Get_Hard_p_tag() {
+    // get the hard parton tag for the each subtracted nulceon energy
+    return(mc_gen_->Get_Hard_p_id());
+}
 void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
     mc_gen_->GetMomandPos_Proj(hard_parton_t_, hard_parton_x_, hard_parton_y_,
                                hard_parton_z_, proj_parton_e_, proj_parton_px_,
