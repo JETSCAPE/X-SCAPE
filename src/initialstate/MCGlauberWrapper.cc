@@ -380,9 +380,9 @@ void MCGlauberWrapper::OutputHardPartonMomentum(
             proj_parton_pz_[lastIdx] += pz;
         } else {
             targ_parton_e_[lastIdx] += E;
-            targ_parton_px_.[lastIdx] += px;
-            targ_parton_py_.[lastIdx] += py;
-            targ_parton_pz_.[lastIdx] += pz;
+            targ_parton_px_[lastIdx] += px;
+            targ_parton_py_[lastIdx] += py;
+            targ_parton_pz_[lastIdx] += pz;
         }
     }
 
