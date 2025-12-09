@@ -1,4 +1,5 @@
 /*******************************************************************************
+    mc_glauber_ptr_->Set_hard_collisions_Pos(HardPartonPos);
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion collisions
@@ -314,61 +315,56 @@ std::vector<double> MCGlauberWrapper::Get_target_nucleon_z_lab() {
     return(mc_gen_->MCGlb_target_nucleon_z());
 }
 
-void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x, double y, 
-                                                                    double z) {
-    hard_parton_t_ = t;
-    hard_parton_x_ = x;
-    hard_parton_y_ = y;
-    hard_parton_z_ = z;
+void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x,
+                                                   double y, double z) {
+    hard_parton_t_.push_back(t);
+    hard_parton_x_.push_back(x);
+    hard_parton_y_.push_back(y);
+    hard_parton_z_.push_back(z);
 }
 
-void MCGlauberWrapper::ClearHardPartonMomentum(){
 
-    proj_parton_e_  = 0.0;
-    proj_parton_px_ = 0.0;
-    proj_parton_py_ = 0.0;
-    proj_parton_pz_ = 0.0;
-    targ_parton_e_  = 0.0;
-    targ_parton_px_ = 0.0;
-    targ_parton_py_ = 0.0;
-    targ_parton_pz_ = 0.0;
+void MCGlauberWrapper::ClearHardPartonMomentum() {
+    hard_parton_t_.clear();
+    hard_parton_x_.clear();
+    hard_parton_y_.clear();
+    hard_parton_z_.clear();
+
+    proj_parton_e_.clear();
+    proj_parton_px_.clear();
+    proj_parton_py_.clear();
+    proj_parton_pz_.clear();
+
+    targ_parton_e_.clear();
+    targ_parton_px_.clear();
+    targ_parton_py_.clear();
+    targ_parton_pz_.clear();
 }
 
-void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py, double pz,
-                                                int direction, double P_A) {
+
+void MCGlauberWrapper::OutputHardPartonMomentum(
+        double E, double px, double py, double pz, int direction, double P_A) {
     // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
     if (direction == 1) {
-        proj_parton_e_ += E;
-        proj_parton_px_ += px;
-        proj_parton_py_ += py;
-        proj_parton_pz_ += pz;
-        // JSINFO <<  MAGENTA << " proj_parton_e_ " << proj_parton_e_; 
-        // JSINFO <<  MAGENTA << " proj_parton_px_ " << proj_parton_px_;
-        // JSINFO <<  MAGENTA << " proj_parton_py_ " << proj_parton_py_;
-        // JSINFO <<  MAGENTA << " proj_parton_pz_ " << proj_parton_pz_;
+        proj_parton_e_.push_back(E);
+        proj_parton_px_.push_back(px);
+        proj_parton_py_.push_back(py);
+        proj_parton_pz_.push_back(pz);
     } else {
-        targ_parton_e_ += E;
-        targ_parton_px_ += px;
-        targ_parton_py_ += py;
-        targ_parton_pz_ += pz;
-        // JSINFO <<  MAGENTA << " targ_parton_e_ " << targ_parton_e_;
-        // JSINFO <<  MAGENTA << " targ_parton_px_ " << targ_parton_px_;
-        // JSINFO <<  MAGENTA << " targ_parton_py_ " << targ_parton_py_;
-        // JSINFO <<  MAGENTA << " targ_parton_pz_ " << targ_parton_pz_;
+        targ_parton_e_.push_back(E);
+        targ_parton_px_.push_back(px);
+        targ_parton_py_.push_back(py);
+        targ_parton_pz_.push_back(pz);
     }
 
+    VERBOSE(2) << BOLDYELLOW << " parton_e_ " << E
+                             << " parton_pz_ " << pz;
 
-    VERBOSE(2) << BOLDYELLOW << " proj_parton_e_ " << proj_parton_e_ 
-                             << " proj_parton_pz_ " << proj_parton_pz_ 
-                             << " targ_parton_e_ " << targ_parton_e_ 
-                             << " targ_parton_pz_ " << targ_parton_pz_;
-
-    if (targ_parton_e_ >= 0.95 * P_A || proj_parton_e_ >= 0.95 * P_A ) {
+    if (E >= 0.95 * P_A) {
         throw std::runtime_error(
             "Energy to subtract from 3DMCGlauber >= 0.95 * P_A "
             + std::to_string(0.95 * P_A)+". Turn on Verbose for more info.");
     }
-
 }
 
 
@@ -378,9 +374,10 @@ std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab() {
     // 3DGlauber attributes the remaining energy and momentum carried by the
     // sea quarks and gluons to a soft gluon cloud
     // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
-    mc_gen_->GetHardPos(hard_parton_t_, hard_parton_x_, hard_parton_y_,
-                        hard_parton_z_);
-    return(mc_gen_->GetQuarkPosProj());
+    int hardCollIdx = 0;
+    return(mc_gen_->GetQuarkPosProj(
+                hard_parton_t_[hardCollIdx], hard_parton_x_[hardCollIdx],
+                hard_parton_y_[hardCollIdx], hard_parton_z_[hardCollIdx]));
 }
 
 
@@ -390,9 +387,10 @@ std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab() {
     // 3DGlauber attributes the remaining energy and momentum carried by the
     // sea quarks and gluons to a soft gluon cloud
     // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
-    mc_gen_->GetHardPos(hard_parton_t_, hard_parton_x_, hard_parton_y_,
-                        hard_parton_z_);
-    return(mc_gen_->GetQuarkPosTarg());
+    int hardCollIdx = 0;
+    return(mc_gen_->GetQuarkPosTarg(
+                hard_parton_t_[hardCollIdx], hard_parton_x_[hardCollIdx],
+                hard_parton_y_[hardCollIdx], hard_parton_z_[hardCollIdx]));
 }
 
 
@@ -420,6 +418,7 @@ void MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
                                hard_parton_z_, targ_parton_e_, targ_parton_px_,
                                targ_parton_py_, targ_parton_pz_);
 }
+
 
 void MCGlauberWrapper::GenerateStrings(bool wound_nucleons, int event_id) {
     // generate strings from 3D Glauber for MUSIC
