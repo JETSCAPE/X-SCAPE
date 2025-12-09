@@ -193,7 +193,8 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           JSWARN << "Energy to subtract is negative !";
           exit(1);
         }
-        ini->OutputHardPartonMomentum(Out.e(), Out.px(), Out.py(),
+        ini->OutputHardPartonMomentum(Out.x_in().t(),Out.x_in().x(), Out.x_in().y(), Out.x_in().z(),
+          Out.e(), Out.px(), Out.py(),
                                       Out.pz(),
                                       (Out.pz() >= 0.0 ? 1 : -1), P_A);
         

@@ -71,7 +71,7 @@ public:
   //void OutputHardCollisionPosition(double t, double x, double y, 
   //                                 double z);
   void OutputHardPartonMomentum(
-        double t, double x, double, y, double z,
+        double t, double x, double y, double z,
         double E, double px, double py, double pz,
         int direction, double P_A);
 
