@@ -315,13 +315,13 @@ std::vector<double> MCGlauberWrapper::Get_target_nucleon_z_lab() {
     return(mc_gen_->MCGlb_target_nucleon_z());
 }
 
-void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x,
-                                                   double y, double z) {
-    hard_parton_t_.push_back(t);
-    hard_parton_x_.push_back(x);
-    hard_parton_y_.push_back(y);
-    hard_parton_z_.push_back(z);
-}
+//void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x,
+//                                                   double y, double z) {
+//    hard_parton_t_.push_back(t);
+//    hard_parton_x_.push_back(x);
+//    hard_parton_y_.push_back(y);
+//    hard_parton_z_.push_back(z);
+//}
 
 
 void MCGlauberWrapper::ClearHardPartonMomentum() {
@@ -343,27 +343,58 @@ void MCGlauberWrapper::ClearHardPartonMomentum() {
 
 
 void MCGlauberWrapper::OutputHardPartonMomentum(
+        double t, double x, double y, double z,
         double E, double px, double py, double pz, int direction, double P_A) {
     // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
-    if (direction == 1) {
-        proj_parton_e_.push_back(E);
-        proj_parton_px_.push_back(px);
-        proj_parton_py_.push_back(py);
-        proj_parton_pz_.push_back(pz);
+    bool newCollFlag = false;
+    int lastIdx = hard_parton_t_.size() - 1;
+    if (lastIdx < 0) {
+        newCollFlag = true;
     } else {
-        targ_parton_e_.push_back(E);
-        targ_parton_px_.push_back(px);
-        targ_parton_py_.push_back(py);
-        targ_parton_pz_.push_back(pz);
+        if (std::abs(x - hard_parton_x_[lastIdx]) > 1e-5
+                || std::abs(y - hard_parton_y_[lastIdx]) > 1e-5) {
+            newCollFlag = true;
+        }
+    }
+    if (newCollFlag) {
+        hard_parton_t_.push_back(t);
+        hard_parton_x_.push_back(x);
+        hard_parton_y_.push_back(y);
+        hard_parton_z_.push_back(z);
+        if (direction == 1) {
+            proj_parton_e_.push_back(E);
+            proj_parton_px_.push_back(px);
+            proj_parton_py_.push_back(py);
+            proj_parton_pz_.push_back(pz);
+        } else {
+            targ_parton_e_.push_back(E);
+            targ_parton_px_.push_back(px);
+            targ_parton_py_.push_back(py);
+            targ_parton_pz_.push_back(pz);
+        }
+    } else {
+        if (direction == 1) {
+            proj_parton_e_[lastIdx] += E;
+            proj_parton_px_[lastIdx] += px;
+            proj_parton_py_[lastIdx] += py;
+            proj_parton_pz_[lastIdx] += pz;
+        } else {
+            targ_parton_e_[lastIdx] += E;
+            targ_parton_px_.[lastIdx] += px;
+            targ_parton_py_.[lastIdx] += py;
+            targ_parton_pz_.[lastIdx] += pz;
+        }
     }
 
     VERBOSE(2) << BOLDYELLOW << " parton_e_ " << E
                              << " parton_pz_ " << pz;
 
-    if (E >= 0.95 * P_A) {
+    double threshold = 0.99 * P_A;
+    if (proj_parton_e_.back() >= threshold
+            || targ_parton_e_.back() >= threshold) {
         throw std::runtime_error(
-            "Energy to subtract from 3DMCGlauber >= 0.95 * P_A "
-            + std::to_string(0.95 * P_A)+". Turn on Verbose for more info.");
+            "Energy to subtract from 3DMCGlauber >= 0.99 * P_A "
+            + std::to_string(threshold)+". Turn on Verbose for more info.");
     }
 }
 
