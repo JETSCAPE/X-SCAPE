@@ -312,6 +312,7 @@ void PythiaIsrGun::ExecuteTask() {
   }
   else
   {
+    ini->ClearHardPartonMomentum();
     double t, x, y, z;
     bool pass = false;
 //  while (!pass)
@@ -421,7 +422,7 @@ void PythiaIsrGun::ExecuteTask() {
   ini->CollisionPositiveMomentum = std::vector<FourVector>(NPP/2,Zeros);
   ini->CollisionNegativeRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
   ini->CollisionPositiveRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
-  ini->ClearHardPartonMomentum();
+  //ini->ClearHardPartonMomentum();
 
   VERBOSE(8) << GetNHardPartons();
 

@@ -406,6 +406,12 @@ std::vector<std::vector<double>> MCGlauberWrapper::Get_remnant_targ() {
 }
 
 void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
+    if (hard_parton_t_.size() != proj_parton_e_.size()) {
+        JSWARN << "Unequal vector sizes for hard parton position list: "
+               << hard_parton_t_.size() << " and their momentum list: "
+               << proj_parton_e_.size();
+        exit(1);
+    }
     mc_gen_->GetMomandPos_Proj(hard_parton_t_, hard_parton_x_, hard_parton_y_,
                                hard_parton_z_, proj_parton_e_, proj_parton_px_,
                                proj_parton_py_, proj_parton_pz_);
@@ -413,6 +419,12 @@ void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
 
 
 void MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
+    if (hard_parton_t_.size() != targ_parton_e_.size()) {
+        JSWARN << "Unequal vector sizes for hard parton position list: "
+               << hard_parton_t_.size() << " and their momentum list: "
+               << targ_parton_e_.size();
+        exit(1);
+    }
     mc_gen_->GetMomandPos_Targ(hard_parton_t_, hard_parton_x_, hard_parton_y_,
                                hard_parton_z_, targ_parton_e_, targ_parton_px_,
                                targ_parton_py_, targ_parton_pz_);
