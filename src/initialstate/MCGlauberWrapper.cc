@@ -419,29 +419,25 @@ void MCGlauberWrapper::OutputHardPartonMomentum(
 }
 
 
-std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab() {
+std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab(
+        double t, double x, double y, double z) {
     // get the x, y, z of the three valence quarks of colliding projectile
     // The fourth parton is the soft ball
     // 3DGlauber attributes the remaining energy and momentum carried by the
     // sea quarks and gluons to a soft gluon cloud
     // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
-    int hardCollIdx = 0;
-    return(mc_gen_->GetQuarkPosProj(
-                hard_parton_t_[hardCollIdx], hard_parton_x_[hardCollIdx],
-                hard_parton_y_[hardCollIdx], hard_parton_z_[hardCollIdx]));
+    return(mc_gen_->GetQuarkPosProj(t, x, y, z));
 }
 
 
-std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab() {
+std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab(
+        double t, double x, double y, double z) {
     // get the x, y, z of the three valence quarks of colliding target
     // The fourth parton is the soft ball
     // 3DGlauber attributes the remaining energy and momentum carried by the
     // sea quarks and gluons to a soft gluon cloud
     // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
-    int hardCollIdx = 0;
-    return(mc_gen_->GetQuarkPosTarg(
-                hard_parton_t_[hardCollIdx], hard_parton_x_[hardCollIdx],
-                hard_parton_y_[hardCollIdx], hard_parton_z_[hardCollIdx]));
+    return(mc_gen_->GetQuarkPosTarg(t, x, y, z));
 }
 
 

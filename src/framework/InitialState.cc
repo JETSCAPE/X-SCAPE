@@ -119,7 +119,8 @@ std::vector<double> InitialState::Get_target_nucleon_z_lab() {
     return Temp;
 }
 
-std::vector<double> InitialState::Get_quarks_pos_proj_lab() {
+std::vector<double> InitialState::Get_quarks_pos_proj_lab(double t, double x,
+                                                          double y, double z) {
     std::vector<double> Temp;
     for (int i = 0; i != 9; i++) {
         Temp.push_back(-1.);
@@ -127,7 +128,8 @@ std::vector<double> InitialState::Get_quarks_pos_proj_lab() {
     return Temp;
 }
 
-std::vector<double> InitialState::Get_quarks_pos_targ_lab() {
+std::vector<double> InitialState::Get_quarks_pos_targ_lab(double t, double x,
+                                                          double y, double z) {
     std::vector<double> Temp;
     for (int i = 0; i != 9; i++) {
         Temp.push_back(-1.);
