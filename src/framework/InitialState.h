@@ -147,13 +147,14 @@ public:
       return 0.0;
   }
 
-  virtual void OutputHardCollisionPosition(double t, double x, double y, 
-                                                               double z);
+  virtual void OutputHardCollisionPosition(double t, double x,
+                                           double y, double z) {}
 
-  void OutputHardPartonMomentum(
+  virtual void OutputHardPartonMomentum(
         double t, double x, double y, double z,
         double E, double px, double py, double pz,
-        int direction, double P_A);
+        int direction, double P_A) {}
+
   virtual void ClearHardPartonMomentum();
 
   virtual std::vector<double> Get_projectile_nucleon_z_lab();
