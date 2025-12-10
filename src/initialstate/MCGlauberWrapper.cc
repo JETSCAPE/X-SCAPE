@@ -349,7 +349,9 @@ void MCGlauberWrapper::OutputHardPartonMomentum(
     // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
     bool newCollFlag = true;
     int hardCollIdx = 0;
-    for (int idx = 0; idx < hard_parton_t_.size(); idx++) {
+    for (int idx = hard_parton_t_.size() - 1; idx >= 0; idx++) {
+        // start searching from the last index so that the vectors support
+        // repeated entries, the last one will be picked.
         if (std::abs(x - hard_parton_x_[idx]) < 1e-5
                 && std::abs(y - hard_parton_y_[idx]) < 1e-5) {
             hardCollIdx = idx;
