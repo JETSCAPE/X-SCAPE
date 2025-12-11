@@ -5,11 +5,13 @@ on:
     branches:
       - main
       - XSCAPE-2.0.1-RC
+      - latessa/alma
 
   push:
     branches:
       - main
       - XSCAPE-2.0.1-RC
+      - latessa/alma
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -20,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v1.13
+      image: jetscape/base:alma-beta-multi-v1.13.1
       options: --user root
     
     steps:
