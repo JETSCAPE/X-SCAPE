@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:alma-beta-multi-v1.13.1
+      image: jetscape/base:alma-beta-multi-v1.13.2
       options: --user root
     
     steps:
