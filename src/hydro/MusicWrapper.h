@@ -25,6 +25,7 @@
 #include "data_struct.h"
 #include "JetScapeConstants.h"
 #include "MakeUniqueHelper.h"
+#include <string>
 
 using namespace Jetscape;
 
@@ -38,6 +39,7 @@ private:
 public:
   HydroSourceJETSCAPE() = default;
   ~HydroSourceJETSCAPE() {}
+
 
   // set the dtau of the hydro and if the hadronic source terms are present
   // add the value to the hadronic liquefier
@@ -191,6 +193,7 @@ private:
   int flag_output_evo_to_file;
   int flag_output_evo_to_memory;
   int flag_surface_in_memory;
+  bool flag_ensure_MusicWrapper_output;
   bool has_source_terms;
   std::shared_ptr<HydroSourceJETSCAPE> hydro_source_terms_ptr;
 

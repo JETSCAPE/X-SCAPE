@@ -91,6 +91,9 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     music_hydro_ptr->set_parameter("surface_in_memory", 0);
   }
 
+  flag_ensure_MusicWrapper_output = (bool) GetXMLElementInt(
+          {"RootBulkWriter", "ensure_MusicWrapper_output"});
+
   int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
   music_hydro_ptr->set_parameter("EOS", EOS);
   // Try to reset the EOS in the music input file
@@ -453,7 +456,7 @@ void MpiMusic::EvolveHydro() {
         if (flag_surface_in_memory == 1) {
             clearSurfaceCellVector();
         }
-        if (flag_output_evo_to_memory == 1) {
+        if (flag_output_evo_to_memory == 1 && !flag_ensure_MusicWrapper_output) {
             clear_up_evolution_data();
         }
         return;
@@ -493,7 +496,7 @@ void MpiMusic::EvolveHydro() {
     hydro_status = FINISHED;
   }
 
-  if (flag_output_evo_to_memory == 1) {
+  if (flag_output_evo_to_memory == 1 && !has_source_terms) {
     if (!has_source_terms) {
       // only the first hydro without source term will be stored
       // in memory for jet energy loss calculations
@@ -504,6 +507,10 @@ void MpiMusic::EvolveHydro() {
       JSINFO << "Number of fluid cells received by JETSCAPE: "
              << bulk_info.data.size();
     }
+  } else if (flag_ensure_MusicWrapper_output) {
+      PassHydroEvolutionHistoryToFramework();
+      JSINFO << "number of fluid cells received by the JETSCAPE: "
+               << bulk_info.data.size();
   }
 
   if (flag_output_evo_to_file == 1) {
@@ -659,7 +666,9 @@ void MpiMusic::PassHydroEvolutionHistoryToFramework() {
     fluid_cell_info_ptr->bulk_Pi = fluidCell_ptr->bulkPi;
     StoreHydroEvolutionHistory(fluid_cell_info_ptr);
   }
+  // check the cells now
   delete fluidCell_ptr;
+  // check the cells now
   music_hydro_ptr->clear_hydro_info_from_memory();
 }
 
