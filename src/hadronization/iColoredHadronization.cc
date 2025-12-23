@@ -160,6 +160,7 @@ void iColoredHadronization::DoHadronization(
 
   auto MCGsecond = std::dynamic_pointer_cast<MCGlauberGenStringWrapper> (Hard->GetTaskList()[1]);
   auto Remnants = Hard->GetRemnants();
+  JSINFO << "Remnants size = " << Remnants.size() << ", Scatterings size = " << 2 * ini->pTHat.size();
   if(2 * ini->pTHat.size() != Remnants.size()){
     throw std::runtime_error("Not enough remnants = " + std::to_string(Remnants.size()) + " Scattering = " + std::to_string(ini->pTHat.size()));
   }
@@ -168,7 +169,7 @@ void iColoredHadronization::DoHadronization(
   for (unsigned int ipart = 0; ipart < Remnants.size(); ++ipart) {
       auto Rem = Remnants[ipart];
       double Pz, Px, Py, En;
-      if(Rem.pz() >=0){
+      if(Rem.pz() >=0){//First index zero is temporary. Should run over scatters but unavailable yet
         En = MCGsecond->Get_remnant_proj()[0][0] / double(NHardScatterings);
         Px = MCGsecond->Get_remnant_proj()[0][1] / double(NHardScatterings);
         Py = MCGsecond->Get_remnant_proj()[0][2] / double(NHardScatterings);

@@ -23,6 +23,7 @@
 #include "Pythia8/Pythia.h"
 
 using namespace Jetscape;
+using std::uniform_real_distribution;
 
 class PythiaIsrGun : public HardProcess, public Pythia8::Pythia {
 
@@ -30,7 +31,11 @@ private:
   double pTHatMin;
   double pTHatMax;
   double eCM;
+  double cross_section;
   bool FSR_on;
+  bool multi_scatter;
+  int proj_A;
+  int targ_A;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<PythiaIsrGun> reg;
@@ -61,6 +66,9 @@ public:
   double GetSigmaErr() { return info.sigmaErr(); };
   double GetPtHat() { return info.pTHat(); };
   double GetEventWeight() { return info.weight(); };
+
+protected:
+  uniform_real_distribution<double> ZeroOneDistribution;
 };
 
 #endif // PYTHIAISRGUN_H

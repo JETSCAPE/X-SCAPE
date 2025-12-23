@@ -234,6 +234,11 @@ void MCGlauberWrapper::ExecuteTask() {
                  binary_collision_y_.push_back(xvec[2]);
                  binary_collision_z_.push_back(xvec[3]);
                  iparticle++;
+                 JSINFO << "Added Hard Binary Collision Point at t,x,y,z = "
+                        << xvec[0] << ", "
+                        << xvec[1] << ", "
+                        << xvec[2] << ", "
+                        << xvec[3];
             }
             event_id_++;
         } catch (std::exception &err) {
@@ -349,9 +354,23 @@ void MCGlauberWrapper::OutputHardPartonMomentum(
     // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
     bool newCollFlag = true;
     int hardCollIdx = 0;
-    for (int idx = hard_parton_t_.size() - 1; idx >= 0; idx++) {
+    // JSINFO << "Size of hard_parton_t_: " << hard_parton_t_.size();
+    if (hard_parton_t_.size() == 0) {
+        JSWARN << "No hard collisions are registered yet! Will throw seg fault below.";
+    }
+    if (hard_parton_x_.size() != hard_parton_t_.size()
+            || hard_parton_y_.size() != hard_parton_t_.size()) {
+        JSWARN << "Inconsistent sizes of hard collision position vectors!";
+        exit(0);
+    }
+    for (int idx = hard_parton_t_.size() - 1; idx >= 0; idx--) {
         // start searching from the last index so that the vectors support
         // repeated entries, the last one will be picked.
+        // JSINFO << " Comparing sampled point with registered binary collision in transverse plane:";
+        // JSINFO << " sampled transverse (x,y)=(" << x << "," << y << ")";
+        // JSINFO << " registered transverse (x,y)=()" << hard_parton_x_[idx] << ","
+        //     << hard_parton_y_[idx] << ")"; 
+        // JSINFO << "Loop index: " << idx;
         if (std::abs(x - hard_parton_x_[idx]) < 1e-5
                 && std::abs(y - hard_parton_y_[idx]) < 1e-5) {
             hardCollIdx = idx;
