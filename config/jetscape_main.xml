@@ -18,7 +18,7 @@
   <!-- Technical settings -->
   <debug> off </debug>
   <remark> off </remark>
-  <vlevel> 0 </vlevel>
+  <vlevel> 2 </vlevel>
   <nEvents_printout> 100 </nEvents_printout>
   <enableAutomaticTaskListDetermination> true </enableAutomaticTaskListDetermination>
 

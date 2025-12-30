@@ -16,7 +16,7 @@
 // JETSCAPE module for soft particlization
 // This module will generate Monte-Carlo samples for soft hadrons
 // -----------------------------------------
-// #ifdef USE_ROOT FIXME
+#ifdef USE_ROOT
 
 #include "RootBulkWriter.h"
 #include <iostream>
@@ -262,28 +262,22 @@ void RootBulkWriter::Exec() {
           for (int ieta = 0; ieta < neta; ieta++) {
             double eta_In = eta_min + ieta * deta;
             auto mCell = bInfo.get(tau_In, x_In, y_In, eta_In);
-            if (x_In==0.0 && y_In==0.0 && eta_In==0.0) {
-              std::cout << " FIXME at center: e= " << mCell.energy_density << std::endl;
+            /* if (x_In==0.0 && y_In==0.0 && eta_In==0.0) { */
+              /* std::cout << " FIXME at center: e= " << mCell.energy_density << " -> "; */
                         /* << "  vx= " << mCell.vx */
                         /* << "  vy= " << mCell.vy */
                         /* << "  vz= " << mCell.vz << std::endl; */
-            }
-            if (x_In==0.0 && y_In==0.0) {
-              std::cout << " FIXME at center (" << eta_In << ") e= " << mCell.energy_density << std::endl;
-                        /* << "  vx= " << mCell.vx */
-                        /* << "  vy= " << mCell.vy */
-                        /* << "  vz= " << mCell.vz << std::endl; */
-            }
+            /* } */
             v_data.push_back((float)(mCell.energy_density));
-            if (eta_In==0) FIXME_energy_sum_eta0 += mCell.energy_density;
-            FIXME_energy_sum += mCell.energy_density;
+            /* if (eta_In==0) FIXME_energy_sum_eta0 += mCell.energy_density; */
+            /* FIXME_energy_sum += mCell.energy_density; */
             v_data.push_back((float)(mCell.vx));
             v_data.push_back((float)(mCell.vy));
             v_data.push_back((float)(mCell.vz));//(mCell.vz));
           } // loop ieta
         } // loop iy
       } // loop ix
-      std::cout << " FIXME energy sum at tau " << tau_In << " = " << FIXME_energy_sum << "  and only at eta==0: " << FIXME_energy_sum_eta0 << std::endl;
+      /* std::cout << " FIXME energy sum at tau " << tau_In << " = " << FIXME_energy_sum << "  and only at eta==0: " << FIXME_energy_sum_eta0 << std::endl; */
     } // loop itau
     // done with vector fill
     /* std::cout << " FIXME check: " << v_data.size() << " vs expected " */
@@ -326,3 +320,4 @@ RootBulkWriter::~RootBulkWriter() {
   f->Write();
   f->Close();
 }
+#endif // USE_ROOT

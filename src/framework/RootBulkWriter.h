@@ -45,7 +45,7 @@ public:
   virtual void Clear() {};
 
   void init_tree(const EvolutionHistory& bInfo);
-  void FIXME_checkdata(std::string msg, const EvolutionHistory& bInfo);
+  /* void FIXME_checkdata(std::string msg, const EvolutionHistory& bInfo); */
 
   TFile *f {nullptr};
   TTree *t {nullptr};
