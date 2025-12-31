@@ -169,6 +169,20 @@ void iColoredHadronization::DoHadronization(
   for (unsigned int ipart = 0; ipart < Remnants.size(); ++ipart) {
       auto Rem = Remnants[ipart];
       double Pz, Px, Py, En;
+      //Debug
+      // JSWARN << "MCGlauberGenStringWrapper projectile remnants first entry size = " << MCGsecond->Get_remnant_proj()[0].size();
+      for (unsigned int i = 0; i < MCGsecond->Get_remnant_proj().size(); i++) {
+        JSWARN << "MCGlauberGenStringWrapper projectile remnants entry " << i << " has size = " << MCGsecond->Get_remnant_proj()[i].size();
+      }
+      if (MCGsecond == nullptr) {
+        throw std::runtime_error("MCGlauberGenStringWrapper pointer is null in iColoredHadronization");
+      }
+      // if (MCGsecond->Get_remnant_proj().size() == 0) {
+      //   throw std::runtime_error("MCGlauberGenStringWrapper projectile remnants size is zero in iColoredHadronization");
+      // }
+      // if (MCGsecond->Get_remnant_targ()[0].size() == 0) {
+      //   throw std::runtime_error("MCGlauberGenStringWrapper target remnants first entry size is zero in iColoredHadronization");
+      // }
       if(Rem.pz() >=0){//First index zero is temporary. Should run over scatters but unavailable yet
         En = MCGsecond->Get_remnant_proj()[0][0] / double(NHardScatterings);
         Px = MCGsecond->Get_remnant_proj()[0][1] / double(NHardScatterings);

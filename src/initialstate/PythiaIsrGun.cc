@@ -196,6 +196,10 @@ void PythiaIsrGun::WriteTask(weak_ptr<JetScapeWriter> w) {
 void PythiaIsrGun::ExecuteTask() {
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
+  JSWARN << "Current Event #" << GetCurrentEvent() << "; PythiaIsrGun ExecuteTask called.";
+  JSWARN << "The pTHat vector size is " << ini->pTHat.size() << "before clearing. Now clearing";
+  ini->pTHat.clear();
+  JSWARN << "Have cleared the pTHat vector. The size is now " << ini->pTHat.size();
   //Reading vir_factor from xml for MATTER
   double vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
 
@@ -463,7 +467,7 @@ void PythiaIsrGun::ExecuteTask() {
     }
 
     // Update the pTHat vector in initial state using dummy
-    ini->pTHat.clear(); // since we now pushback to get correct size need to clear first
+    // ini->pTHat.clear(); // since we now pushback to get correct size need to clear first
     for (auto pT : dummy_pTHat){
       ini->pTHat.push_back(pT);
     }
@@ -473,8 +477,9 @@ void PythiaIsrGun::ExecuteTask() {
     double r = ZeroOneDistribution(*GetMt19937Generator());
     ratio = (GetEventWeight() * GetSigmaGen()) / cross_section;
     // JSINFO << MAGENTA << "Ncoll in event = " << ini->GetNcoll();
-    if (!multi_scatter || r > ratio || n_scatters >= std::min(proj_A, targ_A)) scatter_again = false;
     n_scatters++;
+    if (!multi_scatter || r > ratio || n_scatters >= std::min(proj_A, targ_A)) scatter_again = false;
+    
     VERBOSE(4) << "PythiaIsrGun scattering number " << n_scatters << "completed.";
 
     // Update NPP
