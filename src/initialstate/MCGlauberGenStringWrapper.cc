@@ -52,6 +52,8 @@ void MCGlauberGenStringWrapper::ExecuteTask() {
         // generate strings for MUSIC with wounded nucleons
         // for ISR setup (wound_nucleons=true) 
         ini->GenerateStrings(true, event_id_);
+
+        ini->ClearHardPartonMomentum();
     } catch (std::exception &err) {
         Jetscape::JSWARN << err.what();
         std::exit(-1);
