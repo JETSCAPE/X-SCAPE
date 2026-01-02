@@ -1,0 +1,18 @@
+This directory contains the edits to 
+https://github.com/neuraloperator/neuraloperator.git
+
+To use, copy the neuraloperator.git repository locally, update with the
+following files, and then added neuraloperator to the python environment. This
+was done to study 3+1D distributions of the QGP from X-SCAPE.
+
+From the top git directory `neuraloperator`:
+
+./neuralop/losses/data_losses.py
+./neuralop/losses/finite_diff.py
+./neuralop/models/fno.py
+
+A *.diff file showing the changes in each file is saved here locally as:
+    data_losses.py.diff
+    finite_diff.py.diff
+    fno.py.diff
+

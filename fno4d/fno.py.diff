@@ -1,0 +1,12 @@
+diff --git a/neuralop/models/fno.py b/neuralop/models/fno.py
+index 3c15c77..caf9636 100644
+--- a/neuralop/models/fno.py
++++ b/neuralop/models/fno.py
+@@ -195,7 +195,6 @@ class FNO(BaseModel, name='FNO'):
+         conv_module: nn.Module=SpectralConv,
+         **kwargs
+     ):
+-        
+         super().__init__()
+         self.n_dim = len(n_modes)
+         

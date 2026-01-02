@@ -1,0 +1,37 @@
+diff --git a/neuralop/losses/finite_diff.py b/neuralop/losses/finite_diff.py
+index 0aabc9e..b951f3b 100644
+--- a/neuralop/losses/finite_diff.py
++++ b/neuralop/losses/finite_diff.py
+@@ -122,3 +122,32 @@ def central_diff_3d(x, h, fix_x_bnd=False, fix_y_bnd=False, fix_z_bnd=False):
+         
+     return dx, dy, dz
+ 
++def central_diff_4d(x, h, fix_x_bnd=False, fix_y_bnd=False, fix_z_bnd=False, fix_t_bnd=False):
++    """ logical extension of central_diff_3d to 4d tensors
++    """
++    if isinstance(h, float):
++        h = [h, h, h, h]
++
++    dx = (torch.roll(x, -1, dims=-4) - torch.roll(x, 1, dims=-4))/(2.0*h[0])
++    dy = (torch.roll(x, -1, dims=-3) - torch.roll(x, 1, dims=-3))/(2.0*h[1])
++    dz = (torch.roll(x, -1, dims=-2) - torch.roll(x, 1, dims=-2))/(2.0*h[2])
++    dt = (torch.roll(x, -1, dims=-1) - torch.roll(x, 1, dims=-1))/(2.0*h[3])
++
++
++    if fix_x_bnd:
++        dx[...,0,:,:,:] = (x[...,1,:,:,:] - x[...,0,:,:,:])/h[0]
++        dx[...,-1,:,:,:] = (x[...,-1,:,:,:] - x[...,-2,:,:,:])/h[0]
++    
++    if fix_y_bnd:
++        dy[...,:,0,:,:] = (x[...,:,1,:,:] - x[...,:,0,:,:])/h[1]
++        dy[...,:,-1,:,:] = (x[...,:,-1,:,:] - x[...,:,-2,:,:])/h[1]
++    
++    if fix_z_bnd:
++        dz[...,:,:,0,:] = (x[...,:,:,1,:] - x[...,:,:,0,:])/h[2]
++        dz[...,:,:,-1,:] = (x[...,:,:,-1,:] - x[...,:,:,-2,:])/h[2]
++
++    if fix_t_bnd:
++        dt[...,:,:,:,0] = (x[...,:,:,:,1] - x[...,:,:,:,0])/h[3]
++        dt[...,:,:,:,-1] = (x[...,:,:,:,-1] - x[...,:,:,:,-2])/h[3]
++
++    return dx, dy, dz, dt
