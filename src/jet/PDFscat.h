@@ -17,7 +17,7 @@ class PDFScat {
 		double get_energy(int energy_index);
 		double get_energy(double E1, int& energy_index);
 		double get_rate(int energy_index, int process_index);
-		void get_sample(int energy_index, int process_index, double (&V)[4]);
+		void get_sample(int energy_index, int process_index, double (&V)[4], double EO);
 		void GetEIndexRange();
 		void initialize_samplers(double eNucleon);
 		double Integrator_LQ(double E, double proc, double eNucleon);

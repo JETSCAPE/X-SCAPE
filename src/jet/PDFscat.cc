@@ -45,9 +45,36 @@ double PDFScat::get_rate(int energy_index, int process_index){
     return rates[process_index][energy_index];
 }
 
-void PDFScat::get_sample(int energy_index, int process_index, double (&V)[4]){
-    samplers[process_index][energy_index]->Sample(V);
-}
+void PDFScat::get_sample(int energy_index, int process_index, double (&V)[4], double EO){
+//Only for massless partons for now
+double E2, E3, THETA2, THETA3, PHI23, c23, s, t, lambdaQCD2;
+double funcVal = 0;
+int count = 0;
+do {
+    samplers[process_index][energy_index]->Sample(V); ;
+    //std::cout<<"weight is "<<samplers[temp_index][process_index][energy_index]->GetMCwt()<<std::endl;
+
+    E3 = V[3];
+    THETA2 = V[0]; // Convert to radians
+    THETA3 = V[1];
+    PHI23 = V[2];
+
+
+    c23 = cos(THETA2) * cos(THETA3) + sin(THETA2) * sin(THETA3) * cos(PHI23);
+    E2 = (EO * E3 * (1.0 - cos(THETA3))) / (EO * (1.0 - cos(THETA2)) - E3 * (1.0 - c23));
+
+    s = 2.0 * EO * E2 * (1.0 - cos(THETA2));
+    t = -2.0 * EO * E3 * (1.0 - cos(THETA3));
+
+    lambdaQCD2 = 0.2*0.2;
+    count+=1;
+    if (count > 100) {
+        std::cout << "Warning: get_sample stuck in loop!" << std::endl;
+        break;
+    }
+} while (s < 2.0 * lambdaQCD2 || abs(t) < lambdaQCD2 || abs(t) > s - lambdaQCD2 || E2 > EO || E2 < 0.0 );
+} 
+
 
 long double PDFSampler(int i, double x, double Q2) {
     // Pythia8::PDFPtr pythiaPDF = Pythia8::make_shared<Pythia8::LHAGrid1>(2212, "20", "/home/eric/Documents/pythiainst/pythia8315/share/Pythia8/pdfdata", &logger);
