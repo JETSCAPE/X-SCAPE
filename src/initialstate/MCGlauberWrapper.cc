@@ -285,6 +285,15 @@ void MCGlauberWrapper::SampleABinaryCollisionPoint(
     z = binary_collision_z_[rand_idx];
 }
 
+void MCGlauberWrapper::GetAllBinaryCollisionPoints(std::vector<double> &t,
+                                                    std::vector<double> &x,
+                                                    std::vector<double> &y,
+                                                    std::vector<double> &z) {
+    t = binary_collision_t_;
+    x = binary_collision_x_;
+    y = binary_collision_y_;
+    z = binary_collision_z_;
+} 
 
 double MCGlauberWrapper::Get_total_nucleon_density_lab(
         double t, double x, double y, double z) {

@@ -62,6 +62,10 @@ public:
 
   void SampleABinaryCollisionPoint(double &t, double &x,
                                    double &y, double &z);
+  void GetAllBinaryCollisionPoints(std::vector<double> &t,
+                                    std::vector<double> &x,
+                                    std::vector<double> &y,
+                                    std::vector<double> &z);
   double Get_total_nucleon_density_lab(double t, double x,
                                        double y, double z);
   double Get_target_nucleon_density_lab(double t, double x,

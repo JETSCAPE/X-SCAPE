@@ -131,6 +131,10 @@ public:
   std::tuple<double, double, double> CoordFromIdx(int idx);
   virtual void SampleABinaryCollisionPoint(double &t, double &x,
                                            double &y, double &z);
+  virtual void GetAllBinaryCollisionPoints(std::vector<double> &t,
+                                           std::vector<double> &x,
+                                           std::vector<double> &y,
+                                           std::vector<double> &z);
 
   virtual double Get_total_nucleon_density_lab(double t, double x,
                                                double y, double z) {
