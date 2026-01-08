@@ -103,6 +103,8 @@ private:
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
+  std::vector< std::vector<double> > binary_collision_projPos_;
+  std::vector< std::vector<double> > binary_collision_targPos_;
   std::vector< std::vector<double> > QCDStringList_;
   std::vector<double> hard_parton_x_;
   std::vector<double> hard_parton_y_;

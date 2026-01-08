@@ -207,6 +207,8 @@ void MCGlauberWrapper::ClearTask() {
     binary_collision_x_.clear();
     binary_collision_y_.clear();
     binary_collision_z_.clear();
+    binary_collision_projPos_.clear();
+    binary_collision_targPos_.clear();
     QCDStringList_.clear();
 }
 
@@ -239,6 +241,14 @@ void MCGlauberWrapper::ExecuteTask() {
                         << xvec[1] << ", "
                         << xvec[2] << ", "
                         << xvec[3];
+                 xvec = collisionEvents[iparticle].get_proj_nucleon_ptr().lock()->get_x();
+                 std::vector<double> proj_x = {xvec[0], xvec[1],
+                                               xvec[2], xvec[3]};
+                 binary_collision_projPos_.push_back(proj_x);
+                 xvec = collisionEvents[iparticle].get_targ_nucleon_ptr().lock()->get_x();
+                 std::vector<double> targ_x = {xvec[0], xvec[1],
+                                               xvec[2], xvec[3]};
+                 binary_collision_targPos_.push_back(targ_x);
             }
             event_id_++;
         } catch (std::exception &err) {
@@ -263,6 +273,14 @@ void MCGlauberWrapper::ExecuteTask() {
                  binary_collision_y_.push_back(xvec[2]);
                  binary_collision_z_.push_back(xvec[3]);
                  iparticle++;
+                 xvec = collisionEvents[iparticle].get_proj_nucleon_ptr().lock()->get_x();
+                 std::vector<double> proj_x = {xvec[0], xvec[1],
+                                               xvec[2], xvec[3]};
+                 binary_collision_projPos_.push_back(proj_x);
+                 xvec = collisionEvents[iparticle].get_targ_nucleon_ptr().lock()->get_x();
+                 std::vector<double> targ_x = {xvec[0], xvec[1],
+                                               xvec[2], xvec[3]};
+                 binary_collision_targPos_.push_back(targ_x);
             }
             event_id_++;
             //Do not wound nucleons in Glauber code for case there is no
