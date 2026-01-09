@@ -135,6 +135,8 @@ public:
                                            std::vector<double> &x,
                                            std::vector<double> &y,
                                            std::vector<double> &z);
+  virtual void GetAllBinaryCollisionProjPos(std::vector<std::vector<double>> &pos);
+  virtual void GetAllBinaryCollisionTargPos(std::vector<std::vector<double>> &pos);
 
   virtual double Get_total_nucleon_density_lab(double t, double x,
                                                double y, double z) {

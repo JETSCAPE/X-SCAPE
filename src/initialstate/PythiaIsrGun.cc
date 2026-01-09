@@ -186,6 +186,11 @@ void PythiaIsrGun::InitTask() {
     multi_scatter = false;
   }
 
+  //Check Pythia settings for if pTHat min is less than pTHat ref (can cause weird behaviors where almost everything will have multiple scatterings)
+  if ((multi_scatter) && (settings.flag("PhaseSpace:Bias2Selection")) && (pTHatMin < settings.parm("PhaseSpace:pTHatRef"))) {
+    JSWARN << "pTHatMin < pTHatRef can cause unexpected behavior with multiple nucleon scattering. Please check your settings.";
+    throw std::runtime_error("pTHatMin < pTHatRef can cause unexpected behavior with multiple nucleon scattering. Please check your settings.");
+  }
 }
 
 void PythiaIsrGun::WriteTask(weak_ptr<JetScapeWriter> w) {
@@ -223,7 +228,40 @@ void PythiaIsrGun::ExecuteTask() {
   std::vector<double> all_y;
   std::vector<double> all_z;
   ini->GetAllBinaryCollisionPoints(all_t, all_x, all_y, all_z);
+  std::vector<std::vector<double>> all_projPos;
+  ini->GetAllBinaryCollisionProjPos(all_projPos);
+  std::vector<std::vector<double>> all_targPos;
+  ini->GetAllBinaryCollisionTargPos(all_targPos);
   std::vector<FourVector> AcceptedCollisionPoints;
+  int Ncoll = ini->GetNcoll();
+
+  //Debug
+  std::ofstream debug_file;
+  debug_file.open("PIG_debug.txt", std::ios::out | std::ios::app);
+  debug_file << "Event: " << GetCurrentEvent() << "\n";
+  debug_file << "Ncoll: " << Ncoll << "\n";
+  debug_file << "Index; \t Binary Collision PT; \t proj pos; \t targ pos \n"; 
+  for (int i = 0; i < Ncoll; i++){
+    debug_file << i << "; \t (" << all_t[i] << ", " 
+    << all_x[i] << ", "
+    << all_y[i] << ", "
+    << all_z[i] << "); \t (";
+    for (const auto& val : all_projPos[i]){
+      debug_file << val << " ";
+    }
+    debug_file << "); \t (";
+    for (const auto& val : all_targPos[i]){
+      debug_file << val << " ";
+    }
+    debug_file << ")\n";
+  } 
+  debug_file.close();
+
+  // Debug
+  // JSWARN << "Size of all binary collision points: " << all_t.size();
+  // JSWARN << "Number of binary collisions from MCGlauber: " << Ncoll;
+  // JSWARN << "Size of all_projPos: " << all_projPos.size();
+  // JSWARN << "Size of all_targPos: " << all_targPos.size();
 
   // sort by pt
   struct greater_than_pt {
@@ -233,40 +271,49 @@ void PythiaIsrGun::ExecuteTask() {
     }
   };
 
-  struct distance {
-    inline double operator()(const FourVector &p1,
-                           const FourVector &p2) {
-      return sqrt(pow(p1.x()-p2.x(),2)+pow(p1.y()-p2.y(),2)+pow(p1.z()-p2.z(),2));
+  // determine if two nucleons are at same location
+  struct same_location {
+    inline bool operator()(const std::vector<double> &p1,
+                           const std::vector<double> &p2) {
+      if ( pow(p1[1]-p2[1],2)+pow(p1[2]-p2[2],2)+pow(p1[3]-p2[3],2) < 1e-20 )
+        return true;
+      else
+        return false;
     }
   };
 
     FourVector p_p;
 
-  //Decide which binary collisions will be used for scatterings
-  bool accept_collision;
-  FourVector x1;
-  for (int i = 0; i < all_x.size(); i++) {
+  // Go through targ and proj positions and only add collisions where participants
+  // do not overlap with other collisions
+  same_location same_location;
+  bool same_proj, same_targ, accept_collision;
+  FourVector x;
+  for (int i=0; i < Ncoll; i++){
     accept_collision = true;
-    x1.Set(all_x[i], all_y[i], all_z[i], all_t[i]);
-    if (!multi_scatter){//Take all points to allow any point to be chosen for single scattering
-      accept_collision = true;
-    }
-    else if (AcceptedCollisionPoints.size() == 0) {
-      accept_collision = true;
-    }
-    else {
-      //Compare to all previously accepted collisions
-      for (const auto& accepted_point : AcceptedCollisionPoints){
-        double dist = distance()(x1, accepted_point);
-        if (dist < 1.0 ){accept_collision = false;}
+    for ( int j = 0; j < Ncoll; j++){
+      if (i==j) continue;
+      JSWARN << "Comparing collision points" << i << " and " << j;
+      JSWARN << "Size of all_projPos[i]: " << all_projPos[i].size();
+      JSWARN << "Size of all_targPos[i]: " << all_targPos[i].size();
+      same_proj = same_location(all_projPos[i], all_projPos[j]);
+      same_targ = same_location(all_targPos[i], all_targPos[j]);
+      JSINFO << MAGENTA << "(same_proj, same_targ) = (" << same_proj << ", " << same_targ << ")";
+      // If multiple scatterings exclude overlapping participants
+      if ((same_proj || same_targ) && multi_scatter){
+        accept_collision = false;
+        break;
       }
+      JSINFO << MAGENTA << "accept_collision = " << accept_collision;
     }
     if (accept_collision){
-      AcceptedCollisionPoints.push_back(x1);
-      JSINFO << MAGENTA << "Accepted collision point at (x,y,z,t)=(" << all_x[i] << "," << all_y[i] << "," << all_z[i] << "," << all_t[i] << ")";
+      x.Set(all_x[i], all_y[i], all_z[i], all_t[i]);
+      AcceptedCollisionPoints.push_back(x);
     }
   }
-
+  
+  //Debug
+  JSINFO << MAGENTA << "Number of accepted binary collision points after populating AcceptedCollisionPoints: " << AcceptedCollisionPoints.size();
   //To ensure randomness in selection of first point shuffle the accepted points
   std::shuffle(AcceptedCollisionPoints.begin(), AcceptedCollisionPoints.end(), *GetMt19937Generator());
 
@@ -490,7 +537,7 @@ void PythiaIsrGun::ExecuteTask() {
     // Decide whether to scatter again
     double r = ZeroOneDistribution(*GetMt19937Generator());
     ratio = (GetEventWeight() * GetSigmaGen()) / cross_section;
-    if ( !multi_scatter || r > ratio ) scatter_again = false;
+    if ( !multi_scatter || r > ratio || n_scatters >= std::min(proj_A, targ_A) ) scatter_again = false;
 
     //Debug
     JSINFO << MAGENTA << "At end of scattering loop for scatter # " << n_scatters;

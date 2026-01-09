@@ -95,6 +95,7 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
     z = 0.0;
   }
 }
+
 void InitialState::GetAllBinaryCollisionPoints(std::vector<double> &t,
                                                std::vector<double> &x,
                                                std::vector<double> &y,
@@ -104,6 +105,16 @@ void InitialState::GetAllBinaryCollisionPoints(std::vector<double> &t,
   x.clear();
   y.clear();
   z.clear();
+}
+
+void InitialState::GetAllBinaryCollisionProjPos(std::vector<std::vector<double>> &pos) {
+  // Default implementation: return empty vector
+  pos.clear();
+}
+
+void InitialState::GetAllBinaryCollisionTargPos(std::vector<std::vector<double>> &pos) {
+  // Default implementation: return empty vector
+  pos.clear();
 }
 
 void InitialState::ClearHardPartonMomentum() {}

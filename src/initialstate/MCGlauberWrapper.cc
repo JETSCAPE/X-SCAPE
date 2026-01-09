@@ -250,6 +250,7 @@ void MCGlauberWrapper::ExecuteTask() {
                  binary_collision_targPos_.push_back(targ_x);
                  iparticle++;
             }
+            Jetscape::JSWARN << "MCGlauberWrapper generated " << binary_collision_projPos_.size() << " projectile nucleon positions";
             event_id_++;
         } catch (std::exception &err) {
             Jetscape::JSWARN << err.what();
@@ -312,6 +313,14 @@ void MCGlauberWrapper::GetAllBinaryCollisionPoints(std::vector<double> &t,
     y = binary_collision_y_;
     z = binary_collision_z_;
 } 
+
+void MCGlauberWrapper::GetAllBinaryCollisionProjPos(std::vector<std::vector<double>> &pos) {
+    pos = binary_collision_projPos_;
+}
+
+void MCGlauberWrapper::GetAllBinaryCollisionTargPos(std::vector<std::vector<double>> &pos) {
+    pos = binary_collision_targPos_;
+}
 
 double MCGlauberWrapper::Get_total_nucleon_density_lab(
         double t, double x, double y, double z) {
