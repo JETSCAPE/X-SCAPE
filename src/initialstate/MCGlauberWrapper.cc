@@ -235,7 +235,6 @@ void MCGlauberWrapper::ExecuteTask() {
                  binary_collision_x_.push_back(xvec[1]);
                  binary_collision_y_.push_back(xvec[2]);
                  binary_collision_z_.push_back(xvec[3]);
-                 iparticle++;
                  JSINFO << "Added Hard Binary Collision Point at t,x,y,z = "
                         << xvec[0] << ", "
                         << xvec[1] << ", "
@@ -249,6 +248,7 @@ void MCGlauberWrapper::ExecuteTask() {
                  std::vector<double> targ_x = {xvec[0], xvec[1],
                                                xvec[2], xvec[3]};
                  binary_collision_targPos_.push_back(targ_x);
+                 iparticle++;
             }
             event_id_++;
         } catch (std::exception &err) {
@@ -272,7 +272,6 @@ void MCGlauberWrapper::ExecuteTask() {
                  binary_collision_x_.push_back(xvec[1]);
                  binary_collision_y_.push_back(xvec[2]);
                  binary_collision_z_.push_back(xvec[3]);
-                 iparticle++;
                  xvec = collisionEvents[iparticle].get_proj_nucleon_ptr().lock()->get_x();
                  std::vector<double> proj_x = {xvec[0], xvec[1],
                                                xvec[2], xvec[3]};
@@ -281,6 +280,7 @@ void MCGlauberWrapper::ExecuteTask() {
                  std::vector<double> targ_x = {xvec[0], xvec[1],
                                                xvec[2], xvec[3]};
                  binary_collision_targPos_.push_back(targ_x);
+                 iparticle++;
             }
             event_id_++;
             //Do not wound nucleons in Glauber code for case there is no
