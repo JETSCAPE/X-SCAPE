@@ -20,16 +20,18 @@ void Rectify_Momentum(double (&pc0)[4], const double E1, const double msq){
 std::uniform_real_distribution<> uniform_rand(0.0,1.0);
 PDFElasticCollision::PDFElasticCollision() {};
 
-void PDFElasticCollision::setter(double max_energy0, double low_energy0, double energy_grid0,int index_type0, double eNucleon) {
+void PDFElasticCollision::setter(double max_energy0, double low_energy0, double energy_grid0,int index_type0, double nu, double Q2) {
     obj_hig_energy = max_energy0;
     obj_low_energy = low_energy0;
     obj_grid_energy = energy_grid0;
     obj_index = index_type0;
+    nu_ = nu;
+    Q2_ = Q2;
     //iZ_Vector.SetXYZ(0,0,1); //won't be using root to do the rotations
     scattering_obj.setter(max_energy0, low_energy0, energy_grid0, index_type0);
 	//scattering_obj.setter(0.2,0.2,0.1,102,0.5,0.5);
 	//scattering_obj.setter(0.2,0.2,0.1,102,0.5,1);
-    scattering_obj.initialize_samplers(eNucleon); //the param here is energy of nucleon getting scattered off 
+    scattering_obj.initialize_samplers(nu, Q2); //the param here is energy of nucleon getting scattered off 
 }
 /*The MATTER module had pre-defination  of calculating the probability of scattring.*/
 
@@ -37,13 +39,18 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
     //pc2 is hole
     //pc3 is energetic parton after scattering
     //pc4 is recoil
-    double r0,r1,r2,r3,r4,r5;
+    //double r0,r1,r2,r3,r4,r5;
     double EO,E1,E2,E3,E4,c23,c24,p1,p3,THETA2,THETA3,THETA4,PHI3,PHI4,PHI2,PHI23;
     //EO is the original energy
     double mc_sq;
     double TotalRate = 0;
+    double beta =  nu_ / sqrt(nu_ * nu_ + Q2_);
+    double gamma = sqrt(nu_ * nu_ + Q2_) / sqrt(Q2_);
 
-    int parent_pid,hole_pid,daughter1_pid,daughter2_pid,pid_index;
+    int parent_pid, pid_index;
+    int daughter1_pid = -1;
+    int daughter2_pid = -1;
+    int hole_pid = -1;
     int energy_index;//, temp_index;
     int parton_type = -1;
     int proc; //heavy(1) or light(0)
@@ -55,7 +62,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
     //TRotation r;
 
     EO = pc0[0];
-
+    EO = gamma * (EO - beta * EO);//breit frame
     //find which E1 bin to use and switch over to that discretized value
     //energy_index = round((E1- obj_low_energy)/obj_grid_energy);
     E1 = scattering_obj.get_energy(EO, energy_index);
@@ -64,36 +71,76 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
     pid_index = floor(uniform_rand(generator)*6); //ONLY UDS FOR NOW
     if (parent_pid == 21) {
 		//r0 = scattering_obj.get_rate(energy_index,6); //has color abiguity for matter
-        r0 = PerformLinearInterpolation(EO, 6, 1);
-		r1 = PerformLinearInterpolation(EO, 7, 1);
-        r2 = PerformLinearInterpolation(EO, 8, 1);
-        TotalRate = r0 + r1 + r2;
+        double r0g = PerformLinearInterpolation(EO, 6, 21, 1);
+		double r1g = PerformLinearInterpolation(EO, 7, 21, 1);
+        double r2u = PerformLinearInterpolation(EO, 8, 1, 1);
+        double r2ubar = PerformLinearInterpolation(EO, 8, -1, 1);
+        double r2d = PerformLinearInterpolation(EO, 8, 2, 1);
+        double r2dbar = PerformLinearInterpolation(EO, 8, -2, 1);
+        double r2s = PerformLinearInterpolation(EO, 8, 3, 1);
+        double r2sbar = PerformLinearInterpolation(EO, 8, -3, 1);
+        TotalRate = r0g + r1g + r2u + r2ubar + r2d + r2dbar + r2s + r2sbar;
         if (ProbailisticScattering){  
-            if (exp(-TotalRate * deltaT) > dis(generator)){qt = 0; return false;}
+            if (exp(-TotalRate * deltaT) > uniform_rand(generator)){qt = 0; return false;}
         }  
         parton_type = 0;
-    	std::discrete_distribution<int> distribution0{r0,r1,r2};
+    	std::discrete_distribution<int> distribution0{r0g,r1g,r2u,r2ubar,r2d,r2dbar,r2s,r2sbar};
         switch (distribution0(generator)) {
                 case 0: //g g -> q qbar
-                    scattering_obj.get_sample(energy_index,6,V, EO);
+                    scattering_obj.get_sample(21, energy_index,6,V, EO);
                     hole_pid      =  21;
                     daughter1_pid =  pid_list[pid_index];
                     daughter2_pid = -pid_list[pid_index];
                     break;
 
                 case 1: //g g -> g g
-                    scattering_obj.get_sample(energy_index,7,V, EO);
+                    scattering_obj.get_sample(21, energy_index,7,V, EO);
                     hole_pid      = 21;
                     daughter1_pid = 21;
                     daughter2_pid = 21;
                     break;
 
-                case 2: //g q -> g q
-                    scattering_obj.get_sample(energy_index,8,V, EO);
-                    hole_pid      = pid_list[pid_index];
+                case 2: //g u -> g u
+                    scattering_obj.get_sample(1, energy_index,8,V, EO);
+                    hole_pid      = 1;
                     daughter1_pid = 21;
-                    daughter2_pid = pid_list[pid_index];
-
+                    daughter2_pid = 1;
+                    break;
+                case 3:
+                    //g ubar -> g ubar
+                    scattering_obj.get_sample(-1, energy_index,8,V, EO);
+                    hole_pid      = -1;
+                    daughter1_pid = 21;
+                    daughter2_pid = -1;
+                    break;
+                case 4:
+                    //g d -> g d
+                    scattering_obj.get_sample(2, energy_index,8,V, EO);
+                    hole_pid      = 2;
+                    daughter1_pid = 21;
+                    daughter2_pid = 2;
+                    break;
+                case 5:
+                    //g dbar -> g dbar
+                    scattering_obj.get_sample(-2, energy_index,8,V, EO);
+                    hole_pid      = -2;
+                    daughter1_pid = 21;
+                    daughter2_pid = -2;
+                    break;
+                case 6:
+                    //g s -> g s
+                    scattering_obj.get_sample(3, energy_index,8,V, EO);
+                    hole_pid      = 3;
+                    daughter1_pid = 21;
+                    daughter2_pid = 3;
+                    break;
+                case 7:
+                    //g sbar -> g sbar
+                    scattering_obj.get_sample(-3, energy_index,8,V, EO);
+                    hole_pid      = -3;
+                    daughter1_pid = 21;
+                    daughter2_pid = -3;
+                    break;
                 default:
                     //never gets here
                     //raise error?
@@ -101,21 +148,23 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
         }
     }   
     
-    else if (abs(parent_pid)>=1 && abs(parent_pid)<=3) {
-		r0 = PerformLinearInterpolation(EO,0,1);
-		r1 = PerformLinearInterpolation(EO,1,1);
-		r2 = PerformLinearInterpolation(EO,2,1);
-		r3 = PerformLinearInterpolation(EO,3,1);
-		r4 = PerformLinearInterpolation(EO,4,1);
-		r5 = PerformLinearInterpolation(EO,5,1);
-        TotalRate = r0 + r1 + r2 + r3 + r4 + r5;
+    else if (parent_pid ==1) {
+		double r0 = 0; //PerformLinearInterpolation(EO,0,1);//s-channel not considered
+		double r1bar = PerformLinearInterpolation(EO,1,-parent_pid,1);
+		double r2 = PerformLinearInterpolation(EO,2,parent_pid,1);
+		double r3bar = PerformLinearInterpolation(EO,3,-parent_pid,1);
+		double r4 = PerformLinearInterpolation(EO, 4, 21, 1);
+		double r5a = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 1),1);
+        double r5b = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 2),1);
+        TotalRate = r0 + r1bar + r2 + r3bar + r4 + r5a + r5b;
         if (ProbailisticScattering){  
-            if (exp(-TotalRate * deltaT) > dis(generator)){qt = 0; return false;}
+            if (exp(-TotalRate * deltaT) > uniform_rand(generator)){qt = 0; return false;}
         }  
         parton_type = 0;
-    	std::discrete_distribution<int> distribution0{r0,r1,r2,r3,r4,r5};
+    	std::discrete_distribution<int> distribution0{r0,r1bar,r2,r3bar,r4,r5a,r5b};
         switch (distribution0(generator)) {
                 case 0: //q1 q1bar -> q2 q2bar
+                    /*
                     scattering_obj.get_sample(energy_index,0,V, EO);
                     hole_pid      = -parent_pid;
                     do { //keep sampling until q2 != q1
@@ -123,46 +172,55 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
                         daughter1_pid = pid_list[pid_index];
                     } while (daughter1_pid == parent_pid);                
                     daughter2_pid = -daughter1_pid;
+                    */
                     break;
 
                 case 1: //q1 q1bar -> q1 q1bar
-                    scattering_obj.get_sample(energy_index,1,V, EO);
+                    scattering_obj.get_sample(-parent_pid, energy_index, 1, V, EO);
                     hole_pid      = -parent_pid;
                     daughter1_pid =  parent_pid;
                     daughter2_pid = -parent_pid;
                     break;
 
                 case 2: //q1 q1 -> q1 q1
-                    scattering_obj.get_sample(energy_index,2,V, EO);
+                    scattering_obj.get_sample(parent_pid, energy_index, 2, V, EO);
                     hole_pid      = parent_pid;
                     daughter1_pid = parent_pid;
                     daughter2_pid = parent_pid;
                     break;
 
                 case 3: //q1 q1bar -> g g
-                    scattering_obj.get_sample(energy_index,3,V, EO);
+                    scattering_obj.get_sample(-parent_pid, energy_index, 3, V, EO);
                     hole_pid      = -parent_pid;
                     daughter1_pid = 21;
                     daughter2_pid = 21;
                     break;
 
                 case 4: //q1 g -> q1 g
-                    scattering_obj.get_sample(energy_index,4,V, EO);
+                    scattering_obj.get_sample(21, energy_index,4,V, EO);
                     hole_pid      = 21;
                     daughter1_pid = parent_pid;
                     daughter2_pid = 21;
                     break;
 
                 case 5: //q1 q2 -> q1 q2
-                    scattering_obj.get_sample(energy_index,5,V, EO);
+                    daughter2_pid = (parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 1);
+                    scattering_obj.get_sample(daughter2_pid,energy_index,5,V, EO);
                     daughter1_pid = parent_pid;
+                    /*
                     do { //keep sampling until q2 != q1 or q1bar
                         pid_index = floor(uniform_rand(generator)*6);
                         daughter2_pid = pid_list[pid_index];
                     } while (daughter2_pid == parent_pid || daughter2_pid == -parent_pid);
+                     */
                     hole_pid=daughter2_pid;     
                     break;
-
+                case 6: //q1 q2 -> q1 q2
+                    daughter2_pid = (parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 2);
+                    scattering_obj.get_sample(daughter2_pid,energy_index,5,V, EO);
+                    daughter1_pid = parent_pid;
+                    hole_pid=daughter2_pid;     
+                    break;
                 default:
                     //never gets here
                     break;
@@ -170,13 +228,14 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
     }
      /*Heavy scattering part will be added here*/
     else if (abs(parent_pid)==4) {
+        /*
         mc_sq = 1.6129;
 
 		r0 = PerformLinearInterpolation(EO,9,1);
 		r1 = PerformLinearInterpolation(EO,10,1);
         TotalRate = 0.0; //r0 + r1;
         if (ProbailisticScattering){  
-            if (exp(-TotalRate * deltaT) > dis(generator)){qt = 0; return false;}
+            if (exp(-TotalRate * deltaT) > uniform_rand(generator)){qt = 0; return false;}
         }
         parton_type = 1;
     	std::discrete_distribution<int> distribution0{r0,r1};
@@ -198,17 +257,19 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
                 default:
                     //never gets here
                     break;
-        }
+        }*/
+         return false;
     }
-
+        
     else {
+        /*
         mc_sq = 17.4724;
 
 		r0 = PerformLinearInterpolation(EO,11,1);
 		r1 = PerformLinearInterpolation(EO,12,1);
         TotalRate = 0.0; //r0 + r1;
         if (ProbailisticScattering){  
-            if (exp(-TotalRate * deltaT) > dis(generator)){qt = 0; return false;}
+            if (exp(-TotalRate * deltaT) > uniform_rand(generator)){qt = 0; return false;}
         }
         parton_type = 1;
     	std::discrete_distribution<int> distribution0{r0,r1};
@@ -230,7 +291,8 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
                 default:
                     //never gets here
                     break;
-        }
+        }*/
+       return false;
     }
 
     if (parton_type == 0) { //light parton
@@ -257,23 +319,29 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
 		PHI4 = acos(value);
 
         //std::cout<<"LQ E1 "<<E1<<" E2 "<<E2<<" E3 "<<E3<<" E4 "<<E4<<std::endl;
-        pc2[0] = E2;
+        //pc2[0] = E2;
         pc2[1] = E2 * sin(THETA2) * cos(PHI2);
         pc2[2] = E2 * sin(THETA2) * sin(PHI2);
-        pc2[3] = E2 * cos(THETA2);
+        //pc2[3] = E2 * cos(THETA2);
+        pc2[0] = gamma * (E2 + beta * E2 * cos(THETA2));
+        pc2[3] = gamma * (E2 * cos(THETA2) + beta * E2);
         pid2 = hole_pid;
 
-        pc3[0] = E3;
-        pc3[1] = E3 * sin(THETA3) * cos(PHI3);
-        pc3[2] = E3 * sin(THETA3) * sin(PHI3);
-        pc3[3] = E3 * cos(THETA3);
-        pid3 = daughter1_pid;
+        //pc0[0] = E3;
+        pc0[1] = E3 * sin(THETA3) * cos(PHI3);
+        pc0[2] = E3 * sin(THETA3) * sin(PHI3);
+        //pc0[3] = E3 * cos(THETA3);
+        pc0[0] = gamma * (E3 + beta * E3 * cos(THETA3));
+        pc0[3] = gamma * (E3 * cos(THETA3) + beta * E3);
+        pid0 = daughter1_pid;
 
-        pc4[0] = E4;
-        pc4[1] = E4 * sin(THETA4) * cos(PHI4);
-        pc4[2] = E4 * sin(THETA4) * sin(PHI4);
-        pc4[3] = E4 * cos(THETA4);   
-        pid4 = daughter2_pid;
+        //pc3[0] = E4;
+        pc3[1] = E4 * sin(THETA4) * cos(PHI4);
+        pc3[2] = E4 * sin(THETA4) * sin(PHI4);
+        //pc3[3] = E4 * cos(THETA4);   
+        pc3[0] = gamma * (E4 + beta * E4 * cos(THETA4));
+        pc3[3] = gamma * (E4 * cos(THETA4) + beta * E4);
+        pid3 = daughter2_pid;
         
         //Will perform rotation outside this class;
 
@@ -342,7 +410,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
         //std::cout<<"HQ after one rotation E1 "<<E1<<" E2 "<<E2<<" E3 "<<E3<<" E4 "<<E4<<std::endl;
         */
     }
-    else { return -1; }
+    else { return false; }
     /*
     //TODO: LEARN ROTATIONS ETC
     double s0 = P1.Angle(iZ_Vector);
@@ -380,7 +448,42 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
     return true;
 }
 
-double PDFElasticCollision::PerformLinearInterpolation(double EOriginal, int process_id, int type){
+double PDFElasticCollision::GetQhat_0(double E, int pid){
+    double qhat = 0;
+    int energy_index;
+    //energy_index = std::min( std::max(0, int(round((E1 - obj_low_energy) / obj_grid_energy))), int(round((obj_hig_energy - obj_low_energy) / obj_grid_energy)));
+    //std::cout<<"obj_low_energy "<<obj_low_energy<<" obj_grid_enrgy "<<obj_grid_energy<<std::endl;
+    //int energy_index = round((E- obj_low_energy)/obj_grid_energy);
+    E = scattering_obj.get_energy(E, energy_index);
+    //std::cout<<"energy index is "<<energy_index<<" energy is "<<E<<std::endl;
+    //int temp_index = round((T-obj_low_temp)/obj_grid_temp);
+    //int temp_index = std::min(std::max(0, int(round((T - obj_low_temp) / obj_grid_temp))), int(round((obj_hig_temp - obj_low_temp) / obj_grid_temp)));
+    if (abs(pid) == 21){
+        qhat = PerformLinearInterpolation(energy_index, 6, 21, 2)
+            + PerformLinearInterpolation(energy_index, 7, 21, 2)
+            + PerformLinearInterpolation(energy_index, 8, 1, 2)
+            + PerformLinearInterpolation(energy_index, 8, -1, 2)
+            + PerformLinearInterpolation(energy_index, 8, 2, 2)
+            + PerformLinearInterpolation(energy_index, 8, -2, 2)
+            + PerformLinearInterpolation(energy_index, 8, 3, 2)
+            + PerformLinearInterpolation(energy_index, 8, -3, 2);
+    }
+    else if (abs(pid) < 3){
+        qhat = 0
+            + PerformLinearInterpolation(energy_index, 1, -pid, 2)
+            + PerformLinearInterpolation(energy_index, 2, pid, 2)
+            + PerformLinearInterpolation(energy_index, 3, -pid, 2)
+            + PerformLinearInterpolation(energy_index, 4, 21, 2)
+            + PerformLinearInterpolation(energy_index, 5, (pid < 0 ? -1 : 1) * (((abs(pid)) % 3) + 1), 2)
+            + PerformLinearInterpolation(energy_index, 5, (pid < 0 ? -1 : 1) * (((abs(pid)) % 3) + 2), 2); 
+    }
+    else{
+        qhat = 0;
+    }
+    return qhat;
+}
+
+double PDFElasticCollision::PerformLinearInterpolation(double EOriginal, int process_id,int flv, int type){
     int EIndex, EIndex_; //index where sampler is trained
     double E, E_;
     double ERoundedOff = scattering_obj.get_energy(EOriginal, EIndex);
@@ -418,15 +521,14 @@ double PDFElasticCollision::PerformLinearInterpolation(double EOriginal, int pro
     double ValE1, ValE2;
     double ValFinal;
     if (type == 1){
-        ValE1 = scattering_obj.get_rate(EIndex, process_id);
-        ValE2 = scattering_obj.get_rate(EIndex_, process_id);
+        //Rate interpolation
+        ValE1 = scattering_obj.get_rate(flv, EIndex, process_id);
+        ValE2 = scattering_obj.get_rate(flv, EIndex_, process_id);
     }
     else{
-        //Not in use at present
-        //ValT1E1 = scattering_obj.get_qhat(TIndex, EIndex, process_id);
-        //ValT1E2 = scattering_obj.get_qhat(TIndex, EIndex_, process_id);
-        //ValT2E1 = scattering_obj.get_qhat(TIndex_, EIndex, process_id);
-        //ValT2E2 = scattering_obj.get_qhat(TIndex_, EIndex_, process_id);
+        //Qhat interpolation
+        ValE1 = scattering_obj.get_qhat(flv, EIndex, process_id);
+        ValE2 = scattering_obj.get_qhat(flv, EIndex_, process_id);
     }
     /*
     if (T_ - T < 1e-4){
@@ -453,3 +555,10 @@ double PDFElasticCollision::PerformLinearInterpolation(double EOriginal, int pro
     //std::cout<<std::setprecision(4)<<"ValEgridLow "<<ValEgridLow<<" ValEgridHigh "<<ValEgridHigh<<" ValFinal "<<ValFinal<<std::endl;
     return ValFinal;
 }
+/*
+int main(){
+    PDFElasticCollision pdfElasticCollision;
+    //pdfElasticCollision.setter(10.0, 1.0, 0.5, 1, 1000.0);
+    //std::cout<<PDFSampler(21, 0.1, 10.0)<<std::endl;
+    return 0;
+}*/
