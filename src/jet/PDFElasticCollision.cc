@@ -80,7 +80,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
         double r2s = PerformLinearInterpolation(EO, 8, 3, 1);
         double r2sbar = PerformLinearInterpolation(EO, 8, -3, 1);
         TotalRate = rho * (r0g + r1g + r2u + r2ubar + r2d + r2dbar + r2s + r2sbar);
-        std::cout<<"TotalRate gluon is "<<TotalRate<<std::endl;
+        //std::cout<<"TotalRate gluon is "<<TotalRate<<std::endl;
         if (ProbailisticScattering){  
             if (exp(-TotalRate * deltaT) > uniform_rand(generator)){qt = 0; return false;}
         }  
@@ -156,7 +156,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
 		double r3bar = PerformLinearInterpolation(EO,3,-parent_pid,1);
 		double r4 = PerformLinearInterpolation(EO, 4, 21, 1);
 		double r5a = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 1),1);
-        double r5b = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 2),1);
+        double r5b = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)+1) % 3) + 1),1);
         TotalRate = rho * (r0 + r1bar + r2 + r3bar + r4 + r5a + r5b);
         std::cout<<"TotalRate quark for pid  "<<parent_pid<<" is "<<TotalRate<<std::endl;
         if (ProbailisticScattering){  
@@ -218,7 +218,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
                     hole_pid=daughter2_pid;     
                     break;
                 case 6: //q1 q2 -> q1 q2
-                    daughter2_pid = (parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 2);
+                    daughter2_pid = (parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)+1) % 3) + 1);
                     scattering_obj.get_sample(daughter2_pid,energy_index,5,V, EO);
                     daughter1_pid = parent_pid;
                     hole_pid=daughter2_pid;     
