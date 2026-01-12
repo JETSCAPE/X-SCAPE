@@ -213,7 +213,7 @@ void PDFScat::initialize_samplers(){
                     sampler->SetRange(xmin, xmax);
                     ret = sampler->Init();
                     samplers_row.push_back(sampler);
-                    //std::cout<<"local_energy is "<<local_energy<<" for pid_sampled "<<pid_sampled<<" and pi "<<pi<<" rate "<<temp_rate<<" qhat "<<temp_qhat<<std::endl;
+                    std::cout<<"local_energy is "<<local_energy<<" for pid_sampled "<<pid_sampled<<" and pi "<<pi<<" rate "<<temp_rate<<" qhat "<<temp_qhat<<std::endl;
                 }
             }
             else if (pi == 4||pi == 6||pi ==7){ //quarks and antiquarks
@@ -230,7 +230,7 @@ void PDFScat::initialize_samplers(){
                     sampler->SetRange(xmin, xmax);
                     ret = sampler->Init();
                     samplers_row.push_back(sampler);
-                    //std::cout<<"local_energy is "<<local_energy<<" for pid_sampled "<<pid_sampled<<" and pi "<<pi<<" rate "<<temp_rate<<" qhat "<<temp_qhat<<std::endl;
+                    std::cout<<"local_energy is "<<local_energy<<" for pid_sampled "<<pid_sampled<<" and pi "<<pi<<" rate "<<temp_rate<<" qhat "<<temp_qhat<<std::endl;
                 }
                 else{
                     temp_rate = 0;

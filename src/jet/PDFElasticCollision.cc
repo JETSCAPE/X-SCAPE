@@ -80,6 +80,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
         double r2s = PerformLinearInterpolation(EO, 8, 3, 1);
         double r2sbar = PerformLinearInterpolation(EO, 8, -3, 1);
         TotalRate = rho * (r0g + r1g + r2u + r2ubar + r2d + r2dbar + r2s + r2sbar);
+        std::cout<<"TotalRate gluon is "<<TotalRate<<std::endl;
         if (ProbailisticScattering){  
             if (exp(-TotalRate * deltaT) > uniform_rand(generator)){qt = 0; return false;}
         }  
@@ -148,7 +149,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
         }
     }   
     
-    else if (parent_pid ==1) {
+    else if (abs(parent_pid) >= 1 and abs(parent_pid) <= 3) {
 		double r0 = 0; //PerformLinearInterpolation(EO,0,1);//s-channel not considered
 		double r1bar = PerformLinearInterpolation(EO,1,-parent_pid,1);
 		double r2 = PerformLinearInterpolation(EO,2,parent_pid,1);
@@ -157,6 +158,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
 		double r5a = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 1),1);
         double r5b = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 2),1);
         TotalRate = rho * (r0 + r1bar + r2 + r3bar + r4 + r5a + r5b);
+        std::cout<<"TotalRate quark for pid  "<<parent_pid<<" is "<<TotalRate<<std::endl;
         if (ProbailisticScattering){  
             if (exp(-TotalRate * deltaT) > uniform_rand(generator)){qt = 0; return false;}
         }  
@@ -310,7 +312,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
 		
         do{
             PHI2 = 2 * M_PI * uniform_rand(generator);
-        } while (PHI2 < 0 || PHI2 > 2 * M_PI);
+        } while (E2 * sin(THETA2) * cos(PHI2) < 0.1 || E2 * sin(THETA2) * sin(PHI2) < 0.1); //avoid numerical instability
 		PHI3 = PHI2 - PHI23;
 
 		//THETA4= acos((E1+E2*cos(THETA2)-E3*cos(THETA3))/E4);
@@ -565,19 +567,120 @@ double PDFElasticCollision::PerformLinearInterpolation(double EOriginal, int pro
     return ValFinal;
 }
 
+void rotate_vector(double (&V)[4], int rot_type, double& theta, double& phi){
+    double p1x, p1y, p1z;
+    if (rot_type == 1){
+        theta = atan2(sqrt(V[2]*V[2] + V[1] * V[1]), V[3]);
+        phi = atan2(V[2], V[1]);
+    }
+    //std::cout<<"theta "<<theta<<" phi "<<phi<<std::endl;
+    p1x = V[1];
+    p1y = V[2];
+    p1z = V[3];
+    if (rot_type == 1){
+        //rotate around z axis clockwise(if seen from +z axis) by phi [[cos(phi) sin(phi) 0][-sin(phi) cos(phi) 0][0 0 1]]
+        V[1] = p1x * cos(phi) + p1y * sin(phi);
+        V[2] = -p1x * sin(phi) + p1y * cos(phi);
+        V[3] = p1z;
+        p1x = V[1];
+        p1y = V[2];
+        p1z = V[3];
+        //rotate around y axis clockwise (if seen from +y axis) by theta [[cos(theta) 0 -sin(theta)][0 1 0][sin(theta) 0 cos(theta)]]
+        V[1] = p1x * cos(theta) - p1z * sin(theta);
+        V[2] = p1y;
+        V[3] = p1x * sin(theta) + p1z * cos(theta);
+    }
+    if (rot_type == -1){
+        //rotate around y axis counter-clockwise (if seen from +y axis) by theta [[cos(theta) 0 sin(theta)][0 1 0][-sin(theta) 0 cos(theta)]]
+        V[1] = p1x * cos(theta) + p1z * sin(theta);
+        V[2] = p1y;
+        V[3] = -p1x * sin(theta) + p1z * cos(theta);
+        p1x = V[1];
+        p1y = V[2];
+        p1z = V[3];
+        //rotate around z axis counter-clockwise(if seen from +z axis) by phi [[cos(phi) -sin(phi) 0][sin(phi) cos(phi) 0][0 0 1]]
+        V[1] = p1x * cos(phi) - p1y * sin(phi);
+        V[2] = p1x * sin(phi) + p1y * cos(phi);
+        V[3] = p1z;
+    }
+}
+
 int main(){
-    std::ofstream file_g;
-    file_g.open("Rates_QhatG_w0.8.txt");
-    std::ofstream file_q;
-    file_q.open("Rates_QhatQ_w0.8.txt");
+    std::ofstream file_;
+    file_.open("Qhat_w0.8_MultipleScattering.txt");
+    //std::ofstream file_q;
+    //file_q.open("QhatQ_w0.8_MultipleScattering.txt");
     double rho = 0.16 / pow(5.0, 3.0); //GeV^3
     PDFElasticCollision pdfElasticCollision;
-    int parent_pid = 1;
-    pdfElasticCollision.setter(10.0, 1.0, 0.25, 1);
-    for (int ti = 1; ti <= 100; ti++){
-        double T = 0.1 * ti * 5.0; //GeV-1
-        pdfElasticCollision.elastic_kinematics
-    /*
+    double p1x, p1y, p1z;
+    int parent_pid = -999;
+    int hole_pid = -999;
+    int daughter2_pid = -999;
+    double V0[4], V2[4], V3[4];
+    double qt = 0.1; //GeV
+    bool ifScatter;
+    pdfElasticCollision.setter(100.0, 5.0, 5.0, 1);
+    int pid_list[] = {21, 1, -1, 2, -2, 3, -3};
+    int flv = -999;
+    double rotate_theta = 0.0;
+    double rotate_phi = 0.0;
+    for (int flv_i = 0; flv_i < 7; flv_i++){
+        flv = pid_list[flv_i];
+        for (int ei = 1; ei <=10; ei++){ 
+            for (int it = 1; it <= 5000; it++){
+                V0[0] = (double)ei * 10.0;
+                V0[1] = 0.0;
+                V0[2] = 0.0;
+                V0[3] = (double)ei * 10.0;
+                V2[0] = 0.0;
+                V2[1] = 0.0;
+                V2[2] = 0.0;
+                V2[3] = 0.0;
+                V3[0] = 0.0;
+                V3[1] = 0.0;
+                V3[2] = 0.0;
+                V3[3] = 0.0;   
+                parent_pid = flv;
+                ifScatter = false;
+                for (int ti = 1; ti <= 20; ti++){
+                    if (ifScatter){
+                        rotate_vector(V0, 1, rotate_theta, rotate_phi);
+                        std::cout<<V0[0]<<"\t"<<V0[1]<<"\t"<<V0[2]<<"\t"<<V0[3]<<std::endl;
+                        V0[0] = V0[3];
+                    }
+                    //rotate_vector(V0, 1);
+                    //std::cout<<"rotate 1 "<<V0[0]<<"\t"<<V0[1]<<"\t"<<V0[2]<<"\t"<<V0[3]<<std::endl;
+                    //Make it on-shell
+                    //V0[0] = V0[3];
+                    //double T = 0.1 * ti * 5.0; //GeV-1
+                    ifScatter = pdfElasticCollision.elastic_kinematics(true, 1 * 5.0, parent_pid, hole_pid, daughter2_pid, V0, V2, V3, qt, rho);
+                    if (ifScatter){
+                        rotate_vector(V0, -1, rotate_theta, rotate_phi);
+                        rotate_vector(V2, -1, rotate_theta, rotate_phi);
+                        rotate_vector(V3, -1, rotate_theta, rotate_phi);
+                    
+                    if (V3[0] > V0[0]){
+                        double tempE = V0[0];
+                        double tempPx = V0[1];
+                        double tempPy = V0[2];
+                        double tempPz = V0[3];
+                        V0[0] = V3[0];
+                        V0[1] = V3[1];
+                        V0[2] = V3[2];
+                        V0[3] = V3[3];
+                        V3[0] = tempE;
+                        V3[1] = tempPx;
+                        V3[2] = tempPy;
+                        V3[3] = tempPz;
+                    } 
+                    }
+                }
+                file_<<flv<<" "<<ei<<" "<<it<<" "<<sqrt(V0[1] * V0[1] + V0[2] * V0[2])<<std::endl;
+            }
+
+        }
+    }
+    /* Single scattering rate and qhat calculation
     for (int ei = 1; ei <=10; ei++){
         double EO = 1.0 * ei;
         std::cout<<"Processing energy "<<EO<<std::endl;
@@ -620,8 +723,8 @@ int main(){
         file_q<<std::setprecision(6)<<EO<<"\t"<<rate_q<<"\t"<<qhat_q<<std::endl;
     }
     */
-    file_g.close();
-    file_q.close();
+    file_.close();
+    //file_q.close();
 
     //std::cout<<PDFSampler(21, 0.1, 10.0)<<std::endl;
     return 0;
