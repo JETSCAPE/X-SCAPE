@@ -22,9 +22,9 @@ class PDFScat {
 		void get_sample(int flv, int energy_index, int process_index, double (&V)[4], double EO);
 		double get_qhat(int flv, int energy_index, int process_index);
 		void GetEIndexRange();
-		void initialize_samplers(double nu, double Q2);
-		double Integrator_LQ(double E, int pi, int flv, double Q2, double nu);
-		double Integrator_LQ_QHat(double E, int pi,int flv, double Q2, double nu);
+		void initialize_samplers();
+		double Integrator_LQ(double E, int pi, int flv);
+		double Integrator_LQ_QHat(double E, int pi,int flv);
 		double Integrator_HQ(double E, int proc, double eNucleon, double msq);
 		double Integrator_HQ_QHat(double E, int pi,double eNucleon, double msq);
 		// double Integrator_(double E, double proc);
