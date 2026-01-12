@@ -11,7 +11,7 @@ class PDFElasticCollision{
     public:
         PDFElasticCollision();
 		void setter(double max_energy0, double low_energy0, double energy_grid0, int index_type0);
-        bool elastic_kinematics(bool ProbailisticScattering, double deltaT, int &pid0, int &pid2, int &pid3, double (&pc0)[4], double (&pc2)[4], double (&pc3)[4], double &qt);
+        bool elastic_kinematics(bool ProbailisticScattering, double deltaT, int &pid0, int &pid2, int &pid3, double (&pc0)[4], double (&pc2)[4], double (&pc3)[4], double &qt, double rho);
         double GetQhat_0(double E, int pid);
         double PerformLinearInterpolation(double EOriginal, int process_id, int flv_id, int type);
         double V[4];
