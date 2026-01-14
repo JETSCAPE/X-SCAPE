@@ -14,10 +14,10 @@
 ##############################################################################
 
 folderName="3dMCGlauber"
-commitHash="b239e95434c31011a186b82f2e06bfd9f7e628a8"
+commitHash="3471906ddd0a9b3efbdc78b0316e8a98c26aecf6"
 # download the code package
 rm -fr $folderName
-git clone https://github.com/chunshen1987/3dMCGlauber.git --branch JETSCAPE $folderName
+git clone https://github.com/chunshen1987/3dMCGlauber.git --branch CSCAPE $folderName
 cd $folderName
 git checkout $commitHash
 ./get_LHAPDF.sh
