@@ -106,6 +106,7 @@ private:
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
   bool generateOnlyPositions_ = false;
+  bool eAmode_ = false;
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberWrapper> reg;

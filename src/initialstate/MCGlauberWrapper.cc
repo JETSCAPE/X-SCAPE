@@ -63,6 +63,8 @@ void MCGlauberWrapper::InitTask() {
         GetXMLElementText({"IS", "MCGlauber", "projectile"}));
     mc_gen_->set_parameter("Projectile", para_temp_string);
 
+    if (para_temp_string == "e") eAmode_ = true;
+
     para_temp_string = (
         GetXMLElementText({"IS", "MCGlauber", "target"}));
     mc_gen_->set_parameter("Target", para_temp_string);
@@ -218,21 +220,25 @@ void MCGlauberWrapper::ExecuteTask() {
     if (generateOnlyPositions_) {
         //Run 3DGlauber for positions only (ISR Configuration)
         try {
-            int iparticle=0;
-            mc_gen_->generate_pre_events(); // generate one 3DGlauber event
-            std::vector<MCGlb::CollisionEvent> collisionEvents = (
-                mc_gen_->get_CollisionEventvector());
-            ncoll_ = collisionEvents.size();
-            rand_int_ptr_ = (
-                std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
-            while (iparticle < ncoll_) {
-                 auto xvec = (
-                    collisionEvents[iparticle].get_collision_position());
-                 binary_collision_t_.push_back(xvec[0]);
-                 binary_collision_x_.push_back(xvec[1]);
-                 binary_collision_y_.push_back(xvec[2]);
-                 binary_collision_z_.push_back(xvec[3]);
-                 iparticle++;
+            if (eAmode_) {
+                mc_gen_->generate_pre_eAcollision();  // generate one 3DGlauber event
+            } else {
+                int iparticle=0;
+                mc_gen_->generate_pre_events(); // generate one 3DGlauber event
+                std::vector<MCGlb::CollisionEvent> collisionEvents = (
+                    mc_gen_->get_CollisionEventvector());
+                ncoll_ = collisionEvents.size();
+                rand_int_ptr_ = (
+                    std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
+                while (iparticle < ncoll_) {
+                     auto xvec = (
+                        collisionEvents[iparticle].get_collision_position());
+                     binary_collision_t_.push_back(xvec[0]);
+                     binary_collision_x_.push_back(xvec[1]);
+                     binary_collision_y_.push_back(xvec[2]);
+                     binary_collision_z_.push_back(xvec[3]);
+                     iparticle++;
+                }
             }
             event_id_++;
         } catch (std::exception &err) {
@@ -242,27 +248,29 @@ void MCGlauberWrapper::ExecuteTask() {
     } else {
         //Run 3DMCGlauber to generate initial hard positions and strings
         try {
-            int iparticle=0;
-            mc_gen_->generate_pre_events(); // TODO: change this function to generate_full_events
-            std::vector<MCGlb::CollisionEvent> collisionEvents = (
-                mc_gen_->get_CollisionEventvector());
-            ncoll_ = collisionEvents.size();
-            rand_int_ptr_ = (
-                std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
-            while (iparticle < ncoll_) {
-                 auto xvec = (
-                    collisionEvents[iparticle].get_collision_position());
-                 binary_collision_t_.push_back(xvec[0]);
-                 binary_collision_x_.push_back(xvec[1]);
-                 binary_collision_y_.push_back(xvec[2]);
-                 binary_collision_z_.push_back(xvec[3]);
-                 iparticle++;
+            if (!eAmode_) {
+                int iparticle=0;
+                mc_gen_->generate_pre_events(); // TODO: change this function to generate_full_events
+                std::vector<MCGlb::CollisionEvent> collisionEvents = (
+                    mc_gen_->get_CollisionEventvector());
+                ncoll_ = collisionEvents.size();
+                rand_int_ptr_ = (
+                    std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
+                while (iparticle < ncoll_) {
+                     auto xvec = (
+                        collisionEvents[iparticle].get_collision_position());
+                     binary_collision_t_.push_back(xvec[0]);
+                     binary_collision_x_.push_back(xvec[1]);
+                     binary_collision_y_.push_back(xvec[2]);
+                     binary_collision_z_.push_back(xvec[3]);
+                     iparticle++;
+                }
+                event_id_++;
+                //Do not wound nucleons in Glauber code for case there is no
+                //energy subtraction in JETSCAPE mode (wound_nucleons=false)
+                bool hardCollisionFlag = false;
+                ini->GenerateStrings(hardCollisionFlag, event_id_ - 1);
             }
-            event_id_++;
-            //Do not wound nucleons in Glauber code for case there is no
-            //energy subtraction in JETSCAPE mode (wound_nucleons=false)
-            bool hardCollisionFlag = false;
-            ini->GenerateStrings(hardCollisionFlag, event_id_ - 1);
         } catch (std::exception &err) {
             Jetscape::JSWARN << err.what();
             std::exit(-1);
