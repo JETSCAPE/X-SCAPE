@@ -14,7 +14,7 @@
 ##############################################################################
 
 folderName="3dMCGlauber"
-commitHash="3471906ddd0a9b3efbdc78b0316e8a98c26aecf6"
+commitHash="bd6ab067f844bdc83908e7c34ec54b56bfe94c9c"
 # download the code package
 rm -fr $folderName
 git clone https://github.com/chunshen1987/3dMCGlauber.git --branch CSCAPE $folderName
