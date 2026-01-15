@@ -50,6 +50,12 @@ private:
   double ymin     = 0.;
   double ymax     = 1.;
 
+  double Q2 = 5.;
+  double nu = 10.;
+
+  double numin = 10.-0.01;
+  double numax = 10.+0.01;
+
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<EAGun> reg;
   

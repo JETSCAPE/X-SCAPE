@@ -237,6 +237,8 @@
       <use_positron>0</use_positron>
       <photoproduction>0</photoproduction>
       <breit_vir>1</breit_vir>
+      <Q2>5</Q2>
+      <nu>10</nu>
     </EAGun>
   </Hard>
 
