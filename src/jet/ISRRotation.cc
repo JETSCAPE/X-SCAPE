@@ -94,6 +94,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
   FourVector PlusZaxis(0.0,0.0,1.0,1.0);
 
+  //Debug
+  std::ofstream debug_file;
+  debug_file.open("ISRRot_debug.txt", std::ios::out | std::ios::app);
+  debug_file << "\n\n In event number" << GetCurrentEvent() << ": \n";  
+
   // if(  ) return;
 
   for (int in = 0; in < pIn.size();in++) /// we continue with the loop charade, even though the framework is just giving us one parton
@@ -187,10 +192,10 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
       if ((Out.plabel() == Current_Label || std::abs(Out.pid()) == cid || std::abs(Out.pid()) == bid) && Out.pstat() < 0) {
         
-        VERBOSE(0) << MAGENTA << " iMATTER Pushing particlelabel " << Out.plabel() << " status "
+        debug_file << " iMATTER Pushing particlelabel " << Out.plabel() << " status "
                << Out.pstat() << " pid " << Out.pid()
                << " e " << Out.e() << " px " << Out.px() << " py " << Out.py()<< " pz " << Out.pz()
-               << " to MCGlauber for subtraction ";
+               << " to MCGlauber for subtraction \n";
         if (Out.e() < 0) {
           JSWARN << "Energy to subtract is negative !";
           exit(1);
@@ -301,6 +306,8 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
       if(pIn[in].pstat() > 0 && pIn[in].pstat() != 1000){
         Out.set_stat(0);
       }
+
+      debug_file.close();
     }
 
     SkipRotation:

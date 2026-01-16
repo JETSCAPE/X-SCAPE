@@ -208,21 +208,14 @@ void PythiaIsrGun::ExecuteTask() {
   //Reading vir_factor from xml for MATTER
   double vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
 
-  bool flag62 = false;
   vector<Pythia8::Particle> p62;
 
-  // Initialize for multiple scattering
-  bool scatter_again = true;
-  double ratio = 1.0;
-  int n_scatters = 0;
-
   // Initialze loop variables
-  int NSamplings;
   int NPP = 0;
   std::vector<int> IndexToSkip;
   std::vector<double> dummy_pTHat;
 
-  //Binary collision points
+  //Initialize binary collision points
   std::vector<double> all_t;
   std::vector<double> all_x;
   std::vector<double> all_y;
@@ -232,7 +225,7 @@ void PythiaIsrGun::ExecuteTask() {
   ini->GetAllBinaryCollisionProjPos(all_projPos);
   std::vector<std::vector<double>> all_targPos;
   ini->GetAllBinaryCollisionTargPos(all_targPos);
-  std::vector<FourVector> AcceptedCollisionPoints;
+  std::vector<int> AcceptedCollisionPoints; //Indices of accepted collision points
   int Ncoll = ini->GetNcoll();
 
   //Debug
@@ -255,8 +248,10 @@ void PythiaIsrGun::ExecuteTask() {
     }
     debug_file << ")\n";
   } 
-  debug_file.close();
 
+  std::ofstream debug_partons_file;
+  debug_partons_file.open("PIG_partons.txt", std::ios::out | std::ios::app);
+  debug_partons_file << "\n\nIn Event number " << GetCurrentEvent() << "\n";
   // Debug
   // JSWARN << "Size of all binary collision points: " << all_t.size();
   // JSWARN << "Number of binary collisions from MCGlauber: " << Ncoll;
@@ -284,46 +279,97 @@ void PythiaIsrGun::ExecuteTask() {
 
     FourVector p_p;
 
-  // Go through targ and proj positions and only add collisions where participants
-  // do not overlap with other collisions
+  //Variables for checking duplicate collision points
   same_location same_location;
-  bool same_proj, same_targ, accept_collision;
-  FourVector x;
-  for (int i=0; i < Ncoll; i++){
-    accept_collision = true;
-    for ( int j = 0; j < Ncoll; j++){
-      if (i==j) continue;
-      JSWARN << "Comparing collision points" << i << " and " << j;
-      JSWARN << "Size of all_projPos[i]: " << all_projPos[i].size();
-      JSWARN << "Size of all_targPos[i]: " << all_targPos[i].size();
-      same_proj = same_location(all_projPos[i], all_projPos[j]);
-      same_targ = same_location(all_targPos[i], all_targPos[j]);
-      JSINFO << MAGENTA << "(same_proj, same_targ) = (" << same_proj << ", " << same_targ << ")";
-      // If multiple scatterings exclude overlapping participants
-      if ((same_proj || same_targ) && multi_scatter){
-        accept_collision = false;
-        break;
-      }
-      JSINFO << MAGENTA << "accept_collision = " << accept_collision;
-    }
-    if (accept_collision){
-      x.Set(all_x[i], all_y[i], all_z[i], all_t[i]);
-      AcceptedCollisionPoints.push_back(x);
-    }
+  std::vector<int> index_list; //Shuffled index list to pick collision points and avoid duplicates
+  for (int idx =0; idx < Ncoll; idx++){
+    index_list.push_back(idx);
   }
-  
-  //Debug
-  JSINFO << MAGENTA << "Number of accepted binary collision points after populating AcceptedCollisionPoints: " << AcceptedCollisionPoints.size();
-  //To ensure randomness in selection of first point shuffle the accepted points
-  std::shuffle(AcceptedCollisionPoints.begin(), AcceptedCollisionPoints.end(), *GetMt19937Generator());
+  std::shuffle(index_list.begin(), index_list.end(), *GetMt19937Generator());
 
-  // Loop over all accepted binary collisions to determine scatterings
-  for (const auto& x_p : AcceptedCollisionPoints){
-    NSamplings = 0;
+
+  //Debug file to verify index matching
+  std::ofstream index_match_file;
+  index_match_file.open("PIG_index_matches.txt", std::ios::out | std::ios::app);
+  index_match_file << "Event: " << GetCurrentEvent() << "\n";
+  index_match_file << "Original Index \t Shuffled Index \n";
+  for (int idx = 0; idx < index_list.size(); idx++){
+    index_match_file << idx << " \t " << index_list[idx] << "\n";
+  }
+  index_match_file << "\n\n";
+  index_match_file.close();
+
+  
+  // Loop over possible scatterings to select binary collision point. 
+  // Max number of scatterings is min(proj_A, targ_A)
+  FourVector x_p;
+  for (int iscatt = 0; iscatt < std::min(proj_A, targ_A); iscatt++){
+    int NSamplings = 0;
     p62.clear();
-    flag62=false; // reset for each scattering so interior loop runs
+    bool flag62 = false; // reset for each scattering so interior loop runs
+    bool accept_scatter = true;
+    double ratio = 1.0;
     //Debug
-    JSINFO << MAGENTA << "Entering new scattering loop: n_scatters = " << n_scatters << ". Ratio from last call= " << ratio;
+    JSINFO << MAGENTA << "Entering new scattering loop: iscatt = " << iscatt << ". Ratio from last call= " << ratio;
+
+    //Pick a collision point
+    int icoll = -1;
+    if (AcceptedCollisionPoints.size() == 0){
+      icoll = index_list[iscatt];
+      //Debug
+      JSINFO << MAGENTA << "Selected collision point index " << icoll << " for scattering number " << iscatt;
+    }
+    else {
+      //Debug
+      JSWARN << "Entered else statement line 319";
+      for (int accepted_idx : AcceptedCollisionPoints){
+        //Debug
+        JSWARN << "At top of for loop over accepted indices";
+        JSINFO << MAGENTA << "Accepted index: " << accepted_idx;
+        for (int shuffled_idx : index_list){
+          bool same_proj, same_targ = true;
+          //Debug
+          JSWARN << "At top of for loop over shuffled indices";
+          JSINFO<< MAGENTA << "Shuffled index: " << shuffled_idx;
+          if (accepted_idx == shuffled_idx){
+            //Debug
+            JSINFO << "Skipped already accepted index: " << accepted_idx;
+            continue; //skip already accepted points
+          }
+          same_proj = same_location(all_projPos[accepted_idx], all_projPos[shuffled_idx]);
+          same_targ = same_location(all_targPos[accepted_idx], all_targPos[shuffled_idx]);
+          if (!same_proj && !same_targ){
+            //Debug
+            JSINFO << "Found binary collision with no participant overlap from previous ones. Setting icoll";
+            icoll = shuffled_idx;
+            JSINFO << "icoll set to " << icoll << " for scatter number " << iscatt;
+            break;
+          }
+        }
+        //Debug
+        JSWARN << "Out of for loop over shuffled indices";
+        if (icoll != -1){//break if already found collision
+          //Debug
+          JSINFO << MAGENTA << "Already found a collision point, breaking loop";
+          break;
+        }
+      }
+      //Debug
+      JSWARN << "Out of for loop over shuffled indices";
+    }
+    //Check icoll and pushback the accepted point
+    if (icoll == -1){
+      JSWARN << "All binary collision points have been used. Cannot add another scattering between nucleons";
+      break; //exit the scattering loop
+    }
+    else { //Track accepted point and set binary collision position
+      AcceptedCollisionPoints.push_back(icoll);
+      x_p.Set(all_x[icoll], all_y[icoll], all_z[icoll], all_t[icoll]);
+    }
+    // Debug
+    debug_file << "Selected collision point index " << icoll << " for scattering number " << iscatt << "\n";
+    debug_file << "Length of AcceptedCollisionPoints: " << AcceptedCollisionPoints.size() << "\n";
+    debug_file << "Collision Point Position (t,x,y,z): (" << x_p.t() << ", " << x_p.x() << ", " << x_p.y() << ", " << x_p.z() << ")\n";
 
     ReDoSampling:
     do { // loop over samplings in each scattering
@@ -358,16 +404,6 @@ void PythiaIsrGun::ExecuteTask() {
       for (auto &ToSkip : IndexToSkip) {
         JSWARN << " Skipping non-parton index " << ToSkip;
       }
-
-      // only update sigma printer for an event on first scatter (n_scatters==0)
-      if (!printer.empty() && n_scatters==0){
-            std::ofstream sigma_printer;
-            sigma_printer.open(printer, std::ios::out | std::ios::app);
-
-            sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
-            //sigma_printer.close();
-            //JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
-      };
   
       //Accept particles based on status and type
       for (int parid = 0; parid < event.size(); parid++) {
@@ -427,6 +463,23 @@ void PythiaIsrGun::ExecuteTask() {
 
     } while (!flag62);
 
+    //Decide whether to push the information to the framework by putting break here.
+    double r = ZeroOneDistribution(*GetMt19937Generator());
+    ratio = (GetEventWeight() * GetSigmaGen()) / cross_section;
+    // if ( !multi_scatter || r > ratio ) accept_scatter = false;
+    accept_scatter = true;
+
+    //Debug
+    JSINFO << MAGENTA << "At decision point of scattering loop for scatter # " << iscatt;
+    JSINFO << MAGENTA << "weight = " << GetEventWeight() << " sigmaGen = " << GetSigmaGen() << " cross_section = " << cross_section;
+    JSINFO << MAGENTA << "ratio = " << ratio << " r = " << r << " scatter_again = " << accept_scatter;
+    JSINFO << MAGENTA << "Total number of partons so far NPP = " << NPP << ". p62 size = " << p62.size();
+    debug_file << "Accept scatter number " << iscatt << " (0=T, 1=F): " << accept_scatter << "\n";
+
+    if ((!accept_scatter) && (iscatt != 0)) {break;}
+    debug_file << "Scatter progressed in scatter loop. Will now push information to framework. \n";
+
+    //If scatter is accepted give to framework
     if (!ini)
     {
       JSINFO << BOLDYELLOW << "No initial state module, setting the starting location to "
@@ -438,6 +491,16 @@ void PythiaIsrGun::ExecuteTask() {
       //x_p is already set from AcceptedCollisionPoints Loop
         ini->OutputHardCollisionPosition(x_p.t(), x_p.x(), x_p.y(), x_p.z());
     }
+
+    // only update sigma printer for an event on first scatter (iscatt==0)
+      if (!printer.empty() && iscatt==0){
+            std::ofstream sigma_printer;
+            sigma_printer.open(printer, std::ios::out | std::ios::app);
+
+            sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
+            //sigma_printer.close();
+            //JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
+      };
 
     // Loop through particles
     // Accept them all
@@ -499,7 +562,8 @@ void PythiaIsrGun::ExecuteTask() {
             label = initial_state_label;
             initial_state_label--;
             stat = -1000; // raw initial state status, must go to an initial state module
-
+            debug_partons_file << "Found initial state particle to go to ISR. Label: " << label 
+              << " Energy: " << particle.e() << "\n";  
         }
         if (particle.status()==-23 || particle.status()==-33)
         {
@@ -523,31 +587,14 @@ void PythiaIsrGun::ExecuteTask() {
     // Update the pTHat vector in initial state using dummy
     for (auto pT : dummy_pTHat){
       ini->pTHat.push_back(pT);
+      debug_file << "pT pushed back for scatter " << iscatt << ": " << pT << "\n";
     }
     dummy_pTHat.clear();
 
-    //Iterate n_scatters
-    n_scatters++;
-    VERBOSE(4) << "PythiaIsrGun scattering number " << n_scatters << "completed.";
-
+    VERBOSE(4) << "PythiaIsrGun scattering number " << iscatt << "completed.";
 
     // Update NPP
     NPP += p62.size();
-
-    // Decide whether to scatter again
-    double r = ZeroOneDistribution(*GetMt19937Generator());
-    ratio = (GetEventWeight() * GetSigmaGen()) / cross_section;
-    if ( !multi_scatter || r > ratio || n_scatters >= std::min(proj_A, targ_A) ) scatter_again = false;
-
-    //Debug
-    JSINFO << MAGENTA << "At end of scattering loop for scatter # " << n_scatters;
-    JSINFO << MAGENTA << "weight = " << GetEventWeight() << " sigmaGen = " << GetSigmaGen() << " cross_section = " << cross_section;
-    JSINFO << MAGENTA << "ratio = " << ratio << " r = " << r << " scatter_again = " << scatter_again;
-    JSINFO << MAGENTA << "Total number of partons so far NPP = " << NPP << ". p62 size = " << p62.size();
-    JSINFO << MAGENTA << "----------End of Scattering Loop----------";
-
-    //kill loop if not scattering again
-    if (!scatter_again) {break;}
   }
 
   //Set max color for event and collision momenta vectors
@@ -559,5 +606,9 @@ void PythiaIsrGun::ExecuteTask() {
   ini->CollisionPositiveRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
   // ini->ClearHardPartonMomentum();
 
+  //Debug
+  debug_file << "\n\n";
+  debug_file.close();
   VERBOSE(8) << GetNHardPartons();
+  debug_partons_file.close();
 }

@@ -88,6 +88,7 @@ void iMATTER::InitTask()
     }
 
     P_A *= z_min_factor;
+    std::cout << P_A << ", " << P_B << std::endl;
     
     // Initialize random number distribution
     ZeroOneDistribution = uniform_real_distribution<double> { 0.0, 1.0 };
