@@ -96,15 +96,9 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
   }
 }
 
-void InitialState::OutputHardCollisionPosition(double t, double x, double y, 
-                                                                   double z) {}
-
-void InitialState::OutputHardPartonMomentum(double E, double px, double py, double pz,
-                                            int direction, double P_A) {}
 
 void InitialState::ClearHardPartonMomentum() {}
 
-  
 void InitialState::GetHardPartonPosAndMomentumProj() {}
 
 void InitialState::GetHardPartonPosAndMomentumTarg() {}
@@ -140,7 +134,8 @@ std::vector<double> InitialState::Get_target_nucleon_z_lab() {
     return Temp;
 }
 
-std::vector<double> InitialState::Get_quarks_pos_proj_lab() {
+std::vector<double> InitialState::Get_quarks_pos_proj_lab(double t, double x,
+                                                          double y, double z) {
     std::vector<double> Temp;
     for (int i = 0; i != 9; i++) {
         Temp.push_back(-1.);
@@ -148,7 +143,8 @@ std::vector<double> InitialState::Get_quarks_pos_proj_lab() {
     return Temp;
 }
 
-std::vector<double> InitialState::Get_quarks_pos_targ_lab() {
+std::vector<double> InitialState::Get_quarks_pos_targ_lab(double t, double x,
+                                                          double y, double z) {
     std::vector<double> Temp;
     for (int i = 0; i != 9; i++) {
         Temp.push_back(-1.);
@@ -156,35 +152,17 @@ std::vector<double> InitialState::Get_quarks_pos_targ_lab() {
     return Temp;
 }
 
-std::vector<double> InitialState::Get_remnant_proj() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
+std::vector<std::vector<double>> InitialState::Get_remnant_proj() {
+    std::vector<std::vector<double>> Temp;
+    std::vector<double> Temp1 = {-1, -1, -1, -1};
+    Temp.push_back(Temp1);
     return Temp;
 }
 
-std::vector<double> InitialState::Get_remnant_targ() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
-}
-
-std::vector<double> InitialState::Get_Proj_Remnant() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
-}
-
-std::vector<double> InitialState::Get_Targ_Remnant() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
+std::vector<std::vector<double>> InitialState::Get_remnant_targ() {
+    std::vector<std::vector<double>> Temp;
+    std::vector<double> Temp1 = {-1, -1, -1, -1};
+    Temp.push_back(Temp1);
     return Temp;
 }
 
