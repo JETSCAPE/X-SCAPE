@@ -399,10 +399,6 @@ private:
   //void TestQhatMod();
   double ModificationCorr;
   double ModificationFactor;
-  std::string filename;
-  int enter_pid;
-  double enter_temp;
-  int OneScatter;
   //  extern "C" {
   //      void read_ccnu_(char *dataFN_in, int len1);
   //      void hydroinfoccnu_(double *Ct, double *Cx, double *Cy, double *Cz, double *Ctemp, double *Cvx, double *Cvy, double *Cvz, int *Cflag);
