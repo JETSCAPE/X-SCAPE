@@ -213,11 +213,11 @@ void HydroFromFile::EvolveHydro() {
       input_file = input_filename.str();
       hydro_ideal_file = hydro_filename.str();
     }
-    JSINFO<<"hydro status before read_in "<<hydro_status;
+    //JSINFO<<"hydro status before read_in "<<hydro_status;
     read_in_hydro_event(input_file, hydro_ideal_file, nskip_tau_);
     hydro_tau_0 = hydroinfo_MUSIC_ptr->get_hydro_tau0();
     hydro_tau_max = hydroinfo_MUSIC_ptr->get_hydro_tau_max();
-    JSINFO<<"hydro status after read_in "<<hydro_status;
+    //JSINFO<<"hydro status after read_in "<<hydro_status;
   } else if (hydro_type_ < 9) {
     string input_file = "music";
     string PreEq_file;
@@ -331,7 +331,6 @@ void HydroFromFile::GetHydroInfo(
                                             temp_fluid_cell_ptr);
     }
   }
-   if (abs(t_local-1.3)<0.01 && abs(x_local+3.97262)<0.01 && abs(y_local-5.44029)<0.01 && abs(z_local-0.423842)<0.01){std::cout<<"hurray!!!"<<std::endl;}
 
 
   // assign all the quantites to JETSCAPE output
