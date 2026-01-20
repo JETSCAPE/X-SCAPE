@@ -4541,12 +4541,6 @@ void Matter::colljet22(int CT, double temp, double qhat0ud, double v0[4],
       rsin = sqrt(1.0 - rcos * rcos);
       //
       p2[0] = xw * temp;
-
-      if (ModificationFactor > 0.0){
-      ModificationCorr = 1.0 + 1.0 / ModificationFactor / temp;
-      p2[0] *= pow(ModificationCorr, -1)
-      }
-
       p2[3] = p2[0] * rcos;
       p2[1] = p2[0] * rsin * cos(razim);
       p2[2] = p2[0] * rsin * sin(razim);
@@ -4577,8 +4571,17 @@ void Matter::colljet22(int CT, double temp, double qhat0ud, double v0[4],
     //    use (s^2+u^2)/(t+qhat0ud)^2 as scattering cross section in 
     f1max_y = 1.4215;
     f2max_y = 1.2845;
-    f1 = pow(xw, 3) / (exp(xw) - 1) / f1max_y;
-    f2 = pow(xw, 3) / (exp(xw) + 1) / f2max_y;
+    if (ModificationFactor > 0.0){
+      ModificationCorr = 1.0 + 1.0 / ModificationFactor / temp;
+      f1max_y/=pow(ModificationCorr, 3.0);
+      f2max_y/=pow(ModificationCorr, 3.0);
+      f1 = pow(xw, 3) / (exp(xw * ModificationCorr) - 1) / f1max_y;
+      f2 = pow(xw, 3) / (exp(xw * ModificationCorr) + 1) / f2max_y;
+    }
+    else{
+      f1 = pow(xw, 3) / (exp(xw) - 1) / f1max_y;
+      f2 = pow(xw, 3) / (exp(xw) + 1) / f2max_y;
+    }
 
     uu = ss - tt;
 
