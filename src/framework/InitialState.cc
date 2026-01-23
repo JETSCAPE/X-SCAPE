@@ -96,16 +96,9 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
   }
 }
 
-void InitialState::OutputHardCollisionPosition(double t, double x, double y, 
-                                                                   double z) {}
-  void InitialState::OutputHardPartonMomentum(
-        double t, double x, double y, double z,
-        double E, double px, double py, double pz,
-        int direction, double P_A) {}
 
 void InitialState::ClearHardPartonMomentum() {}
 
-  
 void InitialState::GetHardPartonPosAndMomentumProj() {}
 
 void InitialState::GetHardPartonPosAndMomentumTarg() {}
@@ -126,7 +119,8 @@ std::vector<double> InitialState::Get_target_nucleon_z_lab() {
     return Temp;
 }
 
-std::vector<double> InitialState::Get_quarks_pos_proj_lab() {
+std::vector<double> InitialState::Get_quarks_pos_proj_lab(double t, double x,
+                                                          double y, double z) {
     std::vector<double> Temp;
     for (int i = 0; i != 9; i++) {
         Temp.push_back(-1.);
@@ -134,7 +128,8 @@ std::vector<double> InitialState::Get_quarks_pos_proj_lab() {
     return Temp;
 }
 
-std::vector<double> InitialState::Get_quarks_pos_targ_lab() {
+std::vector<double> InitialState::Get_quarks_pos_targ_lab(double t, double x,
+                                                          double y, double z) {
     std::vector<double> Temp;
     for (int i = 0; i != 9; i++) {
         Temp.push_back(-1.);

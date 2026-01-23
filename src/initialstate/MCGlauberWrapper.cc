@@ -315,13 +315,14 @@ std::vector<double> MCGlauberWrapper::Get_target_nucleon_z_lab() {
     return(mc_gen_->MCGlb_target_nucleon_z());
 }
 
-//void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x,
-//                                                   double y, double z) {
-//    hard_parton_t_.push_back(t);
-//    hard_parton_x_.push_back(x);
-//    hard_parton_y_.push_back(y);
-//    hard_parton_z_.push_back(z);
-//}
+
+void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x,
+                                                   double y, double z) {
+    hard_parton_t_.push_back(t);
+    hard_parton_x_.push_back(x);
+    hard_parton_y_.push_back(y);
+    hard_parton_z_.push_back(z);
+}
 
 
 void MCGlauberWrapper::ClearHardPartonMomentum() {
@@ -346,43 +347,56 @@ void MCGlauberWrapper::OutputHardPartonMomentum(
         double t, double x, double y, double z,
         double E, double px, double py, double pz, int direction, double P_A) {
     // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
-    bool newCollFlag = false;
-    int lastIdx = hard_parton_t_.size() - 1;
-    if (lastIdx < 0) {
-        newCollFlag = true;
-    } else {
-        if (std::abs(x - hard_parton_x_[lastIdx]) > 1e-5
-                || std::abs(y - hard_parton_y_[lastIdx]) > 1e-5) {
-            newCollFlag = true;
+    bool newCollFlag = true;
+    int hardCollIdx = 0;
+    for (int idx = hard_parton_t_.size() - 1; idx >= 0; idx++) {
+        // start searching from the last index so that the vectors support
+        // repeated entries, the last one will be picked.
+        if (std::abs(x - hard_parton_x_[idx]) < 1e-5
+                && std::abs(y - hard_parton_y_[idx]) < 1e-5) {
+            hardCollIdx = idx;
+            newCollFlag = false;
+            break;
         }
     }
+
     if (newCollFlag) {
-        hard_parton_t_.push_back(t);
-        hard_parton_x_.push_back(x);
-        hard_parton_y_.push_back(y);
-        hard_parton_z_.push_back(z);
-        if (direction == 1) {
+        JSWARN << "The requested binary collision point is not registered! "
+               << "please check: t = " << t << ", x = " << x << ", y = " << y
+               << ", z = " << z;
+        JSWARN << "registered binary collision points:";
+        for (int idx = 0; idx < hard_parton_t_.size(); idx++) {
+            JSWARN << "t = " << hard_parton_t_[idx]
+                   << ", x = " << hard_parton_x_[idx]
+                   << ", y = " << hard_parton_y_[idx]
+                   << ", z = " << hard_parton_z_[idx];
+        }
+        exit(0);
+    }
+
+    if (direction == 1) {
+        if (hardCollIdx < proj_parton_e_.size()) {
+            proj_parton_e_[hardCollIdx] += E;
+            proj_parton_px_[hardCollIdx] += px;
+            proj_parton_py_[hardCollIdx] += py;
+            proj_parton_pz_[hardCollIdx] += pz;
+        } else {
             proj_parton_e_.push_back(E);
             proj_parton_px_.push_back(px);
             proj_parton_py_.push_back(py);
             proj_parton_pz_.push_back(pz);
+        }
+    } else {
+        if (hardCollIdx < targ_parton_e_.size()) {
+            targ_parton_e_[hardCollIdx] += E;
+            targ_parton_px_[hardCollIdx] += px;
+            targ_parton_py_[hardCollIdx] += py;
+            targ_parton_pz_[hardCollIdx] += pz;
         } else {
             targ_parton_e_.push_back(E);
             targ_parton_px_.push_back(px);
             targ_parton_py_.push_back(py);
             targ_parton_pz_.push_back(pz);
-        }
-    } else {
-        if (direction == 1) {
-            proj_parton_e_[lastIdx] += E;
-            proj_parton_px_[lastIdx] += px;
-            proj_parton_py_[lastIdx] += py;
-            proj_parton_pz_[lastIdx] += pz;
-        } else {
-            targ_parton_e_[lastIdx] += E;
-            targ_parton_px_[lastIdx] += px;
-            targ_parton_py_[lastIdx] += py;
-            targ_parton_pz_[lastIdx] += pz;
         }
     }
 
@@ -390,38 +404,42 @@ void MCGlauberWrapper::OutputHardPartonMomentum(
                              << " parton_pz_ " << pz;
 
     double threshold = 0.99 * P_A;
-    if (proj_parton_e_.back() >= threshold
-            || targ_parton_e_.back() >= threshold) {
-        throw std::runtime_error(
-            "Energy to subtract from 3DMCGlauber >= 0.99 * P_A "
-            + std::to_string(threshold)+". Turn on Verbose for more info.");
+    bool thresholdFlag = false;
+    if (direction == 1) {
+        if (proj_parton_e_[hardCollIdx] >= threshold) {
+            thresholdFlag = true;
+        }
+    } else {
+        if (targ_parton_e_[hardCollIdx] >= threshold) {
+            thresholdFlag = true;
+        }
+    }
+    if (thresholdFlag) {
+        JSWARN << "Energy to subtract from 3DMCGlauber >= 0.99 * P_A "
+               << threshold << ". Turn on Verbose for more info.";
     }
 }
 
 
-std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab() {
+std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab(
+        double t, double x, double y, double z) {
     // get the x, y, z of the three valence quarks of colliding projectile
     // The fourth parton is the soft ball
     // 3DGlauber attributes the remaining energy and momentum carried by the
     // sea quarks and gluons to a soft gluon cloud
     // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
-    int hardCollIdx = 0;
-    return(mc_gen_->GetQuarkPosProj(
-                hard_parton_t_[hardCollIdx], hard_parton_x_[hardCollIdx],
-                hard_parton_y_[hardCollIdx], hard_parton_z_[hardCollIdx]));
+    return(mc_gen_->GetQuarkPosProj(t, x, y, z));
 }
 
 
-std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab() {
+std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab(
+        double t, double x, double y, double z) {
     // get the x, y, z of the three valence quarks of colliding target
     // The fourth parton is the soft ball
     // 3DGlauber attributes the remaining energy and momentum carried by the
     // sea quarks and gluons to a soft gluon cloud
     // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
-    int hardCollIdx = 0;
-    return(mc_gen_->GetQuarkPosTarg(
-                hard_parton_t_[hardCollIdx], hard_parton_x_[hardCollIdx],
-                hard_parton_y_[hardCollIdx], hard_parton_z_[hardCollIdx]));
+    return(mc_gen_->GetQuarkPosTarg(t, x, y, z));
 }
 
 
