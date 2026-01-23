@@ -408,6 +408,7 @@ void PythiaIsrGun::ExecuteTask() {
     ptn->set_color(particle.col());
     ptn->set_anti_color(particle.acol()); 
     ptn->set_max_color(GetMax_ColorPerShower() * (np + 1));
+    ptn->set_hard_scattering(0); //FIX: Default hard scattering 0 for now
     AddParton(ptn);
   }
 

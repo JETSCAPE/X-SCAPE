@@ -246,6 +246,7 @@ Parton::Parton(const Parton &srp)
 
   set_edgeid(srp.edgeid());
   set_shower(srp.shower());
+  set_hard_scattering(srp.hard_scattering());
 
   // set_edgeid( -1 ); // by default do NOT copy the shower or my position in it
   // pShower_ = nullptr;
@@ -264,6 +265,7 @@ Parton::Parton(int label, int id, int stat, const FourVector &p,
   set_max_color(0);
   set_edgeid(-1);
   set_shower(0);
+  set_hard_scattering(0);
 
   // cout << "========================== std Ctor called, returning : " << endl << *this << endl;
 }
@@ -282,6 +284,7 @@ Parton::Parton(int label, int id, int stat, double pt, double eta, double phi,
   set_max_color(0);
   set_edgeid(-1);
   set_shower(0);
+  set_hard_scattering(0);
 
   // cout << "========================== phieta Ctor called, returning : " << endl << *this << endl;
 }
@@ -322,6 +325,7 @@ Parton &Parton::operator=(Parton &c) {
     jet_v_ = c.jet_v_;
   set_edgeid(c.edgeid());
   set_shower(c.shower());
+  set_hard_scattering(c.hard_scattering());
 
   return *this;
 }
@@ -334,6 +338,7 @@ Parton &Parton::operator=(const Parton &c) {
     jet_v_ = c.jet_v_;
   set_edgeid(c.edgeid());
   set_shower(c.shower());
+  set_hard_scattering(c.hard_scattering());
 
   return *this;
 }
