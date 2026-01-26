@@ -16,9 +16,18 @@
 // Create a pythia collision at a specified point and return the two inital hard partons
 
 #include "PythiaGun.h"
+#include <algorithm>
 #include <sstream>
 #include <iostream>
 #include <fstream>
+
+#ifdef USE_HEPMC
+#include <memory>
+
+#include "HepMC3/GenEvent.h"
+#include "HepMC3/WriterAscii.h"
+#include "Pythia8Plugins/HepMC3.h"
+#endif
 #define MAGENTA "\033[35m"
 
 using namespace std;
@@ -252,6 +261,22 @@ void PythiaGun::ExecuteTask() {
     flag62 = true;
 
   } while (!flag62);
+
+#ifdef USE_HEPMC
+  static std::unique_ptr<HepMC3::WriterAscii> pythia_full_writer;
+  static HepMC3::Pythia8ToHepMC3 pythia_to_hepmc;
+
+  if (!pythia_full_writer) {
+    JSINFO << MAGENTA
+           << "PythiaGun to output full Pythia event record in: "
+           << "pythia_full.hepmc";
+    pythia_full_writer = std::make_unique<HepMC3::WriterAscii>("pythia_full.hepmc");
+  }
+
+  HepMC3::GenEvent full_evt(HepMC3::Units::GEV, HepMC3::Units::MM);
+  pythia_to_hepmc.fill_next_event(*this, &full_evt, GetCurrentEvent());
+  pythia_full_writer->write_event(full_evt);
+#endif
 
   double p[4], xLoc[4];
 

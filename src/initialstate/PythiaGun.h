@@ -18,6 +18,8 @@
 #ifndef PYTHIAGUN_H
 #define PYTHIAGUN_H
 
+#include <string>
+
 #include "HardProcess.h"
 #include "JetScapeLogger.h"
 #include "Pythia8/Pythia.h"
