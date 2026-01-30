@@ -56,6 +56,8 @@ private:
   double numin = 10.-0.01;
   double numax = 10.+0.01;
 
+  std::vector<std::array<double, 4>> nucleonPositions = {{0.,0.,0.,0.}};
+
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<EAGun> reg;
   

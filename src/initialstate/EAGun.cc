@@ -372,12 +372,13 @@ void EAGun::ExecuteTask() {
     if (!ini) {
         VERBOSE(1) << "No initial state module, setting the starting location to "
                       "0. Make sure to add e.g. 3DGlauber before EAGun.";
-        for (int i=0; i<=3; i++) { xLoc[i] = 0.0; }
     } 
     else {
-        ini->SampleABinaryCollisionPoint(xLoc[0], xLoc[1], xLoc[2], xLoc[3]);
+        nucleonPositions = ini->GetTargetNucleonPositions();
     }
-    cout << "COLLISION IS AT: " << xLoc[0] << " " << xLoc[1] << " " << xLoc[2] << " " << xLoc[3] << endl;
+    int randInd = (int)( ZeroOneDistribution(*GetMt19937Generator()) * nucleonPositions.size() );
+    for (int i=0; i<4; i++) { xLoc[i] = nucleonPositions[randInd][i]; }
+    cout << "INITIAL COLLISION IS AT: " << xLoc[0] << " " << xLoc[1] << " " << xLoc[2] << " " << xLoc[3] << endl;
 
   // else {
   //   // double t,x,y,z;

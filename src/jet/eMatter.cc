@@ -250,7 +250,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   // cout << "IN DOENERGYLOSS " << pIn.size() << endl;
   // Dump_pIn_info(0, pIn);
-  
+
   double z = 0.5;
   double blurb, zeta, tQ2;
   int iSplit, pid_a, pid_b;
@@ -483,8 +483,9 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
     // cout << "\tE" << endl;
     // I.S :
     // added the check initR0 > 0 to make sure the warning only happens for final state radiation
+    //last bit is commented out because the initially struck nucleon could be at +z
     if (std::isinf(now_R0) || std::isnan(now_R0) || std::isinf(now_Rz) ||
-        std::isnan(now_Rz) || (std::abs(now_Rz) > now_R0 && initR0 > 0 )) {
+        std::isnan(now_Rz) ) { //|| (std::abs(now_Rz) > now_R0 && initR0 > 0 )) {
       JSINFO << BOLDYELLOW << "First instance";
       JSINFO << BOLDYELLOW << "now_R for vector is:" << now_R0 << ", " << now_Rx
              << ", " << now_Ry << ", " << now_Rz;
@@ -732,7 +733,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
         VERBOSE(8) << "SPLIT in eMATTER";
 
         // SC: add elastic scattering that generates recoiled and back-reaction partons
-        double el_dt = 0.1;
+        double el_dt = 0.05;
         double el_p0[5];
         double el_CR;
         double el_rand;
@@ -792,8 +793,9 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
           recordE0 = pc0[0];
 
+          //last bit is commented out because the initially struck nucleon could be at +z
           if (std::isinf(el_time) || std::isnan(el_time) || std::isinf(el_rz) ||
-              std::isnan(el_rz) || std::abs(el_rz) > el_time) {
+              std::isnan(el_rz) ) { //|| std::abs(el_rz) > el_time) {
             JSWARN << "Second instance";
             JSWARN << "el_vector for vector is:" << el_time << ", " << el_rx
                    << ", " << el_ry << ", " << el_rz;
