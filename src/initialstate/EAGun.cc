@@ -567,6 +567,29 @@ void EAGun::ExecuteTask() {
 
         std::cout << "Particle " << particle.id() << " " << particle.e() << endl;
         AddParton(ptn);
+
+        //make the remnant too
+        FourVector premnant = FourVector(0-ptn->px(),0-ptn->py(),0-ptn->pz(),0.938-ptn->e()); //at rest
+
+        int remnant_pid; //for now all nucleons are protons
+        switch (particle.id()) {
+          case 21:
+            remnant_pid = 21; break; //need a gluon to stay color neutral with recoiled gluon
+          case 1:
+            remnant_pid = 2203; break; //ud diquark left over
+          case 2:
+            remnant_pid = 2103; break; //uu diquark left over
+          default: 
+            remnant_pid = -1*particle.id(); break; //need to preserve overall strangeness etc
+        }
+
+        auto remnant = make_shared<Parton>(0, remnant_pid, -1, premnant, xLoc);
+        remnant->set_color(particle.acol()); //overall color neutral
+        remnant->set_anti_color(particle.col());
+        remnant->set_max_color(1000 * (np + 1));
+
+        AddParton(remnant);
+
     }
 
     VERBOSE(8) << GetNHardPartons();
