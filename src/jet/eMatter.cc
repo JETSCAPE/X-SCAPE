@@ -247,10 +247,10 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
     JSINFO << BOLDYELLOW << "Parton on entry busted on time step " << time;
     Dump_pIn_info(0, pIn);
   }
-  
-  cout << "IN DOENERGYLOSS" << endl;
-  Dump_pIn_info(0, pIn);
 
+  // cout << "IN DOENERGYLOSS " << pIn.size() << endl;
+  // Dump_pIn_info(0, pIn);
+  
   double z = 0.5;
   double blurb, zeta, tQ2;
   int iSplit, pid_a, pid_b;
@@ -305,14 +305,13 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   VERBOSE(8) << " qhat0 = " << qhat0 << " qhat = " << qhat;
 
-  GetHydroTau0Signal(tStart);
+  // GetHydroTau0Signal(tStart);
 
   // auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
 
-  cout << "\tPIN SIZE" << pIn.size() << endl;
   for (int i = 0; i < pIn.size(); i++) {
 
-    cout << "\tA" << endl;
+    // cout << "\tA" << endl;
     // Reject photons
     if (pIn[i].pid() == photonid) {
       if(pIn[i].pstat() != 22) {
@@ -327,7 +326,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
     }
 
     // Reject photons
-    cout << "\tB" << endl;
+    // cout << "\tB" << endl;
 
     if (std::abs(pIn[i].pstat()) == 1) {
 
@@ -340,7 +339,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       return;
     }
       
-    cout << "\tC" << endl;
+    // cout << "\tC" << endl;
       if (pIn[i].time() > time) return; // ignore partons that havent formed yet.
       
       
@@ -402,7 +401,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       xStart[j] = pIn[i].x_in().comp(j);
     }
 
-    cout << "\tD" << endl;
+    // cout << "\tD" << endl;
     // SC: read in hydro
     initR0 = xStart[0];
     initRx = xStart[1];
@@ -481,7 +480,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
     // if(now_R0^2-now_Ri^2<0) print out pIn info and exit
 
-    cout << "\tE" << endl;
+    // cout << "\tE" << endl;
     // I.S :
     // added the check initR0 > 0 to make sure the warning only happens for final state radiation
     if (std::isinf(now_R0) || std::isnan(now_R0) || std::isinf(now_Rz) ||
@@ -516,7 +515,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
     int pid = pIn[i].pid();
 
-    cout << "\tF" << endl;
+    // cout << "\tF" << endl;
     if (pIn[i].form_time() <
         0.0) /// A parton without a virtuality or formation time, must set...
     {
@@ -641,7 +640,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       // end VERBOSE OUTPUT:
     }
 
-    cout << "\tG" << endl;
+    // cout << "\tG" << endl;
     // SC: Q0 can be changed based on different setups
     if (in_vac) { // for vaccuum
       qhat = 0.0;
@@ -678,14 +677,14 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
     if (Q0 < 1.0)
       Q0 = 1.0;
 
-    cout << "\tH" << endl;
+    // cout << "\tH" << endl;
     cout << "T " << pIn[i].t() << " Q02 " << Q0*Q0 << " QS2 " << QS*QS << endl;
     //if (pIn[i].t() > QS + rounding_error)
     if (pIn[i].t() > Q0 * Q0 + rounding_error ||
         ((!in_vac) && //now_temp <= T0 &&
          pIn[i].t() > QS * QS + rounding_error)) {
 
-      cout << "\tI" << endl;
+      // cout << "\tI" << endl;
       TakeResponsibilityFor(
           pIn[i]); // Generate error if another module already has responsibility.
       double decayTime = pIn[i].mean_form_time();
@@ -729,6 +728,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
           time) // it is time to split and calculate the effect of scattering
       {
 
+        cout << "\tSPLIT!!!" << endl;
         VERBOSE(8) << "SPLIT in eMATTER";
 
         // SC: add elastic scattering that generates recoiled and back-reaction partons
@@ -752,6 +752,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
         for (double el_time = initR0; el_time < time + rounding_error;
              el_time = el_time + el_dt) {
 
+          // cout << "\t\tSPLIT!!! STEP" << endl;
           if (in_vac)
             continue;
           if (!recoil_on)
@@ -809,16 +810,22 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
           }
 
           //TODO: HYDRO -> GLAUBER DENSITY -- 
-          GetHydroCellSignal(el_time, el_rx, el_ry, el_rz,
-                             check_fluid_info_ptr);
-          VERBOSE(8) << MAGENTA << "Temperature from medium = "
-                     << check_fluid_info_ptr->temperature;
+          // GetHydroCellSignal(el_time, el_rx, el_ry, el_rz,
+          //                    check_fluid_info_ptr);
+          // VERBOSE(8) << MAGENTA << "Temperature from medium = "
+          //            << check_fluid_info_ptr->temperature;
 
-          tempLoc = check_fluid_info_ptr->temperature;
-          sdLoc = check_fluid_info_ptr->entropy_density;
-          vxLoc = check_fluid_info_ptr->vx;
-          vyLoc = check_fluid_info_ptr->vy;
-          vzLoc = check_fluid_info_ptr->vz;
+          // tempLoc = check_fluid_info_ptr->temperature;
+          tempLoc= 0;
+          sdLoc = 0;
+          vxLoc = 0;
+          vyLoc = 0;
+          vzLoc = 0;
+
+          // sdLoc = check_fluid_info_ptr->entropy_density;
+          // vxLoc = check_fluid_info_ptr->vx;
+          // vyLoc = check_fluid_info_ptr->vy;
+          // vzLoc = check_fluid_info_ptr->vz;
 
           vc0[1] = vxLoc;
           vc0[2] = vyLoc;
@@ -903,8 +910,8 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
           el_rand = ZeroOneDistribution(*GetMt19937Generator());
 
           //cout << "  qhat: " << qhatLoc << "  alphas: " << soln_alphas << "  ener: " << enerLoc << "  prob_el: " << prob_el << "  " << el_rand << endl;
-          cout << "prob is " << prob_el << endl;
-          if (el_rand < prob_el) { // elastic scattering happens
+          cout << "dens " << nuclear_dens << " rate " << rate_per_vol << " dt " << dt_lrf << " prob is " << prob_el << endl;
+          if (el_rand > prob_el) { // elastic scattering happens
 
             cout << "elastic scattering happens" << endl;
             int CT = -1;
@@ -1652,8 +1659,10 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       } else { // not time to split yet broadening it
 
+        cout << "\tno split" << endl;
         if (broadening_on) {
 
+          // cout << "\tbroadening!!!" << endl;
           double now_zeta =
               ((time + initRdotV + (time - initR0)) / std::sqrt(2)) *
               fmToGeVinv;
@@ -1823,8 +1832,9 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
         }
       }
     } else { // virtuality too low lets broaden it
-
+      // cout << "\tanti I" << endl;
       if (broadening_on) {
+        cout << "\tanti I2" << endl;
 
         double now_zeta =
             ((time + initRdotV + (time - initR0)) / std::sqrt(2)) * fmToGeVinv;
@@ -1976,9 +1986,12 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
         }
         //pOut.push_back(pIn[i]);
       }
+      // cout << "\tX" << endl;
     }
+      // cout << "\tY" << endl;
 
   } // particle loop
+      // cout << "\tZ" << endl;
 }
 
 double eMatter::generate_kt(double local_qhat, double dzeta) {

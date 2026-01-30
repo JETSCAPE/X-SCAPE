@@ -216,6 +216,7 @@ void EAGun::ExecuteTask() {
         }
     };
 
+    Pythia8::Vec4 pPhoton;
     do {
         // cout << "?2" <<endl;
         bool check = next();
@@ -233,7 +234,7 @@ void EAGun::ExecuteTask() {
         Pythia8::Vec4 pProton = event[1].p();
         Pythia8::Vec4 peIn    = event[2].p();
         Pythia8::Vec4 peOut   = event[6].p();
-        Pythia8::Vec4 pPhoton = peIn - peOut;
+        pPhoton = peIn - peOut;
 
         // Q2, W2, Bjorken x, y
         double Q2    = - pPhoton.m2Calc();
@@ -569,7 +570,7 @@ void EAGun::ExecuteTask() {
         AddParton(ptn);
 
         //make the remnant too
-        FourVector premnant = FourVector(0-ptn->px(),0-ptn->py(),0-ptn->pz(),0.938-ptn->e()); //at rest
+        FourVector premnant = FourVector(-ptn->px(),-ptn->py(),pPhoton.pz()-ptn->pz(),pPhoton.e()+0.938-ptn->e()); //at rest
 
         int remnant_pid; //for now all nucleons are protons
         switch (particle.id()) {
@@ -587,6 +588,8 @@ void EAGun::ExecuteTask() {
         remnant->set_color(particle.acol()); //overall color neutral
         remnant->set_anti_color(particle.col());
         remnant->set_max_color(1000 * (np + 1));
+
+        std::cout << "Remnant " << remnant->pid() << " " << remnant->e() << endl;
 
         AddParton(remnant);
 
