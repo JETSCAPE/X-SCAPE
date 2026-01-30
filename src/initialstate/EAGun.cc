@@ -207,7 +207,7 @@ void EAGun::ExecuteTask() {
 
     bool flag62 = false;
     vector<Pythia8::Particle> p62;
-
+    // cout << "?1" <<endl;
     // sort by pt
     struct greater_than_pt {
         inline bool operator()(const Pythia8::Particle &p1,
@@ -217,8 +217,10 @@ void EAGun::ExecuteTask() {
     };
 
     do {
+        // cout << "?2" <<endl;
         bool check = next();
         if (check==false) continue;
+        // cout << "?3" <<endl;
 
         // getting scattered electron index
         int elecID = 6;
@@ -239,10 +241,11 @@ void EAGun::ExecuteTask() {
         double x     = Q2 / (2. * pProton * pPhoton);
         double y     = (pProton * pPhoton) / (pProton * peIn);
 
-        cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << endl;
-        cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << endl;
-        cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << endl;
-        cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << endl;
+        // cout << "?4" <<endl;
+        // cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << endl;
+        // cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << endl;
+        // cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << endl;
+        // cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << endl;
         // cout << "Q2: " << Q2 << endl;
         // cout << "nu: " << peIn[0]-peOut[0] << endl;
 
@@ -254,13 +257,14 @@ void EAGun::ExecuteTask() {
 
         double nu = peIn[0]-peOut[0];
 
-        cout << "AFTER BOOSTING" << endl;
-        cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << endl;
-        cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << endl;
-        cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << endl;
-        cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << endl;
-        cout << endl;
+        // cout << "AFTER BOOSTING" << endl;
+        // cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << endl;
+        // cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << endl;
+        // cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << endl;
+        // cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << endl;
+        // cout << endl;
 
+        // cout << "?5" <<endl;
         // kinematic cuts
         if(x < xmin or x > xmax) continue;
         if(y < ymin or y > ymax) continue;
@@ -270,6 +274,8 @@ void EAGun::ExecuteTask() {
 
         // JSINFO << "Q2 = " << Q2 << "; W2 = " << W2 << "; x = " << x << "; y = " << y;
 
+
+        // cout << "?6" <<endl;
         p62.clear();
         if (!printer.empty()) {
             std::ofstream sigma_printer;
@@ -285,13 +291,16 @@ void EAGun::ExecuteTask() {
         // pTarr[0]=0.0; pTarr[1]=0.0;
         // pindexarr[0]=0; pindexarr[1]=0;
 
+        // cout << "?7" <<endl;
         for (int parid = 0; parid < event.size(); parid++) {
+            // cout << "\t?8" <<endl;
             if (parid < 3) continue; // 0, 1, 2: total event and beams
             Pythia8::Particle &particle = event[parid];
 
             //skipping everything decayed
             if (!particle.isFinal()) continue;
 
+            // cout << "\t?9" <<endl;
             //replacing diquarks with antiquarks (and anti-dq's with quarks)
             //the id is set to the heaviest quark in the diquark (except down quark)
             //this technically violates baryon number conservation over the entire event
@@ -307,6 +316,7 @@ void EAGun::ExecuteTask() {
                 continue;
             }
 
+            // cout << "\t?10" <<endl;
             if (!FSR_on) {
                 // only accept gluons and quarks
                 // Also accept Gammas to put into the hadron's list
@@ -325,9 +335,11 @@ void EAGun::ExecuteTask() {
                 if (fabs(particle.id()) > 5 && (particle.id() != 21 && particle.id() != 22)) continue;
             }
 
+            // cout << "\t?11" <<endl;
             p62.push_back(particle);
         }
 
+        // cout << "?12" <<endl;
         // if you want at least 2
         // if (p62.size() < 2) continue;
         if (p62.size() < 1) continue;
@@ -340,6 +352,7 @@ void EAGun::ExecuteTask() {
         flag62 = true;
         cout << "Q2: " << Q2 << endl;
         cout << "nu: " << peIn[0]-peOut[0] << endl;
+        cout << "?13" <<endl;
 
     } while (!flag62);
 
@@ -353,6 +366,7 @@ void EAGun::ExecuteTask() {
     // std::random_device device;
     // std::mt19937 engine(device()); // Seed the random number engine
 
+    // cout << "?14" <<endl;
     double xLoc[4];
     if (!ini) {
         VERBOSE(1) << "No initial state module, setting the starting location to "

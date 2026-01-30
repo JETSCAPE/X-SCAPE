@@ -110,8 +110,9 @@ public:
   double hydro_Tc, qhat0, alphas, brick_length, vir_factor;
   double initR0, initRx, initRy, initRz, initVx, initVy, initVz, initRdotV,
       initVdotV, initEner;
-  double Q00, Q0, T0, QS;
+  double Q00, Q0, T0, QS, max_vir;
   double Lambda_QCD;
+  double TABLEEMAX, TABLEEMIN, TABLEDE;
 
   static const int dimQhatTab = 151;
   double qhatTab1D[dimQhatTab] = {0.0};
@@ -144,6 +145,11 @@ public:
   static double RHQ12[60][20];  //Qg->Qg
   static double qhatHQ[60][20]; //qhat of heavy quark
 
+  static vector<double> pdf_q_rate;
+  static vector<double> pdf_q_qhat;
+  static vector<double> pdf_g_rate;
+  static vector<double> pdf_g_qhat;
+
   // flag to make sure initialize only once
   static bool flag_init;
 
@@ -166,6 +172,9 @@ public:
   void colljet22(int CT, double temp, double qhat0ud, double v0[4],
                  double p0[4], double p2[4], double p3[4], double p4[4],
                  double &qt);
+  void collPDF22(int CT, double LambdaQCD, 
+                 double p0[4], double p2[4], double p3[4], double p4[4],
+                 double &qt);
   void trans(double v[4], double p[4]);
   void transback(double v[4], double p[4]);
   void rotate(double px, double py, double pz, double pr[4], int icc);
@@ -177,6 +186,8 @@ public:
                                 double var_ener, double var_temp);
 
   void read_tables();
+  void read_pdf_collision_tables();
+  double interpolate_pdf_tables(double EOriginal, int pid, int type);
   double Mgc2gc(double s, double t, double M);
   double Mqc2qc(double s, double t, double M);
   void collHQ22(int CT, double temp, double qhat0ud, double v0[4], double p0[4],
