@@ -309,7 +309,7 @@ void Parton::CheckAcceptability(int id) {
     break;
   default:
     JSWARN << " error in id = " << id;
-    throw std::runtime_error("pid not accepted for Parton");
+    // throw std::runtime_error("pid not accepted for Parton");
     break;
   }
 }
