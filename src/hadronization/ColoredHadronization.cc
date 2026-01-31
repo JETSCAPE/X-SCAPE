@@ -132,6 +132,7 @@ void ColoredHadronization::DoHadronization(
     vector<vector<shared_ptr<Parton>>> &shower,
     vector<shared_ptr<Hadron>> &hOut, vector<shared_ptr<Parton>> &pOut) {
 
+  cout << "HADRONIZING" << endl;
   Event &event = pythia.event;
   event.reset();
   double pz = p_fake;
@@ -147,7 +148,7 @@ void ColoredHadronization::DoHadronization(
         event.append(hadIter->get()->pid(),0,0,0,hadIter->get()->px(),hadIter->get()->py(),hadIter->get()->pz(),hadIter->get()->e(),massnow);
         event[event.size()-1].vProd(0., 0., 0., 0.);
       }
-      else hadIter++;
+      hadIter++;
     }
   }
 

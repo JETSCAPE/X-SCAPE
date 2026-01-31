@@ -679,7 +679,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       Q0 = 1.0;
 
     // cout << "\tH" << endl;
-    cout << "T " << pIn[i].t() << " Q02 " << Q0*Q0 << " QS2 " << QS*QS << endl;
+    // cout << "T " << pIn[i].t() << " Q02 " << Q0*Q0 << " QS2 " << QS*QS << endl;
     //if (pIn[i].t() > QS + rounding_error)
     if (pIn[i].t() > Q0 * Q0 + rounding_error ||
         ((!in_vac) && //now_temp <= T0 &&
@@ -870,7 +870,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 	    double muSquare= pIn[i].t(); //Virtuality of the parent; Revist this when q-hat is virtuality dependent
       // qhatLoc= GeneralQhatFunction(QhatParametrizationType, tempLoc, sdLoc, alphas, qhat0, enerLoc, muSquare);
 
-      double nuclear_dens = ini->Get_target_nucleon_density_lab(el_time, el_rx, el_ry, el_rz);
+      double nuclear_dens = ini->Get_target_nucleon_density_lab(el_time, el_rx, el_ry, el_rz) * pow(0.1973,3);
       if (pIn[i].pid()==21) {
         qhatLoc = GeneralQhatFunction(8, tempLoc, sdLoc, alphas, qhat0, enerLoc, muSquare);
       }
