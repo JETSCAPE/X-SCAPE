@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+
+<jetscape>
+  <Random>
+    <seed>0</seed>
+  </Random>
+
+  <nEvents>1000</nEvents>
+  
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <!-- <Trento> </Trento> -->
+    <MCGlauber>
+      <!--0: generates full event with binary collisions and strings-->
+      <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
+      <generateOnlyPositions>1</generateOnlyPositions>
+      <projectile>e</projectile> <!--activates eA mode in MCGlauber-->
+      <target>Pb</target> <!--Target name-->
+      <sqrts>27.6</sqrts> <!--Center of mass energy in GeV-->
+      <ylossParam4At2> 1.666 </ylossParam4At2>
+      <ylossParam4At4> 2.10 </ylossParam4At4>
+      <ylossParam4At6> 2.20 </ylossParam4At6>
+      <ylossParam4At10> 2.30 </ylossParam4At10>
+      <ylossParam4var> 0.555 </ylossParam4var>
+    </MCGlauber>
+  </IS>
+  
+  <!-- Hard Process -->
+  <Hard>
+    <EAGun>
+      <softMomentumCutoff>2.0</softMomentumCutoff>
+      <electron_energy>27.6</electron_energy>
+      <proton_energy>0.938</proton_energy>
+      <Q2_pow>2</Q2_pow>
+      <Q2_factor>500</Q2_factor>
+      <!-- <Q2min>25</Q2min> -->
+      <!-- <Q2max>36</Q2max> -->
+      <Q2>10</Q2>
+      <nu>12</nu>
+    </EAGun>
+  </Hard>
+  
+  <!--Preequilibrium Dynamics Module -->
+  <Preequilibrium>
+    <NullPreDynamics> </NullPreDynamics>
+  </Preequilibrium>
+  
+  <!--Eloss Modules -->
+  <Eloss>
+    <eMatter>
+      <initial_virtuality_pT>0</initial_virtuality_pT>
+      <in_vac>0</in_vac>
+      <QS>0.4</QS>
+      <broadening_on>0</broadening_on>
+    </eMatter>
+  </Eloss>
+  
+  <JetHadronization>
+    <name>colored</name>
+  </JetHadronization>
+
+  <PartonPrinter>
+      <FileName>./FinalPartonsInfo.dat</FileName>
+  </PartonPrinter>  
+</jetscape>
