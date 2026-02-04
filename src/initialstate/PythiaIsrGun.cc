@@ -270,7 +270,10 @@ void PythiaIsrGun::ExecuteTask() {
   struct same_location {
     inline bool operator()(const std::vector<double> &p1,
                            const std::vector<double> &p2) {
-      if ( pow(p1[1]-p2[1],2)+pow(p1[2]-p2[2],2)+pow(p1[3]-p2[3],2) < 1e-20 )
+      if (std::abs(p1[0]-p2[0]) < 1e-8
+          && std::abs(p1[1]-p2[1]) < 1e-8
+          && std::abs(p1[2]-p2[2]) < 1e-8 
+          && std::abs(p1[3]-p2[3]) < 1e-8)
         return true;
       else
         return false;
