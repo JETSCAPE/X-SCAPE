@@ -129,6 +129,8 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                << " but the maximum time is " << GetMaxT() << ", skipping this call.";
         return;
     }
+    std::ofstream debug_file;
+    debug_file.open("iMatter_debug.txt", std::ios::out | std::ios::app);
    
     bool IsRotated = false;
 
@@ -583,6 +585,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 // std::cin >> blurb;
             } /// usual dump routine for naned out partons
 
+            //Check the energy here for sibling and parent. Really need parent
+            if (Parent.e() > 100){
+                debug_file << "\n\n In event number" << GetCurrentEvent() << ": \n";
+                debug_file << "Parent energy: " << Parent.e() << "\n";
+            }
+
             pOut.push_back(pIn[in]);
             pOut.push_back(Sibling);
             pOut.push_back(Parent);
@@ -625,6 +633,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
     // std::cin >> blurb ;
 
     return;
+    debug_file.close();
 }
 // End of DoEnergyLoss
 

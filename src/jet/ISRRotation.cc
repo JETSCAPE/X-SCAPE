@@ -195,7 +195,8 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         debug_file << " iMATTER Pushing particlelabel " << Out.plabel() << " status "
                << Out.pstat() << " pid " << Out.pid()
                << " e " << Out.e() << " px " << Out.px() << " py " << Out.py()<< " pz " << Out.pz()
-               << " to MCGlauber for subtraction \n";
+               << " to MCGlauber for subtraction \n"
+               << "at position" << Out.x_in().t() << Out.x_in().x() << Out.x_in().y() << Out.x_in().z();
         if (Out.e() < 0) {
           JSWARN << "Energy to subtract is negative !";
           exit(1);
