@@ -900,10 +900,11 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                      << ", pc2[3]=" << pc2[3];
             }
 
-            pOut.push_back(Parton(0, pid2, 1, pc2, el_vertex)); // recoiled
+            pOut.push_back(Parton(0, pid2,1,  pc2, el_vertex)); // recoiled
             iout = pOut.size() - 1;
             pOut[iout].set_jet_v(velocity_jet); // use initial jet velocity
             pOut[iout].set_mean_form_time();
+            pOut[iout].set_hard_scattering(pIn[i].hard_scattering());
             ft = 10000.0; /// a really large formation time.
             pOut[iout].set_form_time(ft);
             ////pOut[iout].set_color(el_color2);
@@ -924,6 +925,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
             iout = pOut.size() - 1;
             pOut[iout].set_jet_v(velocity_jet);
             pOut[iout].set_mean_form_time();
+            pOut[iout].set_hard_scattering(pIn[i].hard_scattering());
             ft = 10000.0; /// STILL a really large formation time.
             pOut[iout].set_form_time(ft);
             ////pOut[iout].set_color(el_color3);
@@ -1432,6 +1434,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
         pOut[iout].set_max_color(max_color);
         pOut[iout].set_min_color(pIn[i].min_color());
         pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
+        pOut[iout].set_hard_scattering(pIn[i].hard_scattering());
 
         VERBOSE(8) << BOLDRED << " virtuality of D 1 = " << pOut[iout].t();
         VERBOSE(8) << BOLDRED << " mass of parton = " << pOut[iout].restmass();
@@ -1507,6 +1510,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
           iout = pOut.size() - 1;
           pOut[iout].set_jet_v(velocity_jet); // use initial jet velocity
           pOut[iout].set_mean_form_time();
+          pOut[iout].set_hard_scattering(pIn[i].hard_scattering());
           ft = generate_L(pOut[iout].mean_form_time());
           pOut[iout].set_form_time(ft);
           pOut[iout].set_color(d2_col);

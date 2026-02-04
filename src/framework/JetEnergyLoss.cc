@@ -359,6 +359,9 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT)
     vector<Parton> pOutTemp;
 
     pInTempModule.push_back(pIn[i]);
+    if (pInTempModule.back().hard_scattering() != pIn[i].hard_scattering()) {
+      JSWARN << "Parton hard scattering index changed unexpectedly!";
+    }
 
       //JP: Check if this usage is consistent with master clock etc start time ... !!!!
     SentInPartons(deltaT, currentTime+deltaT, pIn[i].pt(), pInTempModule, pOutTemp);

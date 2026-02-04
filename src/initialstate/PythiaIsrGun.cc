@@ -303,10 +303,15 @@ void PythiaIsrGun::ExecuteTask() {
   index_match_file.close();
 
   
+  // Resize totalMomentum vectors in InitialState
+  size_t nshowers = std::min(proj_A, targ_A);
+  ResizeTotalMomentumVectors(nshowers);
+  ini->pTHat.resize(nshowers);
+
   // Loop over possible scatterings to select binary collision point. 
   // Max number of scatterings is min(proj_A, targ_A)
   FourVector x_p;
-  for (int iscatt = 0; iscatt < std::min(proj_A, targ_A); iscatt++){
+  for (int iscatt = 0; iscatt < nshowers; iscatt++){
     int NSamplings = 0;
     p62.clear();
     bool flag62 = false; // reset for each scattering so interior loop runs
@@ -513,10 +518,10 @@ void PythiaIsrGun::ExecuteTask() {
     // ini->pTHat.resize((p62.size())/4);
     dummy_pTHat.resize((p62.size())/4);
     int hCounter = 0;
-    SetTotalMomentumPositive(0.0);
-    SetTotalMomentumNegative(0.0);
-    SetTotalMomentumFractionPositive(0.0);
-    SetTotalMomentumFractionNegative(0.0);
+    SetTotalMomentumPositive(0.0, iscatt);
+    SetTotalMomentumNegative(0.0, iscatt);
+    SetTotalMomentumFractionPositive(0.0, iscatt);
+    SetTotalMomentumFractionNegative(0.0, iscatt);
     double TotalEnergyOfInitialStatePartons = 0.0;
 
     for (int np = 0; np < p62.size(); ++np) {
@@ -526,27 +531,27 @@ void PythiaIsrGun::ExecuteTask() {
         {
             TotalEnergyOfInitialStatePartons += particle.e();
             if(particle.pz() >= 0.0) {
-              SetTotalMomentumPositive(GetTotalMomentumPositive() + particle.e());
-              SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive() + (particle.e() + particle.pz() ) / ( 0.94 * eCM));
+              SetTotalMomentumPositive(GetTotalMomentumPositive(iscatt) + particle.e(), iscatt);
+              SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive(iscatt) + (particle.e() + particle.pz() ) / ( 0.94 * eCM),iscatt);
               }
             else {
-              SetTotalMomentumNegative(GetTotalMomentumNegative() +particle.e());
-              SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative() + (particle.e() - particle.pz() ) / ( 0.94 * eCM));
+              SetTotalMomentumNegative(GetTotalMomentumNegative(iscatt) +particle.e(), iscatt);
+              SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative(iscatt) + (particle.e() - particle.pz() ) / ( 0.94 * eCM), iscatt);
               }
         }
     }
 
-    VERBOSE(2) << "Negative Partons Momentum "<< GetTotalMomentumNegative()
-            << " Positive Partons Momentum "<< GetTotalMomentumPositive()
+    VERBOSE(2) << "Negative Partons Momentum "<< GetTotalMomentumNegative(iscatt)
+            << " Positive Partons Momentum "<< GetTotalMomentumPositive(iscatt)
             << " eCM " << eCM
             << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
-    if(GetTotalMomentumFractionNegative() >= 1.0 || GetTotalMomentumFractionPositive() >= 1.){
+    if(GetTotalMomentumFractionNegative(iscatt) >= 1.0 || GetTotalMomentumFractionPositive(iscatt) >= 1.){
       JSINFO << "Redoing Pythia Sampling Since MPI energy is larger than eCM/2.1 ";
       if(NSamplings < 1000){
         goto ReDoSampling;
       }
-      JSWARN << "Negative Partons Momentum Fraction "<< GetTotalMomentumFractionNegative()
-            << " Positive Partons Momentum Fraction "<< GetTotalMomentumFractionPositive()
+      JSWARN << "Negative Partons Momentum Fraction "<< GetTotalMomentumFractionNegative(iscatt)
+            << " Positive Partons Momentum Fraction "<< GetTotalMomentumFractionPositive(iscatt)
             << " eCM " << eCM
             << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
       throw std::runtime_error("Pythia Isr Gun outputs more energy in the MPI partons than eCM");
@@ -584,12 +589,13 @@ void PythiaIsrGun::ExecuteTask() {
       ptn->set_color(particle.col());
       ptn->set_anti_color(particle.acol()); 
       ptn->set_max_color(GetMax_ColorPerShower() * (np + 1));
+      ptn->set_hard_scattering(iscatt);
       AddParton(ptn);
     }
 
     // Update the pTHat vector in initial state using dummy
     for (auto pT : dummy_pTHat){
-      ini->pTHat.push_back(pT);
+      ini->pTHat[iscatt].push_back(pT);
       debug_file << "pT pushed back for scatter " << iscatt << ": " << pT << "\n";
     }
     dummy_pTHat.clear();
@@ -598,7 +604,7 @@ void PythiaIsrGun::ExecuteTask() {
 
     // Update NPP
     NPP += p62.size();
-  }
+  } // End of scattering loop
 
   //Set max color for event and collision momenta vectors
   SetMax_Color(GetMax_ColorPerShower() * NPP); 
