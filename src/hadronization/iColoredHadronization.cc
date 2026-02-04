@@ -20,6 +20,7 @@
 #include "tinyxml2.h"
 #include "MCGlauberGenStringWrapper.h"
 #include <memory>
+#include <string>
 
 
 using namespace Jetscape;
@@ -115,58 +116,73 @@ void iColoredHadronization::DoHadronization(
   
   // JSINFO << "Starting "
   Event &event = pythia.event;
-  event.reset();
-  double pz = p_fake;
-  // auto Particles = shower->GetFinalPartons();
-  VERBOSE(2) << BOLDYELLOW << "iColored Hadronization partons ";
-  for (unsigned int ishower = 0; ishower < shower.size(); ++ishower) {
-    JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
-            << " partons in the shower number " << ishower;
-    for (unsigned int ipart = 0; ipart < shower.at(ishower).size(); ++ipart) {
-      
-      // if(shower.at(ishower).at(ipart)->pstat() < 0 ) continue;
-
-      double onshellE = pow(pow(shower.at(ishower).at(ipart)->px(), 2) +
-                                pow(shower.at(ishower).at(ipart)->py(), 2) +
-                                pow(shower.at(ishower).at(ipart)->pz(), 2),
-                            0.5);
-
-      if (shower.at(ishower).at(ipart)->pid() == 22) {
-
-        VERBOSE(1) << BOLDYELLOW
-                   << " photon found in colored hadronization with ";
-        VERBOSE(1) << BOLDYELLOW
-                   << "px = " << shower.at(ishower).at(ipart)->px();
-        //cin >> blurb;
-      }
-
-      event.append(shower.at(ishower).at(ipart)->pid(), 23,
-                   shower.at(ishower).at(ipart)->color(),
-                   shower.at(ishower).at(ipart)->anti_color(),
-                   shower.at(ishower).at(ipart)->px(),
-                   shower.at(ishower).at(ipart)->py(),
-                   shower.at(ishower).at(ipart)->pz(), onshellE);
-
-      VERBOSE(2) << BOLDYELLOW << " pid = " << shower.at(ishower).at(ipart)->pid()
-                 << " plabel = " << shower.at(ishower).at(ipart)->plabel()
-                 << " pstat = " << shower.at(ishower).at(ipart)->pstat()
-                 << " col = " << shower.at(ishower).at(ipart)->color()
-                 << " acol = " << shower.at(ishower).at(ipart)->anti_color();
-    }
-  }
 
   auto ini  = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
-
   auto MCGsecond = std::dynamic_pointer_cast<MCGlauberGenStringWrapper> (Hard->GetTaskList()[1]);
-  auto Remnants = Hard->GetRemnants();
-  JSINFO << "Remnants size = " << Remnants.size() << ", Scatterings size = " << 2 * ini->pTHat.size();
-  if(2 * ini->pTHat.size() != Remnants.size()){
-    throw std::runtime_error("Not enough remnants = " + std::to_string(Remnants.size()) + " Scattering = " + std::to_string(ini->pTHat.size()));
-  }
-  double NHardScatterings = double(ini->pTHat.size());
 
-  for (unsigned int ipart = 0; ipart < Remnants.size(); ++ipart) {
+  size_t nscatter = Hard->GetNumberOfScatterings();
+
+  // Multiscattering loop
+  for (size_t iscatt = 0; iscatt < nscatter; ++iscatt) {
+    event.reset();
+    double pz = p_fake;
+    // auto Particles = shower->GetFinalPartons();
+    VERBOSE(2) << BOLDYELLOW << "iColored Hadronization partons ";
+    for (unsigned int ishower = 0; ishower < shower.size(); ++ishower) {
+      JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
+              << " partons in the shower number " << ishower;
+      for (unsigned int ipart = 0; ipart < shower.at(ishower).size(); ++ipart) {
+        
+        // if(shower.at(ishower).at(ipart)->pstat() < 0 ) continue;
+        // select only partons from the current scattering
+        if (shower.at(ishower).at(ipart)->hard_scattering() != int(iscatt)) {
+          VERBOSE(2) << BOLDYELLOW
+                    << " skipping parton from shower " << ishower
+                    << " plabel " << shower.at(ishower).at(ipart)->plabel()
+                    << " pstat " << shower.at(ishower).at(ipart)->pstat()
+                    << " hard scattering "
+                    << shower.at(ishower).at(ipart)->hard_scattering();
+          continue;
+        }
+
+        double onshellE = pow(pow(shower.at(ishower).at(ipart)->px(), 2) +
+                                  pow(shower.at(ishower).at(ipart)->py(), 2) +
+                                  pow(shower.at(ishower).at(ipart)->pz(), 2),
+                              0.5);
+
+        if (shower.at(ishower).at(ipart)->pid() == 22) {
+
+          VERBOSE(1) << BOLDYELLOW
+                    << " photon found in colored hadronization with ";
+          VERBOSE(1) << BOLDYELLOW
+                    << "px = " << shower.at(ishower).at(ipart)->px();
+          //cin >> blurb;
+        }
+
+        event.append(shower.at(ishower).at(ipart)->pid(), 23,
+                    shower.at(ishower).at(ipart)->color(),
+                    shower.at(ishower).at(ipart)->anti_color(),
+                    shower.at(ishower).at(ipart)->px(),
+                    shower.at(ishower).at(ipart)->py(),
+                    shower.at(ishower).at(ipart)->pz(), onshellE);
+
+        VERBOSE(2) << BOLDYELLOW << " pid = " << shower.at(ishower).at(ipart)->pid()
+                  << " plabel = " << shower.at(ishower).at(ipart)->plabel()
+                  << " pstat = " << shower.at(ishower).at(ipart)->pstat()
+                  << " col = " << shower.at(ishower).at(ipart)->color()
+                  << " acol = " << shower.at(ishower).at(ipart)->anti_color();
+      }
+    }
+
+    auto Remnants = Hard->GetRemnants(iscatt);
+    auto pTHat = ini->pTHat[iscatt];
+    JSINFO << "Remnants size = " << Remnants.size() << ", Scatterings size = " << 2 * pTHat.size();
+    if(2 * pTHat.size() != Remnants.size()){
+      throw std::runtime_error("Not enough remnants = " + std::to_string(Remnants.size()) + " Scattering = " + std::to_string(pTHat.size()) + " at " + std::to_string(iscatt) + " scattering out of " + std::to_string(nscatter) + " in iColoredHadronization");
+    }
+    double NHardScatterings = double(pTHat.size());
+    for (unsigned int ipart = 0; ipart < Remnants.size(); ++ipart) {
       auto Rem = Remnants[ipart];
       double Pz, Px, Py, En;
       //Debug
@@ -184,15 +200,15 @@ void iColoredHadronization::DoHadronization(
       //   throw std::runtime_error("MCGlauberGenStringWrapper target remnants first entry size is zero in iColoredHadronization");
       // }
       if(Rem.pz() >=0){//First index zero is temporary. Should run over scatters but unavailable yet
-        En = MCGsecond->Get_remnant_proj()[0][0] / double(NHardScatterings);
-        Px = MCGsecond->Get_remnant_proj()[0][1] / double(NHardScatterings);
-        Py = MCGsecond->Get_remnant_proj()[0][2] / double(NHardScatterings);
-        Pz = MCGsecond->Get_remnant_proj()[0][3] / double(NHardScatterings);
+        En = MCGsecond->Get_remnant_proj()[iscatt][0] / double(NHardScatterings);
+        Px = MCGsecond->Get_remnant_proj()[iscatt][1] / double(NHardScatterings);
+        Py = MCGsecond->Get_remnant_proj()[iscatt][2] / double(NHardScatterings);
+        Pz = MCGsecond->Get_remnant_proj()[iscatt][3] / double(NHardScatterings);
       } else {
-        En = MCGsecond->Get_remnant_targ()[0][0] / double(NHardScatterings);
-        Px = MCGsecond->Get_remnant_targ()[0][1] / double(NHardScatterings);
-        Py = MCGsecond->Get_remnant_targ()[0][2] / double(NHardScatterings);
-        Pz = MCGsecond->Get_remnant_targ()[0][3] / double(NHardScatterings);
+        En = MCGsecond->Get_remnant_targ()[iscatt][0] / double(NHardScatterings);
+        Px = MCGsecond->Get_remnant_targ()[iscatt][1] / double(NHardScatterings);
+        Py = MCGsecond->Get_remnant_targ()[iscatt][2] / double(NHardScatterings);
+        Pz = MCGsecond->Get_remnant_targ()[iscatt][3] / double(NHardScatterings);
       }
 
       // std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En = "<< En << " " << NHardScatterings <<  std::endl;
@@ -205,11 +221,11 @@ void iColoredHadronization::DoHadronization(
                    Rem.py() + Py,
                    Pz, onshellE);
       VERBOSE(2) << BOLDYELLOW << " pid = " << Rem.pid()
-                 << " plabel = " << Rem.plabel()
-                 << " pstat = " << Rem.pstat()
-                 << " col = " << Rem.color()
-                 << " acol = " << Rem.anti_color();
-  }
+        << " plabel = " << Rem.plabel()
+        << " pstat = " << Rem.pstat()
+        << " col = " << Rem.color()
+        << " acol = " << Rem.anti_color();
+    }
 
     //first, find unpaired color and anticolor tags.
     std::vector<int> cols;
@@ -248,9 +264,9 @@ void iColoredHadronization::DoHadronization(
 
     if(cols.size() > 0 || acols.size() > 0){
       for(auto col : cols)
-        JSWARN << " col = " << col;
+      JSWARN << " col = " << col;
       for(auto col : acols)
-        JSWARN << " col = " << col;
+      JSWARN << " col = " << col;
       throw std::runtime_error("Unpaired colors sent to Pythia");
     }
 
@@ -278,26 +294,28 @@ void iColoredHadronization::DoHadronization(
     }
 
     VERBOSE(2) << "There are " << hOut.size() << " Hadrons and " << pOut.size()
-               << " partons after Hadronization";
-  
-  
-  pythia.next();
-  // event.list();
+      << " partons after Hadronization";
 
-  unsigned int ip = hOut.size();
-  for (unsigned int i = 0; i < event.size(); ++i) {
-    if (!event[i].isFinal())
-      continue;
-    //if ( !event[i].isHadron() )  continue;
-    if (fabs(event[i].eta()) > 20)
-      continue; //To prevent "nan" from propagating, very rare though
 
-    double x[4] = {0, 0, 0, 0};
-    hOut.push_back(make_shared<Hadron>(ip, event[i].id(), event[i].status(),
-                                       event[i].pT(), event[i].eta(),
-                                       event[i].phi(), event[i].e(), x));
-    ++ip;
+    pythia.next();
+    // event.list();
+
+    unsigned int ip = hOut.size();
+    for (unsigned int i = 0; i < event.size(); ++i) {
+      if (!event[i].isFinal())
+        continue;
+      //if ( !event[i].isHadron() )  continue;
+      if (fabs(event[i].eta()) > 20)
+        continue; //To prevent "nan" from propagating, very rare though
+
+      double x[4] = {0, 0, 0, 0};
+      hOut.push_back(make_shared<Hadron>(ip, event[i].id(), event[i].status(),
+                                         event[i].pT(), event[i].eta(),
+                                         event[i].phi(), event[i].e(), x));
+      ++ip;
+    }
   }
+
 
   shower.clear();
 }

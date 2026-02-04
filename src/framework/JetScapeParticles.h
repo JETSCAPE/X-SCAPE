@@ -342,6 +342,8 @@ public:
   unsigned int max_color();
   unsigned int min_color();
   unsigned int min_anti_color();
+  void set_hard_scattering(int hs) { HardScattering_ = hs; }
+  int hard_scattering() const { return HardScattering_; }
 
   const int edgeid() const;
   void set_edgeid(const int id);
@@ -360,6 +362,7 @@ protected:
   unsigned int MaxColor_;     ///< the running maximum color
   unsigned int MinColor_;     ///< color of the parent
   unsigned int MinAntiColor_; ///< anti-color of the parent
+  int HardScattering_;        ///< Hard scattering index
 
   weak_ptr<PartonShower> pShower_; ///< shower that this parton belongs to
   int edgeid_;                     ///< Position in the shower graph

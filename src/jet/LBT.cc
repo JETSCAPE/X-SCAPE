@@ -414,6 +414,7 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
         pOut[iout].set_mean_form_time();
         double ft = pOut[iout].mean_form_time();
         pOut[iout].set_form_time(ft);
+        pOut[iout].set_hard_scattering(pIn[i].hard_scattering());
       }
 
       // negative particle stat = -1
@@ -438,6 +439,7 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
         pOut[iout].set_mean_form_time();
         double ft = pOut[iout].mean_form_time();
         pOut[iout].set_form_time(ft);
+        pOut[iout].set_hard_scattering(pIn[i].hard_scattering());
       }
 
     } else { // free-streaming daughter particles from negative particles if they are inside a medium
@@ -473,6 +475,7 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
         pOut[iout].set_mean_form_time();
         double ft = pOut[iout].mean_form_time();
         pOut[iout].set_form_time(ft);
+        pOut[iout].set_hard_scattering(pIn[i].hard_scattering());
       }
 
     } // end par_status check

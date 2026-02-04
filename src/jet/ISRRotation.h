@@ -50,7 +50,7 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
    void printout_current();
    void SetLatestInitialParton(double px, double py, double pz, double E, int label);
    void ResetShower();
-   void AddRemenant(Parton &Out, int label);
+   void AddRemenant(Parton &Out, int label, int hs);
    
   //  std::shared_ptr<InitialState> ini; // temporary pointer to initial state   
   //  std::shared_ptr<HardProcess> Hard; // temporary pointer to Hard process   

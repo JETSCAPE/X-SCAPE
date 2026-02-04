@@ -210,6 +210,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
         double y_end = pIn[in].x_in().y();
         double z_end = pIn[in].x_in().z();
         double t_end = pIn[in].time();
+        auto iscatt = pIn[in].hard_scattering();
 
         // Set x2 the current particle's momentum fraction //
         double CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
@@ -298,7 +299,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             }
 
             pIn[in].set_jet_v(velocity);
-            double pThat = ini->pTHat[(-pIn[in].plabel()-1)/2];
+            double pThat = ini->pTHat[iscatt][(-pIn[in].plabel()-1)/2];
             double max_t = vir_factor * pThat * pThat;//*pIn[in].e()*pIn[in].e();
 
 
@@ -307,12 +308,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             CurrentPlus =  (e + std::abs(pz)) / M_SQRT2;
             MomentumFractionCurrent = CurrentPlus / ( M_SQRT2 * P_A );
             if(pIn[in].pz() >= 0.0) {
-                TotalMomentum =  Hard->GetTotalMomentumPositive() - Current.e();
-                TotalMomentumFraction =  Hard->GetTotalMomentumFractionPositive() - MomentumFractionCurrent;
+                TotalMomentum =  Hard->GetTotalMomentumPositive(iscatt) - Current.e();
+                TotalMomentumFraction =  Hard->GetTotalMomentumFractionPositive(iscatt) - MomentumFractionCurrent;
                 } 
             else {
-                TotalMomentum =  Hard->GetTotalMomentumNegative() - Current.e();
-                TotalMomentumFraction = Hard->GetTotalMomentumFractionNegative() - MomentumFractionCurrent;
+                TotalMomentum =  Hard->GetTotalMomentumNegative(iscatt) - Current.e();
+                TotalMomentumFraction = Hard->GetTotalMomentumFractionNegative(iscatt) - MomentumFractionCurrent;
                 }
             MomentumFractionCurrent = MomentumFractionCurrent / (1.0 - TotalMomentumFraction);
 
@@ -402,11 +403,11 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             MomentumFractionCurrent = CurrentPlus / (M_SQRT2 * P_A);
 
             if (pIn[in].pz() >= 0.0) {
-              TotalMomentum = Hard->GetTotalMomentumPositive();
-              TotalMomentumFraction = Hard->GetTotalMomentumFractionPositive();
+              TotalMomentum = Hard->GetTotalMomentumPositive(iscatt);
+              TotalMomentumFraction = Hard->GetTotalMomentumFractionPositive(iscatt);
             } else {
-              TotalMomentum = Hard->GetTotalMomentumNegative();
-              TotalMomentumFraction = Hard->GetTotalMomentumFractionNegative();
+              TotalMomentum = Hard->GetTotalMomentumNegative(iscatt);
+              TotalMomentumFraction = Hard->GetTotalMomentumFractionNegative(iscatt);
             }
             
             VERBOSE(2) << BOLDYELLOW << " Current TotalMomentum = " << TotalMomentum;
@@ -566,12 +567,12 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 goto SkipSampling;
             }
             if(Parent.pz()>=0 ){
-                Hard->SetTotalMomentumPositive(NewTotMom);
-                Hard->SetTotalMomentumFractionPositive(NewTotMomFract);
+                Hard->SetTotalMomentumPositive(NewTotMom,iscatt);
+                Hard->SetTotalMomentumFractionPositive(NewTotMomFract, iscatt);
             }
             else{
-                Hard->SetTotalMomentumNegative(NewTotMom);
-                Hard->SetTotalMomentumFractionNegative(NewTotMomFract);
+                Hard->SetTotalMomentumNegative(NewTotMom, iscatt);
+                Hard->SetTotalMomentumFractionNegative(NewTotMomFract, iscatt);
             }
 
             if (std::isnan(Sibling.e()) || std::isnan(Sibling.px()) ||
@@ -582,6 +583,9 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
                 Matter::Dump_pIn_info(in, pOut);
                 // std::cin >> blurb;
             } /// usual dump routine for naned out partons
+
+            Sibling.set_hard_scattering(pIn[in].hard_scattering());
+            Parent.set_hard_scattering(pIn[in].hard_scattering());
 
             pOut.push_back(pIn[in]);
             pOut.push_back(Sibling);

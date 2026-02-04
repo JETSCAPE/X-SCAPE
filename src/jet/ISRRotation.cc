@@ -157,11 +157,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         // New momentum after rotating to get the pT
         FourVector p_Out(Out.px(), Out.py(),Out.pz(), Out.e());
         if(Out.plabel() == LatestPartonLabel_Postive ){
-          AddRemenant(Out,LatestPartonLabel_Postive);
+          AddRemenant(Out,LatestPartonLabel_Postive, Out.hard_scattering());
           VERBOSE(2) << "LatestPartonLabel_Postive used " << LatestPartonLabel_Postive;
         }
         if(Out.plabel() == LatestPartonLabel_Negative ){
-          AddRemenant(Out,LatestPartonLabel_Negative);
+          AddRemenant(Out,LatestPartonLabel_Negative, Out.hard_scattering());
           VERBOSE(2) << "LatestPartonLabel_Negative used " << LatestPartonLabel_Negative;
         }
 
@@ -245,25 +245,6 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         double DeltapyO2 = (vy + vy1) / 2.; 
         double DeltapzO2 = (vz + vz1) / 2.; 
 
-        if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 0) {
-          ini->Olds = 2.0 * CollisionPositive.t() * CollisionNegative.t() -
-                      2.0 * CollisionPositive.x() * CollisionNegative.x() -
-                      2.0 * CollisionPositive.y() * CollisionNegative.y() -
-                      2.0 * CollisionPositive.z() * CollisionNegative.z();
-          ini->Oldt = -2.0 * CollisionPositive.t() * pIn[in].e() +
-                      2.0 * CollisionPositive.x() * pIn[in].px() +
-                      2.0 * CollisionPositive.y() * pIn[in].py() +
-                      2.0 * CollisionPositive.z() * pIn[in].pz();
-        }
-
-        if (pIn[in].plabel() <= NPartonPerShower &&
-            (pIn[in].plabel() - 1) % 2 == 1) {
-          ini->Oldu = -2.0 * CollisionPositive.t() * pIn[in].e() +
-                      2.0 * CollisionPositive.x() * pIn[in].px() +
-                      2.0 * CollisionPositive.y() * pIn[in].py() +
-                      2.0 * CollisionPositive.z() * pIn[in].pz();
-        }
-
         if (!(std::abs(vx - vx1) < 1e-10 && std::abs(vy - vy1) < 1e-10 &&
               std::abs(vz - vz1) < 1e-10)) {
           // p_Out.boost(vx, vy, vz);
@@ -273,25 +254,6 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           double NewPz = pIn[in].pz() - DeltapzO2;
           double NewE  = std::sqrt(NewPx * NewPx + NewPy * NewPy + NewPz * NewPz);
           p_Out.Set(NewPx, NewPy, NewPz, NewE);
-
-          if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 0) {
-            ini->News = 2.0 * CollisionPositive1.t() * CollisionNegative1.t() -
-                        2.0 * CollisionPositive1.x() * CollisionNegative1.x() -
-                        2.0 * CollisionPositive1.y() * CollisionNegative1.y() -
-                        2.0 * CollisionPositive1.z() * CollisionNegative1.z();
-            ini->Newt = -2.0 * CollisionPositive1.t() * p_Out.t() +
-                        2.0 * CollisionPositive1.x() * p_Out.x() +
-                        2.0 * CollisionPositive1.y() * p_Out.y() +
-                        2.0 * CollisionPositive1.z() * p_Out.z();
-          }
-
-          if (pIn[in].plabel() <= NPartonPerShower && (pIn[in].plabel() - 1) % 2 == 1) {
-            ini->Newu = -2.0 * CollisionPositive1.t() * p_Out.t() +
-                        2.0 * CollisionPositive1.x() * p_Out.x() +
-                        2.0 * CollisionPositive1.y() * p_Out.y() +
-                        2.0 * CollisionPositive1.z() * p_Out.z();
-          }
-
 
           Parton Out = pIn[in];
           Out.reset_momentum(p_Out);
@@ -473,19 +435,19 @@ void ISRRotation::SetLatestInitialParton(double px, double py, double pz, double
 
 }
 
-void ISRRotation::AddRemenant(Parton &Out,int label){
+void ISRRotation::AddRemenant(Parton &Out,int label, int hs){
   auto ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
   Parton Rem = Out;
   Rem.set_label(label-1);
   double direction = (Rem.pz() >=0 ? 1.:-1.);
-  int NHardScatterings = ini->pTHat.size();
+  int NHardScatterings = ini->pTHat[hs].size();
   double Pz = (Rem.pz() >=0 ? 1.0:-1.0);
 
   Rem.reset_momentum(0.25 * Lambda_QCD, 0.25 * Lambda_QCD,Pz,0.0);
   Rem.set_color(Out.anti_color()); 
   Rem.set_anti_color(Out.color());
   if(Rem.pid() != 21 ) Rem.set_id(-Out.pid()); 
-  Hard->PushRemnants(Rem);
+  Hard->PushRemnants(Rem, hs);
   return;
 }
