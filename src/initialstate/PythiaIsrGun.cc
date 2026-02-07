@@ -302,16 +302,10 @@ void PythiaIsrGun::ExecuteTask() {
   index_match_file << "\n\n";
   index_match_file.close();
 
-  
-  // Resize totalMomentum vectors in InitialState
-  size_t nshowers = std::min(proj_A, targ_A);
-  ResizeTotalMomentumVectors(nshowers);
-  ini->pTHat.resize(nshowers);
-
   // Loop over possible scatterings to select binary collision point. 
   // Max number of scatterings is min(proj_A, targ_A)
   FourVector x_p;
-  for (int iscatt = 0; iscatt < nshowers; iscatt++){
+  for (int iscatt = 0; iscatt < std::min(targ_A, proj_A); iscatt++){
     int NSamplings = 0;
     p62.clear();
     bool flag62 = false; // reset for each scattering so interior loop runs
@@ -323,7 +317,7 @@ void PythiaIsrGun::ExecuteTask() {
     //Pick a collision point
     int icoll = -1;
     if (AcceptedCollisionPoints.size() == 0){
-      icoll = index_list[iscatt];
+      icoll = index_list[iscatt]; //Automatically select first point
       //Debug
       JSINFO << MAGENTA << "Selected collision point index " << icoll << " for scattering number " << iscatt;
     }
@@ -487,7 +481,12 @@ void PythiaIsrGun::ExecuteTask() {
     if ((!accept_scatter) && (iscatt != 0)) {break;}
     debug_file << "Scatter progressed in scatter loop. Will now push information to framework. \n";
 
-    //If scatter is accepted give to framework
+    //If scatter is accepted give to framework below
+
+    //Resize vectors for hard process info
+    ResizeTotalMomentumVectors(iscatt+1);
+    ini->pTHat.resize(iscatt+1);
+
     if (!ini)
     {
       JSINFO << BOLDYELLOW << "No initial state module, setting the starting location to "
