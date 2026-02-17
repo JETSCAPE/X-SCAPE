@@ -1,4 +1,4 @@
-name: build test
+name: build+external+unit_test
 
 on:
   pull_request:
