@@ -539,7 +539,7 @@ void HybridHadronization::DoHadronization(vector<vector<shared_ptr<Parton>>>& sh
 	  brick.brick_length_width(brickL,brickL);
 	  brick.brick_flow(0., 0., 0.);
     brick.brick_Tc(hydro_Tc);
-	  brick.samplebrick();
+	  brick.sampl_brick();
 
 	  JSINFO << "A " << brickL << " fm brick was sampled, generating " << brick.nTot() << " partons (" << brick.th_nL() << " light, " << brick.th_nS() << " strange).";
 

@@ -169,6 +169,7 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
+        export OpenMP_INCLUDE_DIRS="/opt/homebrew/opt/libomp/include"
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
         export CMAKE_PREFIX_PATH="${EIGEN3_CMAKE_DIR}:$CMAKE_PREFIX_PATH"
         BOOST_ROOT="$(brew --prefix boost@1.85)"
