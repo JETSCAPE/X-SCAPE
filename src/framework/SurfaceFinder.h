@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -17,23 +18,26 @@
 #ifndef SURFACEFINDER_H_
 #define SURFACEFINDER_H_
 
+#include <array>
+#include <fstream>
+#include <omp.h>
 #include <vector>
 
+#include "FluidEvolutionHistory.h"
 #include "RealType.h"
 #include "SurfaceCellInfo.h"
-#include "FluidEvolutionHistory.h"
 
 namespace Jetscape {
 
 class SurfaceFinder {
-private:
+ private:
   Jetscape::real T_cut;
   const EvolutionHistory &bulk_info;
   bool boost_invariant;
 
   std::vector<SurfaceCellInfo> surface_cell_list;
 
-public:
+ public:
   SurfaceFinder(const Jetscape::real T_in, const EvolutionHistory &bulk_data);
   ~SurfaceFinder();
 
@@ -47,16 +51,19 @@ public:
     return (surface_cell_list);
   }
 
-  bool check_intersect_3D(Jetscape::real tau, Jetscape::real x,
-                          Jetscape::real y, Jetscape::real dt,
-                          Jetscape::real dx, Jetscape::real dy, double ***cube);
+  // explicit multidimensional std::array types for 2x2x2 and 2x2x2x2 cubes
+  // 3D cube: [2][2][2]
+  bool check_intersect_3D(
+      Jetscape::real tau, Jetscape::real x, Jetscape::real y, Jetscape::real dt,
+      Jetscape::real dx, Jetscape::real dy,
+      std::array<std::array<std::array<double, 2>, 2>, 2> &cube);
   void Find_full_hypersurface_3D();
-
-  bool check_intersect_4D(Jetscape::real tau, Jetscape::real x,
-                          Jetscape::real y, Jetscape::real eta,
-                          Jetscape::real dt, Jetscape::real dx,
-                          Jetscape::real dy, Jetscape::real deta,
-                          double ****cube);
+  // 4D cube: [2][2][2][2]
+  bool check_intersect_4D(
+      Jetscape::real tau, Jetscape::real x, Jetscape::real y,
+      Jetscape::real eta, Jetscape::real dt, Jetscape::real dx,
+      Jetscape::real dy, Jetscape::real deta,
+      std::array<std::array<std::array<std::array<double, 2>, 2>, 2>, 2> &cube);
   void Find_full_hypersurface_4D();
 
   SurfaceCellInfo PrepareASurfaceCell(Jetscape::real tau, Jetscape::real x,
@@ -64,8 +71,11 @@ public:
                                       Jetscape::real da0, Jetscape::real da1,
                                       Jetscape::real da2, Jetscape::real da3,
                                       const FluidCellInfo fluid_cell);
+
+  void WriteSurfaceToFile(const std::vector<SurfaceCellInfo> &surface_cell_list,
+                          std::string filename);
 };
 
-} // namespace Jetscape
+}  // namespace Jetscape
 
-#endif // SURFACEFINDER_H_
+#endif  // SURFACEFINDER_H_
