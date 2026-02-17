@@ -9,8 +9,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../lib/")
 set (SOURCES
     fjcore.cc
     tinyxml2.cc
-    cornelius.cpp
 )
+
+# Add the Cornelius.cpp from ./Cornelius
+add_subdirectory(Cornelius)
 
 add_subdirectory( hydro_from_external_file )
 
@@ -19,8 +21,7 @@ if (${ZLIB_FOUND})
 endif()
 
 add_library(JetScapeThird SHARED ${SOURCES})
+target_link_libraries(JetScapeThird Cornelius)
 if (${ZLIB_FOUND})
     target_link_libraries(JetScapeThird ${ZLIB_LIBRARIES} )
 endif()
-
-
