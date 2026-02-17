@@ -34,6 +34,7 @@ add_unittest(linear_interpolation)
 add_unittest(fluid_dynamics)
 add_unittest(causal_liquifier)
 add_unittest(LiquifierBase)
+add_unittest(ThermPtnSampler)
 add_unittest(hadronic_EMT)
 add_unittest(hadronic_liquefier)
 # if SMASH is used, include the related tests
