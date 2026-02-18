@@ -101,6 +101,11 @@ if (USE_SMASH)
 endif (USE_SMASH)
 
 # Compile with OpenMP support
+if(APPLE)
+  set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
+  set(OpenMP_CXX_LIB_NAMES "libomp")
+  set(OpenMP_libomp_LIBRARY "/usr/local/opt/libomp/lib")
+endif()
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
