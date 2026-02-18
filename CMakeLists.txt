@@ -367,6 +367,11 @@ include_directories(./external_packages/gtl/include )
 include_directories(./external_packages/hydro_from_external_file )
 include_directories(./external_packages/Random123)
 include_directories(./examples/ )
+if(APPLE)
+  # set OpenMP_INCLUDE_DIRS to the path of the OpenMP headers for example:
+  # /opt/homebrew/opt/libomp/include
+  include_directories($ENV{OpenMP_INCLUDE_DIRS})
+endif()
 
 if (USE_ROOT)
   if ("${ROOT_FOUND}")

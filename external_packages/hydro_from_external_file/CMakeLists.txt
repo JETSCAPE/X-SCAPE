@@ -14,12 +14,11 @@ if (${HDF5_FOUND})
          ParameterReader.cpp
          arsenal.cpp
          SurfaceFinder.cpp
-         cornelius.cpp
          Hydroinfo_MUSIC.cpp
          Hydroinfo_h5.cpp)
     add_library(hydroFromFile SHARED ${SOURCES})
     set_target_properties (hydroFromFile PROPERTIES COMPILE_FLAGS "-DUSE_HDF5")
-    target_link_libraries (hydroFromFile ${_hdf5_libs})
+     target_link_libraries (hydroFromFile ${_hdf5_libs} Cornelius)
 else (${HDF5_FOUND})
     message(STATUS "hydro from file is compiled without hdf5 library ...")
     set (SOURCES
@@ -28,8 +27,8 @@ else (${HDF5_FOUND})
          ParameterReader.cpp
          arsenal.cpp
          SurfaceFinder.cpp
-         cornelius.cpp
          Hydroinfo_MUSIC.cpp)
     add_library(hydroFromFile SHARED ${SOURCES})
+     target_link_libraries (hydroFromFile Cornelius)
  endif(${HDF5_FOUND})
 

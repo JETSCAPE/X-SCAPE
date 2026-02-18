@@ -21,7 +21,6 @@ if (${ZLIB_FOUND})
 endif()
 
 add_library(JetScapeThird SHARED ${SOURCES})
-target_link_libraries(JetScapeThird Cornelius)
 if (${ZLIB_FOUND})
     target_link_libraries(JetScapeThird ${ZLIB_LIBRARIES} )
 endif()
