@@ -100,6 +100,19 @@ if (USE_SMASH)
   endif(${SMASH_FOUND})
 endif (USE_SMASH)
 
+# Compile with OpenMP support
+if(APPLE)
+  set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
+  set(OpenMP_CXX_LIB_NAMES "libomp")
+  set(OpenMP_libomp_LIBRARY "/usr/local/opt/libomp/lib")
+endif()
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+
 ###############################
 ### Compiler & Linker Flags ###
 ###############################
@@ -352,7 +365,13 @@ include_directories(./src/reader )
 include_directories(./external_packages/)
 include_directories(./external_packages/gtl/include )
 include_directories(./external_packages/hydro_from_external_file )
+include_directories(./external_packages/Random123)
 include_directories(./examples/ )
+if(APPLE)
+  # set OpenMP_INCLUDE_DIRS to the path of the OpenMP headers for example:
+  # /opt/homebrew/opt/libomp/include
+  include_directories($ENV{OpenMP_INCLUDE_DIRS})
+endif()
 
 if (USE_ROOT)
   if ("${ROOT_FOUND}")
@@ -443,6 +462,10 @@ endif (USE_ISS)
 if (OPENCL_FOUND AND USE_CLVISC)
   add_subdirectory( ${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper )
 endif (OPENCL_FOUND AND USE_CLVISC)
+
+if (OPENMP_FOUND)
+  target_compile_definitions(JetScape PRIVATE USE_OPENMP)
+endif()
 
 ###########################
 ### Binary location     ###
