@@ -40,6 +40,7 @@ jobs:
         brew install --formula zlib
         brew install --formula gcc
         . /opt/homebrew/bin/thisroot.sh
+        brew --prefix libomp
 
     - name: set environment variables
       run: |
