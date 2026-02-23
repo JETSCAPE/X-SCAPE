@@ -174,7 +174,7 @@ private:
   static const int t_gn_1 = 100;
   static const int t_gn_2 = 125;
   static const int t_gn = t_gn_1 + t_gn_2;
-  static const int temp_gn = 100;
+  static const int temp_gn = 106;
 
   static double dNg_over_dt_c[t_gn + 2][temp_gn + 1][HQener_gn + 1];
   static double dNg_over_dt_q[t_gn + 2][temp_gn + 1][HQener_gn + 1];
@@ -188,7 +188,7 @@ private:
   const double t_max_2 = 270.0;
   const double t_max = t_max_2;
   const double temp_max = 0.65;
-  const double temp_min = 0.15;
+  const double temp_min = 0.12;
   double delta_tg_1 = t_max_1 / t_gn_1;
   double delta_tg_2 = (t_max_2 - t_max_1) / t_gn_2;
   double delta_temp = (temp_max - temp_min) / temp_gn;
@@ -394,6 +394,9 @@ private:
   void jetClean();
   void setParameter(string fileName);
   int checkParameter(int nArg);
+
+  double ModificationCorr;
+  double ModificationFactor;
 
   //  extern "C" {
   //      void read_ccnu_(char *dataFN_in, int len1);

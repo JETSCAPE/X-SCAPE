@@ -52,3 +52,6 @@ jobs:
 
     - name: Run Brick Matter Lbt tests
       run: ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_matter_lbt/runBrickMatterLbtTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_matter_lbt/config/jetscape_user.xml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_matter_lbt/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_matter_lbt/output/latest
+
+    - name: Run Brick rMatter Lbt tests
+      run: ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_rMatter_lbt/runBrickRMatterLbtTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_rMatter_lbt/config/jetscape_user_rMatterLbt.xml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_rMatter_lbt/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_rMatter_lbt/output/latest
