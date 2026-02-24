@@ -1179,8 +1179,8 @@ void LBT::LBT0(int &n, double &ti) {
             KATT1[np0] = KATT2;
             KATT10[np0] = KATT3;
 
-            //		  if(pc0[0]<pc2[0] && abs(KATTC0)!=4) { // for the purpose
-            //of unit test
+            //		  if(pc0[0]<pc2[0] && abs(KATTC0)!=4) { // for the
+            // purpose of unit test
             if (pc0[0] < pc2[0] && abs(KATTC0) != 4 && abs(KATTC0) != 5 &&
                 KATTC0 == KATT2) {  // disable switch for heavy quark, only
                                     // allow switch for identical particles
@@ -1828,10 +1828,12 @@ void LBT::titau(double ti, double vf[4], double vp[4], double p0[4], double &Vx,
 
   //..............................................................test part
   //		  cout<<"gamma"<<" "<<gamma<<" "<<"mt"<<" "<<mt<<" "<<"Yp"<<"
-  //"<<Yp<<endl; 		  cout<<"etas"<<" "<<etas<<" "<<"etaf"<<" "<<etaf<<"
+  //"<<Yp<<endl; 		  cout<<"etas"<<" "<<etas<<" "<<"etaf"<<"
+  //"<<etaf<<"
   //"<<"pper"<<"
   //"<<pper<<endl; 		  cout<<"vper"<<" "<<vper<<" "<<"pvper"<<"
-  //"<<pvper<<endl; 		  cout<<"Vx"<<" "<<Vx<<" "<<"Vy"<<" "<<Vy<<" "<<"Veta"<<"
+  //"<<pvper<<endl; 		  cout<<"Vx"<<" "<<Vx<<" "<<"Vy"<<" "<<Vy<<"
+  //"<<"Veta"<<"
   //"<<Veta<<endl; 		  cout<<"Xtau"<<" "<<Xtau<<endl;
   //..............................................................test part
 }

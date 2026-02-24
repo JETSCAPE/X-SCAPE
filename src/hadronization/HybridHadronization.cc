@@ -5640,8 +5640,8 @@ void HybridHadronization::set_baryon_id(parton_collection& qrks,
   // states in PYTHIA's ParticleData class
   // if(false && had.is_excited){
   //	if(had.id == 2212 || had.id == 2112 || had.id == 2214 || had.id == 2114
-  //|| had.id == 2224 || had.id ==1114 || had.id == 3122){ 		had.id +=
-  //100000;  // This needs to be adjusted to make the actual excited baryon
+  //|| had.id == 2224 || had.id ==1114 || had.id == 3122){ 		had.id
+  //+= 100000;  // This needs to be adjusted to make the actual excited baryon
   // codes
   //	}
   // }
