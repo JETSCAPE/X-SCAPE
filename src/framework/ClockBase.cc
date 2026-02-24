@@ -6,16 +6,10 @@
 
 namespace Jetscape {
 
-//bool ClockBase::use_clock = true;
+// bool ClockBase::use_clock = true;
 
-ClockBase::ClockBase()
-{
-	id = "";
-}
+ClockBase::ClockBase() { id = ""; }
 
-void ClockBase::Info()
-{
-    JSINFO<<GetId()<<" "<<GetTimeRefFrameId();
-}
+void ClockBase::Info() { JSINFO << GetId() << " " << GetTimeRefFrameId(); }
 
-}
+}  // namespace Jetscape

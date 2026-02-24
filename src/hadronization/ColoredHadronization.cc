@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -22,8 +23,8 @@ using namespace Jetscape;
 using namespace Pythia8;
 
 // Register the module with the base class
-RegisterJetScapeModule<ColoredHadronization>
-    ColoredHadronization::reg("ColoredHadronization");
+RegisterJetScapeModule<ColoredHadronization> ColoredHadronization::reg(
+    "ColoredHadronization");
 
 Pythia8::Pythia ColoredHadronization::pythia("IntentionallyEmpty", false);
 
@@ -35,7 +36,6 @@ ColoredHadronization::ColoredHadronization() {
 ColoredHadronization::~ColoredHadronization() { VERBOSE(8); }
 
 void ColoredHadronization::InitTask() {
-
   std::string s = GetXMLElementText({"JetHadronization", "name"});
   JSDEBUG << s << " to be initializied ...";
 
@@ -76,12 +76,16 @@ void ColoredHadronization::InitTask() {
   pythia.readString("PartonLevel:FSR=off");
 
   // General settings for hadron decays
-  std::string pythia_decays = GetXMLElementText({"JetHadronization", "pythia_decays"});
+  std::string pythia_decays =
+      GetXMLElementText({"JetHadronization", "pythia_decays"});
   double tau0Max = 10.0;
   double tau0Max_xml = GetXMLElementDouble({"JetHadronization", "tau0Max"});
-	if(tau0Max_xml >= 0){tau0Max = tau0Max_xml;}
-  else{JSWARN << "tau0Max should be larger than 0. Set it to 10.";}
-  if(pythia_decays == "on"){
+  if (tau0Max_xml >= 0) {
+    tau0Max = tau0Max_xml;
+  } else {
+    JSWARN << "tau0Max should be larger than 0. Set it to 10.";
+  }
+  if (pythia_decays == "on") {
     JSINFO << "Pythia decays are turned on for tau0Max < " << tau0Max;
     pythia.readString("HadronLevel:Decay = on");
     pythia.readString("ParticleDecays:limitTau0 = on");
@@ -92,16 +96,20 @@ void ColoredHadronization::InitTask() {
   }
 
   // Settings for decays (old flag, will be depracted at some point)
-  // This overwrites the previous settings if the user xml file contains the flag
+  // This overwrites the previous settings if the user xml file contains the
+  // flag
   std::string weak_decays =
-    GetXMLElementText({"JetHadronization", "weak_decays"});
+      GetXMLElementText({"JetHadronization", "weak_decays"});
   if (weak_decays == "off") {
     JSINFO << "Hadron decays are turned off.";
-    JSWARN << "This parameter will be depracted at some point. Use 'pythia_decays' instead.\nOverwriting 'pythia_decays'.";
+    JSWARN << "This parameter will be depracted at some point. Use "
+              "'pythia_decays' instead.\nOverwriting 'pythia_decays'.";
     pythia.readString("HadronLevel:Decay = off");
-  } else if(weak_decays == "on") {
+  } else if (weak_decays == "on") {
     JSINFO << "Hadron decays inside a range of 10 mm/c are turned on.";
-    JSWARN << "This parameter will be depracted at some point. Use 'pythia_decays' and 'tau0Max' for more control on decays.\nOverwriting 'pythia_decays' and fix 'tau0Max' to 10.";
+    JSWARN << "This parameter will be depracted at some point. Use "
+              "'pythia_decays' and 'tau0Max' for more control on "
+              "decays.\nOverwriting 'pythia_decays' and fix 'tau0Max' to 10.";
     pythia.readString("HadronLevel:Decay = on");
     pythia.readString("ParticleDecays:limitTau0 = on");
     pythia.readString("ParticleDecays:tau0Max = 10.0");
@@ -111,7 +119,7 @@ void ColoredHadronization::InitTask() {
   lines << GetXMLElementText({"JetHadronization", "LinesToRead"}, false);
   while (std::getline(lines, s, '\n')) {
     if (s.find_first_not_of(" \t\v\f\r") == s.npos)
-      continue; // skip empty lines
+      continue;  // skip empty lines
     JSINFO << "Also reading in: " << s;
     pythia.readString(s);
   }
@@ -131,23 +139,27 @@ void ColoredHadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
 void ColoredHadronization::DoHadronization(
     vector<vector<shared_ptr<Parton>>> &shower,
     vector<shared_ptr<Hadron>> &hOut, vector<shared_ptr<Parton>> &pOut) {
-
   Event &event = pythia.event;
   event.reset();
   double pz = p_fake;
 
-  //initial hadron list
-  //pre existing hadrons
-  if(hOut.size() > 0){
-    for(vector<shared_ptr<Hadron>>::iterator hadIter = hOut.begin(); hadIter<hOut.end();){
-      if(hadIter->get()->pid() > 23){ //skipping leptons
-        double massnow = hadIter->get()->e()*hadIter->get()->e() -
-                        (hadIter->get()->px()*hadIter->get()->px() + hadIter->get()->py()*hadIter->get()->py() + hadIter->get()->pz()*hadIter->get()->pz());
+  // initial hadron list
+  // pre existing hadrons
+  if (hOut.size() > 0) {
+    for (vector<shared_ptr<Hadron>>::iterator hadIter = hOut.begin();
+         hadIter < hOut.end();) {
+      if (hadIter->get()->pid() > 23) {  // skipping leptons
+        double massnow = hadIter->get()->e() * hadIter->get()->e() -
+                         (hadIter->get()->px() * hadIter->get()->px() +
+                          hadIter->get()->py() * hadIter->get()->py() +
+                          hadIter->get()->pz() * hadIter->get()->pz());
         massnow = (massnow >= 0.) ? sqrt(massnow) : -sqrt(-massnow);
-        event.append(hadIter->get()->pid(),0,0,0,hadIter->get()->px(),hadIter->get()->py(),hadIter->get()->pz(),hadIter->get()->e(),massnow);
-        event[event.size()-1].vProd(0., 0., 0., 0.);
-      }
-      else hadIter++;
+        event.append(hadIter->get()->pid(), 0, 0, 0, hadIter->get()->px(),
+                     hadIter->get()->py(), hadIter->get()->pz(),
+                     hadIter->get()->e(), massnow);
+        event[event.size() - 1].vProd(0., 0., 0., 0.);
+      } else
+        hadIter++;
     }
   }
 
@@ -162,12 +174,11 @@ void ColoredHadronization::DoHadronization(
                             0.5);
 
       if (shower.at(ishower).at(ipart)->pid() == 22) {
-
         VERBOSE(1) << BOLDYELLOW
                    << " photon found in colored hadronization with ";
         VERBOSE(1) << BOLDYELLOW
                    << "px = " << shower.at(ishower).at(ipart)->px();
-        //cin >> blurb;
+        // cin >> blurb;
       }
       event.append(shower.at(ishower).at(ipart)->pid(), 23,
                    shower.at(ishower).at(ipart)->color(),
@@ -177,7 +188,7 @@ void ColoredHadronization::DoHadronization(
                    shower.at(ishower).at(ipart)->pz(), onshellE);
     }
 
-    //first, find unpaired color and anticolor tags.
+    // first, find unpaired color and anticolor tags.
     std::vector<int> cols;
     std::vector<int> acols;
     for (unsigned int ipart = 0; ipart < shower.at(ishower).size(); ++ipart) {
@@ -191,8 +202,9 @@ void ColoredHadronization::DoHadronization(
         acols.push_back(shower.at(ishower).at(ipart)->anti_color());
       }
     }
-    //the outcomes are: 1-unpaired color tag, 2-unpaired anticolor tag, 3-both an unpaired color & anticolor tag, 4-no unpaired tags
-    //1-add an antiquark, 2-add a quark, 3-add a gluon, 4-add nothing (possibly photon only event)
+    // the outcomes are: 1-unpaired color tag, 2-unpaired anticolor tag, 3-both
+    // an unpaired color & anticolor tag, 4-no unpaired tags 1-add an antiquark,
+    // 2-add a quark, 3-add a gluon, 4-add nothing (possibly photon only event)
     int icol = 0;
     while (icol < cols.size()) {
       bool foundpair = false;
@@ -236,9 +248,11 @@ void ColoredHadronization::DoHadronization(
                << " partons after Hadronization";
   }
 
-  //there still may be color tag duplicates - will SegFault if color_reconnections is ever invoked.
-  //this should be fixed *here*, before pythia.next() below, if that's ever a concern.
-  //scan over list of color & anticolor tags - if we find a duplicate, set it to a new value >0, <101 (will fail for more than 100 duplicates)
+  // there still may be color tag duplicates - will SegFault if
+  // color_reconnections is ever invoked. this should be fixed *here*, before
+  // pythia.next() below, if that's ever a concern. scan over list of color &
+  // anticolor tags - if we find a duplicate, set it to a new value >0, <101
+  // (will fail for more than 100 duplicates)
   std::vector<std::vector<int>> col_instances;
   for (unsigned int i = 0; i < event.size(); ++i) {
     bool newcol = true;
@@ -273,7 +287,7 @@ void ColoredHadronization::DoHadronization(
   int updcol = 1;
   while (col_instances.size() > 0) {
     int nupd = 2;
-    for ( int i = event.size() - 1; i >= 0; --i) {
+    for (int i = event.size() - 1; i >= 0; --i) {
       if (col_instances[0][0] == event[i].col()) {
         event[i].col(updcol);
         --nupd;
@@ -301,9 +315,9 @@ void ColoredHadronization::DoHadronization(
   for (unsigned int i = 0; i < event.size(); ++i) {
     if (!event[i].isFinal())
       continue;
-    //if ( !event[i].isHadron() )  continue;
+    // if ( !event[i].isHadron() )  continue;
     if (fabs(event[i].eta()) > 20)
-      continue; //To prevent "nan" from propagating, very rare though
+      continue;  // To prevent "nan" from propagating, very rare though
 
     double x[4] = {0, 0, 0, 0};
     hOut.push_back(make_shared<Hadron>(ip, event[i].id(), event[i].status(),

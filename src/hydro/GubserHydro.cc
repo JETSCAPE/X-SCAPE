@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -83,10 +84,10 @@ void GubserHydro::GetHydroInfo(
 
   double e_local = ((e_0 / pow(tau_local, 4. / 3.)) * (pow(2. * q, 8. / 3.)) /
                     (pow(temp, 4. / 3.)));
-  double T_local = temperature(e_local);          // GeV
-  e_local *= hbarc;                               // GeV/fm^3
-  double p_local = e_local / 3.;                  // GeV/fm^3
-  double s_local = (e_local + p_local) / T_local; // 1/fm^3
+  double T_local = temperature(e_local);           // GeV
+  e_local *= hbarc;                                // GeV/fm^3
+  double p_local = e_local / 3.;                   // GeV/fm^3
+  double s_local = (e_local + p_local) / T_local;  // 1/fm^3
 
   double kappa =
       atanh((2. * q * q * tau_local * r_local) /

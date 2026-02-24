@@ -11,10 +11,10 @@ using std::shared_ptr;
 namespace Jetscape {
 
 class JetScapeModuleMutex {
-public:
+ public:
   virtual bool CheckMutex(vector<shared_ptr<JetScapeTask>> modules) = 0;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

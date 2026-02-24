@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -38,4 +39,4 @@ void BulkMediaBase::CalculateTime() {
   CalculateTimeTask();
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

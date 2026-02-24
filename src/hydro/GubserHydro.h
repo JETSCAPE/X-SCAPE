@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -25,15 +26,16 @@ using namespace Jetscape;
 class GubserHydro : public FluidDynamics {
   // this is wrapper class for a simple brick
   // so that it can be used within the JETSCAPE framework
-private:
+ private:
   double q;
   double e_0;
   double temperature(double e_local);
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<GubserHydro> reg;
 
-public:
+ public:
   GubserHydro();
   ~GubserHydro();
 
@@ -49,4 +51,4 @@ public:
                        SurfaceCellInfo *surface_list_ptr){};
 };
 
-#endif // GUBSERHYDRO_H
+#endif  // GUBSERHYDRO_H

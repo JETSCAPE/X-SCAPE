@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -27,7 +28,7 @@ namespace Jetscape {
 
 /// Interface to hadronic afterburner
 class BulkMediaBase : public JetScapeModuleBase {
-public:
+ public:
   BulkMediaBase() {
     VERBOSE(8);
     SetId("BulkMediaBase");
@@ -43,12 +44,13 @@ public:
 
   virtual void ExecuteTask();
   virtual void CalculateTime();
-  virtual void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,Jetscape::real z,
-			   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr){}
-protected:
+  virtual void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,
+                           Jetscape::real z,
+                           std::unique_ptr<BulkMediaInfo> &bulk_info_ptr) {}
 
+ protected:
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
-#endif // BULKMEDIABASE_H
+#endif  // BULKMEDIABASE_H

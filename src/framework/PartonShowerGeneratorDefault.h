@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -13,8 +14,8 @@
  * See COPYING for details.
  ******************************************************************************/
 
-//REMARK: Old JetScape PSG w/o droplets etc ...
-// pretty much copy of the DoShower in JetEnergyLoss ....
+// REMARK: Old JetScape PSG w/o droplets etc ...
+//  pretty much copy of the DoShower in JetEnergyLoss ....
 
 #ifndef PARTONSHOWERGENERATORDEFAULT_H
 #define PARTONSHOWERGENERATORDEFAULT_H
@@ -25,16 +26,14 @@ namespace Jetscape {
 
 class JetEnergyLoss;
 
-class PartonShowerGeneratorDefault : public PartonShowerGenerator
-{
+class PartonShowerGeneratorDefault : public PartonShowerGenerator {
  public:
+  PartonShowerGeneratorDefault() : PartonShowerGenerator(){};
+  virtual ~PartonShowerGeneratorDefault(){};
 
-   PartonShowerGeneratorDefault() : PartonShowerGenerator()  {};
-   virtual ~PartonShowerGeneratorDefault() {};
-
-   virtual void DoShower(JetEnergyLoss &j);
+  virtual void DoShower(JetEnergyLoss &j);
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

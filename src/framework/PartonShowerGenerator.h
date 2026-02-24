@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -21,21 +22,18 @@ namespace Jetscape {
 class JetEnergyLoss;
 
 class PartonShowerGenerator {
-
-public:
-
+ public:
   PartonShowerGenerator(){};
   virtual ~PartonShowerGenerator(){};
 
-  virtual void DoShower(JetEnergyLoss &j) {};
+  virtual void DoShower(JetEnergyLoss &j){};
 
-  virtual void DoCalculateTime(JetEnergyLoss &j) {};
-  virtual void DoExecTime(JetEnergyLoss &j) {};
-  virtual void DoInitPerEvent(JetEnergyLoss &j) {};
-  virtual void DoFinishPerEvent(JetEnergyLoss &j) {};
-  
+  virtual void DoCalculateTime(JetEnergyLoss &j){};
+  virtual void DoExecTime(JetEnergyLoss &j){};
+  virtual void DoInitPerEvent(JetEnergyLoss &j){};
+  virtual void DoFinishPerEvent(JetEnergyLoss &j){};
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

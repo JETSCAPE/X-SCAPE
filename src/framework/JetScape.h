@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -27,12 +28,10 @@
 namespace Jetscape {
 
 class JetScape : public JetScapeModuleBase,
-                 public std::enable_shared_from_this<JetScape>
-{
-
-public:
+                 public std::enable_shared_from_this<JetScape> {
+ public:
   /** Default constructor to create the main task of the JetScape framework.
-  */
+   */
   JetScape();
 
   /** This is a destructor for a JetScape.
@@ -42,7 +41,7 @@ public:
   /** This function initializes the main task of the JetScape framework.
    * As it calls JetScapeTask::InitTasks() function specifically to initialize
    * the attached modules/tasks Init (not InitTask) is used here.
-  */
+   */
   void Init() override;
 
   /** This function executes the modules/tasks of the main JetScapeTask for all
@@ -86,10 +85,12 @@ public:
   }
   inline unsigned int GetNReuseHydro() const { return n_reuse_hydro_; }
 
-protected:
+ protected:
   void CompareElementsFromXML();
-  void recurseToBuild(std::vector<std::string> &elems, tinyxml2::XMLElement *mElement);
-  void recurseToSearch(std::vector<std::string> &elems, tinyxml2::XMLElement *uElement);
+  void recurseToBuild(std::vector<std::string> &elems,
+                      tinyxml2::XMLElement *mElement);
+  void recurseToSearch(std::vector<std::string> &elems,
+                       tinyxml2::XMLElement *uElement);
   void ReadGeneralParametersFromXML();
   void DetermineTaskListFromXML();
   void DetermineWritersFromXML();
@@ -102,15 +103,15 @@ protected:
 
   /** Function to set the per event execution active flag so that
   if hadronization and Afterburner are attached and not per time step executed,
-  that they will be automatically executed after the per time step modules are finished
-  So currently possible workflow automatically executed correctly is:
+  that they will be automatically executed after the per time step modules are
+  finished So currently possible workflow automatically executed correctly is:
   per event -> per timestep -> per event
    */
   void SetPerEventExecFlags(bool start_of_event);
-  /** Function to reset the per event execution active flags to its original state
+  /** Function to reset the per event execution active flags to its original
+   * state
    */
   void ResetPerEventExecFlags();
-
 
   void Show();
   int n_events;
@@ -123,15 +124,14 @@ protected:
   std::shared_ptr<HadronicLiquefier> hadronicLiquefier;
   std::shared_ptr<HadronicEMT> hadronicEMT;
 
- // Option to automatically determine the task list from the XML file,
- // rather than manually calling JetScapeTask::Add() in the run macro.
+  // Option to automatically determine the task list from the XML file,
+  // rather than manually calling JetScapeTask::Add() in the run macro.
   bool fEnableAutomaticTaskListDetermination;
 
   // list to store original SetActive flag settings
-  std::unordered_multimap<int , bool > taskOrgActiveMap;
-
+  std::unordered_multimap<int, bool> taskOrgActiveMap;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

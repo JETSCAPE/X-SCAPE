@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -27,7 +28,7 @@
 namespace Jetscape {
 
 class HadronicEMT {
-private:
+ private:
   double sigma_transverse_, sigma_longitudinal_;
   int smearing_covariant_;
   /// Initial state parameters (grid specifications)
@@ -41,16 +42,12 @@ private:
   std::vector<double> s_table_;
 
   // define the (pseudo)-metric tensor g_{\mu\nu} as a 4x4 array
-  const std::array<std::array<int, 4>, 4> g_ = {{{1, 0, 0, 0},
-                                                {0, -1, 0, 0},
-                                                {0, 0, -1, 0},
-                                                {0, 0, 0, -1}}};
+  const std::array<std::array<int, 4>, 4> g_ = {
+      {{1, 0, 0, 0}, {0, -1, 0, 0}, {0, 0, -1, 0}, {0, 0, 0, -1}}};
 
   // define the inverse (pseudo)-metric tensor g^{\mu\nu} as a 4x4 array
-  const std::array<std::array<int, 4>, 4> g_inv_ = {{{1, 0, 0, 0},
-                                                    {0, -1, 0, 0},
-                                                    {0, 0, -1, 0},
-                                                    {0, 0, 0, -1}}};
+  const std::array<std::array<int, 4>, 4> g_inv_ = {
+      {{1, 0, 0, 0}, {0, -1, 0, 0}, {0, 0, -1, 0}, {0, 0, 0, -1}}};
 
   gsl_matrix *Tmualpha_gsl_;
   gsl_vector_complex *eigenvalues_;
@@ -64,28 +61,28 @@ private:
   // define a variable to store the energy density
   double e_requested_point_;
 
-
-public:
+ public:
   HadronicEMT();
-  HadronicEMT(double sigma_transverse, double sigma_longitudinal, 
+  HadronicEMT(double sigma_transverse, double sigma_longitudinal,
               int smearing_covariant);
   ~HadronicEMT();
 
   void InitTask();
 
   /// Fill in bulk media info for (t,x,y,z) from current hadron list
-  void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, 
-            Jetscape::real z, std::unique_ptr<BulkMediaInfo> &bulk_info_ptr,
-            std::vector<Hadron> &h_list);
+  void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,
+                   Jetscape::real z,
+                   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr,
+                   std::vector<Hadron> &h_list);
 
   /// Determine particles in list to fluidize
-  std::vector<bool> DetermineHadronsForFluidization(double T_critical,
-                  std::vector<Hadron> &current_hadrons,
-                  std::shared_ptr<FluidDynamics> fluid_dynamics_ptr = nullptr);
+  std::vector<bool> DetermineHadronsForFluidization(
+      double T_critical, std::vector<Hadron> &current_hadrons,
+      std::shared_ptr<FluidDynamics> fluid_dynamics_ptr = nullptr);
 
   void ComputeEnergyDensityAndFlowVelocity(
-    const std::array<std::array<double, 4>, 4> &Tmn, double &e,
-    std::array<double, 4> &umu);
+      const std::array<std::array<double, 4>, 4> &Tmn, double &e,
+      std::array<double, 4> &umu);
 
   void ParseEigenSystem(gsl_matrix_complex *eigen_vectors,
                         gsl_vector_complex *eigen_values,
@@ -97,12 +94,11 @@ public:
   void AddParticleToEnergyMomentumTensor(Hadron &hadron, double scaling_factor);
 
   double smearing_kernel_covariant_Cartesian(
-    const double x_diff, const double y_diff, const double z_diff,
-    const double ux, const double uy, const double uz,
-    const double gamma);
+      const double x_diff, const double y_diff, const double z_diff,
+      const double ux, const double uy, const double uz, const double gamma);
 
-  double smearing_kernel_gaussian(
-    const double x_diff, const double y_diff, const double z_diff);
+  double smearing_kernel_gaussian(const double x_diff, const double y_diff,
+                                  const double z_diff);
 
   // setter functions for unit testing
   void set_lower_bound(double e_lower_bound) { e_lower_bound_ = e_lower_bound; }
@@ -122,9 +118,8 @@ public:
 
   double get_ptau(double px, double pz, double eta) const;
   double get_peta(double px, double pz, double eta) const;
-
 };
 
-}; // namespace Jetscape
+};  // namespace Jetscape
 
-#endif // HADRONICEMT_H
+#endif  // HADRONICEMT_H

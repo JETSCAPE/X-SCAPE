@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -50,7 +51,6 @@ void HardProcess::Init() {
 
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   if (!ini) {
-
     // If not vacuum case, give warning to add initial state module
     bool in_vac = GetXMLElementInt({"Eloss", "Matter", "in_vac"});
     bool in_brick = GetXMLElementInt({"Eloss", "Matter", "brick_med"});
@@ -60,12 +60,11 @@ void HardProcess::Init() {
       exit(-1);
     }
   }
-    string status = GetXMLElementText({"PartonPrinter","Status"});
-    if (status!="off")
-    {
-        printer = GetXMLElementText({"PartonPrinter","FileName"});
-        JSINFO << BOLDYELLOW << "Extra parton info goes to " << printer ;
-    }
+  string status = GetXMLElementText({"PartonPrinter", "Status"});
+  if (status != "off") {
+    printer = GetXMLElementText({"PartonPrinter", "FileName"});
+    JSINFO << BOLDYELLOW << "Extra parton info goes to " << printer;
+  }
 
   InitTask();
   InitTasks();
@@ -98,10 +97,9 @@ void HardProcess::WriteTask(weak_ptr<JetScapeWriter> w) {
 
     // Weight, xsec, etc
 
-    // // Can explicitly write our own header information, though the writer should handle this.
-    // std::ostringstream oss;
-    // oss.str(""); oss << GetId() << " sigmaGen  = " << GetSigmaGen();
-    // f->WriteComment ( oss.str() );
+    // // Can explicitly write our own header information, though the writer
+    // should handle this. std::ostringstream oss; oss.str(""); oss << GetId()
+    // << " sigmaGen  = " << GetSigmaGen(); f->WriteComment ( oss.str() );
     // oss.str(""); oss << GetId() << " sigmaErr  = " << GetSigmaErr();
     // f->WriteComment ( oss.str() );
     // oss.str(""); oss << GetId() << " weight  = " << GetEventWeight();
@@ -113,7 +111,7 @@ void HardProcess::WriteTask(weak_ptr<JetScapeWriter> w) {
       f->Write(hp);
 
     // Commented out for now, decide/fix how to safe store the ISR shower ...
-    //JetScapeTask::WriteTasks(w);
+    // JetScapeTask::WriteTasks(w);
   }
 }
 
@@ -134,4 +132,4 @@ void HardProcess::CollectHeader(weak_ptr<JetScapeWriter> w) {
   }
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

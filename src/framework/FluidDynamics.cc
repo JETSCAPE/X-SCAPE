@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -47,30 +48,33 @@ void FluidDynamics::Init() {
 
   VERBOSE(8);
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
-  if (!ini and GetId()!="Brick") {
+  if (!ini and GetId() != "Brick") {
     JSWARN << "No initial state module, "
            << "try: auto trento = make_shared<TrentoInitial>(); "
            << "jetscape->Add(trento);";
     exit(-1);
   }
-  //Check if pre-equilibrium module is needed and set pointer
+  // Check if pre-equilibrium module is needed and set pointer
   pre_eq_ptr =
       JetScapeSignalManager::Instance()->GetPreEquilibriumPointer().lock();
   bool needs_pre_eq = true;
-  if (GetId()=="MUSIC"){
-    int hydro_profile = GetXMLElementDouble({"Hydro", "MUSIC", "InitialProfile"});
-    if (hydro_profile!=42){needs_pre_eq = false;} //Only 42 needs pre-equilibrium
-  }
-  else if (GetId()=="Brick"){needs_pre_eq = false;} 
-  else {
+  if (GetId() == "MUSIC") {
+    int hydro_profile =
+        GetXMLElementDouble({"Hydro", "MUSIC", "InitialProfile"});
+    if (hydro_profile != 42) {
+      needs_pre_eq = false;
+    }  // Only 42 needs pre-equilibrium
+  } else if (GetId() == "Brick") {
+    needs_pre_eq = false;
+  } else {
     JSWARN << "Unrecognized hydro module id:" << GetId()
            << "Assuming pre_equilibrium moudle is needed.";
   }
   // If pre-equilibrium module is needed but not attached, warn and exit
-  if (needs_pre_eq and !pre_eq_ptr){
+  if (needs_pre_eq and !pre_eq_ptr) {
     JSWARN << "No pre-equilibrium module attached."
            << "Check your Hydro InitialProfile.";
-           exit(-1);
+    exit(-1);
   }
 
   InitializeHydro(parameter_list);
@@ -108,7 +112,7 @@ void FluidDynamics::CollectHeader(weak_ptr<JetScapeWriter> w) {
 }
 
 void FluidDynamics::FindAConstantTemperatureSurface(
-        Jetscape::real T_sw, std::vector<SurfaceCellInfo> &surface_cells) {
+    Jetscape::real T_sw, std::vector<SurfaceCellInfo> &surface_cells) {
   std::unique_ptr<SurfaceFinder> surface_finder_ptr(
       new SurfaceFinder(T_sw, bulk_info));
   surface_finder_ptr->Find_full_hypersurface();
@@ -198,8 +202,8 @@ void FluidDynamics::PrintFluidCellInformation(
 }
 
 void FluidDynamics::UpdateEnergyDeposit(int t, double edop) {
-  //sigslot::lock_block<multi_threaded_local> lock(this);
+  // sigslot::lock_block<multi_threaded_local> lock(this);
   JSDEBUG << MAGENTA << "Jet Signal received : " << t << " " << edop;
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

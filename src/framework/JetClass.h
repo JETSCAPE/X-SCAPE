@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -42,7 +43,7 @@ class FourVector;
 
 /*************************************************************************************************/
 
-//dummy for now figure out after graph structure ...
+// dummy for now figure out after graph structure ...
 
 class Jet {
   Jet(){};
@@ -56,8 +57,7 @@ class Jet {
 /*************************************************************************************************/
 
 class Vertex {
-
-public:
+ public:
   Vertex() { x_in_.Set(0, 0, 0, 0); }
   Vertex(double x, double y, double z, double t) { x_in_.Set(x, y, z, t); }
   Vertex(FourVector &x) { set_location(x); }
@@ -73,11 +73,11 @@ public:
     return output;
   }
 
-protected:
-  FourVector x_in_; //location of the vertex
+ protected:
+  FourVector x_in_;  // location of the vertex
   // parents and siblings from Graph structure later ...
 };
 
-}; // namespace Jetscape
+};  // namespace Jetscape
 
 #endif /* JetClass_h */

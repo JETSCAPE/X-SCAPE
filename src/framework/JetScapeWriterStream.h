@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -31,9 +32,9 @@ using std::ofstream;
 
 namespace Jetscape {
 
-template <class T> class JetScapeWriterStream : public JetScapeWriter {
-
-public:
+template <class T>
+class JetScapeWriterStream : public JetScapeWriter {
+ public:
   JetScapeWriterStream<T>(){};
   JetScapeWriterStream<T>(string m_file_name_out);
   virtual ~JetScapeWriterStream<T>();
@@ -51,7 +52,7 @@ public:
   void Write(weak_ptr<Parton> p);
   void Write(weak_ptr<Vertex> v);
   void Write(weak_ptr<Hadron> h);
-  //void Write(weak_ptr<Qvector> Qv);
+  // void Write(weak_ptr<Qvector> Qv);
   void WriteHeaderToFile();
 
   void Write(string s) { output_file << s << endl; }
@@ -59,12 +60,13 @@ public:
   void WriteWhiteSpace(string s) { output_file << s << " "; }
   void WriteEvent();
 
-protected:
-  T output_file; //!< Output file
+ protected:
+  T output_file;  //!< Output file
   int hadronCounter = 0;
-  //int m_precision; //!< Output precision
+  // int m_precision; //!< Output precision
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<JetScapeWriterStream<ofstream>> reg;
   static RegisterJetScapeModule<JetScapeWriterStream<ogzstream>> regGZ;
 };
@@ -74,6 +76,6 @@ typedef JetScapeWriterStream<ofstream> JetScapeWriterAscii;
 typedef JetScapeWriterStream<ogzstream> JetScapeWriterAsciiGZ;
 #endif
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
-#endif // JETSCAPEWRITERSTREAM_H
+#endif  // JETSCAPEWRITERSTREAM_H

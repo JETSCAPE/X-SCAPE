@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -29,9 +30,8 @@ using std::to_string;
 namespace Jetscape {
 
 class JetScapeWriter : public JetScapeModuleBase {
-
-public:
-  JetScapeWriter(){ SetId("JetScape writer"); };
+ public:
+  JetScapeWriter() { SetId("JetScape writer"); };
   JetScapeWriter(string m_file_name_out) { file_name_out = m_file_name_out; }
   virtual ~JetScapeWriter(){};
 
@@ -64,11 +64,11 @@ public:
 
   virtual JetScapeEventHeader &GetHeader() { return header; };
 
-protected:
+ protected:
   string file_name_out;
   JetScapeEventHeader header;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

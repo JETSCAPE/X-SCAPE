@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -30,11 +31,11 @@
 namespace Jetscape {
 
 class SoftParticlization : public JetScapeModuleBase {
-private:
-bool HydroHyperSurfaceConnected_;
+ private:
+  bool HydroHyperSurfaceConnected_;
   bool ClearHydroHyperSurfaceConnected_;
 
-public:
+ public:
   SoftParticlization();
   ~SoftParticlization();
 
@@ -44,15 +45,16 @@ public:
   virtual void ExecuteTask();
   virtual void ClearTask();
 
-  sigslot::signal1<std::vector<SurfaceCellInfo> &,
-                   multi_threaded_local> GetHydroHyperSurface;
+  sigslot::signal1<std::vector<SurfaceCellInfo> &, multi_threaded_local>
+      GetHydroHyperSurface;
   sigslot::signal0<multi_threaded_local> ClearHydroHyperSurface;
 
   void SetGetHydroHyperSurfaceConnected(bool m_GetHydroHyperSurfaceConnected) {
     HydroHyperSurfaceConnected_ = m_GetHydroHyperSurfaceConnected;
   }
 
-  void SetClearHydroHyperSurfaceConnected(bool m_ClearHydroHyperSurfaceConnected) {
+  void SetClearHydroHyperSurfaceConnected(
+      bool m_ClearHydroHyperSurfaceConnected) {
     ClearHydroHyperSurfaceConnected_ = m_ClearHydroHyperSurfaceConnected;
   }
 
@@ -72,6 +74,6 @@ public:
   bool check_boost_invariance();
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
-#endif // SOFTPARTICLIZATION_H_
+#endif  // SOFTPARTICLIZATION_H_

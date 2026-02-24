@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -13,7 +14,8 @@
  * See COPYING for details.
  ******************************************************************************/
 
-// Create a pythia collision at a specified point and return the two inital hard partons
+// Create a pythia collision at a specified point and return the two inital hard
+// partons
 
 #ifndef INITIALSTATERADIATIONTEST_H
 #define INITIALSTATERADIATIONTEST_H
@@ -25,18 +27,15 @@
 using namespace Jetscape;
 
 class InitialStateRadiationTest : public HardProcess, public Pythia8::Pythia {
-
-public:
-
+ public:
   ~InitialStateRadiationTest();
 
   void InitTask();
   void ExecuteTask();
 
-  virtual any GetHistory() {return any(pShowerMaster);}
+  virtual any GetHistory() { return any(pShowerMaster); }
 
-private:
-
+ private:
   const double eps = 1e-5;
   const int timeLike_stat = 23;
   const int spaceLike_stat = 25;
@@ -59,12 +58,12 @@ private:
   const int miss_stat = -13;
   const int neg_stat = -17;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<InitialStateRadiationTest> reg;
 
   void BackwardISR();
   void ForwardISR();
-
 };
 
-#endif // INITIALSTATERADIATIONTEST_H
+#endif  // INITIALSTATERADIATIONTEST_H
