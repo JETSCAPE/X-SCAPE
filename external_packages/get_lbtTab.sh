@@ -15,7 +15,7 @@
 
 # clone the lbt-tables repository
 repo_dir="LBT-tables-repo"
-git clone https://github.com/JETSCAPE/LBT-tables.git "$repo_dir"
+git clone --depth 1 https://github.com/JETSCAPE/LBT-tables.git "$repo_dir"
 
 # temporary directory where the split LBT tables will be extracted
 split_extract_dir="tmp/LBT-tables-split-extract"
