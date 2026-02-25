@@ -843,7 +843,7 @@ class FluidDynamics : public JetScapeModuleBase {
    * reference, ensuring that the caller cannot modify the object directly.
    *
    * @return A constant reference to the `EvolutionHistory` object.
-   */t
+   */
   const EvolutionHistory &get_bulk_info() const { return bulk_info; }
 
   /**
