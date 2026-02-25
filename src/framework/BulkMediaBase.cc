@@ -21,6 +21,13 @@
 using namespace std;
 
 namespace Jetscape {
+/**
+ * @brief Initialize the BulkMediaBase module.
+ *
+ * Ensures that the XML configuration is loaded by calling the base-class
+ * initialization and then initializes this task and any registered
+ * sub-tasks.
+ */
 void BulkMediaBase::Init() {
   // Makes sure that XML file with options and parameters is loaded
   JetScapeModuleBase::InitTask();
@@ -30,10 +37,22 @@ void BulkMediaBase::Init() {
   InitTasks();
 }
 
+/**
+ * @brief Execute the module's task.
+ *
+ * Default implementation emits a verbose log entry. Subclasses should
+ * override to provide actual execution logic.
+ */
 void BulkMediaBase::ExecuteTask() {
   VERBOSE(2) << "BulkMediaBase running: " << GetId() << " ...";
 }
 
+/**
+ * @brief Perform time-step calculations.
+ *
+ * Default implementation logs a verbose message and calls
+ * CalculateTimeTask() to perform the concrete time-dependent work.
+ */
 void BulkMediaBase::CalculateTime() {
   VERBOSE(2) << "BulkMediaBase running for time: " << GetId() << " ...";
   CalculateTimeTask();

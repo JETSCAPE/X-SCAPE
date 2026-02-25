@@ -29,11 +29,17 @@ using namespace std;
 
 namespace Jetscape {
 
+/**
+ * @brief Construct a bulk dynamics manager and assign module id.
+ */
 BulkDynamicsManager::BulkDynamicsManager() : JetScapeModuleBase() {
   SetId("BulkDynamicsManager");
   VERBOSE(8);
 }
 
+/**
+ * @brief Destroy the bulk dynamics manager and clear attached tasks.
+ */
 BulkDynamicsManager::~BulkDynamicsManager() {
   // Check if this is all really needed with shared_ptr ...
   JSDEBUG;
@@ -43,6 +49,9 @@ BulkDynamicsManager::~BulkDynamicsManager() {
     EraseTaskLast();
 }
 
+/**
+ * @brief Clear child tasks and cleanup signal connections.
+ */
 void BulkDynamicsManager::ClearTask() {
   JSDEBUG << "BulkDynamicsManager ClearTask() ...";
 
@@ -55,6 +64,9 @@ void BulkDynamicsManager::ClearTask() {
   JetScapeSignalManager::Instance()->CleanUp();
 }
 
+/**
+ * @brief Initialize configuration, task wiring, and module connections.
+ */
 void BulkDynamicsManager::InitTask() {
   JSINFO << "Initialize BulkDynamicsManager ...";
 
@@ -172,6 +184,9 @@ void BulkDynamicsManager::InitTask() {
   }
 }
 
+/**
+ * @brief Execute manager entry-point checks.
+ */
 void BulkDynamicsManager::ExecuteTask() {
   VERBOSE(1) << "Run BulkDynamicsManager Manager ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
@@ -182,6 +197,9 @@ void BulkDynamicsManager::ExecuteTask() {
   }
 }
 
+/**
+ * @brief Run per-timestep calculations for active child tasks.
+ */
 void BulkDynamicsManager::CalculateTime() {
   VERBOSE(3)
       << "Calculate Bulk Dynamics Manager per timestep ... Current Time = "
@@ -199,6 +217,9 @@ void BulkDynamicsManager::CalculateTime() {
              << new_hadrons_for_timestep_.size();
 }
 
+/**
+ * @brief Execute one manager-controlled timestep and stage transitions.
+ */
 void BulkDynamicsManager::ExecTime() {
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
   VERBOSE(3)
@@ -371,6 +392,9 @@ void BulkDynamicsManager::ExecTime() {
       << new_hadrons_for_timestep_.size();
 }
 
+/**
+ * @brief Perform per-event initialization and stage activation setup.
+ */
 void BulkDynamicsManager::InitPerEvent() {
   VERBOSE(3) << "InitPerEvent Bulk Dynamics Manager when used per timestep ...";
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
@@ -442,6 +466,9 @@ void BulkDynamicsManager::InitPerEvent() {
   CreateHadronicTimeEvolutionFileIfNecessary();
 }
 
+/**
+ * @brief Finalize per-event state, collect output hadrons, and cleanup.
+ */
 void BulkDynamicsManager::FinishPerEvent() {
   VERBOSE(3)
       << "FinishPerEvent Bulk Dynamics Manager when used per timestep ...";
@@ -520,6 +547,10 @@ void BulkDynamicsManager::FinishPerEvent() {
   }
 }
 
+/**
+ * @brief Write BDM final-state hadrons to the configured writer.
+ * @param w Weak pointer to the writer.
+ */
 void BulkDynamicsManager::WriteTask(weak_ptr<JetScapeWriter> w) {
   VERBOSE(3) << "BDM hadron printout";
   auto f = w.lock();
@@ -537,6 +568,11 @@ void BulkDynamicsManager::WriteTask(weak_ptr<JetScapeWriter> w) {
   }
 }
 
+/**
+ * @brief Forward energy-deposit updates to fluid-dynamics modules.
+ * @param t Discrete time index.
+ * @param edop Energy deposit value.
+ */
 void BulkDynamicsManager::UpdateEnergyDepositFromModules(int t, double edop) {
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk manager modules found ...";
@@ -548,6 +584,11 @@ void BulkDynamicsManager::UpdateEnergyDepositFromModules(int t, double edop) {
   }
 }
 
+/**
+ * @brief Query energy density from fluid-dynamics modules.
+ * @param t Discrete time index.
+ * @param edensity Output energy-density reference.
+ */
 void BulkDynamicsManager::GetEnergyDensityFromModules(int t, double& edensity) {
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk manager modules found ...";
@@ -559,6 +600,14 @@ void BulkDynamicsManager::GetEnergyDensityFromModules(int t, double& edensity) {
   }
 }
 
+/**
+ * @brief Query hydro information from attached modules.
+ * @param t Time coordinate.
+ * @param x Spatial x coordinate.
+ * @param y Spatial y coordinate.
+ * @param z Spatial z coordinate.
+ * @param fluid_cell_info_ptr Output fluid-cell information pointer.
+ */
 void BulkDynamicsManager::GetHydroInfoFromModules(
     Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
     std::unique_ptr<FluidCellInfo>& fluid_cell_info_ptr) {
@@ -581,6 +630,10 @@ void BulkDynamicsManager::GetHydroInfoFromModules(
     GetBulkInfo(t, x, y, z, fluid_cell_info_ptr);
 }
 
+/**
+ * @brief Query hydro start time from attached fluid-dynamics modules.
+ * @param tau0 Output hydro start proper time.
+ */
 void BulkDynamicsManager::GetHydroStartTimeFromModules(double& tau0) {
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid bulk manager modules found ...";
@@ -592,6 +645,14 @@ void BulkDynamicsManager::GetHydroStartTimeFromModules(double& tau0) {
   }
 }
 
+/**
+ * @brief Resolve bulk info using hydro first, then hadronic medium fallback.
+ * @param t Time coordinate.
+ * @param x Spatial x coordinate.
+ * @param y Spatial y coordinate.
+ * @param z Spatial z coordinate.
+ * @param fluid_cell_info_ptr Output fluid-cell information pointer.
+ */
 void BulkDynamicsManager::GetBulkInfo(
     Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
     std::unique_ptr<FluidCellInfo>& fluid_cell_info_ptr) {
@@ -685,6 +746,11 @@ void BulkDynamicsManager::GetBulkInfo(
   }
 }
 
+/**
+ * @brief Copy values from `BulkMediaInfo` into `FluidCellInfo`.
+ * @param fluid_cell_info_ptr Destination fluid-cell information pointer.
+ * @param bulk_info_ptr Source bulk-media information pointer.
+ */
 void BulkDynamicsManager::InfoWrapper(
     std::unique_ptr<FluidCellInfo>& fluid_cell_info_ptr,
     std::unique_ptr<BulkMediaInfo>& bulk_info_ptr) {
@@ -709,6 +775,10 @@ void BulkDynamicsManager::InfoWrapper(
   // T^{\mu\nu} from bulk info not converted as not present in fluid cell info
 }
 
+/**
+ * @brief Return and clear hadrons queued for insertion next timestep.
+ * @return Vector of hadrons to add to transport.
+ */
 std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {
   std::vector<shared_ptr<Hadron>> new_h_to_return;
   // The swap puts the empty vector for new_hadrons_for_timestep_
@@ -717,6 +787,10 @@ std::vector<shared_ptr<Hadron>> BulkDynamicsManager::GetNewHadronsAndClear() {
   return new_h_to_return;
 }
 
+/**
+ * @brief Return and clear hadrons queued for removal next timestep.
+ * @return Vector of hadrons to remove from transport.
+ */
 std::vector<shared_ptr<Hadron>>
 BulkDynamicsManager::GetHadronsToRemoveAndClear() {
   std::vector<shared_ptr<Hadron>> new_h_to_remove;
@@ -726,6 +800,10 @@ BulkDynamicsManager::GetHadronsToRemoveAndClear() {
   return new_h_to_remove;
 }
 
+/**
+ * @brief Identify hadrons that crossed the extraction iso-$\tau$ surface.
+ * @param current_hadrons Current hadrons to inspect.
+ */
 void BulkDynamicsManager::DetermineHadronsCrossingIsoTau(
     std::vector<shared_ptr<Hadron>>& current_hadrons) {
   int i = 0;
@@ -745,6 +823,10 @@ void BulkDynamicsManager::DetermineHadronsCrossingIsoTau(
              << remove_hadrons_for_timestep_.size();
 }
 
+/**
+ * @brief Extract transport-IC hadrons at extraction iso-$\tau$ and classify.
+ * @param AllHadronsCrossedIsoTau Output completion flag.
+ */
 void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(
     bool& AllHadronsCrossedIsoTau) {
   linb::any current_hadrons_IC =
@@ -845,6 +927,9 @@ void BulkDynamicsManager::ExtractHadronsFromTransportInitialConditionIsoTau(
   }
 }
 
+/**
+ * @brief Convert extracted hadrons into hydro source terms via liquefier.
+ */
 void BulkDynamicsManager::
     CreateHadronicSourceTermsForHydroInitializationIsoTau() {
   if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr_)) {
@@ -873,6 +958,9 @@ void BulkDynamicsManager::
   }
 }
 
+/**
+ * @brief Collect hadrons emitted by soft particlization and store them.
+ */
 void BulkDynamicsManager::StoreHadronsFromSoftParticlization() {
   for (auto it : GetTaskList()) {
     auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
@@ -892,6 +980,9 @@ void BulkDynamicsManager::StoreHadronsFromSoftParticlization() {
   }
 }
 
+/**
+ * @brief Dump hadronic evolution snapshots if file output is enabled.
+ */
 void BulkDynamicsManager::PrintHadronicTimeEvolutionToFileIfNecessary() {
   // Get all the hadrons from SMASH (initial condition of afterburner) and print
   // them into the file
@@ -968,6 +1059,11 @@ void BulkDynamicsManager::PrintHadronicTimeEvolutionToFileIfNecessary() {
   }
 }
 
+/**
+ * @brief Free-stream a hadron to the extraction proper time.
+ * @param tau Target proper time.
+ * @param hadron Hadron to propagate.
+ */
 void BulkDynamicsManager::PropagateHadronFreeStreamingToTau(
     double tau, std::shared_ptr<Hadron>& hadron) {
   // Get the hadrons four position and momentum
