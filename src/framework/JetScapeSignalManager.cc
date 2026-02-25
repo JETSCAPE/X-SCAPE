@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -38,7 +39,8 @@ void JetScapeSignalManager::ConnectGetHardPartonListSignal(
     auto hpp = GetHardProcessPointer().lock();
     if (hpp) {
       jm->GetHardPartonList.connect(hpp.get(), &HardProcess::GetHardPartonList);
-      jm->GetPartonShowerList.connect(hpp.get(),&HardProcess::GetPartonShowerList);
+      jm->GetPartonShowerList.connect(hpp.get(),
+                                      &HardProcess::GetPartonShowerList);
 
       jm->SetGetHardPartonListConnected(true);
     }
@@ -51,7 +53,8 @@ void JetScapeSignalManager::ConnectGetHardPartonListSignal(
     auto hpp = GetHardProcessPointer().lock();
     if (hpp) {
       jm->GetHardPartonList.connect(hpp.get(), &HardProcess::GetHardPartonList);
-      jm->GetPartonShowerList.connect(hpp.get(),&HardProcess::GetPartonShowerList);
+      jm->GetPartonShowerList.connect(hpp.get(),
+                                      &HardProcess::GetPartonShowerList);
 
       jm->SetGetHardPartonListConnected(true);
     }
@@ -61,11 +64,11 @@ void JetScapeSignalManager::ConnectGetHardPartonListSignal(
 void JetScapeSignalManager::ConnectGetFinalPartonListSignal(
     shared_ptr<HadronizationManager> hm) {
   if (!hm->GetGetFinalPartonListConnected()) {
-
     auto elmp = GetJetEnergyLossManagerPointer().lock();
 
     if (elmp) {
-      hm->GetFinalPartonList.connect(elmp.get(), &JetEnergyLossManager::GetFinalStatePartons);
+      hm->GetFinalPartonList.connect(
+          elmp.get(), &JetEnergyLossManager::GetFinalStatePartons);
       hm->SetGetFinalPartonListConnected(true);
     }
   }
@@ -83,18 +86,18 @@ void JetScapeSignalManager::ConnectJetSignal(shared_ptr<JetEnergyLoss> j) {
   if (!j->GetJetSignalConnected()) {
     auto hp1 = GetBulkPointer().lock();
     if (hp1) {
-        j->jetSignal.connect(hp1.get(), &BulkDynamicsManager::UpdateEnergyDeposit);
+      j->jetSignal.connect(hp1.get(),
+                           &BulkDynamicsManager::UpdateEnergyDeposit);
+      j->SetJetSignalConnected(true);
+      jet_signal_map.emplace(num_jet_signals, (weak_ptr<JetEnergyLoss>)j);
+      num_jet_signals++;
+    } else {
+      auto hp = GetHydroPointer().lock();
+      if (hp) {
+        j->jetSignal.connect(hp.get(), &FluidDynamics::UpdateEnergyDeposit);
         j->SetJetSignalConnected(true);
         jet_signal_map.emplace(num_jet_signals, (weak_ptr<JetEnergyLoss>)j);
         num_jet_signals++;
-    }
-    else{
-      auto hp = GetHydroPointer().lock();
-      if (hp) {
-	j->jetSignal.connect(hp.get(), &FluidDynamics::UpdateEnergyDeposit);
-	j->SetJetSignalConnected(true);
-	jet_signal_map.emplace(num_jet_signals, (weak_ptr<JetEnergyLoss>)j);
-	num_jet_signals++;
       }
     }
   }
@@ -104,20 +107,20 @@ void JetScapeSignalManager::ConnectEdensitySignal(shared_ptr<JetEnergyLoss> j) {
   if (!j->GetEdensitySignalConnected()) {
     auto hp1 = GetBulkPointer().lock();
     if (hp1) {
-      j->edensitySignal.connect(hp1.get(), &BulkDynamicsManager::GetEnergyDensity);
+      j->edensitySignal.connect(hp1.get(),
+                                &BulkDynamicsManager::GetEnergyDensity);
       j->SetEdensitySignalConnected(true);
       edensity_signal_map.emplace(num_edensity_signals,
-				  (weak_ptr<JetEnergyLoss>)j);
+                                  (weak_ptr<JetEnergyLoss>)j);
       num_edensity_signals++;
-    }
-    else{
+    } else {
       auto hp = GetHydroPointer().lock();
       if (hp) {
-	j->edensitySignal.connect(hp.get(), &FluidDynamics::GetEnergyDensity);
-	j->SetEdensitySignalConnected(true);
-	edensity_signal_map.emplace(num_edensity_signals,
-				    (weak_ptr<JetEnergyLoss>)j);
-	num_edensity_signals++;
+        j->edensitySignal.connect(hp.get(), &FluidDynamics::GetEnergyDensity);
+        j->SetEdensitySignalConnected(true);
+        edensity_signal_map.emplace(num_edensity_signals,
+                                    (weak_ptr<JetEnergyLoss>)j);
+        num_edensity_signals++;
       }
     }
   }
@@ -128,14 +131,15 @@ void JetScapeSignalManager::ConnectGetHydroTau0Signal(
   if (!j->GetGetHydroTau0SignalConnected()) {
     auto hp1 = GetBulkPointer().lock();
     if (hp1) {
-      j->GetHydroTau0Signal.connect(hp1.get(), &BulkDynamicsManager::GetHydroStartTime);
+      j->GetHydroTau0Signal.connect(hp1.get(),
+                                    &BulkDynamicsManager::GetHydroStartTime);
       j->SetGetHydroTau0SignalConnected(true);
-    }
-    else{
+    } else {
       auto hp = GetHydroPointer().lock();
       if (hp) {
-	j->GetHydroTau0Signal.connect(hp.get(), &FluidDynamics::GetHydroStartTime);
-	j->SetGetHydroTau0SignalConnected(true);
+        j->GetHydroTau0Signal.connect(hp.get(),
+                                      &FluidDynamics::GetHydroStartTime);
+        j->SetGetHydroTau0SignalConnected(true);
       }
     }
   }
@@ -146,20 +150,20 @@ void JetScapeSignalManager::ConnectGetHydroCellSignal(
   if (!j->GetGetHydroCellSignalConnected()) {
     auto hp1 = GetBulkPointer().lock();
     if (hp1) {
-      j->GetHydroCellSignal.connect(hp1.get(), &BulkDynamicsManager::GetHydroCell);
+      j->GetHydroCellSignal.connect(hp1.get(),
+                                    &BulkDynamicsManager::GetHydroCell);
       j->SetGetHydroCellSignalConnected(true);
       GetHydroCellSignal_map.emplace(num_GetHydroCellSignals,
-				     (weak_ptr<JetEnergyLoss>)j);
+                                     (weak_ptr<JetEnergyLoss>)j);
       num_GetHydroCellSignals++;
-    }
-    else{
+    } else {
       auto hp = GetHydroPointer().lock();
       if (hp) {
-	j->GetHydroCellSignal.connect(hp.get(), &FluidDynamics::GetHydroCell);
-	j->SetGetHydroCellSignalConnected(true);
-	GetHydroCellSignal_map.emplace(num_GetHydroCellSignals,
-				       (weak_ptr<JetEnergyLoss>)j);
-	num_GetHydroCellSignals++;
+        j->GetHydroCellSignal.connect(hp.get(), &FluidDynamics::GetHydroCell);
+        j->SetGetHydroCellSignalConnected(true);
+        GetHydroCellSignal_map.emplace(num_GetHydroCellSignals,
+                                       (weak_ptr<JetEnergyLoss>)j);
+        num_GetHydroCellSignals++;
       }
     }
   }
@@ -210,61 +214,60 @@ void JetScapeSignalManager::ConnectTransformPartonsSignal(
   }
 }
 
-
 void JetScapeSignalManager::ConnectGetFinalHadronListSignal(
-                                                shared_ptr<HadronPrinter> h){
-    auto hadroMgrShared = GetHadronizationManagerPointer().lock();
-    //hadronPrinter->GetFinalHadronList.connect(hadro.get(), &Hadronization::GetHadrons);
-    h->GetFinalHadronList.connect(hadroMgrShared.get(),
-                                  &HadronizationManager::GetHadrons);
+    shared_ptr<HadronPrinter> h) {
+  auto hadroMgrShared = GetHadronizationManagerPointer().lock();
+  // hadronPrinter->GetFinalHadronList.connect(hadro.get(),
+  // &Hadronization::GetHadrons);
+  h->GetFinalHadronList.connect(hadroMgrShared.get(),
+                                &HadronizationManager::GetHadrons);
 }
-
 
 void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
     shared_ptr<Hadronization> h) {
-    if (!h->GetGetHydroHyperSurfaceConnected()) {
-        auto hp = GetHydroPointer().lock();
-        if (hp) {
-            h->GetHydroHyperSurface.connect(
-                hp.get(), &FluidDynamics::FindAConstantTemperatureSurface);
-            h->SetGetHydroHyperSurfaceConnected(true);
-        }
+  if (!h->GetGetHydroHyperSurfaceConnected()) {
+    auto hp = GetHydroPointer().lock();
+    if (hp) {
+      h->GetHydroHyperSurface.connect(
+          hp.get(), &FluidDynamics::FindAConstantTemperatureSurface);
+      h->SetGetHydroHyperSurfaceConnected(true);
     }
+  }
 }
-
 
 void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
     shared_ptr<SoftParticlization> hSoft) {
-    if (!hSoft->GetGetHydroHyperSurfaceConnected()) {
-        auto hp = GetHydroPointer().lock();
-        if (hp) {
-            hSoft->GetHydroHyperSurface.connect(
-                hp.get(), &FluidDynamics::getSurfaceCellVector);
-            hSoft->SetGetHydroHyperSurfaceConnected(true);
-        }
+  if (!hSoft->GetGetHydroHyperSurfaceConnected()) {
+    auto hp = GetHydroPointer().lock();
+    if (hp) {
+      hSoft->GetHydroHyperSurface.connect(hp.get(),
+                                          &FluidDynamics::getSurfaceCellVector);
+      hSoft->SetGetHydroHyperSurfaceConnected(true);
     }
+  }
 }
-
 
 void JetScapeSignalManager::ConnectClearHydroHyperSurfaceSignal(
     shared_ptr<SoftParticlization> hSoft) {
-    if (!hSoft->GetClearHydroHyperSurfaceConnected()) {
-        auto hp = GetHydroPointer().lock();
-        if (hp) {
-            hSoft->ClearHydroHyperSurface.connect(
-                hp.get(), &FluidDynamics::clearSurfaceCellVector);
-            hSoft->SetClearHydroHyperSurfaceConnected(true);
-        }
+  if (!hSoft->GetClearHydroHyperSurfaceConnected()) {
+    auto hp = GetHydroPointer().lock();
+    if (hp) {
+      hSoft->ClearHydroHyperSurface.connect(
+          hp.get(), &FluidDynamics::clearSurfaceCellVector);
+      hSoft->SetClearHydroHyperSurfaceConnected(true);
     }
+  }
 }
 
 void JetScapeSignalManager::CleanUp() {
   VERBOSE(8);
 
   // REMARK JP: In case of two managers attached, Eloss and Isr
-  //            the bookeeping here is not correct, while signal/slots itself are (to be checked)!
+  //            the bookeeping here is not correct, while signal/slots itself
+  //            are (to be checked)!
 
-  // hmmm wrong caintainer .. should have used vectore with struct instead of map!!!!
+  // hmmm wrong caintainer .. should have used vectore with struct instead of
+  // map!!!!
 
   auto loss = jloss.lock();
   if (loss) {
@@ -292,7 +295,8 @@ void JetScapeSignalManager::CleanUp() {
     edensity_signal_map.clear();
     GetHydroCellSignal_map.clear(), SentInPartons_map.clear();
     TransformPartons_map.clear();
-    // think better here how to handle the clean of when the instance goes out of scope ...!???
+    // think better here how to handle the clean of when the instance goes out
+    // of scope ...!???
   }
 
   PrintGetHydroCellSignalMap();
@@ -362,4 +366,4 @@ void JetScapeSignalManager::Clear()
 }
 */
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

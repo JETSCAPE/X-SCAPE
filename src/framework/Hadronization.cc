@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -26,10 +27,10 @@ using namespace std;
 namespace Jetscape {
 
 Hadronization::Hadronization() {
-    SetId("Hadronization");
-    TransformPartonsConnected = false;
-    HydroHyperSurfaceConnected_ = false;
-    GetHydroCellSignalConnected_ = false;
+  SetId("Hadronization");
+  TransformPartonsConnected = false;
+  HydroHyperSurfaceConnected_ = false;
+  GetHydroCellSignalConnected_ = false;
 }
 
 Hadronization::~Hadronization() {}
@@ -58,7 +59,8 @@ void Hadronization::DoHadronize() {
   VERBOSE(2) << "Get Recombination Partons...";
 
   if (inPartons.size() > 0) {
-    VERBOSE(2) << "There are " << inPartons.size() << " Partons ready for Recombination...";
+    VERBOSE(2) << "There are " << inPartons.size()
+               << " Partons ready for Recombination...";
     TransformPartons(inPartons, outHadrons, outPartons);
   } else {
     VERBOSE(2) << "There is no Parton ready for Recombination...";
@@ -70,8 +72,8 @@ void Hadronization::ExecuteTask() {
   VERBOSE(2) << "Found " << GetNumberOfTasks()
              << " Hadronization Tasks/Modules Execute them ... ";
 
-  //this->outHadrons = make_shared<vector<shared_ptr<Hadron>>>();
-  //this->outPartons = make_shared<vector<shared_ptr<Parton>>>();
+  // this->outHadrons = make_shared<vector<shared_ptr<Hadron>>>();
+  // this->outPartons = make_shared<vector<shared_ptr<Parton>>>();
 
   DoHadronize();
 }
@@ -87,8 +89,8 @@ void Hadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
   if (GetHadrons().size() > 0) {
     f->WriteComment("Final State Hadrons");
     int i = 0;
-    for (auto &h : GetHadrons()) {
-      //f->WriteWhiteSpace("[" + to_string(i) + "] H");
+    for (auto& h : GetHadrons()) {
+      // f->WriteWhiteSpace("[" + to_string(i) + "] H");
       f->Write(h);
       ++i;
     }
@@ -97,21 +99,14 @@ void Hadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
   }
 }
 
-void Hadronization::DeleteHadrons() {
-  outHadrons.clear();
-}
+void Hadronization::DeleteHadrons() { outHadrons.clear(); }
 
 void Hadronization::DeleteRealHadrons() {
-  outHadrons.erase(
-    std::remove_if(
-      outHadrons.begin(),
-      outHadrons.end(),
-      [](const std::shared_ptr<Hadron>& hadron) {
-          return hadron->pstat() > 0;
-      }
-    ),
-    outHadrons.end()
-  );
+  outHadrons.erase(std::remove_if(outHadrons.begin(), outHadrons.end(),
+                                  [](const std::shared_ptr<Hadron>& hadron) {
+                                    return hadron->pstat() > 0;
+                                  }),
+                   outHadrons.end());
 }
 
-} // namespace Jetscape
+}  // namespace Jetscape

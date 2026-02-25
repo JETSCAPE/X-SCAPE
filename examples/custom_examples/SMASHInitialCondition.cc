@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -41,20 +42,22 @@ using namespace Jetscape;
 // Forward declaration
 void Show();
 
-int main(int argc, char** argv)
-{
-  clock_t t; t = clock();
-  time_t start, end; time(&start);
+int main(int argc, char** argv) {
+  clock_t t;
+  t = clock();
+  time_t start, end;
+  time(&start);
 
-  cout<<endl;
+  cout << endl;
 
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
   JetScapeLogger::Instance()->SetInfo(true);
   JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
-  //SetVerboseLevel (9 a lot of additional debug output ...)
-  //If you want to suppress it: use SetVerboseLevel(0) or max  SetVerboseLevel(9) or 10
+  // SetVerboseLevel (9 a lot of additional debug output ...)
+  // If you want to suppress it: use SetVerboseLevel(0) or max
+  // SetVerboseLevel(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
 
   Show();
@@ -63,19 +66,23 @@ int main(int argc, char** argv)
 
   std::string mainXMLName = "../config/jetscape_main.xml";
   std::string userXMLName = "../config/jetscape_user_SMASHInitialCondition.xml";
-  if (argc == 2)  {
-    if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
+  if (argc == 2) {
+    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
       std::cout << "Command line options:" << std::endl;
-      std::cout << "- First (optional) argument: path to user XML file ./SMASHInitialCondition /path/to/user.xml" << std::endl;
-      std::cout << "- Second (optional) argument: path to main XML file ./SMASHInitialCondition /path/to/user.xml /path/to/main.xml" << std::endl;
-      std::cout << "- If no command line options are given, defaults are used: config/jetscape_user.xml config/jetscape_main.xml" << std::endl;
+      std::cout << "- First (optional) argument: path to user XML file "
+                   "./SMASHInitialCondition /path/to/user.xml"
+                << std::endl;
+      std::cout << "- Second (optional) argument: path to main XML file "
+                   "./SMASHInitialCondition /path/to/user.xml /path/to/main.xml"
+                << std::endl;
+      std::cout << "- If no command line options are given, defaults are used: "
+                   "config/jetscape_user.xml config/jetscape_main.xml"
+                << std::endl;
       return -1;
-    }
-    else {
+    } else {
       userXMLName = argv[1];
     }
-  }
-  else if (argc == 3) {
+  } else if (argc == 3) {
     userXMLName = argv[1];
     mainXMLName = argv[2];
   }
@@ -88,9 +95,12 @@ int main(int argc, char** argv)
   JetScapeXML::Instance()->OpenXMLUserFile(jetscape->GetXMLUserFileName());
 
   // Get the end time from the XML file
-  double end_time = JetScapeXML::Instance()->GetElementDouble({"IS", "SMASH", "end_time"}, true);
+  double end_time = JetScapeXML::Instance()->GetElementDouble(
+      {"IS", "SMASH", "end_time"}, true);
 
-  auto mClock = make_shared<MainClock>("SpaceTime",-2.0,end_time,0.1); // JP: make consistent with reading from XML in init phase ...
+  auto mClock = make_shared<MainClock>(
+      "SpaceTime", -2.0, end_time,
+      0.1);  // JP: make consistent with reading from XML in init phase ...
   mClock->Info();
 
   jetscape->AddMainClock(mClock);
@@ -99,12 +109,12 @@ int main(int argc, char** argv)
 
   // Initial conditions
   auto initial_state = make_shared<InitialState>();
-  jetscape->Add(initial_state); // to define a grid for the hydro
+  jetscape->Add(initial_state);  // to define a grid for the hydro
 
   auto smash_ic = make_shared<SmashInitialConditionWrapper>();
   // per time step for the IC
   smash_ic->SetTimeStepped(true);
-  smash_ic->SetTimeRange(-2.0,end_time);
+  smash_ic->SetTimeRange(-2.0, end_time);
 
   // Liquefier
   auto hadronic_liquefier = make_shared<HadronicLiquefier>();
@@ -114,24 +124,24 @@ int main(int argc, char** argv)
   // per time step for the hydro
   hydro->SetTimeStepped(true);
   hydro->add_a_hadronic_liquefier(hadronic_liquefier);
-  hydro->SetTimeRange(-2.0,end_time);
+  hydro->SetTimeRange(-2.0, end_time);
 
   // Soft particlization
   auto iSS = make_shared<iSpectraSamplerWrapper>();
   // per time step soft particlization
   iSS->SetTimeStepped(true);
-  iSS->SetTimeRange(-2.0,end_time);
+  iSS->SetTimeRange(-2.0, end_time);
 
   // Afterburner
   auto afterburner = make_shared<SmashWrapper>();
   // per time step for the afterburner
   afterburner->SetTimeStepped(true);
-  afterburner->SetTimeRange(-2.0,end_time);
+  afterburner->SetTimeRange(-2.0, end_time);
 
   // Bulk Dynamics Manager (BDM)
   auto bdm = make_shared<BulkDynamicsManager>();
   bdm->SetTimeStepped(true);
-  bdm->SetTimeRange(-2.0,end_time);
+  bdm->SetTimeRange(-2.0, end_time);
   bdm->Add(smash_ic);
   bdm->Add(hydro);
   bdm->Add(iSS);
@@ -142,19 +152,25 @@ int main(int argc, char** argv)
 
   // Output
   std::string outputFilename = jetscape->GetXMLElementText({"outputFilename"});
-  // check XML element "JetScapeWriterAscii" for on and off and then add the writer or not
-  std::string writerAscii = jetscape->GetXMLElementText({"JetScapeWriterAscii"});
+  // check XML element "JetScapeWriterAscii" for on and off and then add the
+  // writer or not
+  std::string writerAscii =
+      jetscape->GetXMLElementText({"JetScapeWriterAscii"});
   if ((int)writerAscii.find("on") != std::string::npos) {
-    auto writer_ascii = make_shared<JetScapeWriterAscii> (outputFilename + string(".dat"));
+    auto writer_ascii =
+        make_shared<JetScapeWriterAscii>(outputFilename + string(".dat"));
     writer_ascii->SetId("Writer");
     jetscape->Add(writer_ascii);
   }
 
-  // Check XML element "JetScapeWriterFinalStateHadronsAscii" for on and off and then add the writer or not
-  std::string writerFinalStateHadronsAscii = jetscape->GetXMLElementText({"JetScapeWriterFinalStateHadronsAscii"});
+  // Check XML element "JetScapeWriterFinalStateHadronsAscii" for on and off and
+  // then add the writer or not
+  std::string writerFinalStateHadronsAscii =
+      jetscape->GetXMLElementText({"JetScapeWriterFinalStateHadronsAscii"});
   if ((int)writerFinalStateHadronsAscii.find("on") != std::string::npos) {
-    auto writer_hadrons = make_shared<JetScapeWriterFinalStateHadronsAscii> ();
-    writer_hadrons->SetOutputFileName(outputFilename + string("_final_state_hadrons.dat"));
+    auto writer_hadrons = make_shared<JetScapeWriterFinalStateHadronsAscii>();
+    writer_hadrons->SetOutputFileName(outputFilename +
+                                      string("_final_state_hadrons.dat"));
     writer_hadrons->SetId("FinalStateHadronsAscii");
     jetscape->Add(writer_hadrons);
   }
@@ -169,22 +185,21 @@ int main(int argc, char** argv)
   // Most things done in write and clear ...
   jetscape->Finish();
 
-  INFO_NICE<<"Finished!";
-  cout<<endl;
+  INFO_NICE << "Finished!";
+  cout << endl;
 
   t = clock() - t;
   time(&end);
-  printf ("CPU time: %f seconds.\n",((float)t)/CLOCKS_PER_SEC);
-  printf ("Real time: %f seconds.\n",difftime(end,start));
+  printf("CPU time: %f seconds.\n", ((float)t) / CLOCKS_PER_SEC);
+  printf("Real time: %f seconds.\n", difftime(end, start));
   return 0;
 }
 
 // -------------------------------------
 
-void Show()
-{
-  INFO_NICE<<"-------------------------------------------------------";
-  INFO_NICE<<"| SMASH Initial Condition Test X-SCAPE Framework ...  |";
-  INFO_NICE<<"-------------------------------------------------------";
+void Show() {
+  INFO_NICE << "-------------------------------------------------------";
+  INFO_NICE << "| SMASH Initial Condition Test X-SCAPE Framework ...  |";
+  INFO_NICE << "-------------------------------------------------------";
   INFO_NICE;
 }

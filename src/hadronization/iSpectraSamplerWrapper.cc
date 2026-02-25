@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -26,27 +27,25 @@
 using namespace Jetscape;
 
 // Register the module with the base class
-RegisterJetScapeModule<iSpectraSamplerWrapper>
-    iSpectraSamplerWrapper::reg("iSS");
+RegisterJetScapeModule<iSpectraSamplerWrapper> iSpectraSamplerWrapper::reg(
+    "iSS");
 
 iSpectraSamplerWrapper::iSpectraSamplerWrapper() {
-    SetId("iSS");
-    statusCode_ = 0;
+  SetId("iSS");
+  statusCode_ = 0;
 }
 
 iSpectraSamplerWrapper::~iSpectraSamplerWrapper() {}
 
 void iSpectraSamplerWrapper::InitTask() {
-
   JSINFO << "Initialize a particle sampler (iSS)";
 
   std::string input_file =
       GetXMLElementText({"SoftParticlization", "iSS", "iSS_input_file"});
   std::string table_path =
       GetXMLElementText({"SoftParticlization", "iSS", "iSS_table_path"});
-  std::string particle_table_path =
-      GetXMLElementText({"SoftParticlization", "iSS",
-                         "iSS_particle_table_path"});
+  std::string particle_table_path = GetXMLElementText(
+      {"SoftParticlization", "iSS", "iSS_particle_table_path"});
   std::string working_path =
       GetXMLElementText({"SoftParticlization", "iSS", "iSS_working_path"});
   int hydro_mode =
@@ -55,22 +54,22 @@ void iSpectraSamplerWrapper::InitTask() {
       {"SoftParticlization", "iSS", "number_of_repeated_sampling"});
   int flag_perform_decays = GetXMLElementInt(
       {"SoftParticlization", "iSS", "Perform_resonance_decays"});
-  int afterburner_type = (
-      GetXMLElementInt({"SoftParticlization", "iSS", "afterburner_type"}));
+  int afterburner_type =
+      (GetXMLElementInt({"SoftParticlization", "iSS", "afterburner_type"}));
 
-  int include_deltaf_shear = (
-      GetXMLElementInt({"SoftParticlization", "iSS", "include_deltaf_shear"}));
-  int include_deltaf_bulk = (
-      GetXMLElementInt({"SoftParticlization", "iSS", "include_deltaf_bulk"}));
-  int deltaf_type = (
-      GetXMLElementInt({"SoftParticlization", "iSS", "deltaf_type"}));
+  int include_deltaf_shear =
+      (GetXMLElementInt({"SoftParticlization", "iSS", "include_deltaf_shear"}));
+  int include_deltaf_bulk =
+      (GetXMLElementInt({"SoftParticlization", "iSS", "include_deltaf_bulk"}));
+  int deltaf_type =
+      (GetXMLElementInt({"SoftParticlization", "iSS", "deltaf_type"}));
 
   if (!boost_invariance) {
     hydro_mode = 2;
   }
 
   iSpectraSampler_ptr_ = std::unique_ptr<iSS>(
-          new iSS(working_path, table_path, particle_table_path, input_file));
+      new iSS(working_path, table_path, particle_table_path, input_file));
   iSpectraSampler_ptr_->paraRdr_ptr->readFromFile(input_file);
 
   // overwrite some parameters
@@ -122,7 +121,7 @@ int iSpectraSamplerWrapper::getSurfCellVector() {
   GetHydroHyperSurface(surfVec);
   int nCells = surfVec.size();
   JSINFO << "surface cell size: " << nCells;
-  for (const auto surf_i: surfVec) {
+  for (const auto surf_i : surfVec) {
     FO_surf iSS_surf_cell;
     iSS_surf_cell.tau = surf_i.tau;
     iSS_surf_cell.xpt = surf_i.x;
@@ -159,7 +158,7 @@ int iSpectraSamplerWrapper::getSurfCellVector() {
     FOsurf_array.push_back(iSS_surf_cell);
   }
   iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
-  return(nCells);
+  return (nCells);
 }
 
 void iSpectraSamplerWrapper::CalculateTime() {
@@ -167,24 +166,22 @@ void iSpectraSamplerWrapper::CalculateTime() {
              << GetMainClock()->GetCurrentTime() << " fm/c ...";
   if (statusCode_ == 0) {
     // generate symbolic links with music_input_file
-    std::string music_input_file_path = GetXMLElementText(
-            {"Hydro", "MUSIC", "MUSIC_input_file"});
+    std::string music_input_file_path =
+        GetXMLElementText({"Hydro", "MUSIC", "MUSIC_input_file"});
     std::string working_path =
         GetXMLElementText({"SoftParticlization", "iSS", "iSS_working_path"});
     std::string music_input = working_path + "/music_input";
     std::ifstream inputfile(music_input.c_str());
     if (!inputfile.good()) {
       std::ostringstream system_command;
-      system_command << "ln -s " << music_input_file_path << " "
-                     << music_input;
+      system_command << "ln -s " << music_input_file_path << " " << music_input;
       system(system_command.str().c_str());
     }
     inputfile.close();
 
-
     statusCode_ = 1;
   }
-  long random_seed = (*GetMt19937Generator())(); // get random seed
+  long random_seed = (*GetMt19937Generator())();  // get random seed
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
@@ -210,16 +207,15 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   JSINFO << "running iSS ...";
 
   // generate symbolic links with music_input_file
-  std::string music_input_file_path = GetXMLElementText(
-          {"Hydro", "MUSIC", "MUSIC_input_file"});
+  std::string music_input_file_path =
+      GetXMLElementText({"Hydro", "MUSIC", "MUSIC_input_file"});
   std::string working_path =
       GetXMLElementText({"SoftParticlization", "iSS", "iSS_working_path"});
   std::string music_input = working_path + "/music_input";
   std::ifstream inputfile(music_input.c_str());
   if (!inputfile.good()) {
     std::ostringstream system_command;
-    system_command << "ln -s " << music_input_file_path << " "
-                   << music_input;
+    system_command << "ln -s " << music_input_file_path << " " << music_input;
     system(system_command.str().c_str());
   }
   inputfile.close();
@@ -229,18 +225,18 @@ void iSpectraSamplerWrapper::ExecuteTask() {
     int status = iSpectraSampler_ptr_->read_in_FO_surface();
     if (status != 0) {
       JSWARN << "hyper-surface not read in";
-      //exit(-1);
+      // exit(-1);
     } else {
       nCells = 1;
     }
   }
-  //int status = iSpectraSampler_ptr_->read_in_FO_surface();
-  //if (status != 0) {
-  //  JSWARN << "Some errors happened in reading in the hyper-surface";
-  //  exit(-1);
-  //}
+  // int status = iSpectraSampler_ptr_->read_in_FO_surface();
+  // if (status != 0) {
+  //   JSWARN << "Some errors happened in reading in the hyper-surface";
+  //   exit(-1);
+  // }
 
-  long random_seed = (*GetMt19937Generator())(); // get random seed
+  long random_seed = (*GetMt19937Generator())();  // get random seed
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
@@ -268,17 +264,16 @@ void iSpectraSamplerWrapper::ClearTask() {
   ClearHadronList();
 }
 
-
 void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
   unsigned int nev = iSpectraSampler_ptr_->get_number_of_sampled_events();
   VERBOSE(2) << "Passing all sampled hadrons to the JETSCAPE framework";
   VERBOSE(4) << "number of events to pass : " << nev;
   bool hadronListExist = false;
   if (Hadron_list_.size() != 0)
-      hadronListExist = true;
+    hadronListExist = true;
   if (hadronListExist && Hadron_list_.size() != nev) {
-      JSWARN << "Hadron list nev is not equal!";
-      exit(1);
+    JSWARN << "Hadron list nev is not equal!";
+    exit(1);
   }
   for (unsigned int iev = 0; iev < nev; iev++) {
     std::vector<shared_ptr<Hadron>> hadrons;
@@ -291,7 +286,8 @@ void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
       int hadron_label = 0;
       int hadron_status = 11;
       int hadron_id = current_hadron.pid;
-      //int hadron_id = 1;   // just for testing need to be changed to the line above
+      // int hadron_id = 1;   // just for testing need to be changed to the line
+      // above
       double hadron_mass = current_hadron.mass;
       FourVector hadron_p(current_hadron.px, current_hadron.py,
                           current_hadron.pz, current_hadron.E);
@@ -304,9 +300,9 @@ void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
                                               hadron_status, hadron_p, hadron_x,
                                               hadron_mass));
       } else {
-        auto jetscape_hadron = make_shared<Hadron>(
-                hadron_label, hadron_id, hadron_status,
-                hadron_p, hadron_x, hadron_mass);
+        auto jetscape_hadron =
+            make_shared<Hadron>(hadron_label, hadron_id, hadron_status,
+                                hadron_p, hadron_x, hadron_mass);
         Hadron_list_[iev].push_back(jetscape_hadron);
       }
     }
@@ -343,7 +339,8 @@ void iSpectraSamplerWrapper::PassHadronListToJetscape() {
       int hadron_label = 0;
       int hadron_status = 11;
       int hadron_id = current_hadron.pid;
-      //int hadron_id = 1;   // just for testing need to be changed to the line above
+      // int hadron_id = 1;   // just for testing need to be changed to the line
+      // above
       double hadron_mass = current_hadron.mass;
       FourVector hadron_p(current_hadron.px, current_hadron.py,
                           current_hadron.pz, current_hadron.E);
@@ -354,7 +351,8 @@ void iSpectraSamplerWrapper::PassHadronListToJetscape() {
       hadrons.push_back(make_shared<Hadron>(hadron_label, hadron_id,
                                             hadron_status, hadron_p, hadron_x,
                                             hadron_mass));
-      //Hadron* jetscape_hadron = new Hadron(hadron_label, hadron_id, hadron_status, hadron_p, hadron_x, hadron_mass);
+      // Hadron* jetscape_hadron = new Hadron(hadron_label, hadron_id,
+      // hadron_status, hadron_p, hadron_x, hadron_mass);
       //(*Hadron_list_)[iev]->push_back(*jetscape_hadron);
     }
     Hadron_list_.push_back(hadrons);

@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -48,10 +49,10 @@ using namespace sigslot;
 namespace Jetscape {
 
 class
-    JetScapeSignalManager //: public sigslot::has_slots<sigslot::multi_threaded_local>
+    JetScapeSignalManager  //: public
+                           //: sigslot::has_slots<sigslot::multi_threaded_local>
 {
-
-public:
+ public:
   static JetScapeSignalManager *Instance();
 
   void SetInitialStatePointer(shared_ptr<InitialState> m_initial) {
@@ -60,17 +61,18 @@ public:
   weak_ptr<InitialState> GetInitialStatePointer() { return initial_state; }
 
 #ifdef USE_SMASH
-  void SetSMASHInitialStatePointer(shared_ptr<SmashInitialConditionWrapper> m_SMASH_initial) {
+  void SetSMASHInitialStatePointer(
+      shared_ptr<SmashInitialConditionWrapper> m_SMASH_initial) {
     transport_initial_state = m_SMASH_initial;
   }
-  weak_ptr<SmashInitialConditionWrapper> GetSMASHInitialStatePointer() { 
+  weak_ptr<SmashInitialConditionWrapper> GetSMASHInitialStatePointer() {
     return transport_initial_state;
   }
 
   void SetSMASHNucleusPointer(shared_ptr<SMASHNucleusWrapper> m_SMASH_nucleus) {
     smash_nucleus = m_SMASH_nucleus;
   }
-  weak_ptr<SMASHNucleusWrapper> GetSMASHNucleusPointer() { 
+  weak_ptr<SMASHNucleusWrapper> GetSMASHNucleusPointer() {
     return smash_nucleus;
   }
 #endif
@@ -84,7 +86,9 @@ public:
   void SetHydroPointer(shared_ptr<FluidDynamics> m_hydro) { hydro = m_hydro; }
   weak_ptr<FluidDynamics> GetHydroPointer() { return hydro; }
 
-  void SetBulkDynamicsManagerPointer(shared_ptr<BulkDynamicsManager> m_bulk) { bulk = m_bulk; }
+  void SetBulkDynamicsManagerPointer(shared_ptr<BulkDynamicsManager> m_bulk) {
+    bulk = m_bulk;
+  }
   weak_ptr<BulkDynamicsManager> GetBulkPointer() { return bulk; }
 
   void SetSoftParticlizationPointer(shared_ptr<SoftParticlization> m_soft) {
@@ -94,8 +98,8 @@ public:
     return softparticlization;
   }
 
-  void
-  SetJetEnergyLossManagerPointer(shared_ptr<JetEnergyLossManager> m_jloss) {
+  void SetJetEnergyLossManagerPointer(
+      shared_ptr<JetEnergyLossManager> m_jloss) {
     jloss = m_jloss;
   }
   weak_ptr<JetEnergyLossManager> GetJetEnergyLossManagerPointer() {
@@ -112,8 +116,8 @@ public:
   }
   weak_ptr<JetScapeWriter> GetWriterPointer() { return writer; }
 
-  void
-  SetHadronizationManagerPointer(shared_ptr<HadronizationManager> m_hadro) {
+  void SetHadronizationManagerPointer(
+      shared_ptr<HadronizationManager> m_hadro) {
     hadro = m_hadro;
   }
   weak_ptr<HadronizationManager> GetHadronizationManagerPointer() {
@@ -129,7 +133,6 @@ public:
     hprinter = m_hprinter;
   }
   weak_ptr<HadronPrinter> GetHadronPrinterPointer() { return hprinter; }
-
 
   void SetEnergyLossPointer(shared_ptr<JetEnergyLoss> m_eloss) {
     eloss = m_eloss;
@@ -150,15 +153,15 @@ public:
   void ConnectGetFinalPartonListSignal(shared_ptr<HadronizationManager> hm);
   void ConnectTransformPartonsSignal(shared_ptr<Hadronization> h,
                                      shared_ptr<Hadronization> h2);
-    void ConnectGetFinalHadronListSignal(shared_ptr<HadronPrinter> h);
+  void ConnectGetFinalHadronListSignal(shared_ptr<HadronPrinter> h);
 
   void ConnectGetHydroHyperSurfaceSignal(shared_ptr<Hadronization> h);
   void ConnectGetHydroHyperSurfaceSignal(shared_ptr<SoftParticlization> hSoft);
   void ConnectClearHydroHyperSurfaceSignal(
-          shared_ptr<SoftParticlization> hSoft);
+      shared_ptr<SoftParticlization> hSoft);
 
   void
-  DisconnectSignal(){}; // to be implememted if needed maybe for Eloss ...!???
+  DisconnectSignal(){};  // to be implememted if needed maybe for Eloss ...!???
 
   void CleanUp();
 
@@ -172,7 +175,7 @@ public:
   void PrintSentInPartonsSignalMap();
   void PrintTransformPartonsSignalMap();
 
-private:
+ private:
   JetScapeSignalManager(){};
   JetScapeSignalManager(JetScapeSignalManager const &){};
   static JetScapeSignalManager *m_pInstance;
@@ -210,6 +213,6 @@ private:
   map<int, weak_ptr<Hadronization>> TransformPartons_map;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

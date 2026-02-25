@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions to JETSCAPE (new module, feature, bug fix, etc.) are welcome. To contribute, read through the instructions below and open a [Pull Request](https://github.com/JETSCAPE/JETSCAPE/pulls) with your changes, or an [Issue](https://github.com/JETSCAPE/JETSCAPE/issues) describing what you intend to do.
+Contributions to JETSCAPE (new module, feature, bug fix, etc.) are welcome. To contribute, read through the instructions below and open a [Pull Request](https://github.com/JETSCAPE/X-SCAPE/pulls) with your changes, or an [Issue](https://github.com/JETSCAPE/X-SCAPE/issues) describing what you intend to do.
 
 ## Developing modules
 

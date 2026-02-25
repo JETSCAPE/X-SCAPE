@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -22,33 +23,28 @@
 
 namespace Jetscape {
 
-template<class T>
-class JetScapeWriterIsrStream : public JetScapeWriterStream<T>
-{
-
+template <class T>
+class JetScapeWriterIsrStream : public JetScapeWriterStream<T> {
  public:
-
-  JetScapeWriterIsrStream<T>() {};
-  JetScapeWriterIsrStream<T>(string m_file_name_out):
-    JetScapeWriterStream<T>(m_file_name_out){}
+  JetScapeWriterIsrStream<T>(){};
+  JetScapeWriterIsrStream<T>(string m_file_name_out)
+      : JetScapeWriterStream<T>(m_file_name_out) {}
   virtual ~JetScapeWriterIsrStream<T>(){};
 
-  //void InitTask();
-  //void ExecuteTask();
+  // void InitTask();
+  // void ExecuteTask();
 
-  void WriteIsr(weak_ptr<PartonShower> ps){
-      JetScapeWriterStream<T>::Write(ps);}
+  void WriteIsr(weak_ptr<PartonShower> ps) {
+    JetScapeWriterStream<T>::Write(ps);
+  }
 
-  void Write(weak_ptr<PartonShower> ps) {};
-  //void Write(weak_ptr<Parton> p) {};
-  void Write(weak_ptr<Vertex> v) {
-    JetScapeWriterStream<T>::Write(v);
-  };
-  void Write(weak_ptr<Hadron> h) {};
-  //void WriteComment(string s) {};
+  void Write(weak_ptr<PartonShower> ps){};
+  // void Write(weak_ptr<Parton> p) {};
+  void Write(weak_ptr<Vertex> v) { JetScapeWriterStream<T>::Write(v); };
+  void Write(weak_ptr<Hadron> h){};
+  // void WriteComment(string s) {};
 
  private:
-
 };
 
 typedef JetScapeWriterIsrStream<ofstream> JetScapeWriterIsrAscii;
@@ -56,6 +52,6 @@ typedef JetScapeWriterIsrStream<ofstream> JetScapeWriterIsrAscii;
 typedef JetScapeWriterIsrStream<ogzstream> JetScapeWriterIsrAsciiGZ;
 #endif
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
-#endif // JETSCAPEWRITERISRSTREAM_H
+#endif  // JETSCAPEWRITERISRSTREAM_H

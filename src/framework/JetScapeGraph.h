@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -12,7 +13,6 @@
  * Distributed under the GNU General Public License 3.0 (GPLv3 or later).
  * See COPYING for details.
  ******************************************************************************/
-
 
 #ifndef JETSCAPEGRAPH_H
 #define JETSCAPEGRAPH_H
@@ -30,37 +30,36 @@
 
 namespace Jetscape {
 
-  class Vertex;
-  class Parton;
-  class JetScapeParticleBase;
-  class Hadron;
+class Vertex;
+class Parton;
+class JetScapeParticleBase;
+class Hadron;
 
-template<class T>
-class JetScapeGraph : public graph
-{
-
-public:
-
+template <class T>
+class JetScapeGraph : public graph {
+ public:
   JetScapeGraph<T>();
   virtual ~JetScapeGraph<T>();
 
   node new_vertex(std::shared_ptr<Vertex> v);
   int new_particle(node s, node t, std::shared_ptr<T> p);
 
-  //virtual std::unique_ptr<JetScapeGraph> Clone(); //not yet working for 2--2 !!! Fix it !!!
+  // virtual std::unique_ptr<JetScapeGraph> Clone(); //not yet working for 2--2
+  // !!! Fix it !!!
 
   void InsertParticle(edge e, std::shared_ptr<Vertex> v, std::shared_ptr<T> p);
-  void InsertParticleAfter(edge e, std::shared_ptr<Vertex> v, std::shared_ptr<T> p);
-  void InsertEdge(edge e, edge eIns) {};
+  void InsertParticleAfter(edge e, std::shared_ptr<Vertex> v,
+                           std::shared_ptr<T> p);
+  void InsertEdge(edge e, edge eIns){};
 
-  std::shared_ptr<Vertex> GetVertex(node n) {return vMap[n];}
-  std::shared_ptr<T> GetParticle(edge e) {return pMap[e];}
+  std::shared_ptr<Vertex> GetVertex(node n) { return vMap[n]; }
+  std::shared_ptr<T> GetParticle(edge e) { return pMap[e]; }
 
   std::shared_ptr<T> GetParticleAt(int n);
   std::shared_ptr<Vertex> GetVertexAt(int n);
 
-  edge GetEdge(std::shared_ptr<T> p) {return eMap.at(p);}
-  node GetNode(std::shared_ptr<Vertex> v) {return nMap.at(v);}
+  edge GetEdge(std::shared_ptr<T> p) { return eMap.at(p); }
+  node GetNode(std::shared_ptr<Vertex> v) { return nMap.at(v); }
 
   node GetNodeAt(int n);
   edge GetEdgeAt(int n);
@@ -78,12 +77,13 @@ public:
   double GetSplitKt(node n);
 
   double GetNextNodeTime(node n);
-  double GetNodeTime(node n); // {return GetVertex(n)->x_in().t();}
+  double GetNodeTime(node n);  // {return GetVertex(n)->x_in().t();}
 
   edge GetHighSplitEdge(node n);
   edge GetLowSplitEdge(node n);
 
-  void ReCalculateSplit(node n) {}; //to be implemented (see Py8ShowerPSG.cc for example)
+  void ReCalculateSplit(
+      node n){};  // to be implemented (see Py8ShowerPSG.cc for example)
 
   void GetBfsSortedListOfOneToTwoNodes(vector<node> &nl);
   void GetBfsSortedListOfNodes(vector<node> &nl);
@@ -96,42 +96,40 @@ public:
   vector<std::shared_ptr<T>> GetFinalParticles();
   vector<fjcore::PseudoJet> GetFinalParticlesForFastJet();
 
-  void ClearFinalParticleList() {pFinal.clear();}
+  void ClearFinalParticleList() { pFinal.clear(); }
 
-  int GetNumberOfPartons() const {return number_of_edges();}
-  int GetNumberOfVertices() const {return number_of_nodes ();}
+  int GetNumberOfPartons() const { return number_of_edges(); }
+  int GetNumberOfVertices() const { return number_of_nodes(); }
 
-  void save_node_info_handler (ostream *o, node n) const;
-  void save_edge_info_handler (ostream *o, edge n) const;
+  void save_node_info_handler(ostream *o, node n) const;
+  void save_edge_info_handler(ostream *o, edge n) const;
 
-  void load_edge_info_handler (edge e, GML_pair *read);
-  void load_node_info_handler (node n, GML_pair *read);
+  void load_edge_info_handler(edge e, GML_pair *read);
+  void load_node_info_handler(node n, GML_pair *read);
   void pre_clear_handler();
 
-  void PrintVertices() {PrintNodes(false);}
-  void PrintPartons() {PrintEdges(false);}
-  void PrintNodes(bool verbose=true);
-  void PrintEdges(bool verbose=true);
+  void PrintVertices() { PrintNodes(false); }
+  void PrintPartons() { PrintEdges(false); }
+  void PrintNodes(bool verbose = true);
+  void PrintEdges(bool verbose = true);
 
-  void SaveAsGML(string fName) {save(fName.c_str());}
+  void SaveAsGML(string fName) { save(fName.c_str()); }
   void SaveAsGV(string fName);
   void SaveAsGraphML(string fName);
 
-private:
-
+ private:
   node_map<std::shared_ptr<Vertex>> vMap;
   edge_map<std::shared_ptr<T>> pMap;
 
-  //REMARK: check if needed clearing in destructor ...
-  std::map<std::shared_ptr<T>,edge> eMap;
-  std::map<std::shared_ptr<Vertex>,node> nMap;
+  // REMARK: check if needed clearing in destructor ...
+  std::map<std::shared_ptr<T>, edge> eMap;
+  std::map<std::shared_ptr<Vertex>, node> nMap;
 
   vector<std::shared_ptr<T>> pFinal;
-
 };
 
-//typedef JetScapeGraph<JetScapeParticleBase> EventGraph;
-//typedef JetScapeGraph<Hadron> HadronGraph;
+// typedef JetScapeGraph<JetScapeParticleBase> EventGraph;
+// typedef JetScapeGraph<Hadron> HadronGraph;
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 #endif

@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -25,14 +26,13 @@
 
 namespace Jetscape {
 /** @class Jet energy loss manager.
-   */
-class IsrManager
-    : public JetEnergyLossManager
-      //public std::enable_shared_from_this<IsrManager>
-      {
-
-public:
-  /** Default constructor to create a jet energy loss manager. Sets task ID as "JLossManager". Flag GetHardPartonListConnected is set to false.
+ */
+class IsrManager : public JetEnergyLossManager
+// public std::enable_shared_from_this<IsrManager>
+{
+ public:
+  /** Default constructor to create a jet energy loss manager. Sets task ID as
+   * "JLossManager". Flag GetHardPartonListConnected is set to false.
    */
   IsrManager();
 
@@ -40,9 +40,7 @@ public:
    */
   virtual ~IsrManager();
 
-
   virtual void Init() override;
-
 
   virtual void Exec() override;
 
@@ -57,14 +55,12 @@ public:
 
   virtual void FinishPerEvent();
   */
-  
+
   virtual void WriteTask(weak_ptr<JetScapeWriter> w);
 
-
-private:
-
+ private:
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

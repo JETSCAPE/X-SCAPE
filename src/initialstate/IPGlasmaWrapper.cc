@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -20,78 +21,70 @@
 // Register the module with the base class
 RegisterJetScapeModule<IPGlasmaWrapper> IPGlasmaWrapper::reg("IPGlasma");
 
-
 IPGlasmaWrapper::IPGlasmaWrapper() {
-    SetId("IPGlasma");
-    event_id_ = 0;
+  SetId("IPGlasma");
+  event_id_ = 0;
 }
-
 
 IPGlasmaWrapper::~IPGlasmaWrapper() {}
 
-
 void IPGlasmaWrapper::InitTask() {
-    IPGlasma_ptr_ = std::unique_ptr<IPGlasma>(
-                                new IPGlasma(0, 1, 1, "ipglasma.input"));
-    int grid_nx = IPGlasma_ptr_->getGridSizeX();
-    double grid_spacing_x = IPGlasma_ptr_->getGridSpacingX();
-    double grid_size_x = grid_nx*grid_spacing_x/2.;
-    SetRanges(grid_size_x, grid_size_x, 0.);
-    SetSteps(grid_spacing_x, grid_spacing_x, 0.);
+  IPGlasma_ptr_ =
+      std::unique_ptr<IPGlasma>(new IPGlasma(0, 1, 1, "ipglasma.input"));
+  int grid_nx = IPGlasma_ptr_->getGridSizeX();
+  double grid_spacing_x = IPGlasma_ptr_->getGridSpacingX();
+  double grid_size_x = grid_nx * grid_spacing_x / 2.;
+  SetRanges(grid_size_x, grid_size_x, 0.);
+  SetSteps(grid_spacing_x, grid_spacing_x, 0.);
 }
-
 
 void IPGlasmaWrapper::ExecuteTask() {
-    ClearTask();
-    Jetscape::JSINFO << "Run IP-Glasma ...";
-    try {
-        IPGlasma_ptr_->generateAnEvent(event_id_);
-        event_id_++;
-    } catch (std::exception &err) {
-        Jetscape::JSWARN << err.what();
-        std::exit(-1);
-    }
-    ReadNbcList("NcollList0.dat");
+  ClearTask();
+  Jetscape::JSINFO << "Run IP-Glasma ...";
+  try {
+    IPGlasma_ptr_->generateAnEvent(event_id_);
+    event_id_++;
+  } catch (std::exception &err) {
+    Jetscape::JSWARN << err.what();
+    std::exit(-1);
+  }
+  ReadNbcList("NcollList0.dat");
 }
-
 
 void IPGlasmaWrapper::ClearTask() {
-    Jetscape::JSINFO << "clear initial condition vectors";
+  Jetscape::JSINFO << "clear initial condition vectors";
 }
-
 
 void IPGlasmaWrapper::ReadNbcList(std::string filename) {
-    Jetscape::JSINFO << "Read in binary collision list from "
-                     << filename << "...";
-    std::ifstream infile(filename.c_str());
-    if (!infile.good()) {
-        Jetscape::JSWARN << "Can not open " << filename;
-        exit(1);
-    }
+  Jetscape::JSINFO << "Read in binary collision list from " << filename
+                   << "...";
+  std::ifstream infile(filename.c_str());
+  if (!infile.good()) {
+    Jetscape::JSWARN << "Can not open " << filename;
+    exit(1);
+  }
 
-    double x, y;
+  double x, y;
+  infile >> x >> y;
+  while (!infile.eof()) {
+    binary_collision_x_.push_back(x);
+    binary_collision_y_.push_back(y);
     infile >> x >> y;
-    while (!infile.eof()) {
-        binary_collision_x_.push_back(x);
-        binary_collision_y_.push_back(y);
-        infile >> x >> y;
-    }
-    infile.close();
-    ncoll_ = binary_collision_x_.size();
-    rand_int_ptr_ = (
-        std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
-    Jetscape::JSINFO << "Ncoll = " << ncoll_;
+  }
+  infile.close();
+  ncoll_ = binary_collision_x_.size();
+  rand_int_ptr_ =
+      (std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_ - 1));
+  Jetscape::JSINFO << "Ncoll = " << ncoll_;
 }
 
-
-void IPGlasmaWrapper::SampleABinaryCollisionPoint(double &t, double &x, 
+void IPGlasmaWrapper::SampleABinaryCollisionPoint(double &t, double &x,
                                                   double &y, double &z) {
-    int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
-    x = binary_collision_x_[rand_idx];
-    y = binary_collision_y_[rand_idx];
-    t = 0.0;
-    z = 0.0;
+  int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
+  x = binary_collision_x_[rand_idx];
+  y = binary_collision_y_[rand_idx];
+  t = 0.0;
+  z = 0.0;
 }
-
 
 void IPGlasmaWrapper::Write(weak_ptr<JetScapeWriter> w) {}

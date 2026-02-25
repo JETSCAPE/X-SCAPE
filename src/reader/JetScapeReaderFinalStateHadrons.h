@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -26,16 +27,15 @@
 #include "PartonShower.h"
 #include <fstream>
 
-using std::ostream;
+using std::ifstream;
 using std::istream;
 using std::ofstream;
-using std::ifstream;
+using std::ostream;
 
 namespace Jetscape {
 
 class JetScapeReaderFinalStateHadrons {
-
-public:
+ public:
   JetScapeReaderFinalStateHadrons();
   JetScapeReaderFinalStateHadrons(string m_file_name_in) {
     file_name_in = m_file_name_in;
@@ -59,11 +59,11 @@ public:
   double GetEventPlaneAngle() const { return EventPlaneAngle; }
   int TotalEventCount();
 
-private:
+ private:
   StringTokenizer strT;
 
   void InitTask();
-  //void MakeGraph();
+  // void MakeGraph();
   void AddHadron(string s);
   string file_name_in;
   ifstream inFile;
@@ -76,7 +76,7 @@ private:
   double EventPlaneAngle;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 // ---------------------
 

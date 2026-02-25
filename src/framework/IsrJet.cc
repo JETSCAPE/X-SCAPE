@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -35,9 +36,8 @@ IsrJet::~IsrJet() {
   JSDEBUG;
 }
 
-void IsrJet::InitTask()
-{
-  JSINFO << "Intialize ISR Jet ..."; //via JetEnergyLossManager::Init() ...";
+void IsrJet::InitTask() {
+  JSINFO << "Intialize ISR Jet ...";  // via JetEnergyLossManager::Init() ...";
   JSDEBUG << " --> everything set not via XML for now ...";
 
   if (GetNumberOfTasks() < 1) {
@@ -46,19 +46,20 @@ void IsrJet::InitTask()
   }
 
   // Should be done here too; set to nullptr in JetEnergyLoss header ...
-  //inP = nullptr;
-  //pShower = nullptr;
+  // inP = nullptr;
+  // pShower = nullptr;
 
   JSINFO << "Found " << GetNumberOfTasks()
          << " ISR Tasks/Modules Initialize them ... ";
 
-   if (GetActive())
-     JSINFO << "ISR shower with deltaT = " << GetDeltaT() << " startT = "<<GetStartT() << " and maxT = " << GetMaxT();
-   else
-     JSINFO << "ISR shower via Main Clock ...";
+  if (GetActive())
+    JSINFO << "ISR shower with deltaT = " << GetDeltaT()
+           << " startT = " << GetStartT() << " and maxT = " << GetMaxT();
+  else
+    JSINFO << "ISR shower via Main Clock ...";
 
   // JetScapeTask::InitTasks();
   // Automatically done by framework (s. JetscapeTask::Init)
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

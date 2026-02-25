@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -27,26 +28,26 @@ namespace Jetscape {
 
 class MilneClock : public ModuleClock {
  public:
-    MilneClock();
-    virtual ~MilneClock() {};
+  MilneClock();
+  virtual ~MilneClock(){};
 
-    void Info();
-    void Transform(std::weak_ptr<MainClock> mainClock);
+  void Info();
+  void Transform(std::weak_ptr<MainClock> mainClock);
 
-    void setEtaMax(const real etaMax) {etaMax_ = etaMax;}
+  void setEtaMax(const real etaMax) { etaMax_ = etaMax; }
 
-    real getTMin() const {return(tauMin_);}
-    real getTMax() const {return(tauMax_);}
+  real getTMin() const { return (tauMin_); }
+  real getTMax() const { return (tauMax_); }
 
-    double GetCurrentTime() {return(currentModuleTime_);}
-    double GetDeltaT() {return(moduleDeltaT_);}
+  double GetCurrentTime() { return (currentModuleTime_); }
+  double GetDeltaT() { return (moduleDeltaT_); }
 
  private:
-    real currentModuleTime_;
-    real moduleDeltaT_;
-    real etaMax_;
-    real tauMin_;
-    real tauMax_;
+  real currentModuleTime_;
+  real moduleDeltaT_;
+  real etaMax_;
+  real tauMin_;
+  real tauMax_;
 };
 
 }  // end namespace Jetscape

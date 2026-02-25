@@ -8,14 +8,12 @@
 using namespace Jetscape;
 
 class CascadeTest : public BulkMediaBase {
-private:
-  
+ private:
   std::vector<std::shared_ptr<Hadron>> hList;
 
-public:
-
-  CascadeTest() {SetId("CascadeTest");};
-  virtual ~CascadeTest() {};
+ public:
+  CascadeTest() { SetId("CascadeTest"); };
+  virtual ~CascadeTest(){};
 
   void InitTask();
 
@@ -25,12 +23,11 @@ public:
   virtual void InitPerEvent();
   virtual void FinishPerEvent();
 
-  virtual any GetHistory(); 
+  virtual any GetHistory();
 
   void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,
-                    Jetscape::real z,
-                    std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
-  
+                   Jetscape::real z,
+                   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
 };
 
-#endif // CascadeTest_H
+#endif  // CascadeTest_H

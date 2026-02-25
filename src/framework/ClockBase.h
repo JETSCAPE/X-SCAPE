@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -13,9 +14,9 @@
  * See COPYING for details.
  ******************************************************************************/
 
-//Remark JP: Think about if this base class is truly necessary ...
-//Anyways, keep for now in case changes are needed to current implementation idea ...
-//Like putting more clock functions in to base class ...
+// Remark JP: Think about if this base class is truly necessary ...
+// Anyways, keep for now in case changes are needed to current implementation
+// idea ... Like putting more clock functions in to base class ...
 
 #ifndef CLOCKBASE_H
 #define CLOCKBASE_H
@@ -27,35 +28,31 @@ using std::string;
 
 namespace Jetscape {
 
-class ClockBase
-{
+class ClockBase {
+ public:
+  ClockBase();
+  virtual ~ClockBase(){};
 
-public:
+  virtual void Info();
 
-	ClockBase();
-	virtual ~ClockBase() {};
+  void SetId(string m_id) { id = m_id; }
+  void SetTimeRefFrameId(string m_time_id) { time_id = m_time_id; }
+  // void SetCurrentTime(double m_CurrentTime) {currentTime = m_CurrentTime;}
 
-	virtual void Info();
+  const string GetId() const { return id; }
+  const string GetTimeRefFrameId() const { return time_id; }
 
-	void SetId(string m_id) { id = m_id; }
-	void SetTimeRefFrameId(string m_time_id) { time_id = m_time_id; }
-	//void SetCurrentTime(double m_CurrentTime) {currentTime = m_CurrentTime;}
+  virtual double GetCurrentTime() { return -99.; }  // not clear if needed ...
 
-	const string GetId() const { return id; }
-	const string GetTimeRefFrameId() const { return time_id; }
+  // static bool ClockUsed() { return use_clock; }
 
-	virtual double GetCurrentTime() {return -99.;}  //not clear if needed ...
+ private:
+  string id;
+  string time_id;
 
-	//static bool ClockUsed() { return use_clock; }
-
-private:
-
-	string id;
-  	string time_id;
-
-  	//static bool use_clock; //better in time based module base ...
+  // static bool use_clock; //better in time based module base ...
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

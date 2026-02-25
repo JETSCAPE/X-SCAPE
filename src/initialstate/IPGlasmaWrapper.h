@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -29,7 +30,7 @@ class IPGlasmaWrapper : public Jetscape::InitialState {
   // this is wrapper class to read external files that
   // stores initial number of binary collisions and corresponding
   // configurations
-public:
+ public:
   IPGlasmaWrapper();
   ~IPGlasmaWrapper();
 
@@ -37,24 +38,21 @@ public:
   void ExecuteTask();
   void ClearTask();
 
-
-
   /** Default Write() function. It can be overridden by other tasks.
       @param w A pointer to the JetScapeWriter class.
    */
   virtual void Write(weak_ptr<JetScapeWriter> w);
 
   /** Generated number of binary collisions.
-  */
-  double GetNcoll() { return(static_cast<double>(ncoll_)); };
+   */
+  double GetNcoll() { return (static_cast<double>(ncoll_)); };
 
   //! Load saved number of binary collisions
   void ReadNbcList(std::string filename);
 
-  void SampleABinaryCollisionPoint(double &t, double &x, 
-                                   double &y, double &z);
+  void SampleABinaryCollisionPoint(double &t, double &x, double &y, double &z);
 
-private:
+ private:
   std::unique_ptr<IPGlasma> IPGlasma_ptr_;
   int dim_x_, dim_y_;
 
@@ -64,7 +62,8 @@ private:
 
   int ncoll_ = -1;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<IPGlasmaWrapper> reg;
 };
 

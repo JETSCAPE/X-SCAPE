@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -23,58 +24,68 @@
 #include <string>
 #include <memory>
 
-using std::string;
 using std::shared_ptr;
+using std::string;
 
 namespace Jetscape {
 
-class TimeModule //: public JetScapeTask
+class TimeModule  //: public JetScapeTask
 {
+ public:
+  TimeModule();
 
-public:
+  TimeModule(double t1, double t2);
 
-    TimeModule();
+  virtual ~TimeModule(){};
 
-    TimeModule(double t1,double t2);
+  void ClockInfo();
 
-    virtual ~TimeModule() {};
+  void AddModuleClock(shared_ptr<ModuleClock> m_mClock) { mClock = m_mClock; }
+  shared_ptr<ModuleClock> GetModuleClock() const { return mClock; }
 
-    void ClockInfo();
+  void AddMainClock(shared_ptr<MainClock> m_mainClock);
+  static shared_ptr<MainClock> GetMainClock() { return mainClock; }
 
-    void AddModuleClock(shared_ptr<ModuleClock> m_mClock) {mClock = m_mClock;}
-    shared_ptr<ModuleClock> GetModuleClock() const {return mClock;}
+  static bool ClockUsed() { return use_clock; }
+  bool UseModuleClock() {
+    if (mClock != nullptr)
+      return true;
+    else
+      return false;
+  }
 
-    void AddMainClock(shared_ptr<MainClock> m_mainClock);
-    static shared_ptr<MainClock> GetMainClock() {return mainClock;}
+  // static bool use_clock; //better in time based module base ...
 
-    static bool ClockUsed() { return use_clock; }
-    bool UseModuleClock() {if (mClock!=nullptr) return true; else return false;}
+  double GetModuleCurrentTime();
 
-    //static bool use_clock; //better in time based module base ...
+  double GetModuleDeltaT();
 
-    double GetModuleCurrentTime();
+  bool IsValidModuleTime() {
+    if (GetModuleCurrentTime() >= t0 && GetModuleCurrentTime() < tn)
+      return true;
+    else
+      return false;
+  };
 
-    double GetModuleDeltaT();
+  void SetTimeRange(double t1, double t2) {
+    t0 = t1;
+    tn = t2;
+  };
 
-    bool IsValidModuleTime() {if (GetModuleCurrentTime() >= t0 && GetModuleCurrentTime() < tn) return true; else return false;};
+  const double GetTStart() const { return t0; };
 
-    void SetTimeRange(double t1, double t2) {t0 = t1; tn = t2;};
+  const double GetTEnd() const { return tn; };
 
-    const double GetTStart() const {return t0;};
+ private:
+  shared_ptr<ModuleClock> mClock;
+  static shared_ptr<MainClock> mainClock;
 
-    const double GetTEnd() const {return tn;};
+  double t0;  // module start time; default is 0
+  double tn;  // module end time; default is 100
 
-private:
-
-    shared_ptr<ModuleClock> mClock;
-    static shared_ptr<MainClock> mainClock;
-
-    double t0;// module start time; default is 0
-    double tn;// module end time; default is 100
-
-    static bool use_clock; //better in time based module base ...
+  static bool use_clock;  // better in time based module base ...
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

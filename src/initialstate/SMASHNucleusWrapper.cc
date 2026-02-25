@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -25,7 +26,8 @@
 #include <iterator>
 #include <string>
 
-// Provide to_string overload for smash::PdgCode so SMASH's YAML conversion can encode keys
+// Provide to_string overload for smash::PdgCode so SMASH's YAML conversion can
+// encode keys
 namespace smash {
 inline std::string to_string(const PdgCode &code) {
   // Use the decimal representation as string, e.g., "2212"
@@ -36,8 +38,8 @@ inline std::string to_string(const PdgCode &code) {
 namespace Jetscape {
 
 // Register the module with the base class
-RegisterJetScapeModule<SMASHNucleusWrapper>
-    SMASHNucleusWrapper::reg("SMASHNucleusWrapper");
+RegisterJetScapeModule<SMASHNucleusWrapper> SMASHNucleusWrapper::reg(
+    "SMASHNucleusWrapper");
 
 SMASHNucleusWrapper::SMASHNucleusWrapper() {
   SetId("SMASHNucleusWrapper");
@@ -92,17 +94,18 @@ void SMASHNucleusWrapper::InitTask() {
     exit(1);
   }
 
-  auto to_pdg_map = [](const std::map<int,int>& input) {
-    std::map<smash::PdgCode,int> output;
-    for (const auto& [pdg_dec, count] : input) {
-      // SMASH PdgCode expects hex or specific format; convert from decimal safely
+  auto to_pdg_map = [](const std::map<int, int> &input) {
+    std::map<smash::PdgCode, int> output;
+    for (const auto &[pdg_dec, count] : input) {
+      // SMASH PdgCode expects hex or specific format; convert from decimal
+      // safely
       output.emplace(smash::PdgCode::from_decimal(pdg_dec), count);
     }
     return output;
   };
   std::map<int, int> smash_projectile{{2212, smash_projectile_protons},
                                       {2112, smash_projectile_neutrons}};
-  std::map<smash::PdgCode,int> projectile_pdg = to_pdg_map(smash_projectile);
+  std::map<smash::PdgCode, int> projectile_pdg = to_pdg_map(smash_projectile);
   config1.set_value(smash::InputKeys::modi_collider_projectile_particles,
                     projectile_pdg);
   config2.set_value(smash::InputKeys::modi_collider_projectile_particles,
@@ -118,12 +121,12 @@ void SMASHNucleusWrapper::InitTask() {
   // Pass only the 'Modi' section to ColliderModus (like SMASH does), so no
   // unused top-level keys (e.g., General/Output) remain in the passed config.
   smash::Configuration modus_cfg1 =
-    config1.extract_complete_sub_configuration(smash::InputSections::modi);
+      config1.extract_complete_sub_configuration(smash::InputSections::modi);
   smash::Configuration modus_cfg2 =
-    config2.extract_complete_sub_configuration(smash::InputSections::modi);
+      config2.extract_complete_sub_configuration(smash::InputSections::modi);
 
-  smash_nucleus_ = make_shared<NucleusModus>(std::move(modus_cfg1),
-                                             std::move(modus_cfg2));
+  smash_nucleus_ =
+      make_shared<NucleusModus>(std::move(modus_cfg1), std::move(modus_cfg2));
   // Clear the originals to avoid 'unused keys' on destruction
   config1.clear();
   config2.clear();
@@ -133,7 +136,8 @@ void SMASHNucleusWrapper::InitTask() {
   nucleon_radius_black_disk_ =
       GetXMLElementDouble({"IS", "SMASHNucleus", "NucleonRadiusBlackDisk"});
   if (nucleon_radius_black_disk_ <= 0.0) {
-    JSWARN << "NucleonRadiusBlackDisk is not set to a positive value, using 0.6 fm as the default.";
+    JSWARN << "NucleonRadiusBlackDisk is not set to a positive value, using "
+              "0.6 fm as the default.";
     nucleon_radius_black_disk_ = 0.6;
   }
 }
@@ -175,8 +179,8 @@ void SMASHNucleusWrapper::StoreHadronsInWrapper() {
       participant = true;
     }
     hadrons_.push_back(Hadron(hadron_label, hadron_id, hadron_status, hadron_p,
-                            hadron_r, hadron_mass, charge, baryon_number,
-                            strangeness, participant));
+                              hadron_r, hadron_mass, charge, baryon_number,
+                              strangeness, participant));
   }
 }
 
@@ -184,8 +188,8 @@ std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronList() const {
   return hadrons_;
 }
 
-bool SMASHNucleusWrapper::IsHadronAtPosition(double t, double x,
-                                        double y, double z) const {
+bool SMASHNucleusWrapper::IsHadronAtPosition(double t, double x, double y,
+                                             double z) const {
   // Note: All nucleons are initialized at t=0; the 't' argument is ignored.
   // This function only checks if there is at least one hadron spatially
   // within nucleon_radius_black_disk_ of the given (x, y, z).
@@ -196,7 +200,7 @@ bool SMASHNucleusWrapper::IsHadronAtPosition(double t, double x,
     double dx = hadron.x_in().x() - x;
     double dy = hadron.x_in().y() - y;
     double dz = hadron.x_in().z() - z;
-    double distance = std::sqrt(dx*dx + dy*dy + dz*dz);
+    double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
     if (distance <= nucleon_radius_black_disk_) {
       return true;
     }
@@ -204,26 +208,30 @@ bool SMASHNucleusWrapper::IsHadronAtPosition(double t, double x,
   return false;
 }
 
-std::tuple<double, double, double, double> SMASHNucleusWrapper::BoostCoordinates(
-  double x0, double x1, double x2, double x3, 
-  double vx, double vy, double vz) const {
+std::tuple<double, double, double, double>
+SMASHNucleusWrapper::BoostCoordinates(double x0, double x1, double x2,
+                                      double x3, double vx, double vy,
+                                      double vz) const {
   const double beta2 = vx * vx + vy * vy + vz * vz;
   double gamma;
   if (std::sqrt(beta2) < 1.0) {
     gamma = 1.0 / std::sqrt(1.0 - beta2);
   } else {
     gamma = a_very_large_number;
-    JSWARN << "Boost velocity is larger than 1, setting gamma to a very large number.";
+    JSWARN << "Boost velocity is larger than 1, setting gamma to a very large "
+              "number.";
   }
   // create array of the original coordinates
   double original_coordinates[4] = {x0, x1, x2, x3};
   // define 4x4 Lorentz transformation matrix
   double lorentz_matrix[4][4] = {
-    {gamma, -gamma * vx, -gamma * vy, -gamma * vz},
-    {-gamma * vx, (1 + ((gamma - 1) * vx * vx / beta2)), (gamma - 1) * vx * vy / beta2, (gamma - 1) * vx * vz / beta2},
-    {-gamma * vy, (gamma - 1) * vy * vx / beta2, (1 + ((gamma - 1) * vy * vy / beta2)), (gamma - 1) * vy * vz / beta2},
-    {-gamma * vz, (gamma - 1) * vz * vx / beta2, (gamma - 1) * vz * vy / beta2, (1 + ((gamma - 1) * vz * vz / beta2))}
-  };
+      {gamma, -gamma * vx, -gamma * vy, -gamma * vz},
+      {-gamma * vx, (1 + ((gamma - 1) * vx * vx / beta2)),
+       (gamma - 1) * vx * vy / beta2, (gamma - 1) * vx * vz / beta2},
+      {-gamma * vy, (gamma - 1) * vy * vx / beta2,
+       (1 + ((gamma - 1) * vy * vy / beta2)), (gamma - 1) * vy * vz / beta2},
+      {-gamma * vz, (gamma - 1) * vz * vx / beta2,
+       (gamma - 1) * vz * vy / beta2, (1 + ((gamma - 1) * vz * vz / beta2))}};
   // create an array to hold the boosted coordinates
   double boosted_coordinates[4] = {0.0, 0.0, 0.0, 0.0};
   // Perform the Lorentz transformation
@@ -233,31 +241,34 @@ std::tuple<double, double, double, double> SMASHNucleusWrapper::BoostCoordinates
     }
   }
   // Create the tuple with the boosted (primed) coordinates
-  return std::make_tuple(boosted_coordinates[0], boosted_coordinates[1], 
-                          boosted_coordinates[2], boosted_coordinates[3]);
+  return std::make_tuple(boosted_coordinates[0], boosted_coordinates[1],
+                         boosted_coordinates[2], boosted_coordinates[3]);
 }
 
-std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronListBoosted(double vx, double vy, double vz) {
+std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronListBoosted(
+    double vx, double vy, double vz) {
   for (auto &hadron : hadrons_) {
     // Boost the hadron's position and momentum
     const FourVector r = hadron.x_in();
     const FourVector p = hadron.p_in();
 
     // Use the Lorentz transformation to boost the hadron's position
-    auto boosted_positions = BoostCoordinates(r.t(), r.x(), r.y(), r.z(), vx, vy, vz);
+    auto boosted_positions =
+        BoostCoordinates(r.t(), r.x(), r.y(), r.z(), vx, vy, vz);
     const double t_prime = std::get<0>(boosted_positions);
     const double x_prime = std::get<1>(boosted_positions);
     const double y_prime = std::get<2>(boosted_positions);
     const double z_prime = std::get<3>(boosted_positions);
 
     // Boost the hadron's momentum
-    auto boosted_momentum = BoostCoordinates(p.t(), p.x(), p.y(), p.z(), vx, vy, vz);
+    auto boosted_momentum =
+        BoostCoordinates(p.t(), p.x(), p.y(), p.z(), vx, vy, vz);
     const double t_prime_mom = std::get<0>(boosted_momentum);
     const double x_prime_mom = std::get<1>(boosted_momentum);
     const double y_prime_mom = std::get<2>(boosted_momentum);
     const double z_prime_mom = std::get<3>(boosted_momentum);
-    const FourVector boosted_momentum_vector(x_prime_mom, y_prime_mom, 
-                                              z_prime_mom, t_prime_mom);
+    const FourVector boosted_momentum_vector(x_prime_mom, y_prime_mom,
+                                             z_prime_mom, t_prime_mom);
     // Update the hadron's position and momentum
     hadron.reset_momentum(boosted_momentum_vector);
     double new_x[4] = {t_prime, x_prime, y_prime, z_prime};
@@ -266,6 +277,4 @@ std::vector<Hadron> SMASHNucleusWrapper::GetCurrentHadronListBoosted(double vx, 
   return hadrons_;
 }
 
-
-
-} // end namespace Jetscape
+}  // end namespace Jetscape

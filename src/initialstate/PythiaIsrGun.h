@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -13,7 +14,8 @@
  * See COPYING for details.
  ******************************************************************************/
 
-// Create a pythia collision at a specified point and return the two inital hard partons
+// Create a pythia collision at a specified point and return the two inital hard
+// partons
 
 #ifndef PYTHIAISRGUN_H
 #define PYTHIAISRGUN_H
@@ -25,21 +27,23 @@
 using namespace Jetscape;
 
 class PythiaIsrGun : public HardProcess, public Pythia8::Pythia {
-
-private:
+ private:
   double pTHatMin;
   double pTHatMax;
   double eCM;
   bool FSR_on;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<PythiaIsrGun> reg;
 
-public:
+ public:
   int NumberOfHardPartons;
   /** standard ctor
-      @param xmlDir: Note that the environment variable PYTHIA8DATA takes precedence! So don't use it.
-      @param printBanner: Suppress starting blurb. Should be set to true in production, credit where it's due
+      @param xmlDir: Note that the environment variable PYTHIA8DATA takes
+     precedence! So don't use it.
+      @param printBanner: Suppress starting blurb. Should be set to true in
+     production, credit where it's due
   */
   PythiaIsrGun(string xmlDir = "DONTUSETHIS", bool printBanner = false)
       : Pythia8::Pythia(xmlDir, printBanner), HardProcess() {
@@ -63,4 +67,4 @@ public:
   double GetEventWeight() { return info.weight(); };
 };
 
-#endif // PYTHIAISRGUN_H
+#endif  // PYTHIAISRGUN_H
