@@ -21,6 +21,18 @@ using namespace std;
 
 namespace Jetscape {
 
+/**
+ * @brief Collect final edges from a shower that finished before time t
+ *
+ * See `IsrShowerPSG::GetFinalEdgesForTime` declaration in the header for
+ * full details. Iterates over all edges in the provided `PartonShower` and
+ * appends edges whose target node has no outgoing edges (final nodes) and
+ * whose end time is earlier than `t`.
+ *
+ * @param pS Shared pointer to the `PartonShower` to inspect.
+ * @param t Time threshold; edges with end time < t are selected.
+ * @param[out] vE Vector to append matching edges to.
+ */
 void IsrShowerPSG::GetFinalEdgesForTime(shared_ptr<PartonShower> pS, double t,
                                         vector<edge> &vE) {
   graph::edge_iterator eIt, eEnd;
@@ -38,6 +50,18 @@ void IsrShowerPSG::GetFinalEdgesForTime(shared_ptr<PartonShower> pS, double t,
   }
 }
 
+
+/**
+ * @brief Collect final partons from a shower that finished before time t
+ *
+ * Wrapper around `GetFinalEdgesForTime` that converts the selected edges
+ * into `Parton` shared pointers using the shower's `GetParton` method.
+ *
+ * @param pS Shared pointer to the `PartonShower` to inspect.
+ * @param t Time threshold; partons whose finalizing edges end before `t`
+ * will be appended to `vP`.
+ * @param[out] vP Vector to append matching `Parton` shared pointers to.
+ */
 // not the most efficient way via GetFinalEdgesForTime ...
 void IsrShowerPSG::GetFinalPartonsForTime(shared_ptr<PartonShower> pS, double t,
                                           vector<std::shared_ptr<Parton>> &vP) {
@@ -50,12 +74,32 @@ void IsrShowerPSG::GetFinalPartonsForTime(shared_ptr<PartonShower> pS, double t,
   vecE.clear();
 }
 
+/**
+ * @brief Update internal time calculations for the module
+ *
+ * Current implementation only writes a verbose log entry. Kept as a
+ * separate override to allow future ISR-specific time computations.
+ *
+ * @param j Reference to the `JetEnergyLoss` module.
+ */
 void IsrShowerPSG::DoCalculateTime(JetEnergyLoss &j) { VERBOSE(3); }
 
 // REMARK: Not the most elegant way to reuse the standard DoExecTime() in
 // JetEnergyLoss ...
 //         but seems to work. Think about how to make it more efficient and
 //         avoid making things public ... !!!!
+
+/**
+ * @brief Execute the ISR shower generator for the current module time step
+ *
+ * This inspects the attached `PartonShower` for edges that finished prior
+ * to the current module time. For each such edge the corresponding
+ * `Parton` is queued into `j.pIn` and the start vertex is recorded in
+ * `j.vStartVec` before invoking `JetEnergyLoss::DoExecTime` to process
+ * them. The temporary containers are cleared afterwards.
+ *
+ * @param j Reference to the `JetEnergyLoss` module.
+ */
 void IsrShowerPSG::DoExecTime(JetEnergyLoss &j) {
   double currentTime = j.GetModuleCurrentTime() + j.GetModuleDeltaT();
 
@@ -86,6 +130,15 @@ void IsrShowerPSG::DoExecTime(JetEnergyLoss &j) {
   vecE.clear();
 }
 
+/**
+ * @brief Initialize per-event ISR generator state
+ *
+ * Sets per-event flags required by the `JetEnergyLoss` module. The ISR
+ * implementation sets `foundchangedorig` to true and logs at verbose
+ * level 2.
+ *
+ * @param j Reference to the `JetEnergyLoss` module.
+ */
 void IsrShowerPSG::DoInitPerEvent(JetEnergyLoss &j) {
   VERBOSE(2);
 
