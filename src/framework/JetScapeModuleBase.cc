@@ -73,6 +73,9 @@ shared_ptr<std::mt19937> JetScapeModuleBase::GetMt19937Generator() {
   return mt19937_generator_;
 }
 
+/**
+ * @brief Virtual function to execute subtasks of the module.
+ */
 void JetScapeModuleBase::ExecuteTasks() {
   auto tasks = GetTaskList();
   VERBOSE(7) << " : # Subtasks = " << tasks.size();
@@ -85,6 +88,9 @@ void JetScapeModuleBase::ExecuteTasks() {
   }
 }
 
+/**
+ * @brief Virtual function to clear subtasks of the module.
+ */
 void JetScapeModuleBase::ClearTasks() {
   auto tasks = GetTaskList();
   VERBOSE(7) << " : # Subtasks = " << tasks.size();
