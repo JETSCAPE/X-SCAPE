@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - XSCAPE-2.1-RC
+      - latessa/multi-arch-build-test
   push:
     branches:
       - main
       - XSCAPE-2.1-RC
+      - latessa/multi-arch-build-test
 env:
   REPO_NAME: ${{ github.event.repository.name }}
 

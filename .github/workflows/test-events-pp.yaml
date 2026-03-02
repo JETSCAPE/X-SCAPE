@@ -5,11 +5,13 @@ on:
     branches:
       - main
       - XSCAPE-2.1-RC
+      - latessa/multi-arch-build-test
 
   push:
     branches:
       - main
       - XSCAPE-2.1-RC
+      - latessa/multi-arch-build-test
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -20,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v1.13
+      image: jetscape/base:v2.0
       options: --user root
 
     steps:
@@ -42,7 +44,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: JETSCAPE/TEST-EXAMPLES
-        ref: main
+        ref: jetscape-4.0.2
         path: TEST-EXAMPLES
 
     - name: Run pp tests

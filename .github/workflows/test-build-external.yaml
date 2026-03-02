@@ -5,22 +5,32 @@ on:
     branches:
       - main
       - XSCAPE-2.1-RC
+      - latessa/multi-arch-build-test
 
   push:
     branches:
       - main
       - XSCAPE-2.1-RC
+      - latessa/multi-arch-build-test
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
 
 jobs:
   build:
-    name: external packages
-    runs-on: ubuntu-latest
+    name: external packages (${{ matrix.arch }})
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runs-on: ubuntu-24.04
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runs-on }}
 
     container:
-      image: jetscape/base:v1.13
+      image: jetscape/base:v2.0
       options: --user root
 
     steps:
