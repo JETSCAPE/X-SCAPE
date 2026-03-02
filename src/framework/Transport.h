@@ -22,9 +22,12 @@
 
 namespace Jetscape {
 
-// This Transport class inherits from the Afterburner class and adds some new
-// X-SCAPE specific functionalities. This ensures backward compatibility with
-// the JETSCAPE framework
+/**
+ * @brief Transport class inherits from the Afterburner class and adds X-SCAPE
+ * specific functionalities.
+ *
+ * Ensures backward compatibility with the JETSCAPE framework.
+ */
 class Transport : public Afterburner {
  public:
   Transport() {
@@ -37,17 +40,26 @@ class Transport : public Afterburner {
     disconnect_all();
   }
 
-  /// Override Init here as function takes care of calling sub-tasks as well
+  /**
+   * @brief Override Init; this function takes care of calling sub-tasks as well.
+   */
   virtual void Init() override;
 
-  /// Takes care of computations done at the end of a time step
+  /**
+   * @brief Performs computations at the end of a time step.
+   */
   virtual void ExecuteTask() override;
 
-  /// Takes care of the computations within one time step (evolution)
+  /**
+   * @brief Performs computations within one time step (evolution).
+   */
   virtual void CalculateTime() override;
 
-  /// Get the current list of hadrons in the transport as Jetscape hadrons (has
-  /// to be provided by all Transport implementations)
+  /**
+   * @brief Get the current list of hadrons in the transport as Jetscape hadrons.
+   * @note Must be provided by all Transport implementations.
+   * @return std::vector<Hadron> Current hadron list.
+   */
   virtual std::vector<Hadron> GetCurrentHadronList() const = 0;
 };
 
