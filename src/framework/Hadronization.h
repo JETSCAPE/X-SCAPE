@@ -92,7 +92,7 @@ class Hadronization : public JetScapeModuleBase,
    * @param signal Vector to store the hadrons.
    */
   void GetHadrons(vector<shared_ptr<Hadron>> &signal) { signal = outHadrons; }
-  
+
   /// Signal for parton transformation.
   sigslot::signal3<vector<vector<shared_ptr<Parton>>> &,
                    vector<shared_ptr<Hadron>> &, vector<shared_ptr<Parton>> &,
@@ -188,7 +188,7 @@ class Hadronization : public JetScapeModuleBase,
    */
   void DeleteHadrons();
 
-   /**
+  /**
    * @brief Remove hadrons with a positive status flag.
    */
   void DeleteRealHadrons();

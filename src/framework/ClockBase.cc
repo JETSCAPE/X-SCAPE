@@ -14,7 +14,7 @@ namespace Jetscape {
  */
 
 /**
- * @brief Default constructor initializes id and time reference 
+ * @brief Default constructor initializes id and time reference
  * frame id to empty strings.
  */
 ClockBase::ClockBase() { id = ""; }

@@ -99,7 +99,8 @@ class PartonShower : public graph {
   /**
    * @brief Insert a new parton after an existing edge in the shower graph.
    * @param e Existing edge to split.
-   * @param v Vertex to insert at the split point (will copy position of target).
+   * @param v Vertex to insert at the split point (will copy position of
+   * target).
    * @param p Parton to insert on the new edge.
    */
   void InsertPartonAfter(edge e, std::shared_ptr<Vertex> v,

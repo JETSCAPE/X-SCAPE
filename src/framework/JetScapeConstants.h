@@ -49,7 +49,7 @@ static double mu = 0.722;
 
 /* When the code becomes really accurate, a more accurate value for this can be
  * used  */
- /// Constant:: Maximum value from the standard C++ random number generator
+/// Constant:: Maximum value from the standard C++ random number generator
 static double maxN = double(pow(2.0, 31.0) - 1.0);
 
 /// Constant: Maximum double value

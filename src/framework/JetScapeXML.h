@@ -318,7 +318,7 @@ class JetScapeXML {
                           bool isRequired = true);
 
  private:
-   /**
+  /**
    * @brief Default constructor for JetScapeXML.
    *
    * This constructor initializes the JetScapeXML class with default values.

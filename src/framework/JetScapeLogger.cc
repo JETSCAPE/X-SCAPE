@@ -126,10 +126,10 @@ JetScapeLogger *JetScapeLogger::Instance() {
 
 /**
  * @brief Creates a warning log streamer.
- * 
+ *
  * This function constructs a LogStreamer object that is configured to output
  * warning messages.
- * 
+ *
  * @return LogStreamer A LogStreamer object configured for warning messages.
  */
 LogStreamer JetScapeLogger::Warn() {

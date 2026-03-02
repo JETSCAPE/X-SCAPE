@@ -43,7 +43,7 @@ namespace Jetscape {
  *                "pi11", "pi12", "pi13", "pi22", "pi23", "pi33", "bulk_pi"];
  */
 
- /**
+/**
  * @enum EntryName
  * @brief Enumeration of various physical quantities in a dataset.
  *
@@ -140,7 +140,7 @@ class EvolutionHistory {
   /** @param eta_min Minimum value of eta. */
   Jetscape::real eta_min, deta;  //!< @param deta Step-size for eta.
 
-   /** @param ntau Number of grid points in tau-axis.. */
+  /** @param ntau Number of grid points in tau-axis.. */
   int ntau;
 
   /** @param nx Number of grid points in x-axis. */

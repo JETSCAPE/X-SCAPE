@@ -203,8 +203,7 @@ void JetScapeWriterHepMC::Write(weak_ptr<PartonShower> ps) {
   topsortsearch.start_node(); /** @note defaults to first node */
   topsortsearch.run(*pShower);
   /// @note this is a topsort::topsort_iterator
-  auto nEnd =
-      topsortsearch.top_order_end();
+  auto nEnd = topsortsearch.top_order_end();
 
   /// @note Need to keep track of already created ones
   map<int, GenParticlePtr> CreatedPartons;

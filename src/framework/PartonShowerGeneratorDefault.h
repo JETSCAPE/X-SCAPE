@@ -27,12 +27,12 @@ namespace Jetscape {
 class JetEnergyLoss;
 
 /**
-  * @class PartonShowerGeneratorDefault
-  * @brief Default implementation of the PartonShowerGenerator interface.
-  *
-  * This class provides a basic implementation of the parton shower generation
-  * algorithm. It evolves partons in discrete time steps, applying splitting
-  * functions and energy-loss effects as defined by the JetEnergyLoss module.
+ * @class PartonShowerGeneratorDefault
+ * @brief Default implementation of the PartonShowerGenerator interface.
+ *
+ * This class provides a basic implementation of the parton shower generation
+ * algorithm. It evolves partons in discrete time steps, applying splitting
+ * functions and energy-loss effects as defined by the JetEnergyLoss module.
  */
 class PartonShowerGeneratorDefault : public PartonShowerGenerator {
  public:

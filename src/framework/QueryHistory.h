@@ -73,7 +73,9 @@ class QueryHistory {
    * @brief Save the root (main) task used to build the internal task map.
    * @param m_main_task shared pointer to the main `JetScapeTask`.
    */
-  void AddMainTask(std::shared_ptr<JetScapeTask> m_main_task) { main_task = m_main_task; }
+  void AddMainTask(std::shared_ptr<JetScapeTask> m_main_task) {
+    main_task = m_main_task;
+  }
 
   /**
    * @brief Rebuild the internal `taskMap` from the currently set main task.
@@ -101,7 +103,10 @@ class QueryHistory {
    * @brief Return a copy of the internal task multimap.
    * @return unordered_multimap of task id to weak pointer of `JetScapeTask`.
    */
-  std::unordered_multimap<std::string, std::weak_ptr<JetScapeTask>> GetTaskMap() { return taskMap; }
+  std::unordered_multimap<std::string, std::weak_ptr<JetScapeTask>>
+  GetTaskMap() {
+    return taskMap;
+  }
 
   /**
    * @brief Query a single module's history by module/ task name.

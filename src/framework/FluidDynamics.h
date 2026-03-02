@@ -336,10 +336,10 @@ class FluidDynamics : public JetScapeModuleBase {
   /**
    * @brief Default function to evolve the hydrodynamics up to a
    * specified end time.
-   * 
+   *
    * This function allows for evolving the hydrodynamics up to a
    * specified end time (tauEnd).
-   * 
+   *
    * @param tauEnd The end time (or proper time) up to which the
    * hydrodynamics should be evolved.
    */
@@ -363,10 +363,11 @@ class FluidDynamics : public JetScapeModuleBase {
 
   /**
    * @brief Sets the status of the hydrodynamics.
-   * 
+   *
    * This function allows for setting the status of the hydrodynamics system to
-   * one of the defined states (NOT_START, INITIALIZED, EVOLVING, FINISHED, ERROR).
-   * 
+   * one of the defined states (NOT_START, INITIALIZED, EVOLVING, FINISHED,
+   * ERROR).
+   *
    * @param status The new status to be set for the hydrodynamics system.
    */
   void SetHydroStatus(HydroStatus status) { hydro_status = status; }
@@ -467,11 +468,13 @@ class FluidDynamics : public JetScapeModuleBase {
 
   /**
    * @brief Sets the start time (or tau) for hydrodynamic evolution.
-   * 
+   *
    * This function assigns the provided value `tau0` to the member variable
-   * `hydro_tau_0`, effectively setting the start time for the hydrodynamic evolution.
-   * 
-   * @param tau0 The start time (or tau) to be set for the hydrodynamic evolution.
+   * `hydro_tau_0`, effectively setting the start time for the hydrodynamic
+   * evolution.
+   *
+   * @param tau0 The start time (or tau) to be set for the hydrodynamic
+   * evolution.
    */
   virtual void SetHydroStartTime(double tau0) { hydro_tau_0 = tau0; }
 
@@ -500,24 +503,24 @@ class FluidDynamics : public JetScapeModuleBase {
 
   /**
    * @brief Retrieves the maximum time for a hydrodynamic source term.
-   * 
+   *
    * This function returns the value of `source_term_tau_max`, which represents
    * the maximum time for a hydrodynamic source term in the simulation or
    * calculation.
-   * 
+   *
    * @return The maximum time for a hydrodynamic source term (of type double).
    */
   double GetSourceTermTauMax() const { return source_term_tau_max; }
 
-   /**
-    * @brief Sets the maximum time for a hydrodynamic source term.
-    * 
-    * This function assigns the provided value `time` to the member variable
-    * `source_term_tau_max`, effectively setting the maximum time for a
-    * hydrodynamic source term in the simulation or calculation.
-    * 
-    * @param time The maximum time for a hydrodynamic source term to be set.
-    */
+  /**
+   * @brief Sets the maximum time for a hydrodynamic source term.
+   *
+   * This function assigns the provided value `time` to the member variable
+   * `source_term_tau_max`, effectively setting the maximum time for a
+   * hydrodynamic source term in the simulation or calculation.
+   *
+   * @param time The maximum time for a hydrodynamic source term to be set.
+   */
   void SetSourceTermTauMax(double time) { source_term_tau_max = time; }
 
   /**
@@ -563,10 +566,10 @@ class FluidDynamics : public JetScapeModuleBase {
   /**
    * @brief Retrieves the bulk information of the fluid cell at a given
    * space-time point.
-   * 
+   *
    * This function is designed to fetch the bulk information of the fluid
    * cell at the specified space-time point (t, x, y, z or eta).
-   * 
+   *
    * @param t The time or tau coordinate.
    * @param x The spatial coordinate (x).
    * @param y The spatial coordinate (y).
@@ -768,10 +771,10 @@ class FluidDynamics : public JetScapeModuleBase {
 
   /**
    * @brief Adds a new hadronic liquefier to the system.
-   * 
+   *
    * This function accepts a shared pointer to a `HadronicLiquefier` object and
    * assigns it to the internal `hadronic_liquefier_ptr`.
-   * 
+   *
    * @param new_liquefier A shared pointer to a `HadronicLiquefier` object to be
    * added.
    */
@@ -848,20 +851,21 @@ class FluidDynamics : public JetScapeModuleBase {
 
   /**
    * @brief Retrieves a weak pointer to the liquefier object.
-   * 
-   * This function returns a weak pointer to the `LiquefierBase` object, allowing
-   * the caller to access the liquefier without taking ownership of it.
-   * 
+   *
+   * This function returns a weak pointer to the `LiquefierBase` object,
+   * allowing the caller to access the liquefier without taking ownership of it.
+   *
    * @return A weak pointer to the `LiquefierBase` object.
    */
   std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
 
   /**
    * @brief Retrieves a weak pointer to the hadronic liquefier object.
-   * 
-   * This function returns a weak pointer to the `HadronicLiquefier` object, allowing
-   * the caller to access the hadronic liquefier without taking ownership of it.
-   * 
+   *
+   * This function returns a weak pointer to the `HadronicLiquefier` object,
+   * allowing the caller to access the hadronic liquefier without taking
+   * ownership of it.
+   *
    * @return A weak pointer to the `HadronicLiquefier` object.
    */
   std::weak_ptr<HadronicLiquefier> get_hadronic_liquefier() {

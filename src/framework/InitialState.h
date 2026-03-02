@@ -176,9 +176,9 @@ class InitialState : public JetScapeModuleBase {
 
   /**
    * @brief compute 3d coordinates (x, y, z) given the 1D index in vector
-   * 
+   *
    * get the collision information of t,x,y,z from 3DMCGlauber
-   * 
+   *
    * @return Grid point (x,y,z or eta).
    * @param idx is an integer which maps to an unique unit cell in the
      coordinate space (x,y,z or eta).
@@ -230,7 +230,8 @@ class InitialState : public JetScapeModuleBase {
   /**
    * @brief Generates the strings for the initial state.
    * Used only for 3DMcGlauber. Overwritten in McGlauberWrapper.cc
-     @param wound_nucleons A boolean indicating whether to consider wounded nucleons.
+     @param wound_nucleons A boolean indicating whether to consider wounded
+   nucleons.
      @param event_id The ID of the event for which to generate the strings.
    */
   virtual void GenerateStrings(bool wound_nucleons, int event_id);

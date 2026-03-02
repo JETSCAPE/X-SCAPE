@@ -93,7 +93,7 @@ class JetScapeTask {
   virtual void ExecuteTask();
 
   /**
-   * @brief Virtual execution function. 
+   * @brief Virtual execution function.
    * Recursive execution of all subtasks of the JetScapeTask i.e. calling
    * Exec() for subtasks. If one wants to really make sure that no subtasks are
    * done, overwrite ExecuteTasks with empty function.
@@ -118,7 +118,7 @@ class JetScapeTask {
   virtual void ClearTasks();
 
   /**
-   * @brief Virtual finish function. 
+   * @brief Virtual finish function.
    * Finish task itself (via FinishTask()) and call the finish functions
    * for all subtasks. Usually not overriden by modules/tasks.
    */
@@ -266,7 +266,7 @@ class JetScapeTask {
    */
   void SetId(string m_id) { id = m_id; }
 
-   /**
+  /**
    * @brief Get the ID string of the task.
    *
    * @return The ID string.

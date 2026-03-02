@@ -71,7 +71,7 @@ class JetScapeEventHeader {
    */
   void SetSigmaErr(double d) { SigmaErr = d; };
 
-   /**
+  /**
    * @brief Initial Hard Process: Get the pt-hat value
    * @return pt-hat value
    */
@@ -89,7 +89,7 @@ class JetScapeEventHeader {
    * @return Event weight
    */
   double GetEventWeight() { return EventWeight; };
-  
+
   /**
    * @brief Initial Hard Process: Set additionally created weight (e.g.
    * pythia.event().weight())

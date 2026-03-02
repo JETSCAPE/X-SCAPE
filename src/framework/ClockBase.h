@@ -50,7 +50,6 @@ namespace Jetscape {
  */
 class ClockBase {
  public:
-
   /**
    * @brief Default constructor initializes id and time reference
    * frame id to empty strings.

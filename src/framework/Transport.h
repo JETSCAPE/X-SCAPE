@@ -41,7 +41,8 @@ class Transport : public Afterburner {
   }
 
   /**
-   * @brief Override Init; this function takes care of calling sub-tasks as well.
+   * @brief Override Init; this function takes care of calling sub-tasks as
+   * well.
    */
   virtual void Init() override;
 
@@ -56,7 +57,8 @@ class Transport : public Afterburner {
   virtual void CalculateTime() override;
 
   /**
-   * @brief Get the current list of hadrons in the transport as Jetscape hadrons.
+   * @brief Get the current list of hadrons in the transport as Jetscape
+   * hadrons.
    * @note Must be provided by all Transport implementations.
    * @return std::vector<Hadron> Current hadron list.
    */

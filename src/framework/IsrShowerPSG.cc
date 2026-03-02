@@ -50,7 +50,6 @@ void IsrShowerPSG::GetFinalEdgesForTime(shared_ptr<PartonShower> pS, double t,
   }
 }
 
-
 /**
  * @brief Collect final partons from a shower that finished before time t
  *

@@ -14,7 +14,7 @@
  * See COPYING for details.
  ******************************************************************************/
 
- /**
+/**
  * @file JetScapeTaskSupport.h
  * @brief Declaration of the JetScapeTaskSupport singleton class.
  *
@@ -74,8 +74,7 @@ namespace Jetscape {
  * - Uses magic statics (thread-safe except on MSVC 2013).
  * - `make_unique` was avoided due to platform-specific issues.
  */
-class JetScapeTaskSupport
-{
+class JetScapeTaskSupport {
  public:
   /**
    * @brief Get the singleton instance of JetScapeTaskSupport.

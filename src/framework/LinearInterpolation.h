@@ -14,7 +14,7 @@
  * See COPYING for details.
  ******************************************************************************/
 
- /**
+/**
  * @file LinearInterpolation.h
  * @brief Interpolation utility functions (linear, bilinear, trilinear) for
  * general types.

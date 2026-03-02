@@ -25,8 +25,7 @@ namespace Jetscape {
 
 class BulkMediaInfo {
  public:
-
- /**
+  /**
    * @brief Container for local bulk-medium / hydrodynamic cell properties.
    *
    * This class stores thermodynamic and flow quantities for a single
@@ -34,7 +33,7 @@ class BulkMediaInfo {
    * All values are initialized to sensible defaults by the constructor.
    */
 
-   // data structure for outputing cell information
+  // data structure for outputing cell information
   Jetscape::real energy_density;   //!< Local energy density [GeV/fm^3].
   Jetscape::real entropy_density;  //!< Local entropy density [1/fm^3].
   Jetscape::real temperature;      //!< Local temperature [GeV].

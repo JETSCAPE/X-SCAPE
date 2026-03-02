@@ -50,9 +50,9 @@ class HadronizationManager
    */
   virtual ~HadronizationManager();
 
-   /**
+  /**
    * @brief Initializes the hadronization manager.
-   * 
+   *
    * Override Init (not InitTask) here as sub-tasks are called manually
    */
   virtual void Init() override;
@@ -70,7 +70,7 @@ class HadronizationManager
 
   /**
    * @brief Executes the hadronization process.
-   * 
+   *
    * Override Exec() (and not ExecuteTask) here as function takes care of
    * calling the subtasks itself with some checks beforehand.
    */

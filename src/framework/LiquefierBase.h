@@ -43,7 +43,6 @@ class Droplet {
   std::array<Jetscape::real, 4> pmu;  ///< Momentum 4-vector
 
  public:
-
   /**
    * @brief Default constructor.
    *
@@ -90,15 +89,18 @@ class Droplet {
  */
 class LiquefierBase {
  private:
-  std::vector<Droplet> dropletlist;  ///< List of droplets representing source contributions
+  std::vector<Droplet>
+      dropletlist;  ///< List of droplets representing source contributions
   bool GetHydroCellSignalConnected;  ///< Flag for whether signal connection to
                                      ///< hydro exists
-  const int drop_stat;  ///< Droplet statistics
-  const int miss_stat;  ///< Missed parton statistics
-  const int neg_stat;   ///< Negative energy statistics
-  const Jetscape::real hydro_source_abs_err;  ///< Error tolerance for hydro sources
-  bool threshold_energy_switch;  ///< Whether to apply energy threshold filtering
-  double e_threshold;            ///< Energy threshold value
+  const int drop_stat;               ///< Droplet statistics
+  const int miss_stat;               ///< Missed parton statistics
+  const int neg_stat;                ///< Negative energy statistics
+  const Jetscape::real
+      hydro_source_abs_err;  ///< Error tolerance for hydro sources
+  bool
+      threshold_energy_switch;  ///< Whether to apply energy threshold filtering
+  double e_threshold;           ///< Energy threshold value
 
  public:
   /**

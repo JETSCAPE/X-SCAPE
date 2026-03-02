@@ -63,7 +63,8 @@ struct _Unique_if {
 
 template <class T>
 struct _Unique_if<T[]> {
-  typedef std::unique_ptr<T[]> _Unknown_bound;  ///< For dynamically sized arrays
+  typedef std::unique_ptr<T[]>
+      _Unknown_bound;  ///< For dynamically sized arrays
 };
 
 template <class T, size_t N>

@@ -175,7 +175,7 @@ class JetEnergyLossManager
 
   /**
    * @brief Slot to get the final state partons for hadronization.
-   * 
+   *
    * Slot method to send the vector of Hadronization module.
    */
   void GetFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons);
@@ -189,7 +189,7 @@ class JetEnergyLossManager
    */
   bool useShower = false;
 
-  /** 
+  /**
    * @brief Flag indicating if GetHardPartonList is connected.
    */
   bool GetHardPartonListConnected;
@@ -197,7 +197,7 @@ class JetEnergyLossManager
   /**
    * @brief Lists of hard partons managed by this class.
    */
-  vector<shared_ptr<Parton>> hp; 
+  vector<shared_ptr<Parton>> hp;
 
   /**
    * @brief List of parton showers managed by this class.

@@ -280,15 +280,17 @@ class JetScapeModuleBase
 
   /**
    * @brief Checks if the module is defined to evolve in time steps.
-   * 
-   * @return time_stepped True if the module evolves in time steps, false otherwise.
+   *
+   * @return time_stepped True if the module evolves in time steps, false
+   * otherwise.
    */
   bool IsTimeStepped() const { return time_stepped; }
 
   /**
    * @brief Sets whether the module evolves in time steps.
-   * 
-   * @param m_time_stepped True if the module evolves in time steps, false otherwise.
+   *
+   * @param m_time_stepped True if the module evolves in time steps, false
+   * otherwise.
    */
   void SetTimeStepped(bool m_time_stepped) { time_stepped = m_time_stepped; }
 

@@ -40,7 +40,6 @@ IsrManager::IsrManager() : JetEnergyLossManager() {
   VERBOSE(8);
 }
 
-
 /**
  * @brief Destroy the IsrManager object.
  *
@@ -63,7 +62,8 @@ void IsrManager::Init() {
    * `HardProcess` get-parton-list signal so ISR-generated showers can be
    * communicated back to the hard process.
    */
-  JSINFO << "Intialize ISR Manager ...";  // via JetEnergyLossManager::Init() ...";
+  JSINFO
+      << "Intialize ISR Manager ...";  // via JetEnergyLossManager::Init() ...";
 
   if (GetNumberOfTasks() < 1) {
     JSWARN << " : No valid ISR Manager modules found ...";

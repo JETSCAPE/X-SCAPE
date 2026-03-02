@@ -144,13 +144,13 @@ class JetScapeWriterFinalStateStream : public JetScapeWriter {
   void WriteWhiteSpace(string s) {}
 
  protected:
-  T output_file;  ///< Output file stream.
+  T output_file;               ///< Output file stream.
   unsigned int headerVersion;  ///< Version number for the header format.
 
   /** Collected particles to write. */
   std::vector<std::shared_ptr<JetScapeParticleBase>> particles;
   bool writeCentrality;  ///< Whether to write centrality information.
-  bool writePtHat;  ///< Whether to write pTHat information.
+  bool writePtHat;       ///< Whether to write pTHat information.
 
   /** Particle status codes to skip when writing. */
   std::vector<int> particleStatusToSkip;

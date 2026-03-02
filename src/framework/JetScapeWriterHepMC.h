@@ -89,7 +89,7 @@ class JetScapeWriterHepMC : public JetScapeWriter, public HepMC3::WriterAscii {
    */
   void ExecuteTask();
 
-   /**
+  /**
    * @brief Gets the status of the writer.
    *
    * @return True if the writer has failed, false otherwise.
@@ -120,7 +120,7 @@ class JetScapeWriterHepMC : public JetScapeWriter, public HepMC3::WriterAscii {
   // At parton level, we should never accept anything other than a full shower
   // void Write(weak_ptr<Vertex> v);
 
-   /**
+  /**
    * @brief Writes a parton shower to the HepMC file.
    *
    * @param ps A weak pointer to the PartonShower to be written.

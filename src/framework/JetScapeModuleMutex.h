@@ -25,7 +25,7 @@ namespace Jetscape {
  */
 class JetScapeModuleMutex {
  public:
- /**
+  /**
    * @brief Check if a set of modules violates mutex rules.
    *
    * This pure virtual method should be implemented by derived classes

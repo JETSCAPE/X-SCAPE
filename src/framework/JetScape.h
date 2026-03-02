@@ -209,13 +209,13 @@ class JetScape : public JetScapeModuleBase,
 
   /**
    * @brief Set per-event execution flags for modules.
-   * 
+   *
    * Function to set the per event execution active flag so that
-   * if hadronization and Afterburner are attached and not per time step executed,
-   * that they will be automatically executed after the per time step modules are
-   * finished So currently possible workflow automatically executed correctly is:
-   * per event -> per timestep -> per event
-   * 
+   * if hadronization and Afterburner are attached and not per time step
+   * executed, that they will be automatically executed after the per time step
+   * modules are finished So currently possible workflow automatically executed
+   * correctly is: per event -> per timestep -> per event
+   *
    * @param start_of_event Boolean flag indicating whether this is the start
    * of an event.
    */
@@ -223,7 +223,7 @@ class JetScape : public JetScapeModuleBase,
 
   /**
    * @brief Reset per-event execution flags to original state.
-   * 
+   *
    * Function to reset the per event execution active flags to its original
    * state.
    */

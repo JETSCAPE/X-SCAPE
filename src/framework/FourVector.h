@@ -332,10 +332,11 @@ class FourVector {
 
   /**
    * @brief Checks if this FourVector is equal to another FourVector.
-   * 
-   * Two FourVectors are considered equal if their corresponding components (t, x, y, z)
-   * are equal. This function returns true if all components match, and false otherwise.
-   * 
+   *
+   * Two FourVectors are considered equal if their corresponding components (t,
+   * x, y, z) are equal. This function returns true if all components match, and
+   * false otherwise.
+   *
    * @param a The FourVector to compare with.
    * @return true if the FourVectors are equal, false otherwise.
    */
