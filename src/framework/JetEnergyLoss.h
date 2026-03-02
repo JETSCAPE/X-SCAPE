@@ -255,10 +255,20 @@ class JetEnergyLoss : public JetScapeModuleBase,
     return psGen;
   }
 
+  /**
+   * Adds a liquefier to the JetEnergyLoss module.
+   * This function sets the liquefier pointer to the provided liquefier object.
+   * @param new_liquefier A shared pointer to a LiquefierBase object.
+   */
   void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
     liquefier_ptr = new_liquefier;
   }
 
+  /**
+   * Retrieves the liquefier associated with the JetEnergyLoss module.
+   * This function returns a weak pointer to the liquefier object.
+   * @return A weak pointer to a LiquefierBase object.
+   */
   std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
 
   virtual any GetHistory() { return any(pShower); }

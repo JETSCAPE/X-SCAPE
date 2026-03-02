@@ -26,16 +26,36 @@ using namespace std;
 
 namespace Jetscape {
 
+/**
+ * @brief Construct a new IsrJet manager.
+ *
+ * Calls the base `JetEnergyLoss` constructor, sets the task identifier to
+ * "IsrJet" and configures the default verbosity level.
+ */
 IsrJet::IsrJet() : JetEnergyLoss() {
   SetId("IsrJet");
   VERBOSE(8);
 }
 
+/**
+ * @brief Destroy the IsrJet manager.
+ *
+ * The destructor currently performs lightweight debug logging. Most resource
+ * cleanup is handled by the framework and smart pointers.
+ */
 IsrJet::~IsrJet() {
   // Check if this is all really needed with shared_ptr ...
   JSDEBUG;
 }
 
+/**
+ * @brief Initialize the ISR jet task and contained energy-loss modules.
+ *
+ * This routine logs initialization information, checks that at least one
+ * energy-loss module is attached, and reports ISR timing configuration
+ * (deltaT, startT, maxT) if the ISR manager is active. If no modules are
+ * attached the function logs a warning and aborts execution.
+ */
 void IsrJet::InitTask() {
   JSINFO << "Intialize ISR Jet ...";  // via JetEnergyLossManager::Init() ...";
   JSDEBUG << " --> everything set not via XML for now ...";

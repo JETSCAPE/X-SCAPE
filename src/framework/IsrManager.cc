@@ -29,11 +29,22 @@ using namespace std;
 
 namespace Jetscape {
 
+/**
+ * @brief Construct a new IsrManager object.
+ *
+ * Calls the base `JetEnergyLossManager` constructor, sets the task id to
+ * "IsrManager" and configures default verbosity.
+ */
 IsrManager::IsrManager() : JetEnergyLossManager() {
   SetId("IsrManager");
   VERBOSE(8);
 }
 
+/**
+ * @brief Destroy the IsrManager object.
+ *
+ * Performs cleanup by clearing tasks and erasing the last task if any remain.
+ */
 IsrManager::~IsrManager() {
   // Check if this is all really needed with shared_ptr ...
   JSDEBUG;
@@ -44,6 +55,13 @@ IsrManager::~IsrManager() {
 }
 
 void IsrManager::Init() {
+  /**
+   * @brief Initialize the ISR manager and its tasks.
+   *
+   * Initializes registered ISR modules and connects the manager to the
+   * `HardProcess` get-parton-list signal so ISR-generated showers can be
+   * communicated back to the hard process.
+   */
   JSINFO
       << "Intialize ISR Manager ...";  // via JetEnergyLossManager::Init() ...";
 
@@ -74,6 +92,15 @@ void IsrManager::Init() {
 }
 
 void IsrManager::Exec() {
+  /**
+   * @brief Execute ISR modules and update the HardProcess with produced
+   * showers and partons.
+   *
+   * Calls `JetEnergyLossManager::Exec()` to run contained energy-loss
+   * modules, collects parton showers from each ISR module and updates the
+   * `HardProcess` by replacing the initial parton list with ISR-generated
+   * partons that have `pstat >= 0`.
+   */
   VERBOSE(1) << "Create ISR from HardProcess partons ...";
   VERBOSE(1) << "Run ISR Manager via JetEnergyLossManager::Exec() ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
@@ -122,10 +149,18 @@ void IsrManager::Exec() {
   }
 
   JSINFO << "Shower initating parton list/parton showers after ISR updated in "
-            "HardProcess ...";
+         << "HardProcess ...";
 }
 
 void IsrManager::WriteTask(weak_ptr<JetScapeWriter> w) {
+  /**
+   * @brief Write ISR output using the provided writer.
+   *
+   * Writes an introductory comment and then delegates to writer-specific
+   * methods (ASCII or GZ) to serialize the ISR showers for each ISR module.
+   *
+   * @param w Weak pointer to a `JetScapeWriter` used for output.
+   */
   VERBOSE(8);
 
   auto f = w.lock();

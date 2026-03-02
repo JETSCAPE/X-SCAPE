@@ -21,6 +21,13 @@
 using namespace std;
 
 namespace Jetscape {
+/**
+ * @brief Initialize the Afterburner module.
+ *
+ * Ensures the XML configuration is loaded via the base class, initializes
+ * the random number distribution used for smearing fragmentation hadron
+ * positions, and calls module-specific initialization routines.
+ */
 void Afterburner::Init() {
   // Makes sure that XML file with options and parameters is loaded
   JetScapeModuleBase::InitTask();
@@ -31,15 +38,38 @@ void Afterburner::Init() {
   InitTasks();
 }
 
+/**
+ * @brief Execute the Afterburner task for the current event.
+ *
+ * This method is invoked by the framework during the task execution phase.
+ * It currently emits a verbose log message and can be extended to perform
+ * per-event afterburner operations.
+ */
 void Afterburner::ExecuteTask() {
   VERBOSE(2) << "Afterburner running: " << GetId() << " ...";
 }
 
+/**
+ * @brief Perform time-stepping calculations for the Afterburner.
+ *
+ * Emits a verbose log message and delegates to the time-calculation task
+ * implementation via `CalculateTimeTask()`.
+ */
 void Afterburner::CalculateTime() {
   VERBOSE(2) << "Afterburner running for time: " << GetId() << " ...";
   CalculateTimeTask();
 }
 
+/**
+ * @brief Retrieve hadrons produced by the soft particlization module.
+ *
+ * Queries the `JetScapeSignalManager` for the soft particlization module
+ * pointer. If the module is not present, a warning is emitted and a
+ * placeholder (dummy) vector containing an empty hadron vector is returned.
+ *
+ * @return A vector of hadron-event vectors produced by soft particlization,
+ * or a dummy empty event list if the module is not available.
+ */
 std::vector<std::vector<std::shared_ptr<Hadron>>>
 Afterburner::GetSoftParticlizationHadrons() {
   auto soft_particlization =
@@ -55,6 +85,20 @@ Afterburner::GetSoftParticlizationHadrons() {
   }
 }
 
+/**
+ * @brief Retrieve fragmentation (hard) hadrons for inclusion in the
+ * afterburner.
+ *
+ * Obtains the `HadronizationManager` from the `JetScapeSignalManager`,
+ * requests the fragmentation hadron list, applies a small random spatial
+ * smearing to avoid exact position overlaps, converts certain kaon
+ * identifiers to K0/anti-K0 where appropriate, and filters out partonic
+ * entries. If the hadronization manager is missing, the program will exit
+ * with an error.
+ *
+ * @return A vector of shared pointers to fragmentation `Hadron` objects
+ * that are suitable for handing to the afterburner.
+ */
 std::vector<shared_ptr<Hadron>> Afterburner::GetFragmentationHadrons() {
   JSINFO << "Get fragmentation hadrons in Afterburner";
   auto hadronization_mgr = JetScapeSignalManager::Instance()
@@ -120,6 +164,18 @@ std::vector<shared_ptr<Hadron>> Afterburner::GetFragmentationHadrons() {
   return h_list_new;
 }
 
+/**
+ * @brief Gather all hadrons that should be processed by the afterburner.
+ *
+ * Collects hadrons from soft particlization and, optionally depending on
+ * configuration flags, includes fragmentation hadrons. Handles configuration
+ * options that control whether only final-state hadrons are output and
+ * ensures that hadron lists are cleared where necessary to avoid duplicate
+ * outputs.
+ *
+ * @return A vector of event-wise hadron lists prepared for afterburner
+ * processing (and eventual hand-off to transport afterburners like SMASH).
+ */
 std::vector<std::vector<std::shared_ptr<Hadron>>>
 Afterburner::GatherAfterburnerHadrons() {
   std::vector<std::vector<shared_ptr<Hadron>>> afterburner_had_events;
@@ -163,6 +219,16 @@ Afterburner::GatherAfterburnerHadrons() {
   return afterburner_had_events;
 }
 
+/**
+ * @brief Get hadrons produced during the current timestep by bulk dynamics.
+ *
+ * Queries the `BulkDynamicsManager` for newly produced hadrons and clears
+ * the manager's internal buffer of those hadrons. If no bulk manager is
+ * available, a warning is logged and an empty list is returned.
+ *
+ * @return A vector of shared pointers to `Hadron` objects produced this
+ * timestep (may be empty).
+ */
 std::vector<std::shared_ptr<Hadron>>
 Afterburner::GetTimestepParticlizationHadrons() {
   auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
@@ -174,6 +240,16 @@ Afterburner::GetTimestepParticlizationHadrons() {
   return bdm->GetNewHadronsAndClear();
 }
 
+/**
+ * @brief Get hadrons that should be removed this timestep.
+ *
+ * Requests the list of hadrons to remove from the `BulkDynamicsManager`.
+ * If the bulk manager is not present, logs a warning and returns an empty
+ * list.
+ *
+ * @return A vector of shared pointers to `Hadron` objects that should be
+ * removed this timestep (may be empty).
+ */
 std::vector<std::shared_ptr<Hadron>> Afterburner::GetTimestepHadronsToRemove() {
   auto bdm = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
   if (!bdm) {

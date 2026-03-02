@@ -26,11 +26,34 @@ namespace Jetscape {
 
 class JetEnergyLoss;
 
+/**
+ * @class PartonShowerGeneratorDefault
+ * @brief Default implementation of the PartonShowerGenerator interface.
+ *
+ * This class provides a basic implementation of the parton shower generation
+ * algorithm. It evolves partons in discrete time steps, applying splitting
+ * functions and energy-loss effects as defined by the JetEnergyLoss module.
+ */
 class PartonShowerGeneratorDefault : public PartonShowerGenerator {
  public:
   PartonShowerGeneratorDefault() : PartonShowerGenerator(){};
   virtual ~PartonShowerGeneratorDefault(){};
 
+  /**
+   * @brief Perform the parton shower evolution.
+   *
+   * This method takes a reference to a JetEnergyLoss module, which
+   * provides the splitting functions and energy-loss dynamics.
+   * The parton shower starts with the initiating parton provided by
+   * the JetEnergyLoss object, and evolves recursively in discrete
+   * time steps until the maximum evolution time is reached.
+   *
+   * The generated shower is recorded in the PartonShower object
+   * associated with the JetEnergyLoss module.
+   *
+   * @param j Reference to the JetEnergyLoss module controlling
+   *          the shower evolution.
+   */
   virtual void DoShower(JetEnergyLoss &j);
 };
 

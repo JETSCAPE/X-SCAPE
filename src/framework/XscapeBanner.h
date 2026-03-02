@@ -22,6 +22,16 @@
 
 namespace Jetscape {
 
+/**
+ * @brief Displays the X-SCAPE banner with ASCII art and license information.
+ *
+ * This function prints a stylized ASCII banner with the X-SCAPE logo and key
+ * details about the framework, including citation information and the licensing
+ * terms. The output is handled using the `INFO_NICE` logging macro.
+ *
+ * @note The function does not take any parameters or return values. It only
+ * prints information to the standard output using the logger.
+ */
 void ShowXscapeBanner() {
   INFO_NICE
       << "*--------------------------------------------------------------*";

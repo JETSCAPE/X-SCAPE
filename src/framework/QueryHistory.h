@@ -14,7 +14,14 @@
  * See COPYING for details.
  ******************************************************************************/
 
-//  Query History instance class (meant as singelton)
+/**
+ * @file QueryHistory.h
+ * @brief Query history singleton used to find and query module histories.
+ *
+ * Provides a global access point to the module task map and helpers to
+ * retrieve stored history data from modules derived from
+ * `JetScapeModuleBase`.
+ */
 
 #ifndef QUERYHISTORY_H
 #define QUERYHISTORY_H
@@ -42,38 +49,102 @@ using namespace mpark;
 
 namespace Jetscape {
 
+/**
+ * @class QueryHistory
+ * @brief Singleton that stores a map of tasks and provides access to module
+ *        histories.
+ *
+ * `QueryHistory` keeps a (multi)map of task id strings to weak pointers of
+ * `JetScapeTask` instances. It is intended to be used as a global (singleton)
+ * registry so other parts of the framework can lookup modules by name and
+ * request their internal history (where applicable).
+ */
 class QueryHistory {
  public:
+  /**
+   * @brief Get the singleton instance of `QueryHistory`.
+   *
+   * If the instance does not yet exist it will be created.
+   * @return pointer to the `QueryHistory` singleton.
+   */
   static QueryHistory *Instance();
 
+  /**
+   * @brief Save the root (main) task used to build the internal task map.
+   * @param m_main_task shared pointer to the main `JetScapeTask`.
+   */
   void AddMainTask(std::shared_ptr<JetScapeTask> m_main_task) {
     main_task = m_main_task;
   }
+
+  /**
+   * @brief Rebuild the internal `taskMap` from the currently set main task.
+   *
+   * This clears the existing map and walks the main task's children (one
+   * level deep) inserting task id -> weak_ptr pairs.
+   */
   void UpdateTaskMap();
+
+  /**
+   * @brief Print the configured tasks hierarchy to the JetScape logger.
+   */
   void PrintTasks();
+
+  /**
+   * @brief Print the contents of the internal `taskMap` with details.
+   *
+   * Each entry prints the task id, pointer value, active/multithread flags
+   * and task number. If the task can be cast to `JetScapeModuleBase` the
+   * `IsTimeStepped()` flag is also logged.
+   */
   void PrintTaskMap();
 
+  /**
+   * @brief Return a copy of the internal task multimap.
+   * @return unordered_multimap of task id to weak pointer of `JetScapeTask`.
+   */
   std::unordered_multimap<std::string, std::weak_ptr<JetScapeTask>>
   GetTaskMap() {
     return taskMap;
   }
 
-  // JP: same can be done with variant if all datatypes are know
-  // and put into the varaint definition --> elevated to framework like data
-  // types maybe not ideal, to be discussed ...
+  /**
+   * @brief Query a single module's history by module/ task name.
+   * @param mName module/task id string to search for.
+   * @return `any` containing the module history or an empty/zero value when
+   *         not found or on error.
+   */
   any GetHistoryFromModule(string mName);
 
-  // JP: maybe use as standard only to allow for multipe modules like in
-  // JetEnhergyLoss ...
+  /**
+   * @brief Query histories from all modules matching `mName`.
+   *
+   * This returns a `vector<any>` containing the `GetHistory()` results from
+   * every module whose task id equals `mName`.
+   *
+   * @param mName module/task id string to search for.
+   * @return vector of `any` objects with each module's history.
+   */
   vector<any> GetHistoryFromModules(string mName);
 
  private:
   QueryHistory(){};
   QueryHistory(QueryHistory const &){};
+
+  /**
+   * @brief Pointer to the singleton instance.
+   */
   static QueryHistory *m_pInstance;
 
+  /**
+   * @brief Map of task id -> weak pointer to the task instance.
+   */
   std::unordered_multimap<std::string, std::weak_ptr<JetScapeTask>> taskMap;
 
+  /**
+   * @brief Weak pointer to the root/main `JetScapeTask` used to populate
+   *        `taskMap`.
+   */
   std::weak_ptr<JetScapeTask> main_task;
 };
 

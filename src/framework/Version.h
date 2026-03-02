@@ -21,8 +21,19 @@
 
 namespace Jetscape {
 
-const std::string JetScapeVersion = "3.6";
-const std::string XscapeVersion = "1.1";
+/**
+ * @file Version.h
+ * @brief Version identifiers for the JETSCAPE framework and X-SCAPE layer.
+ *
+ * This header exposes two string constants used to identify the
+ * X-SCAPE release and the corresponding JETSCAPE compatibility version.
+ */
+
+/// Version identifier for the JETSCAPE framework.
+const std::string JetScapeVersion = "4.0.2";
+
+/// Version identifier for the X-SCAPE framework.
+const std::string XscapeVersion = "2.1";
 
 }  // end namespace Jetscape
 

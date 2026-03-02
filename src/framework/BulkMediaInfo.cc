@@ -19,6 +19,13 @@
 
 namespace Jetscape {
 
+/**
+ * @brief Default constructor for BulkMediaInfo.
+ *
+ * Initializes all thermodynamic and flow quantities to zero and sets the
+ * `origin_id` to "BulkMedia". This provides a well-defined default
+ * state for interpolation and arithmetic operations on media cells.
+ */
 BulkMediaInfo::BulkMediaInfo() {
   energy_density = 0.0;
   entropy_density = 0.0;
