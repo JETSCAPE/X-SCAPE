@@ -27,6 +27,28 @@ using JetscapeCornelius::Cornelius;
 
 namespace Jetscape {
 
+/**
+ * @brief Prepares a `SurfaceCellInfo` object with the given parameters.
+ *
+ * This function constructs a `SurfaceCellInfo` object by populating its fields
+ * with the provided space-time coordinates, normal vector components, and
+ * fluid cell properties. The resulting `SurfaceCellInfo` encapsulates all
+ * necessary information about a surface element for further processing or
+ * output.
+ *
+ * @param tau Proper time coordinate of the surface cell.
+ * @param x X coordinate of the surface cell.
+ * @param y Y coordinate of the surface cell.
+ * @param eta Pseudorapidity coordinate of the surface cell.
+ * @param da0 Normal vector component in the tau direction.
+ * @param da1 Normal vector component in the x direction.
+ * @param da2 Normal vector component in the y direction.
+ * @param da3 Normal vector component in the eta direction.
+ * @param fluid_cell The `FluidCellInfo` object containing fluid properties at
+ * the surface cell location.
+ * @return A fully populated `SurfaceCellInfo` object representing the surface
+ * element.
+ */
 SurfaceFinder::SurfaceFinder(const Jetscape::real T_in,
                              const EvolutionHistory &bulk_data)
     : bulk_info(bulk_data) {
@@ -41,8 +63,25 @@ SurfaceFinder::SurfaceFinder(const Jetscape::real T_in,
   JSINFO << "Number of fluid cells = " << bulk_info.get_data_size();
 }
 
+/**
+ * @brief Destructor for the `SurfaceFinder` class.
+ *
+ * This destructor clears the `surface_cell_list` to free up memory resources.
+ * It ensures that all dynamically allocated memory for surface cells is
+ * released when a `SurfaceFinder` object goes out of scope or is explicitly
+ * deleted.
+ */
 SurfaceFinder::~SurfaceFinder() { surface_cell_list.clear(); }
 
+/**
+ * @brief Finds and constructs the full hypersurface in a 3D space-time grid.
+ *
+ * This function iterates through a predefined space-time grid to identify
+ * the freeze-out hypersurface using the Cornelius algorithm. It initializes
+ * a 3D grid, iterates over time and spatial coordinates, checks for
+ * intersections, and extracts surface elements to store them in
+ * `surface_cell_list`.
+ */
 void SurfaceFinder::Find_full_hypersurface() {
   char *surf_path = std::getenv("SURF_PATH");
   std::string surf_path_str;
