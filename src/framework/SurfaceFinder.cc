@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -14,19 +15,43 @@
  ******************************************************************************/
 // This is a general basic class for a hyper-surface finder
 
-#include <cmath>
-#include "RealType.h"
 #include "SurfaceFinder.h"
-#include "cornelius.h"
+
+#include <Cornelius/Cornelius.h>
+using JetscapeCornelius::Cornelius;
+#include <cmath>
+
 #include "FluidEvolutionHistory.h"
 #include "JetScapeLogger.h"
+#include "RealType.h"
 
 namespace Jetscape {
 
+/**
+ * @brief Prepares a `SurfaceCellInfo` object with the given parameters.
+ *
+ * This function constructs a `SurfaceCellInfo` object by populating its fields
+ * with the provided space-time coordinates, normal vector components, and
+ * fluid cell properties. The resulting `SurfaceCellInfo` encapsulates all
+ * necessary information about a surface element for further processing or
+ * output.
+ *
+ * @param tau Proper time coordinate of the surface cell.
+ * @param x X coordinate of the surface cell.
+ * @param y Y coordinate of the surface cell.
+ * @param eta Pseudorapidity coordinate of the surface cell.
+ * @param da0 Normal vector component in the tau direction.
+ * @param da1 Normal vector component in the x direction.
+ * @param da2 Normal vector component in the y direction.
+ * @param da3 Normal vector component in the eta direction.
+ * @param fluid_cell The `FluidCellInfo` object containing fluid properties at
+ * the surface cell location.
+ * @return A fully populated `SurfaceCellInfo` object representing the surface
+ * element.
+ */
 SurfaceFinder::SurfaceFinder(const Jetscape::real T_in,
                              const EvolutionHistory &bulk_data)
     : bulk_info(bulk_data) {
-
   T_cut = T_in;
   JSINFO << "Find a surface with temperature T = " << T_cut;
   boost_invariant = bulk_info.is_boost_invariant();
@@ -38,9 +63,38 @@ SurfaceFinder::SurfaceFinder(const Jetscape::real T_in,
   JSINFO << "Number of fluid cells = " << bulk_info.get_data_size();
 }
 
+/**
+ * @brief Destructor for the `SurfaceFinder` class.
+ *
+ * This destructor clears the `surface_cell_list` to free up memory resources.
+ * It ensures that all dynamically allocated memory for surface cells is
+ * released when a `SurfaceFinder` object goes out of scope or is explicitly
+ * deleted.
+ */
 SurfaceFinder::~SurfaceFinder() { surface_cell_list.clear(); }
 
+/**
+ * @brief Finds and constructs the full hypersurface in a 3D space-time grid.
+ *
+ * This function iterates through a predefined space-time grid to identify
+ * the freeze-out hypersurface using the Cornelius algorithm. It initializes
+ * a 3D grid, iterates over time and spatial coordinates, checks for
+ * intersections, and extracts surface elements to store them in
+ * `surface_cell_list`.
+ */
 void SurfaceFinder::Find_full_hypersurface() {
+  char *surf_path = std::getenv("SURF_PATH");
+  std::string surf_path_str;
+  std::string filename;
+  if (surf_path != NULL) {
+    JSINFO << "SURF_PATH is set to " << surf_path;
+    surf_path_str = std::string(surf_path);
+    filename = surf_path_str + "/hypersurface.dat";
+  } else {
+    JSINFO << "SURF_PATH is not set.";
+    filename = "hypersurface.dat";
+  }
+
   if (boost_invariant) {
     JSINFO << "Finding a 2+1D hyper-surface at T = " << T_cut << " GeV ...";
     Find_full_hypersurface_3D();
@@ -50,10 +104,24 @@ void SurfaceFinder::Find_full_hypersurface() {
   }
 }
 
-bool SurfaceFinder::check_intersect_3D(Jetscape::real tau, Jetscape::real x,
-                                       Jetscape::real y, Jetscape::real dt,
-                                       Jetscape::real dx, Jetscape::real dy,
-                                       double ***cube) {
+/**
+ * @brief Checks if the temperature values in the cube intersect the cutoff
+ * temperature.
+ *
+ * @param tau Central value of tau.
+ * @param x Central value of x.
+ * @param y Central value of y.
+ * @param dt Time step size.
+ * @param dx X step size.
+ * @param dy Y step size.
+ * @param cube 3D array to store temperature values of the grid cell.
+ * @return True if the temperature values intersect the cutoff temperature,
+ * false otherwise.
+ */
+bool SurfaceFinder::check_intersect_3D(
+    Jetscape::real tau, Jetscape::real x, Jetscape::real y, Jetscape::real dt,
+    Jetscape::real dx, Jetscape::real dy,
+    std::array<std::array<std::array<double, 2>, 2>, 2> &cube) {
   bool intersect = true;
 
   auto tau_low = tau - dt / 2.;
@@ -89,90 +157,122 @@ bool SurfaceFinder::check_intersect_3D(Jetscape::real tau, Jetscape::real x,
   return (intersect);
 }
 
+/**
+ * @brief Finds and constructs the full hypersurface in a 3D space-time grid.
+ *
+ * This function iterates through a predefined space-time grid to identify
+ * the freeze-out hypersurface using the Cornelius algorithm. It initializes
+ * a 3D grid, iterates over time and spatial coordinates, checks for
+ * intersections, and extracts surface elements to store them in
+ * `surface_cell_list`.
+ *
+ * @note This function dynamically allocates memory for a 3D cube and ensures
+ * proper cleanup.
+ */
 void SurfaceFinder::Find_full_hypersurface_3D() {
   auto grid_tau0 = bulk_info.Tau0();
   auto grid_tauf = bulk_info.TauMax();
   auto grid_x0 = bulk_info.XMin();
   auto grid_y0 = bulk_info.YMin();
-  ;
 
   Jetscape::real grid_dt = 0.1;
   Jetscape::real grid_dx = 0.2;
   Jetscape::real grid_dy = 0.2;
 
   const int dim = 3;
-  double lattice_spacing[dim];
-  lattice_spacing[0] = grid_dt;
-  lattice_spacing[1] = grid_dx;
-  lattice_spacing[2] = grid_dy;
-
-  std::unique_ptr<Cornelius> cornelius_ptr(new Cornelius());
-  cornelius_ptr->init(dim, T_cut, lattice_spacing);
+  std::array<double, 4> lattice_spacing{{grid_dt, grid_dx, grid_dy, 1.0}};
 
   const int ntime = static_cast<int>((grid_tauf - grid_tau0) / grid_dt);
   const int nx = static_cast<int>(std::abs(2. * grid_x0) / grid_dx);
   const int ny = static_cast<int>(std::abs(2. * grid_y0) / grid_dy);
 
-  double ***cube = new double **[2];
-  for (int i = 0; i < 2; i++) {
-    cube[i] = new double *[2];
-    for (int j = 0; j < 2; j++) {
-      cube[i][j] = new double[2];
-      for (int k = 0; k < 2; k++)
-        cube[i][j][k] = 0.0;
-    }
-  }
+  int surface_cell_list_sz = ntime * nx * ny;
+  std::vector<std::vector<SurfaceCellInfo>> surface_cell_list_local;
+  surface_cell_list_local.resize(surface_cell_list_sz);
 
-  for (int itime = 0; itime < ntime; itime++) {
-    // loop over time evolution
-    auto tau_local = grid_tau0 + (itime + 0.5) * grid_dt;
-    for (int i = 0; i < nx; i++) {
-      // loops over the transverse plane
-      auto x_local = grid_x0 + (i + 0.5) * grid_dx;
-      for (int j = 0; j < ny; j++) {
-        auto y_local = grid_y0 + (j + 0.5) * grid_dy;
-        bool intersect = check_intersect_3D(tau_local, x_local, y_local,
-                                            grid_dt, grid_dx, grid_dy, cube);
-        if (intersect) {
-          cornelius_ptr->find_surface_3d(cube);
-          for (int isurf = 0; isurf < cornelius_ptr->get_Nelements(); isurf++) {
-            auto tau_center = (cornelius_ptr->get_centroid_elem(isurf, 0) +
-                               tau_local - grid_dt / 2.);
-            auto x_center = (cornelius_ptr->get_centroid_elem(isurf, 1) +
-                             x_local - grid_dx / 2.);
-            auto y_center = (cornelius_ptr->get_centroid_elem(isurf, 2) +
-                             y_local - grid_dy / 2.);
+#pragma omp parallel
+  {
+    std::array<std::array<std::array<double, 2>, 2>, 2>
+        cube{};  // zero-initialized 2x2x2 cube
 
-            auto da_tau = cornelius_ptr->get_normal_elem(isurf, 0);
-            auto da_x = cornelius_ptr->get_normal_elem(isurf, 1);
-            auto da_y = cornelius_ptr->get_normal_elem(isurf, 2);
+    std::unique_ptr<Cornelius> cornelius_ptr(new Cornelius());
+    cornelius_ptr->init_cornelius(dim, T_cut, lattice_spacing);
 
-            auto fluid_cell =
-                bulk_info.get(tau_center, x_center, y_center, 0.0);
-            auto surface_cell =
-                PrepareASurfaceCell(tau_center, x_center, y_center, 0.0, da_tau,
-                                    da_x, da_y, 0.0, fluid_cell);
-            surface_cell_list.push_back(surface_cell);
+#pragma omp for collapse(3)
+    for (int itime = 0; itime < ntime; itime++) {
+      for (int i = 0; i < nx; i++) {
+        for (int j = 0; j < ny; j++) {
+          // loop over time evolution
+          auto tau_local = grid_tau0 + (itime + 0.5) * grid_dt;
+
+          // loops over the transverse plane
+          auto x_local = grid_x0 + (i + 0.5) * grid_dx;
+
+          auto y_local = grid_y0 + (j + 0.5) * grid_dy;
+          bool intersect = check_intersect_3D(tau_local, x_local, y_local,
+                                              grid_dt, grid_dx, grid_dy, cube);
+          if (intersect) {
+            cornelius_ptr->find_surface_3d(cube);
+            for (int isurf = 0; isurf < cornelius_ptr->get_number_elements();
+                 isurf++) {
+              auto tau_center = (cornelius_ptr->get_centroid_element(isurf, 0) +
+                                 tau_local - grid_dt / 2.);
+              auto x_center = (cornelius_ptr->get_centroid_element(isurf, 1) +
+                               x_local - grid_dx / 2.);
+              auto y_center = (cornelius_ptr->get_centroid_element(isurf, 2) +
+                               y_local - grid_dy / 2.);
+
+              auto da_tau = cornelius_ptr->get_normal_element(isurf, 0);
+              auto da_x = cornelius_ptr->get_normal_element(isurf, 1);
+              auto da_y = cornelius_ptr->get_normal_element(isurf, 2);
+
+              auto fluid_cell =
+                  bulk_info.get(tau_center, x_center, y_center, 0.0);
+              auto surface_cell =
+                  PrepareASurfaceCell(tau_center, x_center, y_center, 0.0,
+                                      da_tau, da_x, da_y, 0.0, fluid_cell);
+              surface_cell_list_local[itime * nx * ny + i * ny + j].push_back(
+                  surface_cell);
+            }
           }
         }
       }
+    }  // end of omp for loop
+  }    // end of omp parallel region
+
+  // reduction of local 2D vector to 1D class member vector
+  for (int i = 0; i < surface_cell_list_sz; i++) {
+    for (int j = 0; j < surface_cell_list_local[i].size(); j++) {
+      surface_cell_list.push_back(surface_cell_list_local[i][j]);
     }
   }
-
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++)
-      delete[] cube[i][j];
-    delete[] cube[i];
-  }
-  delete[] cube;
 }
 
-bool SurfaceFinder::check_intersect_4D(Jetscape::real tau, Jetscape::real x,
-                                       Jetscape::real y, Jetscape::real eta,
-                                       Jetscape::real dt, Jetscape::real dx,
-                                       Jetscape::real dy, Jetscape::real deta,
-                                       double ****cube) {
-
+/**
+ * @brief Checks for an intersection between the hypersurface and a 4D
+ * space-time grid cell.
+ *
+ * This function determines whether the freeze-out hypersurface intersects
+ * a given space-time grid cell by evaluating the temperature values at its
+ * corners. If an intersection is detected, it updates the provided `cube` with
+ * temperature values.
+ *
+ * @param tau   Proper time coordinate at the center of the cell.
+ * @param x     X coordinate at the center of the cell.
+ * @param y     Y coordinate at the center of the cell.
+ * @param eta   Pseudorapidity coordinate at the center of the cell.
+ * @param dt    Proper time step size.
+ * @param dx    X step size.
+ * @param dy    Y step size.
+ * @param deta  Eta step size.
+ * @param cube  4D array to store temperature values at grid points.
+ * @return True if an intersection occurs, false otherwise.
+ */
+bool SurfaceFinder::check_intersect_4D(
+    Jetscape::real tau, Jetscape::real x, Jetscape::real y, Jetscape::real eta,
+    Jetscape::real dt, Jetscape::real dx, Jetscape::real dy,
+    Jetscape::real deta,
+    std::array<std::array<std::array<std::array<double, 2>, 2>, 2>, 2> &cube) {
   bool intersect = true;
 
   auto tau_low = tau - dt / 2.;
@@ -231,14 +331,41 @@ bool SurfaceFinder::check_intersect_4D(Jetscape::real tau, Jetscape::real x,
   return (intersect);
 }
 
+/**
+ * @brief Finds the full hypersurface in 4D space-time by identifying isothermal
+ * surfaces.
+ *
+ * This function iterates over a 4D grid in space-time (τ, x, y, η) and extracts
+ * hypersurface elements where the temperature crosses the critical value
+ * (`T_cut`). It employs the Cornelius isosurface finder to locate and store
+ * surface elements.
+ *
+ * @details
+ * - Initializes the grid and retrieves limits from `bulk_info`.
+ * - Allocates a 4D array (`cube`) to store temperature values at neighboring
+ * grid points.
+ * - Loops over time (`τ`), space-time rapidity (`η`), and transverse plane (`x,
+ * y`).
+ * - Calls `check_intersect_4D()` to determine intersections.
+ * - If an intersection is detected, `Cornelius` finds the isothermal
+ * hypersurface.
+ * - Surface elements are extracted, including centroids and normal vectors.
+ * - Fluid properties are retrieved and stored as `SurfaceCell` elements.
+ * - Cleans up dynamically allocated memory at the end.
+ *
+ * @note This function is computationally expensive due to its iteration over a
+ * 4D space-time grid. Parallelization with OpenMP or Kokkos can improve
+ * performance.
+ *
+ * @see check_intersect_4D(), Cornelius::find_surface_4d(),
+ * PrepareASurfaceCell()
+ */
 void SurfaceFinder::Find_full_hypersurface_4D() {
   auto grid_tau0 = bulk_info.Tau0();
   auto grid_tauf = bulk_info.TauMax();
   auto grid_x0 = bulk_info.XMin();
   auto grid_y0 = bulk_info.YMin();
-  ;
   auto grid_eta0 = bulk_info.EtaMin();
-  ;
 
   Jetscape::real grid_dt = 0.1;
   Jetscape::real grid_dx = 0.2;
@@ -246,96 +373,119 @@ void SurfaceFinder::Find_full_hypersurface_4D() {
   Jetscape::real grid_deta = 0.2;
 
   const int dim = 4;
-  double lattice_spacing[dim];
-  lattice_spacing[0] = grid_dt;
-  lattice_spacing[1] = grid_dx;
-  lattice_spacing[2] = grid_dy;
-  lattice_spacing[3] = grid_deta;
-
-  std::unique_ptr<Cornelius> cornelius_ptr(new Cornelius());
-  cornelius_ptr->init(dim, T_cut, lattice_spacing);
+  std::array<double, 4> lattice_spacing{{grid_dt, grid_dx, grid_dy, grid_deta}};
 
   const int ntime = static_cast<int>((grid_tauf - grid_tau0) / grid_dt);
   const int nx = static_cast<int>(std::abs(2. * grid_x0) / grid_dx);
   const int ny = static_cast<int>(std::abs(2. * grid_y0) / grid_dy);
   const int neta = static_cast<int>(std::abs(2. * grid_eta0) / grid_deta);
 
-  double ****cube = new double ***[2];
-  for (int i = 0; i < 2; i++) {
-    cube[i] = new double **[2];
-    for (int j = 0; j < 2; j++) {
-      cube[i][j] = new double *[2];
-      for (int k = 0; k < 2; k++) {
-        cube[i][j][k] = new double[2];
-        for (int l = 0; l < 2; l++) {
-          cube[i][j][k][l] = 0.0;
-        }
-      }
-    }
-  }
+  int surface_cell_list_sz = ntime * nx * ny * neta;
+  std::vector<std::vector<SurfaceCellInfo>> surface_cell_list_local;
+  surface_cell_list_local.resize(surface_cell_list_sz);
 
-  for (int itime = 0; itime < ntime; itime++) {
-    // loop over time evolution
-    auto tau_local = grid_tau0 + (itime + 0.5) * grid_dt;
-    for (int l = 0; l < neta; l++) {
-      auto eta_local = grid_eta0 + (l + 0.5) * grid_deta;
-      // loops over the transverse plane
-      for (int i = 0; i < nx; i++) {
-        // loops over the transverse plane
-        auto x_local = grid_x0 + (i + 0.5) * grid_dx;
-        for (int j = 0; j < ny; j++) {
-          auto y_local = grid_y0 + (j + 0.5) * grid_dy;
-          bool intersect =
-              check_intersect_4D(tau_local, x_local, y_local, eta_local,
-                                 grid_dt, grid_dx, grid_dy, grid_deta, cube);
-          if (intersect) {
-            cornelius_ptr->find_surface_4d(cube);
-            for (int isurf = 0; isurf < cornelius_ptr->get_Nelements();
-                 isurf++) {
-              auto tau_center = (cornelius_ptr->get_centroid_elem(isurf, 0) +
-                                 tau_local - grid_dt / 2.);
-              auto x_center = (cornelius_ptr->get_centroid_elem(isurf, 1) +
-                               x_local - grid_dx / 2.);
-              auto y_center = (cornelius_ptr->get_centroid_elem(isurf, 2) +
-                               y_local - grid_dy / 2.);
-              auto eta_center = (cornelius_ptr->get_centroid_elem(isurf, 3) +
-                                 eta_local - grid_deta / 2.);
+#pragma omp parallel
+  {
+    std::array<std::array<std::array<std::array<double, 2>, 2>, 2>, 2>
+        cube{};  // zero-initialized 2x2x2x2 cube
 
-              auto da_tau = (cornelius_ptr->get_normal_elem(isurf, 0));
-              auto da_x = (cornelius_ptr->get_normal_elem(isurf, 1));
-              auto da_y = (cornelius_ptr->get_normal_elem(isurf, 2));
-              auto da_eta = (cornelius_ptr->get_normal_elem(isurf, 3));
+    std::unique_ptr<Cornelius> cornelius_ptr(new Cornelius());
+    cornelius_ptr->init_cornelius(dim, T_cut, lattice_spacing);
 
-              auto fluid_cell =
-                  bulk_info.get(tau_center, x_center, y_center, eta_center);
-              auto surface_cell = PrepareASurfaceCell(
-                  tau_center, x_center, y_center, eta_center, da_tau, da_x,
-                  da_y, da_eta, fluid_cell);
-              surface_cell_list.push_back(surface_cell);
+#pragma omp for collapse(4)
+
+    for (int itime = 0; itime < ntime; itime++) {
+      for (int l = 0; l < neta; l++) {
+        for (int i = 0; i < nx; i++) {
+          for (int j = 0; j < ny; j++) {
+            // loop over time evolution
+            auto tau_local = grid_tau0 + (itime + 0.5) * grid_dt;
+
+            auto eta_local = grid_eta0 + (l + 0.5) * grid_deta;
+            // loops over the transverse plane
+
+            // loops over the transverse plane
+            auto x_local = grid_x0 + (i + 0.5) * grid_dx;
+
+            auto y_local = grid_y0 + (j + 0.5) * grid_dy;
+            bool intersect =
+                check_intersect_4D(tau_local, x_local, y_local, eta_local,
+                                   grid_dt, grid_dx, grid_dy, grid_deta, cube);
+            if (intersect) {
+              cornelius_ptr->find_surface_4d(cube);
+              for (int isurf = 0; isurf < cornelius_ptr->get_number_elements();
+                   isurf++) {
+                auto tau_center =
+                    (cornelius_ptr->get_centroid_element(isurf, 0) + tau_local -
+                     grid_dt / 2.);
+                auto x_center = (cornelius_ptr->get_centroid_element(isurf, 1) +
+                                 x_local - grid_dx / 2.);
+                auto y_center = (cornelius_ptr->get_centroid_element(isurf, 2) +
+                                 y_local - grid_dy / 2.);
+                auto eta_center =
+                    (cornelius_ptr->get_centroid_element(isurf, 3) + eta_local -
+                     grid_deta / 2.);
+
+                auto da_tau = (cornelius_ptr->get_normal_element(isurf, 0));
+                auto da_x = (cornelius_ptr->get_normal_element(isurf, 1));
+                auto da_y = (cornelius_ptr->get_normal_element(isurf, 2));
+                auto da_eta = (cornelius_ptr->get_normal_element(isurf, 3));
+
+                auto fluid_cell =
+                    bulk_info.get(tau_center, x_center, y_center, eta_center);
+                auto surface_cell = PrepareASurfaceCell(
+                    tau_center, x_center, y_center, eta_center, da_tau, da_x,
+                    da_y, da_eta, fluid_cell);
+                surface_cell_list_local[itime * nx * ny * neta + l * nx * ny +
+                                        i * ny + j]
+                    .push_back(surface_cell);
+              }
             }
           }
         }
       }
-    }
-  }
+    }  // end of omp for loop
+  }    // end of omp parallel region
 
-  for (int i = 0; i < 2; i++) {
-    for (int j = 0; j < 2; j++) {
-      for (int k = 0; k < 2; k++) {
-        delete[] cube[i][j][k];
-      }
-      delete[] cube[i][j];
+  // reduction of local 2D vector to 1D class member vector
+  for (int i = 0; i < surface_cell_list_sz; i++) {
+    for (int j = 0; j < surface_cell_list_local[i].size(); j++) {
+      surface_cell_list.push_back(surface_cell_list_local[i][j]);
     }
-    delete[] cube[i];
   }
-  delete[] cube;
 }
 
+/**
+ * @brief Prepares a SurfaceCellInfo object containing surface and fluid
+ * properties.
+ *
+ * This function constructs a `SurfaceCellInfo` structure by populating it with
+ * spatial coordinates, normal vectors, hydrodynamic properties, and flow
+ * velocities from a given `FluidCellInfo` object.
+ *
+ * @param tau Proper time coordinate of the surface cell.
+ * @param x X-coordinate of the surface cell.
+ * @param y Y-coordinate of the surface cell.
+ * @param eta Space-time rapidity of the surface cell.
+ * @param da0 Normal vector component in the τ-direction.
+ * @param da1 Normal vector component in the x-direction.
+ * @param da2 Normal vector component in the y-direction.
+ * @param da3 Normal vector component in the η-direction.
+ * @param fluid_cell The hydrodynamic fluid cell containing thermodynamic
+ * properties.
+ *
+ * @return A `SurfaceCellInfo` object populated with spatial, normal vector,
+ *         thermodynamic, and flow velocity data.
+ *
+ *
+ * @note The four-velocity transformation ensures compatibility with the
+ * space-time rapidity coordinate.
+ * @see SurfaceCellInfo, FluidCellInfo
+ */
 SurfaceCellInfo SurfaceFinder::PrepareASurfaceCell(
     Jetscape::real tau, Jetscape::real x, Jetscape::real y, Jetscape::real eta,
     Jetscape::real da0, Jetscape::real da1, Jetscape::real da2,
     Jetscape::real da3, const FluidCellInfo fluid_cell) {
-
   SurfaceCellInfo temp_cell;
   temp_cell.tau = tau;
   temp_cell.x = x;
@@ -347,20 +497,22 @@ SurfaceCellInfo SurfaceFinder::PrepareASurfaceCell(
   temp_cell.d3sigma_mu[3] = da3;
 
   temp_cell.energy_density = fluid_cell.energy_density;
+  temp_cell.entropy_density = fluid_cell.entropy_density;
   temp_cell.temperature = fluid_cell.temperature;
   temp_cell.pressure = fluid_cell.pressure;
+  temp_cell.qgp_fraction = fluid_cell.qgp_fraction;
   temp_cell.mu_B = fluid_cell.mu_B;
   temp_cell.mu_Q = fluid_cell.mu_C;
   temp_cell.mu_S = fluid_cell.mu_S;
 
-  double u0 = sqrt(1. + fluid_cell.vx*fluid_cell.vx
-                   + fluid_cell.vy*fluid_cell.vy
-                   + fluid_cell.vz*fluid_cell.vz);
-  double uz = u0*fluid_cell.vz;
-  temp_cell.umu[0] = u0*cosh(eta) - uz*sinh(eta);
-  temp_cell.umu[1] = u0*fluid_cell.vx;
-  temp_cell.umu[2] = u0*fluid_cell.vy;
-  temp_cell.umu[3] = - u0*sinh(eta) + uz*cosh(eta);
+  double u0 =
+      sqrt(1. + fluid_cell.vx * fluid_cell.vx + fluid_cell.vy * fluid_cell.vy +
+           fluid_cell.vz * fluid_cell.vz);
+  double uz = u0 * fluid_cell.vz;
+  temp_cell.umu[0] = u0 * cosh(eta) - uz * sinh(eta);
+  temp_cell.umu[1] = u0 * fluid_cell.vx;
+  temp_cell.umu[2] = u0 * fluid_cell.vy;
+  temp_cell.umu[3] = -u0 * sinh(eta) + uz * cosh(eta);
 
   temp_cell.pi[0] = fluid_cell.pi[0][0];
   temp_cell.pi[1] = fluid_cell.pi[0][1];
@@ -378,4 +530,28 @@ SurfaceCellInfo SurfaceFinder::PrepareASurfaceCell(
   return (temp_cell);
 }
 
-} // namespace Jetscape
+/**
+ * @brief Writes the surface cell information to a specified file.
+ *
+ * This function appends the string representation of each `SurfaceCellInfo`
+ * object in the provided vector to a file with the given filename. Each
+ * surface cell's data is written in a formatted manner for easy readability.
+ *
+ * @param surface_cells A vector containing `SurfaceCellInfo` objects to be
+ * written to the file.
+ * @param filename The name of the file where the surface cell information will
+ * be appended.
+ */
+void SurfaceFinder::WriteSurfaceToFile(
+    const std::vector<SurfaceCellInfo> &surface_cells, std::string filename) {
+  std::ofstream file;
+  file.open(filename, std::ios::app);
+
+  for (int i = 0; i < surface_cell_list.size(); i++) {
+    file << surface_cell_list[i].sfi_to_string();
+  }
+
+  file.close();
+}
+
+}  // namespace Jetscape

@@ -4,12 +4,13 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-2.0.1-RC
+      - XSCAPE-2.1-RC
+
 
   push:
     branches:
       - main
-      - XSCAPE-2.0.1-RC
+      - XSCAPE-2.1-RC
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -20,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v1.13
+      image: jetscape/base:v2.0
       options: --user root
     
     steps:

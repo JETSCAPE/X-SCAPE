@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -33,9 +34,7 @@ using namespace Jetscape;
 // Register the module with the base class
 RegisterJetScapeModule<SmashWrapper> SmashWrapper::reg("SMASH");
 
-SmashWrapper::SmashWrapper() {
-  SetId("SMASH");
-}
+SmashWrapper::SmashWrapper() { SetId("SMASH"); }
 
 void SmashWrapper::InitTask() {
   JSINFO << "SMASH: picking SMASH-specific configuration from xml file";
@@ -51,9 +50,8 @@ void SmashWrapper::InitTask() {
   std::string tabulations_path("./smash_tabulations");
   const std::string smash_version(SMASH_VERSION);
 
-  auto config = smash::setup_config_and_logging(smash_config_file, 
-                                                smash_hadron_list,
-                                                smash_decays_list);
+  auto config = smash::setup_config_and_logging(
+      smash_config_file, smash_hadron_list, smash_decays_list);
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
@@ -72,14 +70,15 @@ void SmashWrapper::InitTask() {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
 
-  // Check if the tabulations directory exists, if not initialize particles and 
+  // Check if the tabulations directory exists, if not initialize particles and
   // decays
   if (!std::filesystem::exists(tabulations_path)) {
     smash::initialize_particles_decays_and_tabulations(config, smash_version,
-                                                     tabulations_path);
+                                                       tabulations_path);
   }
 
-  const double delta_t_sm = GetXMLElementDouble({"Afterburner", "SMASH", "Delta_Time"});
+  const double delta_t_sm =
+      GetXMLElementDouble({"Afterburner", "SMASH", "Delta_Time"});
   config.set_value(smash::InputKeys::gen_deltaTime, delta_t_sm);
 
   // Enforce timestep compatibility (temporarily)
@@ -89,9 +88,11 @@ void SmashWrapper::InitTask() {
     const double ts_rem = std::remainder(delta_t_js, delta_t_sm);
     const double ts_frac = delta_t_js / delta_t_sm;
     if (!(ts_rem < 1E-6 && ts_frac > 1.0)) {
-      JSWARN << "Timesteps of SMASH (dt = " << delta_t_sm
-             << ") and JETSCAPE (dt = " << delta_t_js << ") are incompatible."
-                "SMASH timesteps should be a half, a third, etc. from JETSCAPE's";
+      JSWARN
+          << "Timesteps of SMASH (dt = " << delta_t_sm
+          << ") and JETSCAPE (dt = " << delta_t_js
+          << ") are incompatible."
+             "SMASH timesteps should be a half, a third, etc. from JETSCAPE's";
     }
   }
 
@@ -133,39 +134,49 @@ void SmashWrapper::InitPerEvent() {
     const int n_events = modus->jetscape_hadrons_.size();
     if (n_events > 1) {
       JSWARN << "In timestep mode SMASH only propagates one (= the first "
-                "soft_particlization) event at the moment. No oversampling possible.";
+                "soft_particlization) event at the moment. No oversampling "
+                "possible.";
     }
   }
   smash_experiment_->initialize_new_event();
 }
 
 void SmashWrapper::CalculateTimeTask() {
-  std::vector<shared_ptr<Hadron>> hadrons_to_add = Afterburner::GetTimestepParticlizationHadrons();
-  std::vector<shared_ptr<Hadron>> hadrons_to_remove = Afterburner::GetTimestepHadronsToRemove();
+  std::vector<shared_ptr<Hadron>> hadrons_to_add =
+      Afterburner::GetTimestepParticlizationHadrons();
+  std::vector<shared_ptr<Hadron>> hadrons_to_remove =
+      Afterburner::GetTimestepHadronsToRemove();
 
-  VERBOSE(2) << "SMASH afterburner got " << hadrons_to_add.size()  << " hadrons in this timestep.";
-  VERBOSE(2) << "SMASH afterburner removed " << hadrons_to_remove.size() << " hadrons in this timestep.";
+  VERBOSE(2) << "SMASH afterburner got " << hadrons_to_add.size()
+             << " hadrons in this timestep.";
+  VERBOSE(2) << "SMASH afterburner removed " << hadrons_to_remove.size()
+             << " hadrons in this timestep.";
 
-  // Check if absolute value of position and momentum vectors can be computed without error in sqrt, otherwise remove hadrons from 
-  // hadrons_to_add and hadrons_to_remove, compute the absolute value of each jetscape hadron
+  // Check if absolute value of position and momentum vectors can be computed
+  // without error in sqrt, otherwise remove hadrons from hadrons_to_add and
+  // hadrons_to_remove, compute the absolute value of each jetscape hadron
   hadrons_to_add.erase(
-    std::remove_if(hadrons_to_add.begin(), hadrons_to_add.end(),
-                   [](const std::shared_ptr<Jetscape::Hadron>& h) {
+      std::remove_if(hadrons_to_add.begin(), hadrons_to_add.end(),
+                     [](const std::shared_ptr<Jetscape::Hadron> &h) {
                        return !h->has_valid_momentum();
-                   }),
-    hadrons_to_add.end());
+                     }),
+      hadrons_to_add.end());
   hadrons_to_remove.erase(
-    std::remove_if(hadrons_to_remove.begin(), hadrons_to_remove.end(),
-                   [](const std::shared_ptr<Jetscape::Hadron>& h) {
+      std::remove_if(hadrons_to_remove.begin(), hadrons_to_remove.end(),
+                     [](const std::shared_ptr<Jetscape::Hadron> &h) {
                        return !h->has_valid_momentum();
-                   }),
-    hadrons_to_remove.end());
+                     }),
+      hadrons_to_remove.end());
 
-  const double until_time = IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
+  const double until_time =
+      IsTimeStepped() ? GetMainClock()->GetCurrentTime() : end_time_;
   if (!only_final_decays_) {
-    smash::ParticleList add_list = get_smash_plist_from_JS_hadrons(hadrons_to_add);
-    smash::ParticleList remove_list = get_smash_plist_from_JS_hadrons(hadrons_to_remove);
-    smash_experiment_->run_time_evolution(until_time,std::move(add_list),std::move(remove_list));
+    smash::ParticleList add_list =
+        get_smash_plist_from_JS_hadrons(hadrons_to_add);
+    smash::ParticleList remove_list =
+        get_smash_plist_from_JS_hadrons(hadrons_to_remove);
+    smash_experiment_->run_time_evolution(until_time, std::move(add_list),
+                                          std::move(remove_list));
   }
 }
 
@@ -202,7 +213,7 @@ void SmashWrapper::WriteTask(weak_ptr<JetScapeWriter> w) {
 
 std::vector<Hadron> SmashWrapper::GetCurrentHadronList() const {
   std::vector<Hadron> h_list;
-  smash::Particles* smash_particles = smash_experiment_->first_ensemble();
+  smash::Particles *smash_particles = smash_experiment_->first_ensemble();
 
   for (const auto &particle : *smash_particles) {
     const int hadron_label = 0;
@@ -215,19 +226,21 @@ std::vector<Hadron> SmashWrapper::GetCurrentHadronList() const {
     const int charge = particle.type().charge();
     const int baryon_number = particle.type().baryon_number();
     const int strangeness = particle.type().strangeness();
-    h_list.push_back(Hadron(hadron_label, hadron_id, hadron_status, hadron_p, 
-                            hadron_r, hadron_mass, charge, baryon_number, 
+    h_list.push_back(Hadron(hadron_label, hadron_id, hadron_status, hadron_p,
+                            hadron_r, hadron_mass, charge, baryon_number,
                             strangeness));
   }
   return h_list;
 }
 
-smash::ParticleList SmashWrapper::get_smash_plist_from_JS_hadrons(const std::vector<shared_ptr<Hadron>>& JS_hadrons) {
+smash::ParticleList SmashWrapper::get_smash_plist_from_JS_hadrons(
+    const std::vector<shared_ptr<Hadron>> &JS_hadrons) {
   smash::ParticleList new_particles;
-  for (const auto& JS_had : JS_hadrons) {
+  for (const auto &JS_had : JS_hadrons) {
     const FourVector p = JS_had->p_in();
     const FourVector r = JS_had->x_in();
-    smash::ParticleData new_p{smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
+    smash::ParticleData new_p{
+        smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
     new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
     new_p.set_4momentum(smash::FourVector(p.t(), p.x(), p.y(), p.z()));
     new_particles.push_back(new_p);
@@ -266,9 +279,8 @@ void SmashWrapper::fill_JS_hadrons_from_smash_particles(
     const int charge = particle.type().charge();
     const int baryon_number = particle.type().baryon_number();
     const int strangeness = particle.type().strangeness();
-    JS_hadrons.push_back(make_shared<Hadron>(hadron_label, hadron_id,
-                                             hadron_status, hadron_p, hadron_r,
-                                             hadron_mass, charge, baryon_number, 
-                                             strangeness));
+    JS_hadrons.push_back(make_shared<Hadron>(
+        hadron_label, hadron_id, hadron_status, hadron_p, hadron_r, hadron_mass,
+        charge, baryon_number, strangeness));
   }
 }

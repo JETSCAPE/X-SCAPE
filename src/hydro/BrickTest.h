@@ -6,12 +6,10 @@
 using namespace Jetscape;
 
 class BrickTest : public Brick {
-private:
-  
-public:
-
-  BrickTest() : Brick() {SetId("BrickTest");};
-  virtual ~BrickTest() {};
+ private:
+ public:
+  BrickTest() : Brick() { SetId("BrickTest"); };
+  virtual ~BrickTest(){};
 
   virtual void CalculateTime();
   virtual void ExecTime();
@@ -19,8 +17,7 @@ public:
   virtual void InitPerEvent();
   virtual void FinishPerEvent();
 
-  virtual any GetHistory(); 
-
+  virtual any GetHistory();
 };
 
-#endif // BrickTest_H
+#endif  // BrickTest_H

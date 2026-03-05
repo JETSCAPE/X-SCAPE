@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -46,9 +47,9 @@ void InitialState::ExecuteTask() {
 void InitialState::ClearTask() {}
 
 void InitialState::Write(weak_ptr<JetScapeWriter> w) {
-  //Write out the original vertex so the writer can keep track of it...
-  // auto f = w.lock();
-  // if ( f ) f->Write(make_shared<Vertex>(initialVtx));
+  // Write out the original vertex so the writer can keep track of it...
+  //  auto f = w.lock();
+  //  if ( f ) f->Write(make_shared<Vertex>(initialVtx));
 }
 
 void InitialState::CollectHeader(weak_ptr<JetScapeWriter> w) {
@@ -68,7 +69,7 @@ std::tuple<double, double, double> InitialState::CoordFromIdx(int idx) {
   int nz = GetZSize();
 
   int ix = idx / (ny * nz);
-  int iy = (idx - (ny * nz * ix))/ nz;
+  int iy = (idx - (ny * nz * ix)) / nz;
   int ieta = idx - (ny * nz * ix) - (nz * iy);
 
   return std::make_tuple(-grid_max_x_ + ix * grid_step_x_,
@@ -76,16 +77,15 @@ std::tuple<double, double, double> InitialState::CoordFromIdx(int idx) {
                          -grid_max_z_ + ieta * grid_step_z_);
 }
 
-
-void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
-                                               double &y, double &z) {
+void InitialState::SampleABinaryCollisionPoint(double &t, double &x, double &y,
+                                               double &z) {
   if (num_of_binary_collisions_.size() == 0) {
     JSWARN << "num_of_binary_collisions is empty, setting the starting "
               "location to 0. Make sure to add e.g. trento before PythiaGun.";
   } else {
     std::discrete_distribution<> dist(
         begin(num_of_binary_collisions_),
-        end(num_of_binary_collisions_)); // Create the distribution
+        end(num_of_binary_collisions_));  // Create the distribution
     // Now generate values
     auto idx = dist(*GetMt19937Generator());
     auto coord = CoordFromIdx(idx);
@@ -96,86 +96,86 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x,
   }
 }
 
-void InitialState::OutputHardCollisionPosition(double t, double x, double y, 
-                                                                   double z) {}
+void InitialState::OutputHardCollisionPosition(double t, double x, double y,
+                                               double z) {}
 
-void InitialState::OutputHardPartonMomentum(double E, double px, double py, double pz,
-                                            int direction, double P_A) {}
+void InitialState::OutputHardPartonMomentum(double E, double px, double py,
+                                            double pz, int direction,
+                                            double P_A) {}
 
 void InitialState::ClearHardPartonMomentum() {}
 
-  
 void InitialState::GetHardPartonPosAndMomentumProj() {}
 
 void InitialState::GetHardPartonPosAndMomentumTarg() {}
 
 std::vector<double> InitialState::Get_projectile_nucleon_z_lab() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 8; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
+  std::vector<double> Temp;
+  for (int i = 0; i != 8; i++) {
+    Temp.push_back(-1.);
+  }
+  return Temp;
 }
 
 std::vector<double> InitialState::Get_target_nucleon_z_lab() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 8; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
+  std::vector<double> Temp;
+  for (int i = 0; i != 8; i++) {
+    Temp.push_back(-1.);
+  }
+  return Temp;
 }
 
 std::vector<double> InitialState::Get_quarks_pos_proj_lab() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 9; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
+  std::vector<double> Temp;
+  for (int i = 0; i != 9; i++) {
+    Temp.push_back(-1.);
+  }
+  return Temp;
 }
 
 std::vector<double> InitialState::Get_quarks_pos_targ_lab() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 9; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
+  std::vector<double> Temp;
+  for (int i = 0; i != 9; i++) {
+    Temp.push_back(-1.);
+  }
+  return Temp;
 }
 
 std::vector<double> InitialState::Get_remnant_proj() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
+  std::vector<double> Temp;
+  for (int i = 0; i != 4; i++) {
+    Temp.push_back(-1.);
+  }
+  return Temp;
 }
 
 std::vector<double> InitialState::Get_remnant_targ() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
+  std::vector<double> Temp;
+  for (int i = 0; i != 4; i++) {
+    Temp.push_back(-1.);
+  }
+  return Temp;
 }
 
 std::vector<double> InitialState::Get_Proj_Remnant() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
+  std::vector<double> Temp;
+  for (int i = 0; i != 4; i++) {
+    Temp.push_back(-1.);
+  }
+  return Temp;
 }
 
 std::vector<double> InitialState::Get_Targ_Remnant() {
-    std::vector<double> Temp;
-    for (int i = 0; i != 4; i++) {
-        Temp.push_back(-1.);
-    }
-    return Temp;
+  std::vector<double> Temp;
+  for (int i = 0; i != 4; i++) {
+    Temp.push_back(-1.);
+  }
+  return Temp;
 }
 
 void InitialState::GenerateStrings(bool wound_nucleons, int event_id) {
   // Do whatever is needed to figure out the internal temp...
-  std::cout<<"Call the wrong GenerateStrings function..."<<std::endl;
+  std::cout << "Call the wrong GenerateStrings function..." << std::endl;
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

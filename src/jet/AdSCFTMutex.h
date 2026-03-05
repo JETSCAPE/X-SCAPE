@@ -13,7 +13,7 @@ using namespace Jetscape;
 using std::shared_ptr;
 
 class AdSCFTMutex : public JetScapeModuleMutex {
-public:
+ public:
   AdSCFTMutex();
   ~AdSCFTMutex();
   bool CheckMutex(vector<shared_ptr<JetScapeTask>> modules);

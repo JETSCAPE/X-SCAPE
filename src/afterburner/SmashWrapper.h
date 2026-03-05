@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -34,14 +35,15 @@ using namespace Jetscape;
  * SMASH as a 3rd party Afterburner.
  */
 class AfterburnerModus : public smash::ListModus {
-public:
+ public:
   // Unlike for ListModus there is no need to get any data from the config
-  AfterburnerModus(smash::Configuration config, const smash::ExperimentParameters &) {
+  AfterburnerModus(smash::Configuration config,
+                   const smash::ExperimentParameters &) {
     JSINFO << "Constructing AfterburnerModus";
     config.clear();
   }
   void reset_event_numbering() { event_number_ = 0; }
-  int current_event_number() {return event_number_;}
+  int current_event_number() { return event_number_; }
 
   /**
    * Add the Jetscape (JS) hadron list to the SMASH particles
@@ -58,7 +60,8 @@ public:
   // This function overrides the function from ListModus.
   double initial_conditions(smash::Particles *particles,
                             const smash::ExperimentParameters &) {
-    add_JS_hadrons_to_smash_particles(jetscape_hadrons_[event_number_], *particles);
+    add_JS_hadrons_to_smash_particles(jetscape_hadrons_[event_number_],
+                                      *particles);
     if (particles->size() > 0) {
       backpropagate_to_same_time(*particles);
     } else {
@@ -69,27 +72,29 @@ public:
   }
   std::vector<std::vector<shared_ptr<Hadron>>> jetscape_hadrons_;
 
-private:
+ private:
   int event_number_ = 0;
 };
 
 class SmashWrapper : public Afterburner {
-private:
-
+ private:
   /// Convert Jetscape (JS) hadron list to smash particle list
-  smash::ParticleList get_smash_plist_from_JS_hadrons(const std::vector<shared_ptr<Hadron>>& JS_hadrons);
+  smash::ParticleList get_smash_plist_from_JS_hadrons(
+      const std::vector<shared_ptr<Hadron>> &JS_hadrons);
 
   bool only_final_decays_ = false;
   double end_time_ = -1.0;
   shared_ptr<smash::Experiment<AfterburnerModus>> smash_experiment_;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<SmashWrapper> reg;
 
-public:
+ public:
   /// Fill the provided Jetscape (JS) hadron list from the SMASH particles
-  void fill_JS_hadrons_from_smash_particles(const smash::Particles &smash_particles,
-                                            std::vector<shared_ptr<Hadron>> &JS_hadrons);
+  void fill_JS_hadrons_from_smash_particles(
+      const smash::Particles &smash_particles,
+      std::vector<shared_ptr<Hadron>> &JS_hadrons);
   SmashWrapper();
 
   void InitTask();
@@ -102,7 +107,7 @@ public:
 
   std::vector<Hadron> GetCurrentHadronList() const override;
 
-  virtual any GetHistory() {return GetCurrentHadronList();}
+  virtual any GetHistory() { return GetCurrentHadronList(); }
 };
 
-#endif // SMASHWRAPPER_H
+#endif  // SMASHWRAPPER_H
