@@ -33,6 +33,7 @@ class epemGun : public HardProcess, public Pythia8::Pythia {
   double eCM;
   // bool FSR_on;
   double Lambda_QCD;
+  double QS;
 
   // Allows the registration of the module so that it is available to be used by
   // the Jetscape framework.
