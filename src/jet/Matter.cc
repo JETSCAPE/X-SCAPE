@@ -149,6 +149,8 @@ void Matter::InitTask() {
   Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
 
   ModificationFactor = GetXMLElementDouble({"Eloss", "ModificationFactor"});
+  ModificationPower = GetXMLElementDouble({"Eloss", "ModificationPower"});
+
   ModificationCorr = 1.0;
 
   if(vir_factor < 0.0) {
@@ -816,7 +818,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
           muD2 = 6.0 * pi * soln_alphas * tempLoc * tempLoc;
 
           if (ModificationFactor > 0.0){
-            ModificationCorr = 1.0 + 1.0 / ModificationFactor / tempLoc;
+            ModificationCorr = 1.0 + ModificationFactor / pow(tempLoc, ModificationPower);
             muD2 = muD2 / pow(ModificationCorr, 2.0);
           }
 
@@ -3907,7 +3909,7 @@ double Matter::GeneralQhatFunction(int QhatParametrization, double Temperature, 
   double DebyeMassSquare = FixAlphas*4*pi*pow(Temperature,2.0)*(6.0 + ActiveFlavor)/6.0;
   if (ModificationFactor > 0.0)
   {
-      ModificationCorr = 1.0 + 1.0 / ModificationFactor / Temperature;
+      ModificationCorr = 1.0 + ModificationFactor / pow(Temperature, ModificationPower);
       DebyeMassSquare = DebyeMassSquare / pow(ModificationCorr,2.0);
   }
   double ScaleNet=2*E*Temperature;
@@ -3965,7 +3967,7 @@ double Matter::GeneralQhatFunction(int QhatParametrization, double Temperature, 
     }
    if (ModificationFactor > 0.0)
    {
-      ModificationCorr = 1.0 + 1.0 / ModificationFactor / Temperature;
+      ModificationCorr = 1.0 +  ModificationFactor / pow(Temperature, ModificationPower);
       qhat = qhat / pow(ModificationCorr, 3.0);
    }
   return qhat;
@@ -4572,7 +4574,7 @@ void Matter::colljet22(int CT, double temp, double qhat0ud, double v0[4],
     f1max_y = 1.4215;
     f2max_y = 1.2845;
     if (ModificationFactor > 0.0){
-      ModificationCorr = 1.0 + 1.0 / ModificationFactor / temp;
+      ModificationCorr = 1.0 +  ModificationFactor / pow(temp, ModificationPower);
       f1max_y/=pow(ModificationCorr, 3.0);
       f2max_y/=pow(ModificationCorr, 3.0);
       f1 = pow(xw, 3) / (exp(xw * ModificationCorr) - 1) / f1max_y;

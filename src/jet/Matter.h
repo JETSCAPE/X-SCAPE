@@ -180,6 +180,7 @@ public:
                 double p2[4], double p3[4], double p4[4], double &qt);
   double ModificationCorr;
   double ModificationFactor;
+  double ModificationPower;
 protected:
   uniform_real_distribution<double> ZeroOneDistribution;
 
