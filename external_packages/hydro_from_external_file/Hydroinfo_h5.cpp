@@ -36,6 +36,7 @@ HydroinfoH5::~HydroinfoH5() {
 }
 
 void HydroinfoH5::clean_hydro_event() {
+    if (readinFlag == 0) return;
     for (int i=0; i<Buffersize; i++) {
         for (int j=0; j<dimensionX; j++) {
            delete[] ed[i][j];
