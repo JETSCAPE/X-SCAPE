@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -60,20 +61,22 @@ void Show();
 
 // -------------------------------------
 
-int main(int argc, char** argv)
-{
-  clock_t t; t = clock();
-  time_t start, end; time(&start);
+int main(int argc, char** argv) {
+  clock_t t;
+  t = clock();
+  time_t start, end;
+  time(&start);
 
-  cout<<endl;
+  cout << endl;
 
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
   JetScapeLogger::Instance()->SetInfo(false);
   JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
-  //SetVerboseLevel (9 a lot of additional debug output ...)
-  //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
+  // SetVerboseLevel (9 a lot of additional debug output ...)
+  // If you want to suppress it: use SetVerboseLevle(0) or max
+  // SetVerboseLevle(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
 
   Show();
@@ -83,19 +86,23 @@ int main(int argc, char** argv)
   // Read in XML file
   std::string mainXMLName = "../config/jetscape_main.xml";
   std::string userXMLName = "../config/jetscape_user_iMATTERMCGlauberMUSIC.xml";
-  if (argc == 2)  {
-    if ( strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-h")==0 ){
+  if (argc == 2) {
+    if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
       std::cout << "Command line options:" << std::endl;
-      std::cout << "    First (optional) argument: path to user XML file         ./PythiaIsrTest /path/to/user.xml" << std::endl;
-      std::cout << "    Second (optional) argument: path to main XML file      ./PythiaIsrTest /path/to/user.xml /path/to/main.xml" << std::endl;
-      std::cout << "    If no command line options are given, defaults are used: config/jetscape_user.xml config/jetscape_main.xml" << std::endl;
+      std::cout << "    First (optional) argument: path to user XML file       "
+                   "  ./PythiaIsrTest /path/to/user.xml"
+                << std::endl;
+      std::cout << "    Second (optional) argument: path to main XML file      "
+                   "./PythiaIsrTest /path/to/user.xml /path/to/main.xml"
+                << std::endl;
+      std::cout << "    If no command line options are given, defaults are "
+                   "used: config/jetscape_user.xml config/jetscape_main.xml"
+                << std::endl;
       return -1;
-    }
-    else {
+    } else {
       userXMLName = argv[1];
     }
-  }
-  else if (argc == 3) {
+  } else if (argc == 3) {
     userXMLName = argv[1];
     mainXMLName = argv[2];
   }
@@ -115,25 +122,28 @@ int main(int argc, char** argv)
 
   // Initial conditions and hydro
   auto MCG = make_shared<MCGlauberWrapper>();
-  auto pythiaIsrGun= make_shared<PythiaIsrGun> ();
-  auto hydro = make_shared<MpiMusic> ();
-  auto iSS = make_shared<iSpectraSamplerWrapper> ();
+  auto pythiaIsrGun = make_shared<PythiaIsrGun>();
+  auto hydro = make_shared<MpiMusic>();
+  auto iSS = make_shared<iSpectraSamplerWrapper>();
 
   jetscape->Add(MCG);
 
   // ISR Mangers Shower module
   auto isrManager = make_shared<IsrManager>();
   auto isrJloss = make_shared<IsrJet>();
-  auto isrPSG = make_shared<IsrShowerPSG>(); 
-  // minor changes to allow backward time evolution (wrt to DoShower() in JetEnergyLoss class implementation)
+  auto isrPSG = make_shared<IsrShowerPSG>();
+  // minor changes to allow backward time evolution (wrt to DoShower() in
+  // JetEnergyLoss class implementation)
 
-  auto iMatter = make_shared<iMATTER> ();
+  auto iMatter = make_shared<iMATTER>();
 
   // Reading tMax from the xml
   double tMax = jetscape->GetXMLElementDouble({"Eloss", "maxT"});
 
   // iMatter showers negative virtuality partons from 0 => -tMax
-  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax);
+  isrJloss->SetDeltaT(-0.1);
+  isrJloss->SetStartT(0);
+  isrJloss->SetMaxT(-tMax);
   iMatter->SetMaxT(-tMax);
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
@@ -149,20 +159,23 @@ int main(int argc, char** argv)
   jetscape->Add(iSS);
 
   // Energy loss
-  // Matter showers positive virtuality partons in forward evolution, -tMax => tMax
-  auto jlossmanager = make_shared<JetEnergyLossManager> ();
-  auto jloss = make_shared<JetEnergyLoss> ();
-  jloss->SetDeltaT(0.1); jloss->SetStartT(-tMax); jloss->SetMaxT(tMax);
-  auto matter = make_shared<Matter> ();
+  // Matter showers positive virtuality partons in forward evolution, -tMax =>
+  // tMax
+  auto jlossmanager = make_shared<JetEnergyLossManager>();
+  auto jloss = make_shared<JetEnergyLoss>();
+  jloss->SetDeltaT(0.1);
+  jloss->SetStartT(-tMax);
+  jloss->SetMaxT(tMax);
+  auto matter = make_shared<Matter>();
 
   jloss->Add(matter);
   jlossmanager->Add(jloss);
   jetscape->Add(jlossmanager);
 
   // Hadronization Module which uses the colors of partons from ISR to FSR
-  auto hadroMgr = make_shared<HadronizationManager> ();
-  auto hadro = make_shared<Hadronization> ();
-  auto hadroModule = make_shared<iColoredHadronization> ();
+  auto hadroMgr = make_shared<HadronizationManager>();
+  auto hadro = make_shared<Hadronization>();
+  auto hadroModule = make_shared<iColoredHadronization>();
   hadro->Add(hadroModule);
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
@@ -172,17 +185,19 @@ int main(int argc, char** argv)
 
   auto writer = make_shared<JetScapeWriterFinalStatePartonsAscii>();
   auto writer2 = make_shared<JetScapeWriterFinalStateHadronsAscii>();
-  writer->SetOutputFileName(outputFilename + string("_final_state_partons.dat"));
-  writer2->SetOutputFileName(outputFilename + string("_final_state_hadrons.dat"));
-  writer->SetId("FinalStatePartonsAscii"); //for task search test ...
-  writer2->SetId("FinalStateHadronsAscii"); //for task search test ...
+  writer->SetOutputFileName(outputFilename +
+                            string("_final_state_partons.dat"));
+  writer2->SetOutputFileName(outputFilename +
+                             string("_final_state_hadrons.dat"));
+  writer->SetId("FinalStatePartonsAscii");   // for task search test ...
+  writer2->SetId("FinalStateHadronsAscii");  // for task search test ...
   jetscape->Add(writer);
   jetscape->Add(writer2);
 
-  auto writerIsr= make_shared<JetScapeWriterIsrAscii> (outputFilename + "_isr.dat");
-  writerIsr->SetId("IsrAsciiWriter"); //for task search test ...
+  auto writerIsr =
+      make_shared<JetScapeWriterIsrAscii>(outputFilename + "_isr.dat");
+  writerIsr->SetId("IsrAsciiWriter");  // for task search test ...
   jetscape->Add(writerIsr);
-
 
   /*
 #ifdef USE_GZIP
@@ -206,23 +221,22 @@ int main(int argc, char** argv)
   // For the future, cleanup is mostly already done in write and clear
   jetscape->Finish();
 
-  INFO_NICE<<"Finished!";
-  cout<<endl;
+  INFO_NICE << "Finished!";
+  cout << endl;
 
   t = clock() - t;
   time(&end);
-  printf ("CPU time: %f seconds.\n",((float)t)/CLOCKS_PER_SEC);
-  printf ("Real time: %f seconds.\n",difftime(end,start));
+  printf("CPU time: %f seconds.\n", ((float)t) / CLOCKS_PER_SEC);
+  printf("Real time: %f seconds.\n", difftime(end, start));
 
   return 0;
 }
 
 // -------------------------------------
 
-void Show()
-{
-  INFO_NICE<<"----------------------------------------------";
-  INFO_NICE<<"| ISR/small sytem MUSIC Test XSCAPE Framework |";
-  INFO_NICE<<"----------------------------------------------";
+void Show() {
+  INFO_NICE << "----------------------------------------------";
+  INFO_NICE << "| ISR/small sytem MUSIC Test XSCAPE Framework |";
+  INFO_NICE << "----------------------------------------------";
   INFO_NICE;
 }

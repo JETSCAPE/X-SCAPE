@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -32,14 +33,17 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   // stores initial number of binary collisions and corresponding
   // configurations
 
-public:
+ public:
   MCGlauberWrapper();
   ~MCGlauberWrapper() {}
 
-  /** Reads the input parameters from the XML file under the tag  <IS>. Calls InitTask(); This explicit call of InitTask() can be used for actual initialization of modules such as @a Trento if attached as a @a polymorphic class. It also initializes the tasks within the current module.
+  /** Reads the input parameters from the XML file under the tag  <IS>. Calls
+     InitTask(); This explicit call of InitTask() can be used for actual
+     initialization of modules such as @a Trento if attached as a @a polymorphic
+     class. It also initializes the tasks within the current module.
       @sa Read about @a polymorphism in C++.
    */
-  //void Init();
+  // void Init();
 
   /** Default ExecuteTask() function. It can be overridden by other tasks.
    */
@@ -57,19 +61,15 @@ public:
   virtual void Write(weak_ptr<JetScapeWriter> w) {}
 
   /** Generated number of binary collisions.
-  */
-  double GetNcoll() { return(static_cast<double>(ncoll_)); }
+   */
+  double GetNcoll() { return (static_cast<double>(ncoll_)); }
 
-  void SampleABinaryCollisionPoint(double &t, double &x,
-                                   double &y, double &z);
-  double Get_total_nucleon_density_lab(double t, double x,
-                                       double y, double z);
-  double Get_target_nucleon_density_lab(double t, double x,
-                                        double y, double z);
-  double Get_projectile_nucleon_density_lab(double t, double x,
-                                            double y, double z);
-  void OutputHardCollisionPosition(double t, double x, double y, 
-                                   double z);
+  void SampleABinaryCollisionPoint(double &t, double &x, double &y, double &z);
+  double Get_total_nucleon_density_lab(double t, double x, double y, double z);
+  double Get_target_nucleon_density_lab(double t, double x, double y, double z);
+  double Get_projectile_nucleon_density_lab(double t, double x, double y,
+                                            double z);
+  void OutputHardCollisionPosition(double t, double x, double y, double z);
   void OutputHardPartonMomentum(double E, double px, double py, double pz,
                                 int direction, double P_A);
   void ClearHardPartonMomentum();
@@ -82,19 +82,19 @@ public:
   std::vector<double> Get_remnant_proj();
   std::vector<double> Get_remnant_targ();
   void GenerateStrings(bool wound_nucleons, int event_id);
-  std::vector< std::vector<double> > GetQCDStringList() {
-    return(QCDStringList_);
-}
+  std::vector<std::vector<double>> GetQCDStringList() {
+    return (QCDStringList_);
+  }
 
-std::shared_ptr<InitialState> ini;
+  std::shared_ptr<InitialState> ini;
 
-private:
+ private:
   std::shared_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
-  std::vector< std::vector<double> > QCDStringList_;
+  std::vector<std::vector<double>> QCDStringList_;
   double hard_parton_x_, hard_parton_y_, hard_parton_z_, hard_parton_t_;
   double targ_parton_px_ = 0.0, targ_parton_py_ = 0.0;
   double targ_parton_pz_ = 0.0, targ_parton_e_ = 0.0;

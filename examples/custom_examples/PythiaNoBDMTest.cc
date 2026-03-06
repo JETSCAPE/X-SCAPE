@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -66,27 +67,32 @@ void Show();
 
 // -------------------------------------
 
-int main(int argc, char** argv)
-{
-  clock_t t; t = clock();
-  time_t start, end; time(&start);
+int main(int argc, char** argv) {
+  clock_t t;
+  t = clock();
+  time_t start, end;
+  time(&start);
 
-  cout<<endl;
+  cout << endl;
 
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
   JetScapeLogger::Instance()->SetInfo(true);
   JetScapeLogger::Instance()->SetDebug(true);
   JetScapeLogger::Instance()->SetRemark(true);
-  //SetVerboseLevel (9 a lot of additional debug output ...)
-  //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
+  // SetVerboseLevel (9 a lot of additional debug output ...)
+  // If you want to suppress it: use SetVerboseLevle(0) or max
+  // SetVerboseLevle(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(9);
 
   Show();
 
   // -------------
-  // clocks here are defaulted for testing, clocks can costumized via inhererting from the MainClock/ModuleClock base classes ...
-  auto mClock = make_shared<MainClock>("SpaceTime",-1,3,0.1); // JP: make consistent with reading from XML in init phase ...
+  // clocks here are defaulted for testing, clocks can costumized via
+  // inhererting from the MainClock/ModuleClock base classes ...
+  auto mClock = make_shared<MainClock>(
+      "SpaceTime", -1, 3,
+      0.1);  // JP: make consistent with reading from XML in init phase ...
   mClock->Info();
 
   auto jetscape = make_shared<JetScape>();
@@ -100,52 +106,55 @@ int main(int argc, char** argv)
 
   // Initial conditions and hydro
   auto trento = make_shared<InitialState>();
-  auto pythiaGun= make_shared<PythiaGun> ();
-  auto hydro = make_shared<Brick> ();
+  auto pythiaGun = make_shared<PythiaGun>();
+  auto hydro = make_shared<Brick>();
   jetscape->Add(trento);
 
-  auto oldPSG = make_shared<PartonShowerGeneratorDefault>(); //modify for ISR evolution ... to be discussed ...
-
+  auto oldPSG =
+      make_shared<PartonShowerGeneratorDefault>();  // modify for ISR evolution
+                                                    // ... to be discussed ...
 
   jetscape->Add(pythiaGun);
   jetscape->Add(hydro);
 
   // Energy loss
-  auto jlossmanager = make_shared<JetEnergyLossManager> ();
-  auto jloss = make_shared<JetEnergyLoss> ();
+  auto jlossmanager = make_shared<JetEnergyLossManager>();
+  auto jloss = make_shared<JetEnergyLoss>();
 
-  //Do per time step for these modules with main clock attached ...
-  //Needed to overwrite functions: CalculateTime() and ExecTime(), in these functions get
-  //time, either main clock time or if module clock attached the tranformed time via: GetModuleCurrentTime();
+  // Do per time step for these modules with main clock attached ...
+  // Needed to overwrite functions: CalculateTime() and ExecTime(), in these
+  // functions get time, either main clock time or if module clock attached the
+  // tranformed time via: GetModuleCurrentTime();
   jlossmanager->SetTimeStepped(true);
   jloss->SetTimeStepped(true);
 
-  //Matter is added but not executed, need to implement the per time step execution in JetEnergyLoss::DoShower()...
-  auto matter = make_shared<Matter> ();
-  //Has to be set now if one wants to deal with negative
-  //times in forward evolution; default is: 0 -- 100 ...
-  jlossmanager->SetTimeRange(-20.0,20.0);
-  jloss->SetTimeRange(-20.0,20.0);
-  matter->SetTimeRange(-20.0,20.0);
+  // Matter is added but not executed, need to implement the per time step
+  // execution in JetEnergyLoss::DoShower()...
+  auto matter = make_shared<Matter>();
+  // Has to be set now if one wants to deal with negative
+  // times in forward evolution; default is: 0 -- 100 ...
+  jlossmanager->SetTimeRange(-20.0, 20.0);
+  jloss->SetTimeRange(-20.0, 20.0);
+  matter->SetTimeRange(-20.0, 20.0);
 
   // Note: if you use Matter, it MUST come first (to set virtuality)
   jloss->Add(matter);
   jlossmanager->Add(jloss);
   jetscape->Add(jlossmanager);
 
-  auto cascadeTest = make_shared<CascadeTest> ();
+  auto cascadeTest = make_shared<CascadeTest>();
   cascadeTest->SetMultiThread(true);
   cascadeTest->SetTimeStepped(true);
 
-  auto bulkmanager = make_shared<BulkDynamicsManager> ();
-  bulkmanager->SetTimeStepped(true); //Time-step evolution
-  bulkmanager->SetTimeRange(-20.0,20.0);
-  //bulkmanager->Add(hydro);
-  //bulkmanager->Add(cascadeTest);
-  //jetscape->Add(bulkmanager);
-  // Output
-  auto writer= make_shared<JetScapeWriterAscii> ("test_out.dat");
-  writer->SetId("AsciiWriter"); //for task search test ...
+  auto bulkmanager = make_shared<BulkDynamicsManager>();
+  bulkmanager->SetTimeStepped(true);  // Time-step evolution
+  bulkmanager->SetTimeRange(-20.0, 20.0);
+  // bulkmanager->Add(hydro);
+  // bulkmanager->Add(cascadeTest);
+  // jetscape->Add(bulkmanager);
+  //  Output
+  auto writer = make_shared<JetScapeWriterAscii>("test_out.dat");
+  writer->SetId("AsciiWriter");  // for task search test ...
   jetscape->Add(writer);
 
   // Intialize all modules tasks
@@ -157,13 +166,13 @@ int main(int argc, char** argv)
   // For the future, cleanup is mostly already done in write and clear
   jetscape->Finish();
 
-  INFO_NICE<<"Finished!";
-  cout<<endl;
+  INFO_NICE << "Finished!";
+  cout << endl;
 
   t = clock() - t;
   time(&end);
-  printf ("CPU time: %f seconds.\n",((float)t)/CLOCKS_PER_SEC);
-  printf ("Real time: %f seconds.\n",difftime(end,start));
+  printf("CPU time: %f seconds.\n", ((float)t) / CLOCKS_PER_SEC);
+  printf("Real time: %f seconds.\n", difftime(end, start));
 
   // Print pythia statistics
   // pythiaGun->stat();
@@ -181,10 +190,9 @@ int main(int argc, char** argv)
 
 // -------------------------------------
 
-void Show()
-{
-  INFO_NICE<<"-------------------------------------------";
-  INFO_NICE<<"| Clock Brick Test XSCAPE Framework ...   |";
-  INFO_NICE<<"-------------------------------------------";
+void Show() {
+  INFO_NICE << "-------------------------------------------";
+  INFO_NICE << "| Clock Brick Test XSCAPE Framework ...   |";
+  INFO_NICE << "-------------------------------------------";
   INFO_NICE;
 }

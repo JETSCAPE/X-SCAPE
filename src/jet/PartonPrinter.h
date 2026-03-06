@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -25,8 +26,7 @@
 namespace Jetscape {
 
 class PartonPrinter : public JetScapeModuleBase {
-
-public:
+ public:
   PartonPrinter();
   virtual ~PartonPrinter();
 
@@ -34,7 +34,7 @@ public:
   virtual void ExecuteTask() final;
   virtual void ClearTask();
   std::ofstream
-      dist_output; ///< the output stream where events are saved to file
+      dist_output;  ///< the output stream where events are saved to file
 
   void GetFinalPartons(shared_ptr<PartonShower>
                            pShower /*, vector<shared_ptr<Parton>>& fPartons*/);
@@ -48,13 +48,14 @@ public:
     fPartons = pFinals;
   };
 
-private:
+ private:
   vector<vector<shared_ptr<Parton>>> pFinals;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<PartonPrinter> reg;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

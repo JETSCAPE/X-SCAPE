@@ -1,26 +1,23 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project (libJetScapeThird)
+project(libJetScapeThird)
 
-#for MacOSX
+# for MacOSX
 cmake_policy(SET CMP0042 NEW)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../lib/")
 
-set (SOURCES
-    fjcore.cc
-    tinyxml2.cc
-    cornelius.cpp
-)
+set(SOURCES fjcore.cc tinyxml2.cc)
 
-add_subdirectory( hydro_from_external_file )
+# Add the Cornelius.cpp from ./Cornelius
+add_subdirectory(Cornelius)
 
-if (${ZLIB_FOUND})
-    set (SOURCES ${SOURCES}  gzstream.cc )
+add_subdirectory(hydro_from_external_file)
+
+if(${ZLIB_FOUND})
+  set(SOURCES ${SOURCES} gzstream.cc)
 endif()
 
 add_library(JetScapeThird SHARED ${SOURCES})
-if (${ZLIB_FOUND})
-    target_link_libraries(JetScapeThird ${ZLIB_LIBRARIES} )
+if(${ZLIB_FOUND})
+  target_link_libraries(JetScapeThird ${ZLIB_LIBRARIES})
 endif()
-
-

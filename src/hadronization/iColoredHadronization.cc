@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -21,13 +22,12 @@
 #include "MCGlauberGenStringWrapper.h"
 #include <memory>
 
-
 using namespace Jetscape;
 using namespace Pythia8;
 
 // Register the module with the base class
-RegisterJetScapeModule<iColoredHadronization>
-    iColoredHadronization::reg("iColoredHadronization");
+RegisterJetScapeModule<iColoredHadronization> iColoredHadronization::reg(
+    "iColoredHadronization");
 
 Pythia8::Pythia iColoredHadronization::pythia("IntentionallyEmpty", false);
 
@@ -39,7 +39,6 @@ iColoredHadronization::iColoredHadronization() {
 iColoredHadronization::~iColoredHadronization() { VERBOSE(8); }
 
 void iColoredHadronization::InitTask() {
-
   std::string s = GetXMLElementText({"JetHadronization", "name"});
   JSDEBUG << s << " to be initializied ...";
 
@@ -87,12 +86,12 @@ void iColoredHadronization::InitTask() {
     pythia.readString("ParticleDecays:limitTau0 = on");
     pythia.readString("ParticleDecays:tau0Max = 10.0");
   }
-  //Optionally read in additional settings
+  // Optionally read in additional settings
   std::stringstream lines;
   lines << GetXMLElementText({"JetHadronization", "LinesToRead"}, false);
   while (std::getline(lines, s, '\n')) {
     if (s.find_first_not_of(" \t\v\f\r") == s.npos)
-      continue; // skip empty lines
+      continue;  // skip empty lines
     JSINFO << "Also reading in: " << s;
     pythia.readString(s);
   }
@@ -112,7 +111,6 @@ void iColoredHadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
 void iColoredHadronization::DoHadronization(
     vector<vector<shared_ptr<Parton>>> &shower,
     vector<shared_ptr<Hadron>> &hOut, vector<shared_ptr<Parton>> &pOut) {
-  
   // JSINFO << "Starting "
   Event &event = pythia.event;
   event.reset();
@@ -123,7 +121,6 @@ void iColoredHadronization::DoHadronization(
     JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
             << " partons in the shower number " << ishower;
     for (unsigned int ipart = 0; ipart < shower.at(ishower).size(); ++ipart) {
-      
       // if(shower.at(ishower).at(ipart)->pstat() < 0 ) continue;
 
       double onshellE = pow(pow(shower.at(ishower).at(ipart)->px(), 2) +
@@ -132,12 +129,11 @@ void iColoredHadronization::DoHadronization(
                             0.5);
 
       if (shower.at(ishower).at(ipart)->pid() == 22) {
-
         VERBOSE(1) << BOLDYELLOW
                    << " photon found in colored hadronization with ";
         VERBOSE(1) << BOLDYELLOW
                    << "px = " << shower.at(ishower).at(ipart)->px();
-        //cin >> blurb;
+        // cin >> blurb;
       }
 
       event.append(shower.at(ishower).at(ipart)->pid(), 23,
@@ -147,7 +143,8 @@ void iColoredHadronization::DoHadronization(
                    shower.at(ishower).at(ipart)->py(),
                    shower.at(ishower).at(ipart)->pz(), onshellE);
 
-      VERBOSE(2) << BOLDYELLOW << " pid = " << shower.at(ishower).at(ipart)->pid()
+      VERBOSE(2) << BOLDYELLOW
+                 << " pid = " << shower.at(ishower).at(ipart)->pid()
                  << " plabel = " << shower.at(ishower).at(ipart)->plabel()
                  << " pstat = " << shower.at(ishower).at(ipart)->pstat()
                  << " col = " << shower.at(ishower).at(ipart)->color()
@@ -155,117 +152,114 @@ void iColoredHadronization::DoHadronization(
     }
   }
 
-  auto ini  = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
+  auto ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
   auto Hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
 
-  auto MCGsecond = std::dynamic_pointer_cast<MCGlauberGenStringWrapper> (Hard->GetTaskList()[1]);
+  auto MCGsecond = std::dynamic_pointer_cast<MCGlauberGenStringWrapper>(
+      Hard->GetTaskList()[1]);
   auto Remnants = Hard->GetRemnants();
-  if(2 * ini->pTHat.size() != Remnants.size()){
-    throw std::runtime_error("Not enough remnants = " + std::to_string(Remnants.size()) + " Scattering = " + std::to_string(ini->pTHat.size()));
+  if (2 * ini->pTHat.size() != Remnants.size()) {
+    throw std::runtime_error(
+        "Not enough remnants = " + std::to_string(Remnants.size()) +
+        " Scattering = " + std::to_string(ini->pTHat.size()));
   }
   double NHardScatterings = double(ini->pTHat.size());
 
   for (unsigned int ipart = 0; ipart < Remnants.size(); ++ipart) {
-      auto Rem = Remnants[ipart];
-      double Pz, Px, Py, En;
-      if(Rem.pz() >=0){
-        En = MCGsecond->Get_Proj_Remnant()[0] / double(NHardScatterings);
-        Px = MCGsecond->Get_Proj_Remnant()[1] / double(NHardScatterings);
-        Py = MCGsecond->Get_Proj_Remnant()[2] / double(NHardScatterings);
-        Pz = MCGsecond->Get_Proj_Remnant()[3] / double(NHardScatterings);
-      } else {
-        En = MCGsecond->Get_Targ_Remnant()[0] / double(NHardScatterings);
-        Px = MCGsecond->Get_Targ_Remnant()[1] / double(NHardScatterings);
-        Py = MCGsecond->Get_Targ_Remnant()[2] / double(NHardScatterings);
-        Pz = MCGsecond->Get_Targ_Remnant()[3] / double(NHardScatterings);
-      }
+    auto Rem = Remnants[ipart];
+    double Pz, Px, Py, En;
+    if (Rem.pz() >= 0) {
+      En = MCGsecond->Get_Proj_Remnant()[0] / double(NHardScatterings);
+      Px = MCGsecond->Get_Proj_Remnant()[1] / double(NHardScatterings);
+      Py = MCGsecond->Get_Proj_Remnant()[2] / double(NHardScatterings);
+      Pz = MCGsecond->Get_Proj_Remnant()[3] / double(NHardScatterings);
+    } else {
+      En = MCGsecond->Get_Targ_Remnant()[0] / double(NHardScatterings);
+      Px = MCGsecond->Get_Targ_Remnant()[1] / double(NHardScatterings);
+      Py = MCGsecond->Get_Targ_Remnant()[2] / double(NHardScatterings);
+      Pz = MCGsecond->Get_Targ_Remnant()[3] / double(NHardScatterings);
+    }
 
-      // std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En = "<< En << " " << NHardScatterings <<  std::endl;
+    // std::cout << "Px = " << Px << " Py = " << Py << " Pz = " << Pz << " En =
+    // "<< En << " " << NHardScatterings <<  std::endl;
 
-      double onshellE = pow(pow(Rem.px() + Px, 2) + pow(Rem.py() + Py, 2) + pow(Pz, 2),0.5);
-      event.append(Rem.pid(), 23,
-                   Rem.color(),
-                   Rem.anti_color(),
-                   Rem.px() + Px,
-                   Rem.py() + Py,
-                   Pz, onshellE);
-      VERBOSE(2) << BOLDYELLOW << " pid = " << Rem.pid()
-                 << " plabel = " << Rem.plabel()
-                 << " pstat = " << Rem.pstat()
-                 << " col = " << Rem.color()
-                 << " acol = " << Rem.anti_color();
+    double onshellE =
+        pow(pow(Rem.px() + Px, 2) + pow(Rem.py() + Py, 2) + pow(Pz, 2), 0.5);
+    event.append(Rem.pid(), 23, Rem.color(), Rem.anti_color(), Rem.px() + Px,
+                 Rem.py() + Py, Pz, onshellE);
+    VERBOSE(2) << BOLDYELLOW << " pid = " << Rem.pid()
+               << " plabel = " << Rem.plabel() << " pstat = " << Rem.pstat()
+               << " col = " << Rem.color() << " acol = " << Rem.anti_color();
   }
 
-    //first, find unpaired color and anticolor tags.
-    std::vector<int> cols;
-    std::vector<int> acols;
-    for (unsigned int ipart = 0; ipart < event.size(); ++ipart) {
-      if (event[ipart].id() == 22) {
+  // first, find unpaired color and anticolor tags.
+  std::vector<int> cols;
+  std::vector<int> acols;
+  for (unsigned int ipart = 0; ipart < event.size(); ++ipart) {
+    if (event[ipart].id() == 22) {
+      continue;
+    }
+    if (event[ipart].col() != 0) {
+      cols.push_back(event[ipart].col());
+    }
+    if (event[ipart].acol() != 0) {
+      acols.push_back(event[ipart].acol());
+    }
+  }
+
+  // the outcomes are: 1-unpaired color tag, 2-unpaired anticolor tag, 3-both an
+  // unpaired color & anticolor tag, 4-no unpaired tags 1-add an antiquark,
+  // 2-add a quark, 3-add a gluon, 4-add nothing (possibly photon only event)
+  int icol = 0;
+  while (icol < cols.size()) {
+    bool foundpair = false;
+    for (int iacol = 0; iacol < acols.size(); ++iacol) {
+      if (cols[icol] == acols[iacol]) {
+        cols.erase(cols.begin() + icol);
+        acols.erase(acols.begin() + iacol);
+        foundpair = true;
         continue;
       }
-      if (event[ipart].col() != 0) {
-        cols.push_back(event[ipart].col());
-      }
-      if (event[ipart].acol() != 0) {
-        acols.push_back(event[ipart].acol());
-      }
     }
-
-
-    //the outcomes are: 1-unpaired color tag, 2-unpaired anticolor tag, 3-both an unpaired color & anticolor tag, 4-no unpaired tags
-    //1-add an antiquark, 2-add a quark, 3-add a gluon, 4-add nothing (possibly photon only event)
-    int icol = 0;
-    while (icol < cols.size()) {
-      bool foundpair = false;
-      for (int iacol = 0; iacol < acols.size(); ++iacol) {
-        if (cols[icol] == acols[iacol]) {
-          cols.erase(cols.begin() + icol);
-          acols.erase(acols.begin() + iacol);
-          foundpair = true;
-          continue;
-        }
-      }
-      if (!foundpair) {
-        ++icol;
-      }
+    if (!foundpair) {
+      ++icol;
     }
+  }
 
+  if (cols.size() > 0 || acols.size() > 0) {
+    for (auto col : cols)
+      JSWARN << " col = " << col;
+    for (auto col : acols)
+      JSWARN << " col = " << col;
+    throw std::runtime_error("Unpaired colors sent to Pythia");
+  }
 
-    if(cols.size() > 0 || acols.size() > 0){
-      for(auto col : cols)
-        JSWARN << " col = " << col;
-      for(auto col : acols)
-        JSWARN << " col = " << col;
-      throw std::runtime_error("Unpaired colors sent to Pythia");
-    }
+  int pid = 0;
+  int color = 0;
+  int anti_color = 0;
+  if ((cols.size() > 0) && (acols.size() > 0)) {
+    pid = 21;
+    color = cols[0];
+    anti_color = acols[0];
+  } else if ((cols.size() > 0) && (acols.size() == 0)) {
+    pid = -1;
+    color = cols[0];
+    anti_color = 0;
+  } else if ((cols.size() == 0) && (acols.size() > 0)) {
+    pid = 1;
+    color = 0;
+    anti_color = acols[0];
+  }
 
-    int pid = 0;
-    int color = 0;
-    int anti_color = 0;
-    if ((cols.size() > 0) && (acols.size() > 0)) {
-      pid = 21;
-      color = cols[0];
-      anti_color = acols[0];
-    } else if ((cols.size() > 0) && (acols.size() == 0)) {
-      pid = -1;
-      color = cols[0];
-      anti_color = 0;
-    } else if ((cols.size() == 0) && (acols.size() > 0)) {
-      pid = 1;
-      color = 0;
-      anti_color = acols[0];
-    }
+  if (pid != 0) {
+    pz = -1 * pz;
+    event.append(pid, 23, anti_color, color, 0.2, 0.2, pz,
+                 sqrt(pz * pz + 0.08));
+  }
 
-    if (pid != 0) {
-      pz = -1 * pz;
-      event.append(pid, 23, anti_color, color, 0.2, 0.2, pz,
-                   sqrt(pz * pz + 0.08));
-    }
+  VERBOSE(2) << "There are " << hOut.size() << " Hadrons and " << pOut.size()
+             << " partons after Hadronization";
 
-    VERBOSE(2) << "There are " << hOut.size() << " Hadrons and " << pOut.size()
-               << " partons after Hadronization";
-  
-  
   pythia.next();
   // event.list();
 
@@ -273,9 +267,9 @@ void iColoredHadronization::DoHadronization(
   for (unsigned int i = 0; i < event.size(); ++i) {
     if (!event[i].isFinal())
       continue;
-    //if ( !event[i].isHadron() )  continue;
+    // if ( !event[i].isHadron() )  continue;
     if (fabs(event[i].eta()) > 20)
-      continue; //To prevent "nan" from propagating, very rare though
+      continue;  // To prevent "nan" from propagating, very rare though
 
     double x[4] = {0, 0, 0, 0};
     hOut.push_back(make_shared<Hadron>(ip, event[i].id(), event[i].status(),

@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -70,7 +71,8 @@ void HadronizationManager::Init() {
   JetScapeTask::InitTasks();
 
   JSINFO << "Connect HadronizationManager Signal to Energy Loss Manager ...";
-  JetScapeSignalManager::Instance()->ConnectGetFinalPartonListSignal(shared_from_this());
+  JetScapeSignalManager::Instance()->ConnectGetFinalPartonListSignal(
+      shared_from_this());
 }
 
 void HadronizationManager::WriteTask(weak_ptr<JetScapeWriter> w) {
@@ -79,7 +81,6 @@ void HadronizationManager::WriteTask(weak_ptr<JetScapeWriter> w) {
 }
 
 void HadronizationManager::ExecuteTask() {
-
   VERBOSE(2) << "Run Hadronization Manager ...";
   JSDEBUG << "Task Id = " << this_thread::get_id();
 
@@ -97,8 +98,7 @@ void HadronizationManager::ExecuteTask() {
     VERBOSE(2) << " There are " << hd.size()
                << " partons ready for hadronization";
     VERBOSE(2) << " There are already " << hadrons.size() << " hadrons";
-   
-    
+
     for (auto it : GetTaskList()) {
       dynamic_pointer_cast<Hadronization>(it)->AddInPartons(hd);
       dynamic_pointer_cast<Hadronization>(it)->AddInHadrons(hadrons);
@@ -133,37 +133,37 @@ void HadronizationManager::CreateSignalSlots() {
   JetScapeSignalManager::Instance()->PrintTransformPartonsSignalMap();
 }
 
-void HadronizationManager::GetHadrons(vector<shared_ptr<Hadron>>& signal){
-	//signal = outHadrons;
-	signal.clear();
-	// foreach hadronizon object tasks
-	for(shared_ptr<JetScapeTask> it : GetTaskList()){
-		vector<shared_ptr<Hadron>> tempHadronList;
-		JetScapeTask *jet = it.get();
-		Hadronization *hit = (Hadronization *) jet;
-		tempHadronList = hit->GetHadrons();
-		for(auto hadron : tempHadronList){
-			signal.push_back(hadron);
-		}
-	}
+void HadronizationManager::GetHadrons(vector<shared_ptr<Hadron>> &signal) {
+  // signal = outHadrons;
+  signal.clear();
+  // foreach hadronizon object tasks
+  for (shared_ptr<JetScapeTask> it : GetTaskList()) {
+    vector<shared_ptr<Hadron>> tempHadronList;
+    JetScapeTask *jet = it.get();
+    Hadronization *hit = (Hadronization *)jet;
+    tempHadronList = hit->GetHadrons();
+    for (auto hadron : tempHadronList) {
+      signal.push_back(hadron);
+    }
+  }
 }
 
 void HadronizationManager::DeleteHadrons() {
   // foreach hadronizon object tasks
-	for(shared_ptr<JetScapeTask> it : GetTaskList()){
-		JetScapeTask *jet = it.get();
-		Hadronization *hit = (Hadronization *) jet;
-		hit->DeleteHadrons();
-	}
+  for (shared_ptr<JetScapeTask> it : GetTaskList()) {
+    JetScapeTask *jet = it.get();
+    Hadronization *hit = (Hadronization *)jet;
+    hit->DeleteHadrons();
+  }
 }
 
 void HadronizationManager::DeleteRealHadrons() {
   // foreach hadronizon object tasks
-	for(shared_ptr<JetScapeTask> it : GetTaskList()){
-		JetScapeTask *jet = it.get();
-		Hadronization *hit = (Hadronization *) jet;
-		hit->DeleteRealHadrons();
-	}
+  for (shared_ptr<JetScapeTask> it : GetTaskList()) {
+    JetScapeTask *jet = it.get();
+    Hadronization *hit = (Hadronization *)jet;
+    hit->DeleteRealHadrons();
+  }
 }
 
-} // namespace Jetscape
+}  // namespace Jetscape

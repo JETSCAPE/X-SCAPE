@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -13,16 +14,27 @@
  * See COPYING for details.
  ******************************************************************************/
 
- #ifndef VERSION_H
- #define VERSION_H
+#ifndef VERSION_H
+#define VERSION_H
 
- #include <string>
+#include <string>
 
- namespace Jetscape {
+namespace Jetscape {
 
- const std::string JetScapeVersion = "3.6";
- const std::string XscapeVersion = "1.1";
+/**
+ * @file Version.h
+ * @brief Version identifiers for the JETSCAPE framework and X-SCAPE layer.
+ *
+ * This header exposes two string constants used to identify the
+ * X-SCAPE release and the corresponding JETSCAPE compatibility version.
+ */
 
- } // end namespace Jetscape
+/// Version identifier for the JETSCAPE framework.
+const std::string JetScapeVersion = "4.0.2";
 
- #endif
+/// Version identifier for the X-SCAPE framework.
+const std::string XscapeVersion = "2.1";
+
+}  // end namespace Jetscape
+
+#endif

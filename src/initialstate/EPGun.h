@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -13,7 +14,8 @@
  * See COPYING for details.
  ******************************************************************************/
 
-// Create a pythia collision at a specified point and return the two inital hard partons
+// Create a pythia collision at a specified point and return the two inital hard
+// partons
 
 #ifndef EPGUN_H
 #define EPGUN_H
@@ -26,9 +28,8 @@
 using namespace Jetscape;
 
 class EPGun : public HardProcess, public Pythia8::Pythia {
-
-private:
-  double eProton   = 920.;
+ private:
+  double eProton = 920.;
   double eElectron = 27.5;
   double vir_factor;
   double softMomentumCutoff;
@@ -40,26 +41,29 @@ private:
   double Q2pow = 1.0;
   double Q2factor = 0.00469765;
 
-  //cut variables
-  double Q2min     = 0.;
-  double Q2max    = 1000000.;
-  double W2min     = 0.;
-  double W2max     = 1000000.;
-  double xmin     = 0.;
-  double xmax     = 1.;
-  double ymin     = 0.;
-  double ymax     = 1.;
+  // cut variables
+  double Q2min = 0.;
+  double Q2max = 1000000.;
+  double W2min = 0.;
+  double W2max = 1000000.;
+  double xmin = 0.;
+  double xmax = 1.;
+  double ymin = 0.;
+  double ymax = 1.;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<EPGun> reg;
-  
-protected:
+
+ protected:
   std::uniform_real_distribution<double> ZeroOneDistribution;
 
-public:
+ public:
   /** standard ctor
-      @param xmlDir: Note that the environment variable PYTHIA8DATA takes precedence! So don't use it.
-      @param printBanner: Suppress starting blurb. Should be set to true in production, credit where it's due
+      @param xmlDir: Note that the environment variable PYTHIA8DATA takes
+     precedence! So don't use it.
+      @param printBanner: Suppress starting blurb. Should be set to true in
+     production, credit where it's due
   */
   EPGun(string xmlDir = "DONTUSETHIS", bool printBanner = false)
       : Pythia8::Pythia(xmlDir, printBanner), HardProcess() {
@@ -76,14 +80,14 @@ public:
   double GetSigmaErr() { return info.sigmaErr(); };
   double GetEventWeight() { return info.weight(); };
 
-  std::shared_ptr<Hadron> PythiaToJSHadron(Pythia8::Particle &particle){
-
-    std::shared_ptr<Hadron> jshadron = std::make_shared<Hadron>
-      (Hadron(1,particle.id(),801,particle.pT(),particle.eta(),particle.phi(),particle.e(),0));
+  std::shared_ptr<Hadron> PythiaToJSHadron(Pythia8::Particle &particle) {
+    std::shared_ptr<Hadron> jshadron = std::make_shared<Hadron>(
+        Hadron(1, particle.id(), 801, particle.pT(), particle.eta(),
+               particle.phi(), particle.e(), 0));
     return jshadron;
   }
 
   Matter matterHelper;
 };
 
-#endif // EPGun_H
+#endif  // EPGun_H

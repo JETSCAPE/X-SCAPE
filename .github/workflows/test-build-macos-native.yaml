@@ -4,12 +4,12 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-2.0.1-RC
+      - XSCAPE-2.1-RC
 
   push:
     branches:
       - main
-      - XSCAPE-2.0.1-RC
+      - XSCAPE-2.1-RC
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -36,16 +36,34 @@ jobs:
         brew install --formula open-mpi
         brew install --formula gsl
         brew install --formula boost@1.85
+        brew install --formula eigen
         brew install --formula zlib
         brew install --formula gcc
+        brew install --formula libomp
         . /opt/homebrew/bin/thisroot.sh
+        brew --prefix libomp
 
     - name: set environment variables
       run: |
-        export ROOTSYS="/usr/local/root"
-        export PATH="$ROOTSYS/bin:\$PATH"
-        export LD_LIBRARY_PATH="$ROOTSYS/lib:$LD_LIBRARY_PATH"
-        export PYTHONPATH="$ROOTSYS/lib"
+        echo "ROOTSYS=/usr/local/root" >> $GITHUB_ENV
+        echo "PATH=/usr/local/root/bin:$PATH" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=/usr/local/root/lib:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+        echo "PYTHONPATH=/usr/local/root/lib" >> $GITHUB_ENV
+
+    - name: Capture Eigen paths
+      run: |
+        EIGEN_PREFIX="$(brew --prefix eigen)"
+        OPENMP_PREFIX="$(brew --prefix libomp)"
+        echo "EIGEN3_PREFIX=${EIGEN_PREFIX}" >> $GITHUB_ENV
+        echo "EIGEN3_ROOT=${EIGEN_PREFIX}/include" >> $GITHUB_ENV
+        echo "EIGEN3_INCLUDE_DIR=${EIGEN_PREFIX}/include/eigen3" >> $GITHUB_ENV
+        echo "EIGEN3_CMAKE_DIR=${EIGEN_PREFIX}/share/eigen3/cmake" >> $GITHUB_ENV
+        echo "Eigen3_DIR=${EIGEN_PREFIX}/share/eigen3/cmake" >> $GITHUB_ENV
+        echo "EIGEN3_ROOT_DIR=${EIGEN_PREFIX}/include" >> $GITHUB_ENV
+        echo "OPENMP_PREFIX=${OPENMP_PREFIX}" >> $GITHUB_ENV
+        echo "OpenMP_INCLUDE_DIRS=${OPENMP_PREFIX}/include" >> $GITHUB_ENV
+        echo "Eigen paths registered from ${EIGEN_PREFIX}"
+        echo "OpenMP paths registered from ${OPENMP_PREFIX}"
 
     - name: Download CMake 3.31.6
       run: |
@@ -96,6 +114,8 @@ jobs:
           ../hepmc3-source
         make
         make install
+        echo "HEPMC3_DIR=${GITHUB_WORKSPACE}/hepmc3-install" >> $GITHUB_ENV
+        echo "Set HEPMC3_DIR=${GITHUB_WORKSPACE}/hepmc3-install"
 
     - name: Download Pythia 8315
       run: |
@@ -139,6 +159,7 @@ jobs:
 
     - name: Download SMASH
       run: |
+        export CMAKE_PREFIX_PATH="${EIGEN3_CMAKE_DIR}:$CMAKE_PREFIX_PATH"
         echo "JETSCAPE_DIR is $JETSCAPE_DIR"
         echo "PYTHIA8DIR is $PYTHIA8DIR"
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages
@@ -154,7 +175,9 @@ jobs:
         cd ${GITHUB_WORKSPACE}/${REPO_NAME}
         mkdir build
         cd build
+        export OpenMP_INCLUDE_DIRS="/opt/homebrew/opt/libomp/include"
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
+        export CMAKE_PREFIX_PATH="${EIGEN3_CMAKE_DIR}:$CMAKE_PREFIX_PATH"
         BOOST_ROOT="$(brew --prefix boost@1.85)"
         echo "This is SMASH_DIR: "
         echo ${SMASH_DIR}
@@ -165,7 +188,13 @@ jobs:
           -DUSE_ISS=ON \
           -DUSE_FREESTREAM=ON \
           -DUSE_SMASH=ON \
-          -DCMAKE_PREFIX_PATH="$BOOST_ROOT" \
+          -DOpenMP_ROOT="$OPENMP_PREFIX" \
+          -DOpenMP_C_FLAGS="-Xpreprocessor -fopenmp -I$OPENMP_PREFIX/include" \
+          -DOpenMP_CXX_FLAGS="-Xpreprocessor -fopenmp -I$OPENMP_PREFIX/include" \
+          -DOpenMP_CXX_LIB_NAMES=omp \
+          -DOpenMP_omp_LIBRARY="$OPENMP_PREFIX/lib/libomp.dylib" \
+          -DOpenMP_libomp_LIBRARY="$OPENMP_PREFIX/lib/libomp.dylib" \
+          -DCMAKE_PREFIX_PATH="$BOOST_ROOT;$EIGEN3_CMAKE_DIR" \
           -DBoost_NO_BOOST_CMAKE=ON
         make -j2
 

@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -56,7 +57,7 @@ void PreequilibriumDynamics::Init() {
   preequilibrium_tau_0_ = GetXMLElementDouble({"Preequilibrium", "tau0"});
   preequilibrium_tau_max_ = GetXMLElementDouble({"Preequilibrium", "taus"});
 
- InitializePreequilibrium();
+  InitializePreequilibrium();
 
   InitTask();
   InitTasks();
@@ -94,4 +95,4 @@ void PreequilibriumDynamics::ClearTask() {
   bulk_Pi_.clear();
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

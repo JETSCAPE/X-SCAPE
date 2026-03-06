@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -27,16 +28,17 @@
 using namespace Jetscape;
 
 class iSpectraSamplerWrapper : public SoftParticlization {
-private:
+ private:
   tinyxml2::XMLElement *iSS_xml_;
 
   int statusCode_;
   std::unique_ptr<iSS> iSpectraSampler_ptr_;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<iSpectraSamplerWrapper> reg;
 
-public:
+ public:
   iSpectraSamplerWrapper();
   ~iSpectraSamplerWrapper();
 
@@ -54,4 +56,4 @@ public:
   void PassHadronListToJetscapeSameEvent();
 };
 
-#endif // ISPECTRASAMPLERWRAPPER_H
+#endif  // ISPECTRASAMPLERWRAPPER_H

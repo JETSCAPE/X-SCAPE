@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -33,18 +34,20 @@ JetScapeWriterStream<T>::JetScapeWriterStream(string m_file_name_out) {
   SetOutputFileName(m_file_name_out);
 }
 
-template <class T> JetScapeWriterStream<T>::~JetScapeWriterStream() {
+template <class T>
+JetScapeWriterStream<T>::~JetScapeWriterStream() {
   VERBOSE(8);
   if (GetActive())
     Close();
 }
 
-template <class T> void JetScapeWriterStream<T>::WriteHeaderToFile() {
+template <class T>
+void JetScapeWriterStream<T>::WriteHeaderToFile() {
   VERBOSE(3) << "Run JetScapeWriterStream<T>: Write header of event # "
              << GetCurrentEvent() << " ...";
   Write(to_string(GetCurrentEvent()) + " Event");
   hadronCounter = 0;
-  
+
   std::ostringstream oss;
   oss.str("");
   oss << GetId() << "sigmaGen " << GetHeader().GetSigmaGen();
@@ -79,45 +82,52 @@ template <class T> void JetScapeWriterStream<T>::WriteHeaderToFile() {
   }
 }
 
-template <class T> void JetScapeWriterStream<T>::WriteEvent() {
-  // JSINFO<<"Run JetScapeWriterStream<T>: Write event # "<<GetCurrentEvent()<<" ...";
-  // do nothing, the modules handle this
+template <class T>
+void JetScapeWriterStream<T>::WriteEvent() {
+  // JSINFO<<"Run JetScapeWriterStream<T>: Write event # "<<GetCurrentEvent()<<"
+  // ..."; do nothing, the modules handle this
 }
 
-template <class T> void JetScapeWriterStream<T>::Write(weak_ptr<Parton> p) {
+template <class T>
+void JetScapeWriterStream<T>::Write(weak_ptr<Parton> p) {
   auto pp = p.lock();
   if (pp) {
     output_file << *pp << endl;
   }
 }
 
-template <class T> void JetScapeWriterStream<T>::Write(weak_ptr<Vertex> v) {
+template <class T>
+void JetScapeWriterStream<T>::Write(weak_ptr<Vertex> v) {
   auto vv = v.lock();
   if (vv) {
     output_file << *vv << endl;
   }
 }
 
-template <class T> void JetScapeWriterStream<T>::InitTask() {
+template <class T>
+void JetScapeWriterStream<T>::InitTask() {
   if (GetActive()) {
     JSINFO << "JetScape Stream Writer initialized with output file = "
            << GetOutputFileName();
     output_file.open(GetOutputFileName().c_str());
 
-    //Write Init Informations, like XML and ... to file ...
-    //WriteInitFileXMLMain();
-    //WriteInitFileXMLUser();
+    // Write Init Informations, like XML and ... to file ...
+    // WriteInitFileXMLMain();
+    // WriteInitFileXMLUser();
   }
 }
 
-template <class T> void JetScapeWriterStream<T>::ExecuteTask() {
-  // JSINFO<<"Run JetScapeWriterStream<T>: Write event # "<<GetCurrentEvent()<<" ...";
+template <class T>
+void JetScapeWriterStream<T>::ExecuteTask() {
+  // JSINFO<<"Run JetScapeWriterStream<T>: Write event # "<<GetCurrentEvent()<<"
+  // ...";
 
   // if (GetActive())
   //   WriteEvent();
 }
 
-template <class T> void JetScapeWriterStream<T>::WriteInitFileXMLMain() {
+template <class T>
+void JetScapeWriterStream<T>::WriteInitFileXMLMain() {
   JSDEBUG << "Write XML Main to output file. XML file = "
           << JetScapeXML::Instance()->GetXMLMainFileName();
   tinyxml2::XMLPrinter printer;
@@ -127,7 +137,8 @@ template <class T> void JetScapeWriterStream<T>::WriteInitFileXMLMain() {
   output_file << printer.CStr();
 }
 
-template <class T> void JetScapeWriterStream<T>::WriteInitFileXMLUser() {
+template <class T>
+void JetScapeWriterStream<T>::WriteInitFileXMLUser() {
   JSDEBUG << "Write XML User to output file. XML file = "
           << JetScapeXML::Instance()->GetXMLUserFileName();
   tinyxml2::XMLPrinter printer;
@@ -164,7 +175,8 @@ void JetScapeWriterStream<T>::Write(weak_ptr<PartonShower> ps) {
   }
 }
 
-template <class T> void JetScapeWriterStream<T>::Write(weak_ptr<Hadron> h) {
+template <class T>
+void JetScapeWriterStream<T>::Write(weak_ptr<Hadron> h) {
   auto hh = h.lock();
   if (hh) {
     WriteWhiteSpace("[" + to_string(hadronCounter) + "] H");
@@ -179,4 +191,4 @@ template class JetScapeWriterStream<ofstream>;
 template class JetScapeWriterStream<ogzstream>;
 #endif
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

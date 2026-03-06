@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -77,7 +78,7 @@ bool StringTokenizer::isCommentEntry() const {
 bool StringTokenizer::isEventEntry() const {
   if (buffer.length() == 0)
     return false;
-  if (buffer.find("Event") < 100) // && !isCommentEntry())
+  if (buffer.find("Event") < 100)  // && !isCommentEntry())
     return true;
 
   return false;
@@ -116,16 +117,16 @@ void StringTokenizer::setDelimiter(const std::string &delimiter) {
 // If cannot find a token anymore, return "".
 ///////////////////////////////////////////////////////////////////////////////
 std::string StringTokenizer::next() {
-  //if(buffer.size() <= 0) return "";           // skip if buffer is empty
+  // if(buffer.size() <= 0) return "";           // skip if buffer is empty
 
   if (buffer.size() <= 0) {
     this->currPos = buffer.end();
     return "";
   }
 
-  token.clear(); // reset token string
+  token.clear();  // reset token string
 
-  this->skipDelimiter(); // skip leading delimiters
+  this->skipDelimiter();  // skip leading delimiters
 
   // append each char to token string until it meets delimiter
   while (currPos != buffer.end() && !isDelimiter(*currPos)) {
@@ -164,4 +165,4 @@ std::vector<std::string> StringTokenizer::split() {
   return tokens;
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

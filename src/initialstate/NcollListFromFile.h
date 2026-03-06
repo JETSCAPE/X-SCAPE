@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -31,7 +32,7 @@ class NcollListFromFile : public Jetscape::InitialState {
   // this is wrapper class to read external files that
   // stores initial number of binary collisions and corresponding
   // configurations
-public:
+ public:
   NcollListFromFile();
   ~NcollListFromFile();
 
@@ -39,15 +40,14 @@ public:
   void ClearTask();
 
   /** Generated number of binary collisions. */
-  double GetNcoll() { return(ncoll_); };
+  double GetNcoll() { return (ncoll_); };
 
   //! Load saved number of binary collisions
   void ReadNbcList(std::string filename);
 
-  void SampleABinaryCollisionPoint(double &t, double &x, 
-                                   double &y, double &z);
+  void SampleABinaryCollisionPoint(double &t, double &x, double &y, double &z);
 
-private:
+ private:
   std::vector<double> binary_collision_x_;
   std::vector<double> binary_collision_y_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;

@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -24,17 +25,18 @@ using namespace Jetscape;
 class Brick : public FluidDynamics {
   // this is wrapper class for a simple brick
   // so that it can be used within the JETSCAPE framework
-private:
+ private:
   double T_brick;
   double brick_L;
   double start_time;
   bool bjorken_expansion_on;
   double vx, vy, vz;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<Brick> reg;
 
-public:
+ public:
   Brick();
   ~Brick();
 
@@ -49,7 +51,7 @@ public:
                        SurfaceCellInfo *surface_list_ptr){};
 
   void InitTask();
-  //virtual void ExecuteTask();
+  // virtual void ExecuteTask();
 
   void CalculateTime();
   void ExecTime();
@@ -58,4 +60,4 @@ public:
                                  const Jetscape::real tauMax);
 };
 
-#endif // BRICK_H
+#endif  // BRICK_H

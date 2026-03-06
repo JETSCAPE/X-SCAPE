@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -18,25 +19,29 @@
 
 namespace Jetscape {
 
-template <class T> JetScapeReader<T>::JetScapeReader():
-  currentEvent{-1}
-  , sigmaGen{-1}
-  , sigmaErr{-1}
-  , vertexX{-999}
-  , vertexY{-999}
-  , vertexZ{-999}
-  , eventWeight{-1}
-  , EventPlaneAngle{0.0}
-{
+template <class T>
+JetScapeReader<T>::JetScapeReader()
+    : currentEvent{-1},
+      sigmaGen{-1},
+      sigmaErr{-1},
+      vertexX{-999},
+      vertexY{-999},
+      vertexZ{-999},
+      eventWeight{-1},
+      EventPlaneAngle{0.0} {
   VERBOSE(8);
 }
 
-template <class T> JetScapeReader<T>::~JetScapeReader() { VERBOSE(8); }
+template <class T>
+JetScapeReader<T>::~JetScapeReader() {
+  VERBOSE(8);
+}
 
-template <class T> void JetScapeReader<T>::ClearTask() {
+template <class T>
+void JetScapeReader<T>::ClearTask() {
   nodeVec.clear();
   edgeVec.clear();
-  //pShower->clear();//pShower=nullptr; //check ...
+  // pShower->clear();//pShower=nullptr; //check ...
   pShowers.clear();
   hadrons.clear();
 
@@ -49,9 +54,10 @@ template <class T> void JetScapeReader<T>::ClearTask() {
   EventPlaneAngle = 0.0;
 }
 
-template <class T> void JetScapeReader<T>::AddNode(string s) {
+template <class T>
+void JetScapeReader<T>::AddNode(string s) {
   string token;
-  //int counter=0;
+  // int counter=0;
   strT.set(s);
 
   vector<string> vS;
@@ -66,10 +72,11 @@ template <class T> void JetScapeReader<T>::AddNode(string s) {
       make_shared<Vertex>(stod(vS[1]), stod(vS[2]), stod(vS[3]), stod(vS[4]))));
 }
 
-template <class T> void JetScapeReader<T>::AddEdge(string s) {
+template <class T>
+void JetScapeReader<T>::AddEdge(string s) {
   if (nodeVec.size() > 1) {
     string token;
-    //int counter=0;
+    // int counter=0;
     strT.set(s);
 
     vector<string> vS;
@@ -82,16 +89,16 @@ template <class T> void JetScapeReader<T>::AddEdge(string s) {
 
     pShower->new_parton(
         nodeVec[stoi(vS[0])], nodeVec[stoi(vS[1])],
-        make_shared<Parton>(
-            stoi(vS[2]), stoi(vS[3]), stoi(vS[4]), stod(vS[5]), stod(vS[6]),
-            stod(vS[7]),
-            stod(
-                vS[8]))); // use different constructor wit true spatial posiiton ...
+        make_shared<Parton>(stoi(vS[2]), stoi(vS[3]), stoi(vS[4]), stod(vS[5]),
+                            stod(vS[6]), stod(vS[7]),
+                            stod(vS[8])));  // use different constructor wit
+                                            // true spatial posiiton ...
   } else
     JSWARN << "Node vector not filled, can not add edges/partons!";
 }
 
-template <class T> void JetScapeReader<T>::AddHadron(string s) {
+template <class T>
+void JetScapeReader<T>::AddHadron(string s) {
   string token;
   strT.set(s);
 
@@ -108,11 +115,12 @@ template <class T> void JetScapeReader<T>::AddHadron(string s) {
                                         stod(vS[7]), x));
 }
 
-template <class T> void JetScapeReader<T>::Next() {
+template <class T>
+void JetScapeReader<T>::Next() {
   if (currentEvent > 0)
     ClearTask();
 
-  //ReadEvent(currentPos);
+  // ReadEvent(currentPos);
   string line;
   string token;
 
@@ -128,7 +136,6 @@ template <class T> void JetScapeReader<T>::Next() {
     strT.set(line);
 
     if (strT.isCommentEntry()) {
-
       // Cross section
       if (line.find("sigmaGen") != std::string::npos) {
         std::stringstream data(line);
@@ -159,10 +166,11 @@ template <class T> void JetScapeReader<T>::Next() {
       }
       // vertex position of hard scattering
       if (line.find("HardProcess") != std::string::npos) {
-        getline(inFile, line); // get next line to get vertex position
+        getline(inFile, line);  // get next line to get vertex position
         std::stringstream data(line);
         double dummy;
-        data >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> vertexX >> vertexY >> vertexZ;
+        data >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >>
+            vertexX >> vertexY >> vertexZ;
         JSDEBUG << " vertexX=" << vertexX;
         JSDEBUG << " vertexY=" << vertexY;
         JSDEBUG << " vertexZ=" << vertexZ;
@@ -208,8 +216,8 @@ template <class T> void JetScapeReader<T>::Next() {
     }
 
     // rest is list entry == hadron entry
-    // Some questionable nomenclature here - identifying all that begins with "[" as "GraphEntry"
-    // oh well
+    // Some questionable nomenclature here - identifying all that begins with
+    // "[" as "GraphEntry" oh well
     AddHadron(line);
   }
 
@@ -228,7 +236,8 @@ vector<fjcore::PseudoJet> JetScapeReader<T>::GetHadronsForFastJet() {
   return forFJ;
 }
 
-template <class T> void JetScapeReader<T>::InitTask() {
+template <class T>
+void JetScapeReader<T>::InitTask() {
   VERBOSE(8) << "Open Input File = " << file_name_in;
   JSINFO << "Open Input File = " << file_name_in;
 
@@ -249,4 +258,4 @@ template class JetScapeReader<ifstream>;
 template class JetScapeReader<igzstream>;
 #endif
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

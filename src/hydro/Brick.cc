@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -31,7 +32,7 @@ RegisterJetScapeModule<Brick> Brick::reg("Brick");
 
 Brick::Brick() : FluidDynamics() {
   // initialize the parameter reader
-  T_brick = 0.0; // GeV
+  T_brick = 0.0;  // GeV
   start_time = 0.0;
   bjorken_expansion_on = false;
   vx = 0.0;
@@ -44,7 +45,6 @@ Brick::Brick() : FluidDynamics() {
 }
 
 Brick::~Brick() { VERBOSE(8); }
-
 
 void Brick::InitTask() {
   // kind of stupid ... do pointer GetHydroXML() via XML instance ...
@@ -64,7 +64,7 @@ void Brick::InitTask() {
     bjorken_expansion_on = true;
     start_time = std::atof(brick->Attribute("start_time"));
   } else {
-    if (brick->Attribute("start_time")){
+    if (brick->Attribute("start_time")) {
       start_time = std::atof(brick->Attribute("start_time"));
     }
   }
@@ -73,32 +73,29 @@ void Brick::InitTask() {
 
   brick_L = GetXMLElementDouble({"Eloss", "Matter", "brick_length"});
 
-  //Setting flow
+  // Setting flow
   vx = GetXMLElementDouble({"Hydro", "Brick", "v_x"});
   vy = GetXMLElementDouble({"Hydro", "Brick", "v_y"});
   vz = GetXMLElementDouble({"Hydro", "Brick", "v_z"});
-  if(vx*vx + vy*vy + vz*vz >= 1.0){
+  if (vx * vx + vy * vy + vz * vz >= 1.0) {
     JSWARN << "Brick velocity set higher than c";
     exit(-1);
-  }else{
+  } else {
     JSINFO << "Brick (vx, vy, vz): (" << vx << ", " << vy << ", " << vz << ")";
   }
 
-  //Parameter parameter_list;
-  GetParameterList().hydro_input_filename = (char *)"dummy"; //*(argv+1);
+  // Parameter parameter_list;
+  GetParameterList().hydro_input_filename = (char *)"dummy";  //*(argv+1);
 }
-
 
 void Brick::InitializeHydro(Parameter parameter_list) {
   hydro_status = INITIALIZED;
 }
 
-
 void Brick::EvolveHydro() {
   VERBOSE(8);
   hydro_status = FINISHED;
 }
-
 
 void Brick::GetHydroInfo(
     Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
@@ -113,7 +110,7 @@ void Brick::GetHydroInfo(
   if (hydro_status == FINISHED) {
     fluid_cell_info_ptr->energy_density = 0.0;
     fluid_cell_info_ptr->entropy_density = 0.0;
-    if(t > brick_L) {
+    if (t > brick_L) {
       fluid_cell_info_ptr->temperature = 0.;
     } else if (bjorken_expansion_on) {
       fluid_cell_info_ptr->temperature =
@@ -144,36 +141,32 @@ void Brick::GetHydroInfo(
   }
 }
 
-
 void Brick::CalculateTime() {
-    Jetscape::real tauCurrent = GetModuleCurrentTime();
+  Jetscape::real tauCurrent = GetModuleCurrentTime();
 
-    //REMARK JP: Needs to be made more conssitent, for now, just avoid crash
-    // After the check for timestep is forced  ...
-    if (GetModuleClock()) {
-      Jetscape::real tauMax = GetModuleClock()->getTMax();
-      Jetscape::real tauMin = GetModuleClock()->getTMin();
+  // REMARK JP: Needs to be made more conssitent, for now, just avoid crash
+  //  After the check for timestep is forced  ...
+  if (GetModuleClock()) {
+    Jetscape::real tauMax = GetModuleClock()->getTMax();
+    Jetscape::real tauMin = GetModuleClock()->getTMin();
 
-      VERBOSE(2) << "tau_min = " << tauMin << " fm/c, tau_max = "
-                 << tauMax << " fm/c.";
+    VERBOSE(2) << "tau_min = " << tauMin << " fm/c, tau_max = " << tauMax
+               << " fm/c.";
 
-      EvolveHydroFromTminToTmax(GetModuleClock()->getTMin(),GetModuleClock()->getTMax());
-    }
-    else
-      hydro_status = FINISHED;
-
+    EvolveHydroFromTminToTmax(GetModuleClock()->getTMin(),
+                              GetModuleClock()->getTMax());
+  } else
+    hydro_status = FINISHED;
 }
-
 
 void Brick::ExecTime() {
-    JSINFO << "Brick::ExecTime(): Current Main Clock Time = "
-           << GetMainClock()->GetCurrentTime() << " fm/c";
+  JSINFO << "Brick::ExecTime(): Current Main Clock Time = "
+         << GetMainClock()->GetCurrentTime() << " fm/c";
 }
 
-
 void Brick::EvolveHydroFromTminToTmax(const real tauMin, const real tauMax) {
-    VERBOSE(8);
-    JSINFO << "Brick::ExecTime(): hydro medium is available from tau_min = "
-           << tauMin << " fm/c to tau_max = " << tauMax << " fm/c.";
-    hydro_status = FINISHED;
+  VERBOSE(8);
+  JSINFO << "Brick::ExecTime(): hydro medium is available from tau_min = "
+         << tauMin << " fm/c to tau_max = " << tauMax << " fm/c.";
+  hydro_status = FINISHED;
 }

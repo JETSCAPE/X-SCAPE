@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -33,9 +34,9 @@ namespace Jetscape {
 
 class JetEnergyLoss : public JetScapeModuleBase,
                       public std::enable_shared_from_this<JetEnergyLoss> {
-
-public:
-  /** Default constructor. It sets the value of qhat, deltaT and maxT to -99.99, 0.0 and 0.0, respectively. Standard signal slot flags are set to false.
+ public:
+  /** Default constructor. It sets the value of qhat, deltaT and maxT to -99.99,
+   * 0.0 and 0.0, respectively. Standard signal slot flags are set to false.
    */
   JetEnergyLoss();
 
@@ -59,22 +60,26 @@ public:
   virtual void InitTask();
 
   /** It calls DoShower() for all shower-initiating partons.
-      To avoid abuse, this can NOT be overwritten. Eloss happens on a parton-by-parton level,
-      ExecuteTask() should only be executed once per event.
+      To avoid abuse, this can NOT be overwritten. Eloss happens on a
+     parton-by-parton level, ExecuteTask() should only be executed once per
+     event.
    */
-  virtual void ExecuteTask() final; // prevents eloss modules from overwrting and missusing
+  virtual void ExecuteTask()
+      final;  // prevents eloss modules from overwrting and missusing
 
-  /** Prevent from executing any subtasks as everything is done by JetEnergyLoss.
+  /** Prevent from executing any subtasks as everything is done by
+   * JetEnergyLoss.
    */
-  virtual void ExecuteTasks() override {};
-  
-  /** Write output information for each tasks/subtasks attached to the JetEnergyLoss module using JetScapeWriter functionality.
+  virtual void ExecuteTasks() override{};
+
+  /** Write output information for each tasks/subtasks attached to the
+     JetEnergyLoss module using JetScapeWriter functionality.
       @param w A pointer of type JetScapeWriter.
   */
   virtual void WriteTask(weak_ptr<JetScapeWriter> w);
 
   /** Reset the parton shower information.
-  */
+   */
   virtual void ClearTask();
 
   virtual void CalculateTime() final;
@@ -85,11 +90,13 @@ public:
 
   virtual void FinishPerEvent();
 
-  // Bypass check here since the Energloss modules are neither per event or per time_step
-  // but per parton, so there is no need to check for time step consistency here.
-  void CheckExec() {};
+  // Bypass check here since the Energloss modules are neither per event or per
+  // time_step but per parton, so there is no need to check for time step
+  // consistency here.
+  void CheckExec(){};
 
-  /** Default function to perform the energy loss for partons at time "time". It should be overridden by different energy loss tasks.
+  /** Default function to perform the energy loss for partons at time "time". It
+     should be overridden by different energy loss tasks.
       @param deltaT Step-size.
       @param time Current time.
       @param Q2 Current virtuality of the parton.
@@ -106,17 +113,20 @@ public:
 
   sigslot::signal1<double &, multi_threaded_local> GetHydroTau0Signal;
 
-  /** For future development. A signal to connect the JetEnergyLoss object to the function UpdateEnergyDeposit() of the FluidDynamics class.
+  /** For future development. A signal to connect the JetEnergyLoss object to
+   * the function UpdateEnergyDeposit() of the FluidDynamics class.
    */
   sigslot::signal2<int, double, multi_threaded_local> jetSignal;
 
-  /** For future development. A signal to connect the JetEnergyLoss object to the function GetEnergyDensity() of the FluidDynamics class.
+  /** For future development. A signal to connect the JetEnergyLoss object to
+   * the function GetEnergyDensity() of the FluidDynamics class.
    */
   sigslot::signal2<int, double &, multi_threaded_local> edensitySignal;
 
-  /** A signal to connect the JetEnergyLoss object to the function DoEnergyLoss() function.
-      Send all a list of shower-initiating partons to all attached eloss modules.
-      They in turn decide whether they are responsible or not.
+  /** A signal to connect the JetEnergyLoss object to the function
+     DoEnergyLoss() function. Send all a list of shower-initiating partons to
+     all attached eloss modules. They in turn decide whether they are
+     responsible or not.
       @TODO Rename...
    */
   sigslot::signal5<double, double, double, vector<Parton> &, vector<Parton> &,
@@ -131,7 +141,8 @@ public:
    */
   const double GetQhat() const { return qhat; }
 
-  /** It adds a initiating parton @a p to create the parton shower in an energy loss task.
+  /** It adds a initiating parton @a p to create the parton shower in an energy
+     loss task.
       @param p A pointer of type parton class.
    */
   void AddShowerInitiatingParton(shared_ptr<Parton> p) { inP = p; }
@@ -145,15 +156,15 @@ public:
   /** @return The time-step "deltaT" used by energy loss task.
    */
   double GetDeltaT() { return deltaT; }
-  void SetDeltaT(double m_deltaT) {deltaT = m_deltaT;}
+  void SetDeltaT(double m_deltaT) { deltaT = m_deltaT; }
 
   /** @return The maximum time limit for parton shower.
    */
   double GetMaxT() { return maxT; }
-  void SetMaxT(double m_maxT) {maxT = m_maxT;}
+  void SetMaxT(double m_maxT) { maxT = m_maxT; }
 
-  double GetStartT() { return startT;}
-  void SetStartT(double m_startT) {startT = m_startT;}
+  double GetStartT() { return startT; }
+  void SetStartT(double m_startT) { startT = m_startT; }
 
   /** @return The current shower.
    */
@@ -161,18 +172,22 @@ public:
 
   // old test signals ======================
   //! TODO: Remove
-  /** Set the flag m_jetSignalConnected to true, if JetEnergyLoss had sent a signal to the function UpdateEnergyDeposit() of the class FluidDynamics.
+  /** Set the flag m_jetSignalConnected to true, if JetEnergyLoss had sent a
+     signal to the function UpdateEnergyDeposit() of the class FluidDynamics.
       @param m_jetSignalConnected A boolean flag.
    */
   void SetJetSignalConnected(bool m_jetSignalConnected) {
     jetSignalConnected = m_jetSignalConnected;
   }
 
-  /**  @return A boolean flag. Its status indicates whether JetEnergyLoss had sent a signal to the function UpdateEnergyDeposit() of the class FluidDynamics.
+  /**  @return A boolean flag. Its status indicates whether JetEnergyLoss had
+   * sent a signal to the function UpdateEnergyDeposit() of the class
+   * FluidDynamics.
    */
   const bool GetJetSignalConnected() const { return jetSignalConnected; }
 
-  /** Set the flag m_edensitySignalConnected to true, if JetEnergyLoss had sent a signal to the function GetEnergyDensity() of the class FluidDynamics.
+  /** Set the flag m_edensitySignalConnected to true, if JetEnergyLoss had sent
+     a signal to the function GetEnergyDensity() of the class FluidDynamics.
       @param m_edensitySignalConnected A boolean flag.
    */
   void SetEdensitySignalConnected(bool m_edensitySignalConnected) {
@@ -180,13 +195,15 @@ public:
   }
 
   /**
-     @return A boolean flag. Its status indicates whether JetEnergyLoss had sent a signal to the function GetEnergyDensity() of the class FluidDynamics.
+     @return A boolean flag. Its status indicates whether JetEnergyLoss had sent
+     a signal to the function GetEnergyDensity() of the class FluidDynamics.
    */
   const bool GetEdensitySignalConnected() const {
     return edensitySignalConnected;
   }
 
-  /** Set the flag m_GetHydroCellSignalConnected to true, if JetEnergyLoss had sent a signal to the function GetHydroCell() of the class FluidDynamics.
+  /** Set the flag m_GetHydroCellSignalConnected to true, if JetEnergyLoss had
+     sent a signal to the function GetHydroCell() of the class FluidDynamics.
       @param m_GetHydroCellSignalConnected A boolean flag.
    */
   void SetGetHydroCellSignalConnected(bool m_GetHydroCellSignalConnected) {
@@ -194,7 +211,8 @@ public:
   }
 
   /**
-     @return A boolean flag. Its status indicates whether JetEnergyLoss had sent a signal to the function GetHydroCell() of the class FluidDynamics.
+     @return A boolean flag. Its status indicates whether JetEnergyLoss had sent
+     a signal to the function GetHydroCell() of the class FluidDynamics.
    */
   const bool GetGetHydroCellSignalConnected() {
     return GetHydroCellSignalConnected;
@@ -208,7 +226,8 @@ public:
     return GetHydroTau0SignalConnected;
   }
 
-  /** Set the flag m_SentInPartonsConnected to true, if JetEnergyLoss had sent a signal to the function DoEnergyLoss().
+  /** Set the flag m_SentInPartonsConnected to true, if JetEnergyLoss had sent a
+     signal to the function DoEnergyLoss().
       @param m_SentInPartonsConnected A boolean flag.
    */
   void SetSentInPartonsConnected(bool m_SentInPartonsConnected) {
@@ -216,41 +235,55 @@ public:
   }
 
   /**
-      @return A boolean flag. Its status indicates whether JetEnergyLoss had sent a signal to the function DoEnergyLoss().
+      @return A boolean flag. Its status indicates whether JetEnergyLoss had
+     sent a signal to the function DoEnergyLoss().
    */
   const bool GetSentInPartonsConnected() { return SentInPartonsConnected; }
 
-  const bool GetUseIntialPartonShower() const {return useShower;}
-  void SetUseIntialPartonShower(bool m_Use) {useShower=m_Use;}
+  const bool GetUseIntialPartonShower() const { return useShower; }
+  void SetUseIntialPartonShower(bool m_Use) { useShower = m_Use; }
 
-  void AddInitalPartonShower(shared_ptr<PartonShower> p) {pInShower=p;}
-  shared_ptr<PartonShower> GetInitialPartonShower() {return pInShower;}
+  void AddInitalPartonShower(shared_ptr<PartonShower> p) { pInShower = p; }
+  shared_ptr<PartonShower> GetInitialPartonShower() { return pInShower; }
 
-  void SetShower(shared_ptr<PartonShower> mS) {pShower=mS;}
+  void SetShower(shared_ptr<PartonShower> mS) { pShower = mS; }
 
-  void AddPartonShowerGenerator(shared_ptr<PartonShowerGenerator> m_psGen) {psGen=m_psGen;}
-  const shared_ptr<PartonShowerGenerator> GetPartonShowerGenerator() const {return psGen;}
+  void AddPartonShowerGenerator(shared_ptr<PartonShowerGenerator> m_psGen) {
+    psGen = m_psGen;
+  }
+  const shared_ptr<PartonShowerGenerator> GetPartonShowerGenerator() const {
+    return psGen;
+  }
 
+  /**
+   * Adds a liquefier to the JetEnergyLoss module.
+   * This function sets the liquefier pointer to the provided liquefier object.
+   * @param new_liquefier A shared pointer to a LiquefierBase object.
+   */
   void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
     liquefier_ptr = new_liquefier;
   }
 
+  /**
+   * Retrieves the liquefier associated with the JetEnergyLoss module.
+   * This function returns a weak pointer to the liquefier object.
+   * @return A weak pointer to a LiquefierBase object.
+   */
   std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
 
-  virtual any GetHistory() {return any(pShower);}
+  virtual any GetHistory() { return any(pShower); }
 
-  //REMARK JP: Quick fix to test IsrShowerPSG ... fix later!!!!
+  // REMARK JP: Quick fix to test IsrShowerPSG ... fix later!!!!
   void DoExecTime(double currentTime, double deltaT);
   vector<Parton> pIn;
   vector<node> vStartVec;
   bool foundchangedorig = false;
 
-protected:
+ protected:
   std::weak_ptr<LiquefierBase> liquefier_ptr;
 
-private:
-
-  bool useShower=false;
+ private:
+  bool useShower = false;
 
   double deltaT;
   double maxT;
@@ -266,35 +299,34 @@ private:
   bool GetHydroTau0SignalConnected;
   bool SentInPartonsConnected;
 
-  /** This function executes the shower process for the partons produced from the hard scaterring.
-  */
+  /** This function executes the shower process for the partons produced from
+   * the hard scaterring.
+   */
   void DoShower();
 
-  void DoCalculateTime() {};
-  //void DoExecTime();
+  void DoCalculateTime(){};
+  // void DoExecTime();
   void DoInitPerEvent();
   void DoFinishPerEvent();
-
 
   shared_ptr<PartonShowerGenerator> psGen;
 
   node vStart;
   node vEnd;
 
-  //vector<Parton> pIn;
-  //vector<node> vStartVec;
-  //bool foundchangedorig = false;
+  // vector<Parton> pIn;
+  // vector<node> vStartVec;
+  // bool foundchangedorig = false;
 
   int droplet_stat = -11;
   int miss_stat = -13;
   int neg_stat = -17;
 
-  //old test signals
+  // old test signals
   bool jetSignalConnected;
   bool edensitySignalConnected;
-
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

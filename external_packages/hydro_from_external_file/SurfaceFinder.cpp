@@ -8,7 +8,11 @@
 #include <fstream>
 
 #include "./SurfaceFinder.h"
-#include "./cornelius.h"
+#include <Cornelius/Cornelius.h>
+#include <array>
+#include <memory>
+using JetscapeCornelius::Cornelius;
+
 
 using namespace std;
 
@@ -44,7 +48,7 @@ SurfaceFinder::~SurfaceFinder() {}
 
 bool SurfaceFinder::check_intersect(double T_cut, double tau, double x,
                                     double y, double dt, double dx, double dy,
-                                    double ***cube) {
+                                    std::array<std::array<std::array<double, 2>, 2>, 2> &cube) {
     hydrofluidCell *fluidCellptr = new hydrofluidCell();
     bool intersect = true;
 
@@ -166,27 +170,16 @@ int SurfaceFinder::Find_full_hypersurface() {
     double grid_dy = paraRdr->getVal("grid_dy");
 
     int dim = 3;
-    double *lattice_spacing = new double [dim];
-    lattice_spacing[0] = grid_dt;
-    lattice_spacing[1] = grid_dx;
-    lattice_spacing[2] = grid_dy;
+    std::array<double, 4> lattice_spacing_arr{{grid_dt, grid_dx, grid_dy, 1.0}};
 
-    Cornelius* cornelius_ptr = new Cornelius();
-    cornelius_ptr->init(dim, T_cut, lattice_spacing);
+    std::unique_ptr<Cornelius> cornelius_ptr = std::make_unique<Cornelius>();
+    cornelius_ptr->init_cornelius(dim, T_cut, lattice_spacing_arr);
   
     int ntime = static_cast<int>((grid_tauf - grid_tau0)/grid_dt);
     int nx = static_cast<int>(fabs(2.*grid_x0)/grid_dx);
     int ny = static_cast<int>(fabs(2.*grid_y0)/grid_dy);
 
-    double ***cube = new double** [2];
-    for (int i = 0; i < 2; i++) {
-        cube[i] = new double* [2];
-        for (int j = 0; j < 2; j++) {
-            cube[i][j] = new double [2];
-            for (int k = 0; k < 2; k++)
-                cube[i][j][k] = 0.0;
-        }
-    }
+    std::array<std::array<std::array<double, 2>, 2>, 2> cube{};
     
     hydrofluidCell *fluidCellptr = new hydrofluidCell();
   
@@ -202,23 +195,24 @@ int SurfaceFinder::Find_full_hypersurface() {
                                                  y_local, grid_dt, grid_dx,
                                                  grid_dy, cube);
                 if (intersect) {
+                    // cube already has the required std::array layout; pass it directly
                     cornelius_ptr->find_surface_3d(cube);
-                    for (int isurf = 0; isurf < cornelius_ptr->get_Nelements();
+                    for (int isurf = 0; isurf < cornelius_ptr->get_number_elements();
                          isurf++) {
-                        double tau_center = (
-                                cornelius_ptr->get_centroid_elem(isurf, 0)
-                                + tau_local - grid_dt/2.);
-                        double x_center = (
-                                cornelius_ptr->get_centroid_elem(isurf, 1)
-                                + x_local - grid_dx/2.);
-                        double y_center = (
-                                cornelius_ptr->get_centroid_elem(isurf, 2)
-                                + y_local - grid_dy/2.);
+            double tau_center = (
+                cornelius_ptr->get_centroid_element(isurf, 0)
+                + tau_local - grid_dt/2.);
+            double x_center = (
+                cornelius_ptr->get_centroid_element(isurf, 1)
+                + x_local - grid_dx/2.);
+            double y_center = (
+                cornelius_ptr->get_centroid_element(isurf, 2)
+                + y_local - grid_dy/2.);
 
-                        double da_tau =
-                                cornelius_ptr->get_normal_elem(isurf, 0);
-                        double da_x = cornelius_ptr->get_normal_elem(isurf, 1);
-                        double da_y = cornelius_ptr->get_normal_elem(isurf, 2);
+            double da_tau =
+                cornelius_ptr->get_normal_element(isurf, 0);
+            double da_x = cornelius_ptr->get_normal_element(isurf, 1);
+            double da_y = cornelius_ptr->get_normal_element(isurf, 2);
                        
                         if (hydro_type == 1) {
 #ifdef USE_HDF5
@@ -248,13 +242,5 @@ int SurfaceFinder::Find_full_hypersurface() {
     output.close();
     
     delete fluidCellptr;
-    delete cornelius_ptr;
-    delete [] lattice_spacing;
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 2; j++)
-            delete [] cube[i][j];
-        delete [] cube[i];
-    }
-    delete [] cube;
     return 0;
 }

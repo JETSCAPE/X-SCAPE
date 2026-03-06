@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -18,6 +19,13 @@
 
 namespace Jetscape {
 
+/**
+ * @brief Default constructor for BulkMediaInfo.
+ *
+ * Initializes all thermodynamic and flow quantities to zero and sets the
+ * `origin_id` to "BulkMedia". This provides a well-defined default
+ * state for interpolation and arithmetic operations on media cells.
+ */
 BulkMediaInfo::BulkMediaInfo() {
   energy_density = 0.0;
   entropy_density = 0.0;
@@ -45,4 +53,4 @@ BulkMediaInfo::BulkMediaInfo() {
   origin_id = "BulkMedia";
 }
 
-} // namespace Jetscape
+}  // namespace Jetscape

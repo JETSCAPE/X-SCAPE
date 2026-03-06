@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -36,10 +37,10 @@ PartonPrinter::~PartonPrinter() {}
 
 void PartonPrinter::InitTask() {
   this->SetId("PartonPrinter");
-    JSINFO << "Initialize PartonPrinter ...";
-    string filename = GetXMLElementText({"PartonPrinter","FileName"});
-    
-  dist_output.open(filename,std::ios::app);
+  JSINFO << "Initialize PartonPrinter ...";
+  string filename = GetXMLElementText({"PartonPrinter", "FileName"});
+
+  dist_output.open(filename, std::ios::app);
 }
 
 void PartonPrinter::ExecuteTask() {
@@ -51,10 +52,10 @@ void PartonPrinter::GetFinalPartons(
     shared_ptr<PartonShower>
         pShower /*, vector<shared_ptr<Parton>>& fPartons*/) {
   if (pShower) {
-    //vector<shared_ptr<Parton>> vPin;
+    // vector<shared_ptr<Parton>> vPin;
     for (unsigned int ipart = 0;
          ipart < pShower.get()->GetFinalPartons().size(); ++ipart) {
-      //fPartons.push_back( pShower.get()->GetFinalPartons().at(ipart));
+      // fPartons.push_back( pShower.get()->GetFinalPartons().at(ipart));
       if (std::abs(pShower.get()->GetFinalPartons().at(ipart)->pid()) == 21) {
         dist_output << ipart << " "
                     << pShower.get()->GetFinalPartons().at(ipart)->pid() << " "
@@ -64,29 +65,31 @@ void PartonPrinter::GetFinalPartons(
                     << pShower.get()->GetFinalPartons().at(ipart)->pz() << endl;
       }
 
-      //vPin.push_back( pShower.get()->GetFinalPartons().at(ipart));
+      // vPin.push_back( pShower.get()->GetFinalPartons().at(ipart));
     }
-    //this->pFinals.push_back(vPin);
+    // this->pFinals.push_back(vPin);
   }
 }
 
 void PartonPrinter::GetFinalPartons2(shared_ptr<PartonShower> pShower) {
   if (pShower) {
     /*
-    for(unsigned int ipart=0; ipart <  pShower.get()->GetFinalPartons().size(); ++ipart)
+    for(unsigned int ipart=0; ipart <  pShower.get()->GetFinalPartons().size();
+    ++ipart)
     {
       this->pFinals.push_back( pShower.get()->GetFinalPartons());
-      //cout << "############### FINAL PARTON IN THE VECTOR NUMBER : " << ipart << " is " << this->pFinals.at(ipart) << "###################\n";
+      //cout << "############### FINAL PARTON IN THE VECTOR NUMBER : " << ipart
+    << " is " << this->pFinals.at(ipart) << "###################\n";
     }
 */
-    //this->pFinals.clear();
+    // this->pFinals.clear();
     this->pFinals.push_back(pShower.get()->GetFinalPartons());
   }
 }
 
 void PartonPrinter::ClearTask() {
-  //dist_output << " *********************************** " << endl;
-  //dist_output.close();
+  // dist_output << " *********************************** " << endl;
+  // dist_output.close();
   this->pFinals.clear();
 }
 
@@ -94,4 +97,4 @@ void PartonPrinter::GetPartonsAtTime(shared_ptr<PartonShower> pShower,
                                      vector<shared_ptr<Parton>> &fPartons,
                                      double time) {}
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -20,6 +21,16 @@
 
 namespace Jetscape {
 
+/**
+ * @brief Displays the JETSCAPE banner with ASCII art and license information.
+ *
+ * This function prints a stylized ASCII banner with the JETSCAPE logo and key
+ * details about the framework, including citation information and the licensing
+ * terms. The output is handled using the `INFO_NICE` logging macro.
+ *
+ * @note The function does not take any parameters or return values. It only
+ * prints information to the standard output using the logger.
+ */
 void ShowJetscapeBanner() {
   INFO_NICE
       << "*--------------------------------------------------------------*";
@@ -46,8 +57,10 @@ void ShowJetscapeBanner() {
             << "__/"
             << "      %|%     " << (char)92 << "/" << (char)92
             << "__             |";
-  //INFO_NICE<<"|            /   "<<(char) 92<<" | /    "<<(char) 92<<"    / *  * | *   "<<(char) 92<<"                  |";
-  //INFO_NICE<<"|          _/     "<<(char) 92<<"|/      "<<(char) 92<<"__/"<<"   *  *|*     "<<(char) 92<<"/"<<(char) 92<<"__             |";
+  // INFO_NICE<<"|            /   "<<(char) 92<<" | /    "<<(char) 92<<"    / *
+  // * | *   "<<(char) 92<<"                  |"; INFO_NICE<<"|          _/
+  // "<<(char) 92<<"|/      "<<(char) 92<<"__/"<<"   *  *|*     "<<(char)
+  // 92<<"/"<<(char) 92<<"__             |";
   INFO_NICE
       << "|                                                              |";
   INFO_NICE
@@ -80,6 +93,6 @@ void ShowJetscapeBanner() {
       << "*--------------------------------------------------------------*";
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

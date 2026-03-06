@@ -13,7 +13,7 @@ using namespace Jetscape;
 using std::shared_ptr;
 
 class LBTMutex : public JetScapeModuleMutex {
-public:
+ public:
   LBTMutex();
   ~LBTMutex();
   bool CheckMutex(vector<shared_ptr<JetScapeTask>> modules);

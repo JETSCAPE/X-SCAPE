@@ -6,35 +6,36 @@
 
 namespace Jetscape {
 
-//bool ClockBase::use_clock = true;
+// bool ClockBase::use_clock = true;
 
 ModuleClock::ModuleClock() : ClockBase() {
-    SetId("ModuleClock");
-    currentModuleTime = -99.;
-    moduleDeltaT = -99.;
+  SetId("ModuleClock");
+  currentModuleTime = -99.;
+  moduleDeltaT = -99.;
 }
 
 void ModuleClock::Info() {
-    ClockBase::Info();
-    JSINFO << " Curent Module Time = " << currentModuleTime;
+  ClockBase::Info();
+  JSINFO << " Curent Module Time = " << currentModuleTime;
 }
 
 /*
 void ModuleClock::Transform(string mainClockRef, double mainClockCurrentTime)
 {
-	currentModuleTime = mainClockCurrentTime * 2.;
+        currentModuleTime = mainClockCurrentTime * 2.;
 }
 */
 
 void ModuleClock::Transform(std::weak_ptr<MainClock> mainClock) {
-    auto p = mainClock.lock();
-    if (p) {
-        currentModuleTime = p->GetCurrentTime() * 2.;
-        moduleDeltaT = p->GetDeltaT() * 2.;
-    } else {
-        JSWARN << "Trying to transform module clock with no main clock ... exiting ...";
-        exit(-1);
-    }
+  auto p = mainClock.lock();
+  if (p) {
+    currentModuleTime = p->GetCurrentTime() * 2.;
+    moduleDeltaT = p->GetDeltaT() * 2.;
+  } else {
+    JSWARN << "Trying to transform module clock with no main clock ... exiting "
+              "...";
+    exit(-1);
+  }
 }
 
-}
+}  // namespace Jetscape
