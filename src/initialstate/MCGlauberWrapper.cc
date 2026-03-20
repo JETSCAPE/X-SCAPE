@@ -363,6 +363,16 @@ void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x,
     hard_parton_x_.push_back(x);
     hard_parton_y_.push_back(y);
     hard_parton_z_.push_back(z);
+
+    proj_parton_e_.push_back(0);
+    proj_parton_px_.push_back(0);
+    proj_parton_py_.push_back(0);
+    proj_parton_pz_.push_back(0);
+
+    targ_parton_e_.push_back(0);
+    targ_parton_px_.push_back(0);
+    targ_parton_py_.push_back(0);
+    targ_parton_pz_.push_back(0);
 }
 
 
@@ -430,29 +440,15 @@ void MCGlauberWrapper::OutputHardPartonMomentum(
     }
 
     if (direction == 1) {
-        if (hardCollIdx < proj_parton_e_.size()) {
-            proj_parton_e_[hardCollIdx] += E;
-            proj_parton_px_[hardCollIdx] += px;
-            proj_parton_py_[hardCollIdx] += py;
-            proj_parton_pz_[hardCollIdx] += pz;
-        } else {
-            proj_parton_e_.push_back(E);
-            proj_parton_px_.push_back(px);
-            proj_parton_py_.push_back(py);
-            proj_parton_pz_.push_back(pz);
-        }
+        proj_parton_e_[hardCollIdx] += E;
+        proj_parton_px_[hardCollIdx] += px;
+        proj_parton_py_[hardCollIdx] += py;
+        proj_parton_pz_[hardCollIdx] += pz;
     } else {
-        if (hardCollIdx < targ_parton_e_.size()) {
-            targ_parton_e_[hardCollIdx] += E;
-            targ_parton_px_[hardCollIdx] += px;
-            targ_parton_py_[hardCollIdx] += py;
-            targ_parton_pz_[hardCollIdx] += pz;
-        } else {
-            targ_parton_e_.push_back(E);
-            targ_parton_px_.push_back(px);
-            targ_parton_py_.push_back(py);
-            targ_parton_pz_.push_back(pz);
-        }
+        targ_parton_e_[hardCollIdx] += E;
+        targ_parton_px_[hardCollIdx] += px;
+        targ_parton_py_[hardCollIdx] += py;
+        targ_parton_pz_[hardCollIdx] += pz;
     }
 
     VERBOSE(2) << BOLDYELLOW << " parton_e_ " << E
