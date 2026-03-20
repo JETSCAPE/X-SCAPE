@@ -364,12 +364,12 @@ void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x,
     hard_parton_y_.push_back(y);
     hard_parton_z_.push_back(z);
 
-    proj_parton_e_.push_back(0);
+    proj_parton_e_.push_back(-1.0);
     proj_parton_px_.push_back(0);
     proj_parton_py_.push_back(0);
     proj_parton_pz_.push_back(0);
 
-    targ_parton_e_.push_back(0);
+    targ_parton_e_.push_back(-1.0);
     targ_parton_px_.push_back(0);
     targ_parton_py_.push_back(0);
     targ_parton_pz_.push_back(0);
@@ -506,11 +506,11 @@ std::vector<std::vector<double>> MCGlauberWrapper::Get_remnant_targ() {
 }
 
 void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
-    if (hard_parton_t_.size() != proj_parton_e_.size()) {
-        JSWARN << "Unequal vector sizes for hard parton position list: "
-               << hard_parton_t_.size() << " and their momentum list: "
-               << proj_parton_e_.size();
-        exit(1);
+    for (size_t i = 0; i < proj_parton_e_.size(); ++i) {
+          if (proj_parton_e_[i] < 0.0) {
+              JSWARN << "Collision " << i << " registered but never populated with projectile momentum!";
+              exit(1);
+          }
     }
     mc_gen_->GetMomandPos_Proj(hard_parton_t_, hard_parton_x_, hard_parton_y_,
                                hard_parton_z_, proj_parton_e_, proj_parton_px_,
@@ -519,11 +519,11 @@ void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
 
 
 void MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
-    if (hard_parton_t_.size() != targ_parton_e_.size()) {
-        JSWARN << "Unequal vector sizes for hard parton position list: "
-               << hard_parton_t_.size() << " and their momentum list: "
-               << targ_parton_e_.size();
-        exit(1);
+    for (size_t i = 0; i < targ_parton_e_.size(); ++i) {
+          if (targ_parton_e_[i] < 0.0) {
+              JSWARN << "Collision " << i << " registered but never populated with target momentum!";
+              exit(1);
+          }
     }
     mc_gen_->GetMomandPos_Targ(hard_parton_t_, hard_parton_x_, hard_parton_y_,
                                hard_parton_z_, targ_parton_e_, targ_parton_px_,
