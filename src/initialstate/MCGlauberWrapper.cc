@@ -440,11 +440,17 @@ void MCGlauberWrapper::OutputHardPartonMomentum(
     }
 
     if (direction == 1) {
+        if (proj_parton_e_[hardCollIdx] < 0.0) {
+            proj_parton_e_[hardCollIdx] = 0.0;
+        }
         proj_parton_e_[hardCollIdx] += E;
         proj_parton_px_[hardCollIdx] += px;
         proj_parton_py_[hardCollIdx] += py;
         proj_parton_pz_[hardCollIdx] += pz;
     } else {
+        if (targ_parton_e_[hardCollIdx] < 0.0) {
+            targ_parton_e_[hardCollIdx] = 0.0;
+        }
         targ_parton_e_[hardCollIdx] += E;
         targ_parton_px_[hardCollIdx] += px;
         targ_parton_py_[hardCollIdx] += py;

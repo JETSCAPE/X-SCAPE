@@ -509,6 +509,14 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             FourVector p_Sibling(SiblingPx,SiblingPy,SiblingPz,SiblingEn);
             FourVector p_Parent ( ParentPx, ParentPy, ParentPz, ParentEn);
+
+            double NewTotMomFract = TotalMomentumFraction + ParentPlus / ( M_SQRT2 * (P_A) );
+            double NewTotMom      = TotalMomentum + ParentEn;
+            VERBOSE(2) << BOLDYELLOW << "NewTotMomFract " << NewTotMomFract << " NewTotMom " << NewTotMom << " P_A "<< P_A;
+            if(NewTotMomFract >= 1. || NewTotMom >= P_A ){
+                VERBOSE(2) << BOLDYELLOW << "Skipped iMATTER split because no energy is available in the proton eCM";
+                goto SkipSampling;
+            }
             
             Current_Status = Current.pstat() + 900;
             RotationVector = p_Parent;
@@ -560,14 +568,6 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             Parent.set_jet_v(velocity);
             Parent.set_x(Position);
             VERBOSE_OUTPUT("Parent",Parent);
-
-            double NewTotMomFract = TotalMomentumFraction + ParentPlus / ( M_SQRT2 * (P_A) );
-            double NewTotMom      = TotalMomentum + ParentEn;
-            VERBOSE(2) << BOLDYELLOW << "NewTotMomFract " << NewTotMomFract << " NewTotMom " << NewTotMom << " P_A "<< P_A;
-            if(NewTotMomFract >= 1. || NewTotMom >= P_A ){
-                VERBOSE(2) << BOLDYELLOW << "Skipped iMATTER split because no energy is available in the proton eCM";
-                goto SkipSampling;
-            }
             if(Parent.pz()>=0 ){
                 Hard->SetTotalMomentumPositive(NewTotMom,iscatt);
                 Hard->SetTotalMomentumFractionPositive(NewTotMomFract, iscatt);
