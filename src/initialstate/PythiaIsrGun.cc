@@ -495,8 +495,7 @@ void PythiaIsrGun::ExecuteTask() {
     else
     {
       bool pass = false;
-      //x_p is already set from AcceptedCollisionPoints Loop
-        ini->OutputHardCollisionPosition(x_p.t(), x_p.x(), x_p.y(), x_p.z());
+  
     }
 
     // only update sigma printer for an event on first scatter (iscatt==0)
@@ -555,6 +554,9 @@ void PythiaIsrGun::ExecuteTask() {
             << " TotalEnergyOfInitialStatePartons = " << TotalEnergyOfInitialStatePartons;
       throw std::runtime_error("Pythia Isr Gun outputs more energy in the MPI partons than eCM");
     }
+
+    //If all sampling checks passed push back the collision position
+    ini->OutputHardCollisionPosition(x_p.t(), x_p.x(), x_p.y(), x_p.z());
 
     // Decide which particles go to initial and final state modules
     // Update pTHat for each scattering; create and add partons 
