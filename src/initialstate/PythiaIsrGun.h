@@ -31,11 +31,16 @@ private:
   double pTHatMin;
   double pTHatMax;
   double eCM;
-  double cross_section;
+  double cross_section; //User provided cross section for event weighting
   bool FSR_on;
   bool multi_scatter;
   int proj_A;
   int targ_A;
+  //First hard collision information when multiple hard collisions
+  double first_sigmaGen = -1.0;
+  double first_sigmaErr = -1.0;
+  double first_ptHat = -1.0;
+  double first_weight = -1.0;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<PythiaIsrGun> reg;
@@ -62,13 +67,14 @@ public:
   double GetpTHatMax() const { return pTHatMax; }
 
   // Cross-section information in mb and event weight.
-  double GetSigmaGen() { return info.sigmaGen(); };
-  double GetSigmaErr() { return info.sigmaErr(); };
-  double GetPtHat() { return info.pTHat(); };
-  double GetEventWeight() { return info.weight(); };
+  double GetSigmaGen() { return first_sigmaGen; };
+  double GetSigmaErr() { return first_sigmaErr; };
+  double GetPtHat() { return first_ptHat; };
+  double GetEventWeight() { return first_weight; };
 
 protected:
   uniform_real_distribution<double> ZeroOneDistribution;
+  // uniform_int_distribution<int> RandIntDistribution;
 };
 
 #endif // PYTHIAISRGUN_H

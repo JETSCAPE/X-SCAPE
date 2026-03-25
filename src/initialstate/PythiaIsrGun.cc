@@ -465,15 +465,24 @@ void PythiaIsrGun::ExecuteTask() {
 
     } while (!flag62);
 
+    if (iscatt == 0){ // Set first scatter info for printer and getters
+      first_sigmaGen = info.sigmaGen();
+      first_sigmaErr = info.sigmaErr();
+      first_ptHat = info.pTHat();
+      first_weight = info.weight();
+      JSINFO << "first_sigma_gen = " << first_sigmaGen << " first_weight = " << first_weight << " first_ptHat = " << first_ptHat;
+      JSINFO << "Values returned from GetSigmaGen, GetEventWeight, and GetPtHat: " << GetSigmaGen() << ", " << GetEventWeight() << ", " << GetPtHat();
+    }
+    
     //Decide whether to push the information to the framework by putting break here.
     double r = ZeroOneDistribution(*GetMt19937Generator());
-    ratio = (GetEventWeight() * GetSigmaGen()) / cross_section;
+    ratio = (info.weight() * info.sigmaGen()) / cross_section;
     // if ( !multi_scatter || r > ratio ) accept_scatter = false;
     accept_scatter = true;
 
     //Debug
     JSINFO << MAGENTA << "At decision point of scattering loop for scatter # " << iscatt;
-    JSINFO << MAGENTA << "weight = " << GetEventWeight() << " sigmaGen = " << GetSigmaGen() << " cross_section = " << cross_section;
+    JSINFO << MAGENTA << "weight = " << info.weight() << " sigmaGen = " << info.sigmaGen() << " cross_section = " << cross_section;
     JSINFO << MAGENTA << "ratio = " << ratio << " r = " << r << " scatter_again = " << accept_scatter;
     JSINFO << MAGENTA << "Total number of partons so far NPP = " << NPP << ". p62 size = " << p62.size();
     debug_file << "Accept scatter number " << iscatt << " (0=T, 1=F): " << accept_scatter << "\n";
