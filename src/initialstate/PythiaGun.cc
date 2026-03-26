@@ -150,8 +150,8 @@ void PythiaGun::InitTask() {
   }
   
   if (ImpParMean > 0.0){
-    auto pdfA = pythia.getPDFPtr(2212, 1, "A", true);
-    auto pdfB = pythia.getPDFPtr(2212, 1, "B", true);
+    auto pdfA = getPDFPtr(2212, 1, "A", true);
+    auto pdfB = getPDFPtr(2212, 1, "B", true);
     pdfA->setSA(ImpParMean/2.0);
     pdfB->setSB(ImpParMean/2.0);
   }
