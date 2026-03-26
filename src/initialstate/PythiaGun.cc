@@ -73,6 +73,7 @@ void PythiaGun::InitTask() {
 
   pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
   pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
+  ImpParMean = GetXMLElementDouble({"Hard", "PythiaGun", "ImpParMean"});
 
   if(pTHatMin < 0.01){ //assuming low bin where softQCD should be used
     //running softQCD - inelastic nondiffrative (min-bias)
@@ -147,6 +148,13 @@ void PythiaGun::InitTask() {
     VERBOSE(7) << "Also reading in: " << s;
     readString(s);
   }
+  
+  if (ImpParMean > 0.0){
+    auto pdfA = pythia.getPDFPtr(2212, 1, "A", true);
+    auto pdfB = pythia.getPDFPtr(2212, 1, "B", true);
+    pdfA->setSA(ImpParMean/2.0);
+    pdfB->setSB(ImpParMean/2.0);
+  }
 
   // And initialize
   if (!init()) { // Pythia>8.1
@@ -171,6 +179,7 @@ void PythiaGun::ExecuteTask() {
       return (p1.pT() > p2.pT());
     }
   };
+
 
   do {
     next();

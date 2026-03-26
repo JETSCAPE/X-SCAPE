@@ -29,6 +29,7 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
 private:
   double pTHatMin;
   double pTHatMax;
+  double ImpParMean;
   double eCM;
   double vir_factor;
   bool initial_virtuality_pT;
