@@ -477,8 +477,8 @@ void PythiaIsrGun::ExecuteTask() {
     //Decide whether to push the information to the framework by putting break here.
     double r = ZeroOneDistribution(*GetMt19937Generator());
     ratio = (info.weight() * info.sigmaGen()) / cross_section;
-    // if ( !multi_scatter || r > ratio ) accept_scatter = false;
-    accept_scatter = true;
+    if ( !multi_scatter || r > ratio ) accept_scatter = false;
+    // accept_scatter = true;
 
     //Debug
     JSINFO << MAGENTA << "At decision point of scattering loop for scatter # " << iscatt;
