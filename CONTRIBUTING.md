@@ -38,6 +38,26 @@ Tips for git management are found on the corresponding [wiki page](https://githu
 
 Tips for code formatting are found on the corresponding [wiki page](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Policy.CodeFormatting).
 
+### Optional Local git Hooks
+
+Enable a local formatter hook that runs on staged files before commit.
+This is useful for catching formatting issues early, but remains optional.
+
+Setup:
+```
+./bin/setup-hooks.sh
+```
+
+Notes:
+- The setup-hooks script only needs to be run once per clone.
+- The hook formats CMake files and C++ files in `src/` and `examples/`.
+- The hook only checks staged files.
+- Requires `clang-format` (v14) and `cmake-format` (v0.6.13) on PATH.
+  - Ubuntu / Debian: `sudo apt install clang-format-14 cmake-format`
+  - Package manager commands for other distributions may differ.
+- Skip hooks for one commit with `git commit --no-verify`.
+- To disable permanently, unset hooks with `git config --unset core.hooksPath`.
+
 ## Unit Tests
 
 Please also see the [Unit Tests](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Policy.UnitTests) page for details about writing unit tests to accompany your code contributions.
