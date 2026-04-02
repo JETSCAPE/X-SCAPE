@@ -55,6 +55,8 @@ Notes:
 - Requires `clang-format` (v14) and `cmake-format` (v0.6.13) on PATH.
   - Ubuntu / Debian: `sudo apt install clang-format-14 cmake-format`
   - Package manager commands for other distributions may differ.
+  - `pip3 install clang-format==14.0.6 cmakelang` can be used.
+    - If using pip3, add the pip bin directory to the PATH, e.g. `export PATH="$HOME/.local/bin:$PATH"`.
 - Skip hooks for one commit with `git commit --no-verify`.
 - To disable permanently, unset hooks with `git config --unset core.hooksPath`.
 

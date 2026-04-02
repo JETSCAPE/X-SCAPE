@@ -21,6 +21,8 @@ Warning: Formatter utilities not found. Install them with your package manager:
   Ubuntu / Debian:
     sudo apt install clang-format-14 cmake-format
     Package manager commands for other distributions may differ.
+    pip3 install clang-format==14.0.6 cmakelang can be used.
+      If using pip3, add the pip bin directory to the PATH, e.g. export PATH="$HOME/.local/bin:$PATH".
   After installing the formatter utilities, re-run this setup script.
 EOF
   exit 1
