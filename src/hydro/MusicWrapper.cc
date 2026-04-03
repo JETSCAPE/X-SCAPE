@@ -246,7 +246,9 @@ int MpiMusic::InitializeHydroEnergyProfile() {
     auto QCDStringList = ini->GetQCDStringList();
     if (QCDStringList.size() == 0) {
         status = -1;
+        JSWARN << "No QCD string source term is provided. Size = 0.";
     } else {
+        JSWARN << "QCD string source terms are not empty, size = " << QCDStringList.size() << ".";
         music_hydro_ptr->generate_hydro_source_terms(ini->GetQCDStringList());
         music_hydro_ptr->initialize_hydro_xscape();
     }
