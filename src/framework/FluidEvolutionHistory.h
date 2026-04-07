@@ -129,7 +129,24 @@ public:
     data_info.clear();
   }
 
-  void clear_up_evolution_data() { data.clear(); }
+  /**
+   * @brief Clear the evolution history data.
+   */
+  void clear_up_evolution_data() {
+      data.clear();
+      ntau = 0;
+      nx = 0;
+      ny = 0;
+      neta = 0;
+      dtau = 0;
+      dx = 0;
+      dy = 0;
+      deta = 0;
+      tau_min = 0;
+      x_min = 0;
+      y_min = 0;
+      eta_min = 0;
+  }
 
   int get_data_size() const { return (data.size()); }
   bool is_boost_invariant() const { return (boost_invariant); }
