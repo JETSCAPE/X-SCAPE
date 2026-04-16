@@ -16,7 +16,7 @@
 // JETSCAPE module for soft particlization
 // This module will generate Monte-Carlo samples for soft hadrons
 // -----------------------------------------
-#ifdef USE_ROOT
+//#ifdef USE_ROOT
 
 #include "RootBulkWriter.h"
 #include <iostream>
@@ -85,6 +85,8 @@ void Show();
 
 // -------------------------------------
 void RootBulkWriter::Init() {
+
+    JSINFO << "Initialzing RootBulkWriter ...";
     out_file_name = GetXMLElementText({"RootBulkWriter","out_file_name"});
 
     x_min = GetXMLElementDouble({"RootBulkWriter","x_min"});
@@ -107,13 +109,17 @@ void RootBulkWriter::Init() {
                 "to true. This will likely lead to erroneous output. Please "
                 "fix your XML file.";
     }
+
+    JSINFO << " RootBulkWriter initialized with output file name: " << out_file_name;
+    JSINFO << " RootBulkWriter initialized with grid parameters: x_min = " << x_min << ", dx = " << dx << ", y_min = " << y_min << ", dy = " << dy << 
+              ", tau_min = " << tau_min << ", dtau = " << dtau << ", eta_min = " << eta_min << ", deta = " << deta << ", ntau = " << ntau;
 }
 
 RootBulkWriter::RootBulkWriter() 
   // The information to init (the size of music, etc...) isn't present until
   // after the first Exec() call to MUSIC, so init is done in first Exec() instead.
 {
-    JSINFO << " Adding RootBulkWriter ";
+    //JSINFO << " Adding RootBulkWriter ";
     SetId("RootBulkWriter");
 } 
 
@@ -158,12 +164,17 @@ void RootBulkWriter::init_tree(const EvolutionHistory& bInfo) {
   if (!dtau) dtau = dtau_MUSIC;
   /* if (!ntau) ntau = ntau_MUSIC; */
   if (!eta_min) eta_min = eta_min_MUSIC;
-  if (!deta) deta = deta_MUSIC;
+  if (!deta) deta = deta_MUSIC;\
 
   // assign to member variables
   nx = 2*int(fabs(x_min)/dx)+1;
   ny = 2*int(fabs(y_min)/dy)+1;
   neta = 2*int(fabs(eta_min)/deta)+1;
+
+  //JP: Do not understand the need for the the +1 !??? And also the ntau !???? Follow up!!!
+  //nx = 2*int(fabs(x_min)/dx);
+  //ny = 2*int(fabs(y_min)/dy);
+  //neta = 2*int(fabs(eta_min)/deta);
 
   use_vec = (ntau <= 0);
   if (use_vec) {
@@ -175,6 +186,12 @@ void RootBulkWriter::init_tree(const EvolutionHistory& bInfo) {
     data = std::make_unique<float[]>(ntotal); //new float[ntotal];
     t->Branch("user_res", data.get(), Form("user_res[%d]/F", ntotal));
   }
+
+  JSINFO << " RootBulkWriter initialized with grid parameters: x_min = " << x_min << ", dx = " << dx << ", y_min = " << y_min << ", dy = " << dy << 
+    ", tau_min = " << tau_min << ", dtau = " << dtau << ", eta_min = " << eta_min << ", deta = " << deta << ", ntau = " << ntau;
+  JSINFO<<" neta = " << neta << " eta_min = " << eta_min << " deta = " << deta;
+  JSINFO << " MUSIC grid parameters: x_min = " << X_min_MUSIC << ", dx = " << dX_MUSIC << ", y_min = " << Y_min_MUSIC << ", dy = " << dY_MUSIC << 
+    ", tau_min = " << tau_min_MUSIC << ", dtau = " << dtau_MUSIC << ", eta_min = " << eta_min_MUSIC << ", deta = " << deta_MUSIC << ", ntau = " << bInfo.ntau;
 
   t->Branch("tau_freezeout", &tau_freezeout, "tau_freezeout/F");
   t->Branch("ntau_freezeout", &ntau_freezeout, "ntau_freezeout/I");
@@ -235,17 +252,25 @@ void RootBulkWriter::Exec() {
     init_tree(bInfo);
   }
 
-    float _eta_min = bInfo.eta_min;
-    float _eta_max = bInfo.EtaMax();
-    float _tau_min = bInfo.tau_min;
-    float _tau_max = bInfo.TauMax();
+  float _eta_min = bInfo.eta_min;
+  float _eta_max = bInfo.EtaMax();
+  float _tau_min = bInfo.tau_min;
+  float _tau_max = bInfo.TauMax();
 
-    JSINFO << " tau_min user( " << tau_min << " ) vs MUSIC ( " << _tau_min 
-           << " )  tau_max MUSIC ( " << _tau_max << " ) "; 
+  //REMARK JP: Why are the actually different form the prequilibrium values !??? Follow up!
+  //Because with strings tau0 = tau_min - string dtau (0.02) but first bin is nonsensical !!!
+  //More puzzling when saving 2 or more events, first lower edensity for taubin=0 ... see dave tau0 = 0.58, so + 1 dtau!???
 
-    // NOTE: FIXME, below should use _tau_min instead of tau_min, this is why I am getting the empty steps past freezeout
+  JSINFO << " tau_min user( " << tau_min << " ) vs MUSIC ( " << _tau_min 
+          << " )  tau_max MUSIC ( " << _tau_max << " ) "; 
+
+  //REMAARK JP: Same issues as with init tree, #bins are not conistent ... not too big of a deal here since one 
+  // can clean data for training, but still should be fixed for consistency and to avoid confusion ... Follow up!
+
+  // NOTE: FIXME, below should use _tau_min instead of tau_min, this is why I am getting the empty steps past freezeout
   tau_freezeout = _tau_min + bInfo.ntau * dtau_MUSIC;
   ntau_freezeout = int((tau_freezeout - tau_min) / dtau) + 1; // this ends up being about 2 units too large (why?!?)
+  
   // in practice, I am getting events with no energy distribution 
   if (use_vec) { // fill in vector of tau times
     v_data.clear();
@@ -320,4 +345,4 @@ RootBulkWriter::~RootBulkWriter() {
   f->Write();
   f->Close();
 }
-#endif // USE_ROOT
+//#endif // USE_ROOT
