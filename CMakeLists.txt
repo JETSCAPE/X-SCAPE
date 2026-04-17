@@ -122,9 +122,31 @@ endif(USE_JS_CONTRIB)
 
 # Compile with OpenMP support
 if(APPLE)
+  # Locate Homebrew libomp dynamically so the same CMakeLists.txt works on
+  # both Intel (/usr/local) and Apple Silicon (/opt/homebrew) Macs.
+  if(NOT DEFINED OpenMP_libomp_PREFIX)
+    find_program(_brew brew)
+    if(_brew)
+      execute_process(
+        COMMAND "${_brew}" --prefix libomp
+        OUTPUT_VARIABLE OpenMP_libomp_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE _brew_result
+      )
+      if(NOT _brew_result EQUAL 0)
+        # Fall back to the Intel default if brew query failed
+        set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
+      endif()
+    else()
+      set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
+    endif()
+  endif()
+  message(STATUS "Homebrew libomp prefix: ${OpenMP_libomp_PREFIX}")
   set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
   set(OpenMP_CXX_LIB_NAMES "libomp")
-  set(OpenMP_libomp_LIBRARY "/usr/local/opt/libomp/lib")
+  set(OpenMP_libomp_LIBRARY "${OpenMP_libomp_PREFIX}/lib/libomp.dylib")
+  # Make omp.h findable for all targets (avoids 'omp.h file not found')
+  include_directories("${OpenMP_libomp_PREFIX}/include")
 endif()
 find_package(OpenMP)
 if(OPENMP_FOUND)
@@ -391,11 +413,9 @@ include_directories(./external_packages/gtl/include)
 include_directories(./external_packages/hydro_from_external_file)
 include_directories(./external_packages/Random123)
 include_directories(./examples/)
-if(APPLE)
-  # set OpenMP_INCLUDE_DIRS to the path of the OpenMP headers for example:
-  # /opt/homebrew/opt/libomp/include
-  include_directories($ENV{OpenMP_INCLUDE_DIRS})
-endif()
+# Note: the Homebrew libomp include directory is added earlier in the
+# OpenMP section via include_directories("${OpenMP_libomp_PREFIX}/include"),
+# so no manual env-var workaround is needed here.
 
 if(USE_ROOT)
   if("${ROOT_FOUND}")
@@ -702,3 +722,31 @@ else()
     "Warning: LBT-tables have not been downloaded in external_packages by ./get_lbtTab.sh; LBT-brickTest will NOT run properly."
   )
 endif()
+
+# ##############################################################################
+# Build-tree export for js-contrib and other out-of-tree consumers          ###
+# Must live here — AFTER all optional add_subdirectory() calls — so every   ###
+# in-tree target already exists when export() is invoked.                   ###
+# ##############################################################################
+set(_js_export_targets JetScape JetScapeThird GTL libtrento Cornelius)
+if(${HDF5_FOUND})
+  list(APPEND _js_export_targets hydroFromFile)
+endif()
+if(USE_IPGLASMA)
+  list(APPEND _js_export_targets ipglasma_lib)
+endif()
+if(USE_3DGlauber)
+  list(APPEND _js_export_targets 3dMCGlb)
+endif()
+if(USE_MUSIC)
+  list(APPEND _js_export_targets music)
+endif()
+if(USE_ISS)
+  list(APPEND _js_export_targets iSS)
+endif()
+if(OPENCL_FOUND AND USE_CLVISC)
+  list(APPEND _js_export_targets clviscwrapper)
+endif()
+export(TARGETS ${_js_export_targets} FILE "${CMAKE_BINARY_DIR}/JetScapeTargets.cmake")
+configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
+               "${CMAKE_BINARY_DIR}/JetScapeConfig.cmake" @ONLY)

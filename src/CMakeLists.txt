@@ -179,35 +179,9 @@ if(USE_SMASH)
 endif()
 
 # -------------------------------------------------------------------------
-# Build-tree export so js-contrib (and other out-of-tree projects) can
-# locate this JetScape installation via find_package(JetScape HINTS <build>).
-# No install() calls needed — the build directory acts as the package root.
-#
-# All in-tree CMake targets that JetScape links to must be included in the
-# same export() call; otherwise CMake raises "requires target X that is not
-# in any export set".
+# Build-tree export — moved to the top-level CMakeLists.txt so it runs
+# after all optional add_subdirectory() calls have defined their targets.
+# The configure_file() for JetScapeConfig.cmake is also there.
 # -------------------------------------------------------------------------
-set(_js_export_targets JetScape JetScapeThird GTL libtrento)
-if(${HDF5_FOUND})
-  list(APPEND _js_export_targets hydroFromFile)
-endif()
-if(USE_IPGLASMA)
-  list(APPEND _js_export_targets ipglasma_lib)
-endif()
-if(USE_3DGlauber)
-  list(APPEND _js_export_targets 3dMCGlb)
-endif()
-if(USE_MUSIC)
-  list(APPEND _js_export_targets music)
-endif()
-if(USE_ISS)
-  list(APPEND _js_export_targets iSS)
-endif()
-if(USE_CLVISC)
-  list(APPEND _js_export_targets clviscwrapper)
-endif()
-export(TARGETS ${_js_export_targets} FILE "${CMAKE_BINARY_DIR}/JetScapeTargets.cmake")
-configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
-               "${CMAKE_BINARY_DIR}/JetScapeConfig.cmake" @ONLY)
 
 # -------------------------------------------------------------------------

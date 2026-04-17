@@ -347,7 +347,7 @@ chmod +x external_packages/get_js_contrib.sh
 
 #### Step 2 — patch `CMakeLists.txt`
 
-Two blocks must be added to the top-level `CMakeLists.txt`.
+Two blocks must be added to the top-level `CMakeLists.txt`, and one block must be patched in `src/CMakeLists.txt`.
 
 **Block A — option declarations** (add after the `USE_SMASH` option block,
 around the line that reads `# Compile with OpenMP support`):
@@ -385,7 +385,39 @@ if(USE_JS_CONTRIB)
 endif(USE_JS_CONTRIB)
 ```
 
-After applying both blocks, fetch and build as in the quick-start above.
+**Block C — build-tree export in the top-level `CMakeLists.txt`** — js-contrib discovers JetScape
+via a build-tree `export()`. CMake requires every in-tree target reachable through `JetScape`'s
+`target_link_libraries` to be in the same export set, and `export()` must be called **after**
+all the optional `add_subdirectory()` calls that define those targets. Remove any existing
+`export(TARGETS JetScape …)` from `src/CMakeLists.txt` and **append** this block at the very
+end of the top-level `CMakeLists.txt`:
+
+```cmake
+set(_js_export_targets JetScape JetScapeThird GTL libtrento Cornelius)
+if(${HDF5_FOUND})
+  list(APPEND _js_export_targets hydroFromFile)
+endif()
+if(USE_IPGLASMA)
+  list(APPEND _js_export_targets ipglasma_lib)
+endif()
+if(USE_3DGlauber)
+  list(APPEND _js_export_targets 3dMCGlb)
+endif()
+if(USE_MUSIC)
+  list(APPEND _js_export_targets music)
+endif()
+if(USE_ISS)
+  list(APPEND _js_export_targets iSS)
+endif()
+if(OPENCL_FOUND AND USE_CLVISC)
+  list(APPEND _js_export_targets clviscwrapper)
+endif()
+export(TARGETS ${_js_export_targets} FILE "${CMAKE_BINARY_DIR}/JetScapeTargets.cmake")
+configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
+               "${CMAKE_BINARY_DIR}/JetScapeConfig.cmake" @ONLY)
+```
+
+After applying all three blocks, fetch and build as in the quick-start above.
 
 ## Troubleshooting
 

@@ -527,6 +527,16 @@ void MpiMusic::EvolveHydro() {
   }
 }
 
+void MpiMusic::Clear() {
+  if (preserve_bulk_info_) {
+    // Keep bulk_info.data alive so Python can inspect it after Exec().
+    // Only discard the freeze-out surface (re-computed each event).
+    clearSurfaceCellVector();
+    return;
+  }
+  FluidDynamics::Clear();
+}
+
 void MpiMusic::collect_freeze_out_surface() {
   system("rm surface.dat 2> /dev/null");
 

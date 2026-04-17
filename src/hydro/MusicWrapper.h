@@ -251,6 +251,16 @@ class MpiMusic : public FluidDynamics {
                        SurfaceCellInfo *surface_list_ptr){};
   void collect_freeze_out_surface();
 
+  // ── Python-interop: preserve bulk_info across ClearTasks() ─────────────────
+  // When set to true, Clear() skips clear_up_evolution_data() so that
+  // bulk_info.data survives the end-of-event cleanup and can be inspected from
+  // Python after Exec() returns.
+  void set_preserve_bulk_info(bool v) { preserve_bulk_info_ = v; }
+  bool get_preserve_bulk_info() const { return preserve_bulk_info_; }
+
+  //! Overrides FluidDynamics::Clear() to honour preserve_bulk_info_.
+  void Clear();
+
   bool update_music_input_parameter(const std::string &filename,
                                     const std::string &key, int new_value);
 
@@ -263,6 +273,9 @@ class MpiMusic : public FluidDynamics {
       music_hydro_ptr->set_parameter("Initial_time_tau_0", tau0);
     }
   }
+
+ private:
+  bool preserve_bulk_info_ = false;
 };
 
 #endif  // MUSICWRAPPER_H
