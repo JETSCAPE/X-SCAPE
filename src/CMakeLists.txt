@@ -179,3 +179,12 @@ if(USE_SMASH)
 endif()
 
 # -------------------------------------------------------------------------
+# Build-tree export so js-contrib (and other out-of-tree projects) can
+# locate this JetScape installation via find_package(JetScape HINTS <build>).
+# No install() calls needed — the build directory acts as the package root.
+# -------------------------------------------------------------------------
+export(TARGETS JetScape FILE "${CMAKE_BINARY_DIR}/JetScapeTargets.cmake")
+configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
+               "${CMAKE_BINARY_DIR}/JetScapeConfig.cmake" @ONLY)
+
+# -------------------------------------------------------------------------

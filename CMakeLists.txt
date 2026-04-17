@@ -107,6 +107,19 @@ if(USE_SMASH)
   endif(${SMASH_FOUND})
 endif(USE_SMASH)
 
+# js-contrib extensions. Turn on with 'cmake -DUSE_JS_CONTRIB=ON'.
+# Individual contribs are gated by their own sub-options (all OFF by default).
+option(USE_JS_CONTRIB "Enable js-contrib extensions" OFF)
+if(USE_JS_CONTRIB)
+  option(USE_JS_FNO_HYDRO
+    "Build FnoHydro contrib (requires libtorch ~2 GB and ROOT)" OFF)
+  option(USE_JS_PYJETSCAPE
+    "Build PyJetscape pybind11 Python bindings (compile from source)" OFF)
+  if(USE_JS_FNO_HYDRO OR USE_JS_PYJETSCAPE)
+    message("Enabling js-contrib extensions ...")
+  endif()
+endif(USE_JS_CONTRIB)
+
 # Compile with OpenMP support
 if(APPLE)
   set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
@@ -487,6 +500,19 @@ endif(USE_ISS)
 if(OPENCL_FOUND AND USE_CLVISC)
   add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper)
 endif(OPENCL_FOUND AND USE_CLVISC)
+
+if(USE_JS_CONTRIB)
+  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/js-contrib")
+    message(
+      FATAL_ERROR
+        "Error: js-contrib has not been downloaded in external_packages by ./external_packages/get_js_contrib.sh"
+    )
+  endif()
+  # Pass the per-contrib flags through to the js-contrib CMakeLists
+  set(BUILD_FNO_HYDRO ${USE_JS_FNO_HYDRO})
+  set(BUILD_PYJETSCAPE ${USE_JS_PYJETSCAPE})
+  add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/js-contrib)
+endif(USE_JS_CONTRIB)
 
 if(OPENMP_FOUND)
   target_compile_definitions(JetScape PRIVATE USE_OPENMP)
