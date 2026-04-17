@@ -284,6 +284,109 @@ For reasonable physics with SMASH these decays should be switched off.
 
 More material on the physics behind JETSCAPE and how to use it can be found in the material of the JETSCAPE Summer Schools. The schools are a yearly event explaining the details of the approach. You can either sign-up for the next one or go through the material of the last school yourself. The material is found in the SummerSchool repositories under [the JETSCAPE organization](https://github.com/JETSCAPE).
 
+## js-contrib community extensions
+
+[js-contrib](https://github.com/jhputschke/js-contrib) provides community-maintained physics modules
+(analogous to [fastjet-contrib](https://fastjet.hepforge.org/contrib/)) that can be compiled
+directly into X-SCAPE.  Current contribs:
+
+| Contrib | Description | Extra deps |
+|---------|-------------|------------|
+| FnoHydro | Neural-network (FNO) hydrodynamics via LibTorch | ROOT, libtorch (~2 GB) |
+| PyJetscape | pybind11 Python bindings + PyFNOHydro trampoline | pybind11, PyTorch |
+
+### Quick start (current X-SCAPE)
+
+Up-to-date X-SCAPE already contains the required `get_js_contrib.sh` script and CMake hooks.
+Run:
+
+```bash
+cd external_packages
+./get_js_contrib.sh        # clones js-contrib into external_packages/js-contrib
+
+cd ../build
+cmake .. -DUSE_JS_CONTRIB=ON -DUSE_JS_FNO_HYDRO=ON   # add -DUSE_JS_PYJETSCAPE=ON if needed
+make -j$(nproc)
+```
+
+### Manual integration into older X-SCAPE checkouts
+
+If your X-SCAPE checkout predates the js-contrib integration, apply the two
+steps below by hand.
+
+#### Step 1 — add the fetch script
+
+Copy (or create) `external_packages/get_js_contrib.sh` with the following content:
+
+```bash
+#!/usr/bin/env bash
+###############################################################################
+# Copyright (c) The JETSCAPE Collaboration, 2018
+#
+# Distributed under the GNU General Public License 3.0 (GPLv3 or later).
+# See COPYING for details.
+###############################################################################
+# Clone js-contrib into external_packages/js-contrib
+# Use with: cmake -DUSE_JS_CONTRIB=ON [-DUSE_JS_FNO_HYDRO=ON] [-DUSE_JS_PYJETSCAPE=ON]
+
+folderName="js-contrib"
+
+if [ -d "$folderName" ]; then
+  echo "$folderName already exists — skipping clone."
+  exit 0
+fi
+
+git clone https://github.com/jhputschke/js-contrib.git "$folderName"
+```
+
+Make the script executable:
+
+```bash
+chmod +x external_packages/get_js_contrib.sh
+```
+
+#### Step 2 — patch `CMakeLists.txt`
+
+Two blocks must be added to the top-level `CMakeLists.txt`.
+
+**Block A — option declarations** (add after the `USE_SMASH` option block,
+around the line that reads `# Compile with OpenMP support`):
+
+```cmake
+# js-contrib extensions. Turn on with 'cmake -DUSE_JS_CONTRIB=ON'.
+# Individual contribs are gated by their own sub-options (all OFF by default).
+option(USE_JS_CONTRIB "Enable js-contrib extensions" OFF)
+if(USE_JS_CONTRIB)
+  option(USE_JS_FNO_HYDRO
+    "Build FnoHydro contrib (requires libtorch ~2 GB and ROOT)" OFF)
+  option(USE_JS_PYJETSCAPE
+    "Build PyJetscape pybind11 Python bindings (compile from source)" OFF)
+  if(USE_JS_FNO_HYDRO OR USE_JS_PYJETSCAPE)
+    message("Enabling js-contrib extensions ...")
+  endif()
+endif(USE_JS_CONTRIB)
+```
+
+**Block B — subdirectory hook** (add after the `if(USE_ISS)` / `if(OPENCL_FOUND AND USE_CLVISC)` block
+and before the `if(OPENMP_FOUND)` definition block):
+
+```cmake
+if(USE_JS_CONTRIB)
+  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/js-contrib")
+    message(
+      FATAL_ERROR
+        "Error: js-contrib has not been downloaded in external_packages by ./external_packages/get_js_contrib.sh"
+    )
+  endif()
+  # Pass the per-contrib flags through to the js-contrib CMakeLists
+  set(BUILD_FNO_HYDRO ${USE_JS_FNO_HYDRO})
+  set(BUILD_PYJETSCAPE ${USE_JS_PYJETSCAPE})
+  add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/js-contrib)
+endif(USE_JS_CONTRIB)
+```
+
+After applying both blocks, fetch and build as in the quick-start above.
+
 ## Troubleshooting
 
 If you encounter a problem, please report the issue [here](https://github.com/JETSCAPE/JETSCAPE/issues).
