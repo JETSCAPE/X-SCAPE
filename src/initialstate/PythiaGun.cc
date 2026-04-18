@@ -155,8 +155,8 @@ void PythiaGun::InitTask() {
     auto pdfA = pythia.getPDFPtr(2212, 1, "A", true);
     auto pdfB = pythia.getPDFPtr(2212, 1, "B", true);
     VERBOSE(1) << "Only works for symmetric collision system";
-    double s1 = sqrt((s_1x - ImpParMean/2.0)**2 + (s_1y)**2);
-    double s2 = sqrt((s_1x + ImpParMean/2.0)**2 + (s_1y)**2);
+    double s1 = sqrt(pow(s_1x - ImpParMean/2.0, 2) + pow(s_1y, 2));
+    double s2 = sqrt(pow(s_1x + ImpParMean/2.0, 2) + pow(s_1y, 2));
     pdfA->setSA(s1);
     pdfB->setSB(s2);
   }
