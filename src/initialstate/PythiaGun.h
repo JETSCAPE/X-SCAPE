@@ -30,6 +30,8 @@ private:
   double pTHatMin;
   double pTHatMax;
   double ImpParMean;
+  double s_1x;
+  double s_1y;
   double eCM;
   double vir_factor;
   bool initial_virtuality_pT;
