@@ -28,3 +28,4 @@ external_packages/Cornelius/libCornelius.*
 sftp-config.json
 /external_packages/js-contrib
 notebooks*/
+X-SCAPE*.code-workspace
