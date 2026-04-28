@@ -229,29 +229,29 @@ void PythiaIsrGun::ExecuteTask() {
   int Ncoll = ini->GetNcoll();
 
   //Debug
-  std::ofstream debug_file;
-  debug_file.open("PIG_debug.txt", std::ios::out | std::ios::app);
-  debug_file << "Event: " << GetCurrentEvent() << "\n";
-  debug_file << "Ncoll: " << Ncoll << "\n";
-  debug_file << "Index; \t Binary Collision PT; \t proj pos; \t targ pos \n"; 
-  for (int i = 0; i < Ncoll; i++){
-    debug_file << i << "; \t (" << all_t[i] << ", " 
-    << all_x[i] << ", "
-    << all_y[i] << ", "
-    << all_z[i] << "); \t (";
-    for (const auto& val : all_projPos[i]){
-      debug_file << val << " ";
-    }
-    debug_file << "); \t (";
-    for (const auto& val : all_targPos[i]){
-      debug_file << val << " ";
-    }
-    debug_file << ")\n";
-  } 
+  // std::ofstream debug_file;
+  // debug_file.open("PIG_debug.txt", std::ios::out | std::ios::app);
+  // debug_file << "Event: " << GetCurrentEvent() << "\n";
+  // debug_file << "Ncoll: " << Ncoll << "\n";
+  // debug_file << "Index; \t Binary Collision PT; \t proj pos; \t targ pos \n"; 
+  // for (int i = 0; i < Ncoll; i++){
+  //   debug_file << i << "; \t (" << all_t[i] << ", " 
+  //   << all_x[i] << ", "
+  //   << all_y[i] << ", "
+  //   << all_z[i] << "); \t (";
+  //   for (const auto& val : all_projPos[i]){
+  //     debug_file << val << " ";
+  //   }
+  //   debug_file << "); \t (";
+  //   for (const auto& val : all_targPos[i]){
+  //     debug_file << val << " ";
+  //   }
+  //   debug_file << ")\n";
+  // } 
 
-  std::ofstream debug_partons_file;
-  debug_partons_file.open("PIG_partons.txt", std::ios::out | std::ios::app);
-  debug_partons_file << "\n\nIn Event number " << GetCurrentEvent() << "\n";
+  // std::ofstream debug_partons_file;
+  // debug_partons_file.open("PIG_partons.txt", std::ios::out | std::ios::app);
+  // debug_partons_file << "\n\nIn Event number " << GetCurrentEvent() << "\n";
   // Debug
   // JSWARN << "Size of all binary collision points: " << all_t.size();
   // JSWARN << "Number of binary collisions from MCGlauber: " << Ncoll;
@@ -290,17 +290,20 @@ void PythiaIsrGun::ExecuteTask() {
   }
   std::shuffle(index_list.begin(), index_list.end(), *GetMt19937Generator());
 
+  // For outputting positions
+  std::vector<int> passed_hard_position_idx;
+
 
   //Debug file to verify index matching
-  std::ofstream index_match_file;
-  index_match_file.open("PIG_index_matches.txt", std::ios::out | std::ios::app);
-  index_match_file << "Event: " << GetCurrentEvent() << "\n";
-  index_match_file << "Original Index \t Shuffled Index \n";
-  for (int idx = 0; idx < index_list.size(); idx++){
-    index_match_file << idx << " \t " << index_list[idx] << "\n";
-  }
-  index_match_file << "\n\n";
-  index_match_file.close();
+  // std::ofstream index_match_file;
+  // index_match_file.open("PIG_index_matches.txt", std::ios::out | std::ios::app);
+  // index_match_file << "Event: " << GetCurrentEvent() << "\n";
+  // index_match_file << "Original Index \t Shuffled Index \n";
+  // for (int idx = 0; idx < index_list.size(); idx++){
+  //   index_match_file << idx << " \t " << index_list[idx] << "\n";
+  // }
+  // index_match_file << "\n\n";
+  // index_match_file.close();
 
   // Loop over possible scatterings to select binary collision point. 
   // Max number of scatterings is min(proj_A, targ_A)
@@ -369,9 +372,9 @@ void PythiaIsrGun::ExecuteTask() {
       x_p.Set(all_x[icoll], all_y[icoll], all_z[icoll], all_t[icoll]);
     }
     // Debug
-    debug_file << "Selected collision point index " << icoll << " for scattering number " << iscatt << "\n";
-    debug_file << "Length of AcceptedCollisionPoints: " << AcceptedCollisionPoints.size() << "\n";
-    debug_file << "Collision Point Position (t,x,y,z): (" << x_p.t() << ", " << x_p.x() << ", " << x_p.y() << ", " << x_p.z() << ")\n";
+    // debug_file << "Selected collision point index " << icoll << " for scattering number " << iscatt << "\n";
+    // debug_file << "Length of AcceptedCollisionPoints: " << AcceptedCollisionPoints.size() << "\n";
+    // debug_file << "Collision Point Position (t,x,y,z): (" << x_p.t() << ", " << x_p.x() << ", " << x_p.y() << ", " << x_p.z() << ")\n";
 
     ReDoSampling:
     do { // loop over samplings in each scattering
@@ -485,10 +488,10 @@ void PythiaIsrGun::ExecuteTask() {
     JSINFO << MAGENTA << "weight = " << info.weight() << " sigmaGen = " << info.sigmaGen() << " cross_section = " << cross_section;
     JSINFO << MAGENTA << "ratio = " << ratio << " r = " << r << " scatter_again = " << accept_scatter;
     JSINFO << MAGENTA << "Total number of partons so far NPP = " << NPP << ". p62 size = " << p62.size();
-    debug_file << "Accept scatter number " << iscatt << " (0=T, 1=F): " << accept_scatter << "\n";
+    // debug_file << "Accept scatter number " << iscatt << " (0=T, 1=F): " << accept_scatter << "\n";
 
     if ((!accept_scatter) && (iscatt != 0)) {break;}
-    debug_file << "Scatter progressed in scatter loop. Will now push information to framework. \n";
+    // debug_file << "Scatter progressed in scatter loop. Will now push information to framework. \n";
 
     //If scatter is accepted give to framework below
 
@@ -566,6 +569,7 @@ void PythiaIsrGun::ExecuteTask() {
 
     //If all sampling checks passed push back the collision position
     ini->OutputHardCollisionPosition(x_p.t(), x_p.x(), x_p.y(), x_p.z());
+    passed_hard_position_idx.push_back(icoll);
 
     // Decide which particles go to initial and final state modules
     // Update pTHat for each scattering; create and add partons 
@@ -580,8 +584,8 @@ void PythiaIsrGun::ExecuteTask() {
             label = initial_state_label;
             initial_state_label--;
             stat = -1000; // raw initial state status, must go to an initial state module
-            debug_partons_file << "Found initial state particle to go to ISR. Label: " << label 
-              << " Energy: " << particle.e() << "\n";  
+            // debug_partons_file << "Found initial state particle to go to ISR. Label: " << label 
+              // << " Energy: " << particle.e() << "\n";  
         }
         if (particle.status()==-23 || particle.status()==-33)
         {
@@ -606,7 +610,7 @@ void PythiaIsrGun::ExecuteTask() {
     // Update the pTHat vector in initial state using dummy
     for (auto pT : dummy_pTHat){
       ini->pTHat[iscatt].push_back(pT);
-      debug_file << "pT pushed back for scatter " << iscatt << ": " << pT << "\n";
+      // debug_file << "pT pushed back for scatter " << iscatt << ": " << pT << "\n";
     }
     dummy_pTHat.clear();
 
@@ -625,9 +629,22 @@ void PythiaIsrGun::ExecuteTask() {
   ini->CollisionPositiveRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
   // ini->ClearHardPartonMomentum();
 
+  // File for PIG summary of collision points and Ncoll
+  std::ofstream PIG_summary;
+  PIG_summary.open("PIG_summary.dat", std::ios::out | std::ios::app);
+  PIG_summary << "# Event " << GetCurrentEvent() << ", Ncoll " << Ncoll << ", Nscatt: " 
+    << passed_hard_position_idx.size() << ", Location (t,x,y,z,bool:hard_scatter)" << std::endl;
+  for (int i=0; i<all_t.size(); i++){
+    int hard_scatter = 0;
+    for (int accepted_idx : passed_hard_position_idx){
+      if (i == accepted_idx) {hard_scatter = 1;}
+    }
+    PIG_summary << all_t[i] << " " << all_x[i] << " " << all_y[i] << " " << all_z[i] << " " << hard_scatter << std::endl;
+  }
+  PIG_summary.close();
   //Debug
-  debug_file << "\n\n";
-  debug_file.close();
+  // debug_file << "\n\n";
+  // debug_file.close();
   VERBOSE(8) << GetNHardPartons();
-  debug_partons_file.close();
+  // debug_partons_file.close();
 }

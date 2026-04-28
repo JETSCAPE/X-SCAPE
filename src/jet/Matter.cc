@@ -1868,6 +1868,27 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
     }
 
   } // particle loop
+
+  // //Print out hypersurface
+  // //This part prints out the temperature and flow profile at all location  
+  //   std::ofstream MyFile;
+  //   MyFile.open("Transverse_Plane_Hydro_Info.dat", std::ios::out | std::ios::app);
+  //   MyFile << "# Event number " << GetCurrentEvent() << " (t,x,y,z=0, vx, vy, Temp, entropy_density, energy_density)";
+  //   for (int e = 1; e <= 150; e++){
+  //     for (int f = -100; f <= 100; f++){
+  //       for(int k = -100; k <= 100; k++){
+  //         double T = e * 0.1;
+  //         double X = f * 0.1;
+  //         double Y = k * 0.1; 
+  //         //JSINFO<< T<<" "<<X<<" "<<Y;
+  //         GetHydroCellSignal(T, X, Y, 0, check_fluid_info_ptr);
+  //         MyFile <<T<<" "<<X<<" "<<Y<<" "<<0<<" "<<check_fluid_info_ptr->vx<<" "
+  //           <<check_fluid_info_ptr->vy<<" "<<check_fluid_info_ptr->temperature<<" "<<check_fluid_info_ptr->entropy_density<<" "
+  //           <<check_fluid_info_ptr->energy_density<<"\n";
+  //       }
+  //     }
+  //   }
+  //    MyFile.close();
 }
 
 double Matter::generate_kt(double local_qhat, double dzeta) {
@@ -3813,19 +3834,19 @@ double Matter::fillQhatTab(double y) {
 
     if (std::isinf(tLoc) || std::isnan(tLoc) || std::isinf(zLoc) ||
         std::isnan(zLoc) || std::abs(zLoc) > tLoc) {
-      JSWARN << "Third instance";
-      JSWARN << "Loc for vector is:" << tLoc << ", " << xLoc << ", " << yLoc
-             << ", " << zLoc;
-      JSWARN << "initR0, initRx, initRy, initRz="
-             << ", " << initR0 << ", " << initRx << ", " << initRy << ", "
-             << initRz;
-      JSWARN << "initVx, initVy, initVz =" << initVx << ", " << initVy << ", "
-             << initVz;
-      JSWARN << "initVMod=" << std::setprecision(20)
-             << std::sqrt(initVx * initVx + initVy * initVy + initVz * initVz);
-      JSWARN << "Can't dump pIn_info as we are in fillQhatTab. But it should "
-                "be dumped right before this."; //Dump_pIn_info(i, pIn);
-                                                //exit(0);
+      // JSWARN << "Third instance";
+      // JSWARN << "Loc for vector is:" << tLoc << ", " << xLoc << ", " << yLoc
+      //        << ", " << zLoc;
+      // JSWARN << "initR0, initRx, initRy, initRz="
+      //        << ", " << initR0 << ", " << initRx << ", " << initRy << ", "
+      //        << initRz;
+      // JSWARN << "initVx, initVy, initVz =" << initVx << ", " << initVy << ", "
+      //        << initVz;
+      // JSWARN << "initVMod=" << std::setprecision(20)
+      //        << std::sqrt(initVx * initVx + initVy * initVy + initVz * initVz);
+      // JSWARN << "Can't dump pIn_info as we are in fillQhatTab. But it should "
+      //           "be dumped right before this."; //Dump_pIn_info(i, pIn);
+      //                                           //exit(0);
     }
 
     GetHydroCellSignal(tLoc, xLoc, yLoc, zLoc, check_fluid_info_ptr);
