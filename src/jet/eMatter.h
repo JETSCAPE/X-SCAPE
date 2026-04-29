@@ -110,9 +110,12 @@ public:
   double hydro_Tc, qhat0, alphas, brick_length, vir_factor;
   double initR0, initRx, initRy, initRz, initVx, initVy, initVz, initRdotV,
       initVdotV, initEner;
+  int pPid;
   double Q00, Q0, T0, QS, max_vir;
   double Lambda_QCD;
   double TABLEEMAX, TABLEEMIN, TABLEDE;
+
+  int targZ, targA;
 
   static const int dimQhatTab = 151;
   double qhatTab1D[dimQhatTab] = {0.0};

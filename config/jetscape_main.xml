@@ -239,6 +239,8 @@
       <breit_vir>1</breit_vir>
       <Q2>5</Q2>
       <nu>10</nu>
+      <targetZ>1</targetZ>
+      <targetA>1</targetA>
     </EAGun>
   </Hard>
 

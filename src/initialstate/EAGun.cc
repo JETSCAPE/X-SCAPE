@@ -60,6 +60,22 @@ void EAGun::InitTask() {
     std::string s = GetXMLElementText({"Hard", "EAGun", "name"});
     SetId(s);
 
+    // Initialize random number distribution
+    ZeroOneDistribution = uniform_real_distribution<double>{0.0, 1.0};
+
+    //for p/n sampling
+    targZ = GetXMLElementDouble({"Hard", "EAGun", "targetZ"});
+    targA = GetXMLElementDouble({"Hard", "EAGun", "targetA"});
+
+    //intrinsic kt
+    double ktsigma = 0.865;
+    readString("BeamRemnants:primordialKT = on");
+    settings.parm("BeamRemnants:primordialKTsoft", ktsigma);
+    settings.parm("BeamRemnants:primordialKThard", ktsigma);
+    settings.parm("BeamRemnants:halfMassForKT", 0);
+    settings.parm("BeamRemnants:reducedKTatHighY", 0);
+    settings.parm("BeamRemnants:primordialKTremnant", ktsigma);
+
     // initial kinematics
     eElectron = GetXMLElementDouble({"Hard", "EAGun", "electron_energy"});
     eProton = GetXMLElementDouble({"Hard", "EAGun", "proton_energy"});
@@ -91,13 +107,22 @@ void EAGun::InitTask() {
     // other Pythia settings
     readString("HadronLevel:Decay = off");
     readString("HadronLevel:all = off");
+    readString("Print:quiet = on");
   
-    // EA Gun stuff
-    readString("Beams:frameType = 2"); //for fixed target -- later swap to breit with frametype 3
-    // BeamA = proton
-    readString("Beams:idA = 2212");
-    // settings.parm("Beams:eA", eProton);
-    settings.parm("Beams:eA", 0.938);
+    // beam setup
+    // readString("Beams:frameType = 2");
+    // settings.parm("Beams:eA", 0.);
+    // settings.parm("Beams:eB", eElectron);
+    readString("Beams:frameType = 3");
+    settings.parm("Beams:pzA", 0.);
+    settings.parm("Beams:pzB", eElectron);
+    // readString("Beams:allowMomentumSpread = off");
+    // settings.parm("Beams:sigmaPxA", 0.);
+    // settings.parm("Beams:sigmaPyA", 0.);
+    // settings.parm("Beams:sigmaPzA", 0.);
+    // settings.parm("Beams:maxDevA", 0.);
+
+    // BeamA = p/n chosen randomly later
 
     // BeamB = electron
     if (use_positron) {
@@ -105,12 +130,6 @@ void EAGun::InitTask() {
         JSINFO << "Running with positron beam.";
     }
     else { readString("Beams:idB = 11"); }
-    // double disCos = sqrt( Q2/(4*eElectron*(eElectron-nu)) );
-    // double disSin = sqrt( 1 - pow(disCos,2.0) );
-    settings.parm("Beams:eB", eElectron);
-    // settings.parm("Beams:pxB", eElectron*disSin);
-    // settings.parm("Beams:pyB", 0);
-    // settings.parm("Beams:pzB", -1*eElectron*disCos);
 
     if (photoproduction) {
         readString("PDF:lepton2gamma = on");
@@ -155,6 +174,9 @@ void EAGun::InitTask() {
 
     JSINFO << MAGENTA << "EA Gun with FSR_on: " << FSR_on;
 
+    // readString("Random:setSeed = on");
+    // readString("Random:seed = 0");
+    
     // random seed
     // xml limits us to unsigned int :-/ -- but so does 32 bits Mersenne Twist
     tinyxml2::XMLElement *RandomXmlDescription = GetXMLElement({"Random"});
@@ -189,25 +211,46 @@ void EAGun::InitTask() {
         readString(s);
     }
 
-    // And initialize
-    if (!init()) { // Pythia>8.1
-        throw std::runtime_error("Pythia init() failed.");
-    }
-
     std::ofstream sigma_printer;
     sigma_printer.open(printer, std::ios::trunc);
 
-    // Initialize random number distribution
-    ZeroOneDistribution = uniform_real_distribution<double>{0.0, 1.0};
+    readString("PartonLevel:ISR = off");
+    readString("PartonLevel:FSR = off");
+
+    // And initialize
+    // if (!init()) { // Pythia>8.1
+    //     throw std::runtime_error("Pythia init() failed.");
+    // }
+    isFirstEvent = true;
 }
 
 void EAGun::ExecuteTask() {
     VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
     VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
+
+    if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
+        // cout << "PROTON!!!!" << endl;
+        readString("Beams:idA = 2212");
+    }
+    else {
+        // cout << "NEUTRON!!!!" << endl;
+        readString("Beams:idA = 2112");
+    }
+
+    // settings.listChanged();
+    if (!init()) { // Pythia>8.1
+        throw std::runtime_error("Pythia init() failed.");
+    }
+
+    if (!isFirstEvent) { //load rng state
+        rndm.setState(randState); 
+    }
+
     bool flag62 = false;
     vector<Pythia8::Particle> p62;
-    // cout << "?1" <<endl;
+    vector<Pythia8::Particle> p63;
+
     // sort by pt
     struct greater_than_pt {
         inline bool operator()(const Pythia8::Particle &p1,
@@ -216,12 +259,14 @@ void EAGun::ExecuteTask() {
         }
     };
 
-    Pythia8::Vec4 pPhoton;
+    Pythia8::Vec4 pProton, peIn, peOut, pPhoton, pProtonNoz, pStruck;
+    Pythia8::RotBstMatrix fixedtargBoost, polarRot;
+    // Pythia8::Vec4 tmp1,tmp2,tmp3,tmp4;
+    double nu, Q2, W2, x, y;
+
     do {
-        // cout << "?2" <<endl;
         bool check = next();
         if (check==false) continue;
-        // cout << "?3" <<endl;
 
         // getting scattered electron index
         int elecID = 6;
@@ -231,41 +276,19 @@ void EAGun::ExecuteTask() {
             }
         }
 
-        Pythia8::Vec4 pProton = event[1].p();
-        Pythia8::Vec4 peIn    = event[2].p();
-        Pythia8::Vec4 peOut   = event[6].p();
+        pProton = event[1].p();
+        peIn    = event[2].p();
+        peOut   = event[6].p();
         pPhoton = peIn - peOut;
+        pStruck = event[3].p();
 
-        // Q2, W2, Bjorken x, y
-        double Q2    = - pPhoton.m2Calc();
-        double W2    = (pProton + pPhoton).m2Calc();
-        double x     = Q2 / (2. * pProton * pPhoton);
-        double y     = (pProton * pPhoton) / (pProton * peIn);
+        // nu, Q2, W2, Bjorken x, y
+        nu = pPhoton.eInFrame(pProton);
+        Q2 = - pPhoton.m2Calc();
+        W2 = (pProton + pPhoton).m2Calc();
+        x  = Q2 / (2. * pProton * pPhoton);
+        y  = (pProton * pPhoton) / (pProton * peIn);
 
-        // cout << "?4" <<endl;
-        // cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << endl;
-        // cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << endl;
-        // cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << endl;
-        // cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << endl;
-        // cout << "Q2: " << Q2 << endl;
-        // cout << "nu: " << peIn[0]-peOut[0] << endl;
-
-        Pythia8::RotBstMatrix fixedtargBoost = Pythia8::toCMframe(pProton, pPhoton, peIn);
-        pProton.rotbst(fixedtargBoost);
-        peIn.rotbst(fixedtargBoost);
-        peOut.rotbst(fixedtargBoost);
-        pPhoton.rotbst(fixedtargBoost);
-
-        double nu = peIn[0]-peOut[0];
-
-        // cout << "AFTER BOOSTING" << endl;
-        // cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << endl;
-        // cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << endl;
-        // cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << endl;
-        // cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << endl;
-        // cout << endl;
-
-        // cout << "?5" <<endl;
         // kinematic cuts
         if(x < xmin or x > xmax) continue;
         if(y < ymin or y > ymax) continue;
@@ -273,11 +296,59 @@ void EAGun::ExecuteTask() {
         if(W2 < W2min or W2 > W2max) continue;
         if(nu < numin or nu > numax) continue;
 
-        // JSINFO << "Q2 = " << Q2 << "; W2 = " << W2 << "; x = " << x << "; y = " << y;
+        // cout << endl;
+        // cout << "BEFORE ROTATION" << endl;
+        // cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << " MAG " << pow( pow(pProton[1],2.) + pow(pProton[2],2.) + pow(pProton[3],2.), 0.5) << endl;
+        // cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << " MAG " << pow( pow(peIn[1],2.) + pow(peIn[2],2.) + pow(peIn[3],2.), 0.5) << endl;
+        // cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << " MAG " << pow( pow(peOut[1],2.) + pow(peOut[2],2.) + pow(peOut[3],2.), 0.5) << endl;
+        // cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << " MAG " << pow( pow(pPhoton[1],2.) + pow(pPhoton[2],2.) + pow(pPhoton[3],2.), 0.5) << endl;
+        // cout << "incoming q: " << pStruck[0] << " " << pStruck[1] << " " << pStruck[2] << " " << pStruck[3] << " MAG " << pow( pow(pStruck[1],2.) + pow(pStruck[2],2.) + pow(pStruck[3],2.), 0.5) << endl;
 
+        // tmp1 = pStruck;
 
-        // cout << "?6" <<endl;
+        //boost to proton rest frame
+        //...except pythia gives it small nonzero pz that we should keep
+        pProtonNoz = event[1].p();
+        pProtonNoz.pz(0.);
+
+        fixedtargBoost = Pythia8::toCMframe(pProtonNoz, pPhoton, peIn);
+        pProton.rotbst(fixedtargBoost);
+        peIn.rotbst(fixedtargBoost);
+        peOut.rotbst(fixedtargBoost);
+        pPhoton.rotbst(fixedtargBoost);
+        pStruck.rotbst(fixedtargBoost);
+
+        // cout << "AFTER ROTATING" << endl;
+        // cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << " MAG " << pow( pow(pProton[1],2.) + pow(pProton[2],2.) + pow(pProton[3],2.), 0.5) << endl;
+        // cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << " MAG " << pow( pow(peIn[1],2.) + pow(peIn[2],2.) + pow(peIn[3],2.), 0.5) << endl;
+        // cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << " MAG " << pow( pow(peOut[1],2.) + pow(peOut[2],2.) + pow(peOut[3],2.), 0.5) << endl;
+        // cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << " MAG " << pow( pow(pPhoton[1],2.) + pow(pPhoton[2],2.) + pow(pPhoton[3],2.), 0.5) << endl;
+        // cout << "incoming q: " << pStruck[0] << " " << pStruck[1] << " " << pStruck[2] << " " << pStruck[3] << " MAG " << pow( pow(pStruck[1],2.) + pow(pStruck[2],2.) + pow(pStruck[3],2.), 0.5) << endl;
+        // cout << endl;
+        
+        // tmp2 = pStruck;
+
+        // polarRot.reset();
+        polarRot.rot(0., 2.*M_PI*ZeroOneDistribution(*GetMt19937Generator()));
+        pProton.rotbst(polarRot);
+        peIn.rotbst(polarRot);
+        peOut.rotbst(polarRot);
+        pPhoton.rotbst(polarRot);
+        pStruck.rotbst(polarRot);
+
+        // cout << "AFTER ROTATING" << endl;
+        // cout << "incoming p: " << pProton[0] << " " << pProton[1] << " " << pProton[2] << " " << pProton[3] << " MAG " << pow( pow(pProton[1],2.) + pow(pProton[2],2.) + pow(pProton[3],2.), 0.5) << endl;
+        // cout << "incoming e: " << peIn[0] << " " << peIn[1] << " " << peIn[2] << " " << peIn[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peIn[3] << " MAG " << pow( pow(peIn[1],2.) + pow(peIn[2],2.) + pow(peIn[3],2.), 0.5) << endl;
+        // cout << "outgoing e: " << peOut[0] << " " << peOut[1] << " " << peOut[2] << " " << peOut[3] << " tan " << sqrt(pow(peIn[1],2.)+pow(peIn[2],2.))/peOut[3] << " MAG " << pow( pow(peOut[1],2.) + pow(peOut[2],2.) + pow(peOut[3],2.), 0.5) << endl;
+        // cout << "photon    : " << pPhoton[0] << " " << pPhoton[1] << " " << pPhoton[2] << " " << pPhoton[3] << " MAG " << pow( pow(pPhoton[1],2.) + pow(pPhoton[2],2.) + pow(pPhoton[3],2.), 0.5) << endl;
+        // cout << "incoming q: " << pStruck[0] << " " << pStruck[1] << " " << pStruck[2] << " " << pStruck[3] << " MAG " << pow( pow(pStruck[1],2.) + pow(pStruck[2],2.) + pow(pStruck[3],2.), 0.5) << endl;
+        // cout << endl;
+
+        // tmp3 = pStruck;
+
         p62.clear();
+        p63.clear();
+
         if (!printer.empty()) {
             std::ofstream sigma_printer;
             sigma_printer.open(printer, std::ios::out | std::ios::app);
@@ -285,31 +356,21 @@ void EAGun::ExecuteTask() {
             sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
             //sigma_printer.close();
 
-
             // JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
         }
 
         // pTarr[0]=0.0; pTarr[1]=0.0;
         // pindexarr[0]=0; pindexarr[1]=0;
 
-        // cout << "?7" <<endl;
+        //get the struck parton
         for (int parid = 0; parid < event.size(); parid++) {
-            // cout << "\t?8" <<endl;
             if (parid < 3) continue; // 0, 1, 2: total event and beams
             Pythia8::Particle &particle = event[parid];
 
+            // if (particle.status() == 62) { cout << "62 is " << particle.id() << endl; }
+
             //skipping everything decayed
             if (!particle.isFinal()) continue;
-
-            // cout << "\t?9" <<endl;
-            //replacing diquarks with antiquarks (and anti-dq's with quarks)
-            //the id is set to the heaviest quark in the diquark (except down quark)
-            //this technically violates baryon number conservation over the entire event
-            //also can violate electric charge conservation
-            if ( (std::abs(particle.id()) > 1100) && (std::abs(particle.id()) < 6000) && ((std::abs(particle.id())/10)%10 == 0) ) {
-                if(particle.id() > 0){particle.id( -1*particle.id()/1000 );}
-                else{particle.id( particle.id()/1000 );}
-            }
 
             //catching scattered electron and beam remenants
             if (particle.isHadron() or particle.isLepton()) {
@@ -317,7 +378,6 @@ void EAGun::ExecuteTask() {
                 continue;
             }
 
-            // cout << "\t?10" <<endl;
             if (!FSR_on) {
                 // only accept gluons and quarks
                 // Also accept Gammas to put into the hadron's list
@@ -336,265 +396,197 @@ void EAGun::ExecuteTask() {
                 if (fabs(particle.id()) > 5 && (particle.id() != 21 && particle.id() != 22)) continue;
             }
 
-            // cout << "\t?11" <<endl;
             p62.push_back(particle);
         }
 
-        // cout << "?12" <<endl;
         // if you want at least 2
         // if (p62.size() < 2) continue;
         if (p62.size() < 1) continue;
 
+        //now that we have a good struck parton
+        //take all of the associated remnants
+        for (int parid = 0; parid < event.size(); parid++) {
+            if (parid < 3) continue; // 0, 1, 2: total event and beams
+            Pythia8::Particle &particle = event[parid];
+
+            if (particle.status() != 63) continue;
+
+            p63.push_back(particle);
+        }
+
+
         // Now have all candidates, sort them by pt
-        std::sort(p62.begin(), p62.end(), greater_than_pt());
+        // std::sort(p62.begin(), p62.end(), greater_than_pt());
         // check...
         // for (auto& p : p62 ) cout << p.pT() << endl;
 
-        flag62 = true;
-        cout << "Q2: " << Q2 << endl;
-        cout << "nu: " << peIn[0]-peOut[0] << endl;
-        cout << "?13" <<endl;
+        // event.list();
+        // for (auto& p : p62 ) cout << "62 " << p.pz() << endl;
+        // for (auto& p : p63 ) cout << "63 " << p.pz() << endl;
 
+        flag62 = true;
+
+        // int found61already = 0;
+        // int numremn = 0;
+        // int remni = 0;
+
+        // for (int parid = 0; parid < event.size(); parid++) {
+        //     Pythia8::Particle &particle = event[parid];
+        //     if (particle.status() == -61) {
+        //         if (found61already == 1) { cout << "ALREADY DID A -61 HERE" << endl; exit(-2); }
+        //         Pythia8::Vec4 pmed = particle.p();
+
+        //         std::ofstream foutx1;
+        //         foutx1.open("fullrot-qmed1-v4-19.txt", std::ios_base::app);
+        //         foutx1 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
+
+        //         pmed.rotbst(fixedtargBoost);
+
+        //         std::ofstream foutx2;
+        //         foutx2.open("fullrot-qmed2-v4-19.txt", std::ios_base::app);
+        //         foutx2 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
+
+        //         pmed.rotbst(polarRot);
+
+        //         std::ofstream foutx3;
+        //         foutx3.open("fullrot-qmed3-v4-19.txt", std::ios_base::app);
+        //         foutx3 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
+
+        //         found61already = 1;
+        //     }
+        //     if (particle.status() == 63) { numremn++; remni=parid; }
+        // }
+        // if (numremn==1) {
+        //     Pythia8::Particle &particle = event[remni];
+        //     Pythia8::Vec4 pmed = particle.p();
+
+        //     std::ofstream foutx1;
+        //     foutx1.open("fullrot-remn1-v4-19.txt", std::ios_base::app);
+        //     foutx1 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
+
+        //     pmed.rotbst(fixedtargBoost);
+
+        //     std::ofstream foutx2;
+        //     foutx2.open("fullrot-remn2-v4-19.txt", std::ios_base::app);
+        //     foutx2 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
+
+        //     pmed.rotbst(polarRot);
+
+        //     std::ofstream foutx3;
+        //     foutx3.open("fullrot-remn3-v4-19.txt", std::ios_base::app);
+        //     foutx3 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
+        // }
     } while (!flag62);
 
+    // std::ofstream fout1;
+    // fout1.open("fullrot-qin1-v4-19.txt", std::ios_base::app);
+    // fout1 << tmp1[1] << " " << tmp1[2] << " " << tmp1[3] << endl;
 
-    // event passing kinematical cuts as been generated
+    // std::ofstream fout2;
+    // fout2.open("fullrot-qin2-v4-19.txt", std::ios_base::app);
+    // fout2 << tmp2[1] << " " << tmp2[2] << " " << tmp2[3] << endl;
+
+    // std::ofstream fout3;
+    // fout3.open("fullrot-qin3-v4-19.txt", std::ios_base::app);
+    // fout3 << tmp3[1] << " " << tmp3[2] << " " << tmp3[3] << endl;
+
+    // event passing kinematical cuts has been generated
     // identify where it occurred
-
-    // double p[4], xLoc[4];  
-    // // Roll for a starting point
-    // // See: https://stackoverflow.com/questions/15039688/random-generator-from-vector-with-probability-distribution-in-c
-    // std::random_device device;
-    // std::mt19937 engine(device()); // Seed the random number engine
-
-    // cout << "?14" <<endl;
     double xLoc[4];
     if (!ini) {
         VERBOSE(1) << "No initial state module, setting the starting location to "
                       "0. Make sure to add e.g. 3DGlauber before EAGun.";
+        for (int i=0; i<4; i++) { xLoc[i] = 0.; }
     } 
     else {
         nucleonPositions = ini->GetTargetNucleonPositions();
+        int randInd = (int)( ZeroOneDistribution(*GetMt19937Generator()) * nucleonPositions.size() );
+        for (int i=0; i<4; i++) { xLoc[i] = nucleonPositions[randInd][i]; }
     }
-    int randInd = (int)( ZeroOneDistribution(*GetMt19937Generator()) * nucleonPositions.size() );
-    for (int i=0; i<4; i++) { xLoc[i] = nucleonPositions[randInd][i]; }
-    cout << "INITIAL COLLISION IS AT: " << xLoc[0] << " " << xLoc[1] << " " << xLoc[2] << " " << xLoc[3] << endl;
+    // cout << "INITIAL COLLISION IS AT: " << xLoc[0] << " " << xLoc[1] << " " << xLoc[2] << " " << xLoc[3] << endl;
 
-  // else {
-  //   // double t,x,y,z;
-  //   // ini->SampleABinaryCollisionPoint(t,x, y,z);
-  //   // xLoc[1] = x;
-  //   // xLoc[2] = y;
-
-  //   std::ofstream fdensity;
-  //   fdensity.open("EAgun_densities.csv", std::ofstream::out | std::ios::trunc);
-  //   for (int t=-5; t<=5; t++) {
-  //     for (int x=-5; x<=5; x++) {
-  //       for (int y=-5; y<=5; y++) {
-  //         for (int z=-5; z<=5; z++) {
-  //           fdensity << t << "," << x << "," << y << "," << z << ";" << ini->Get_target_nucleon_density_lab(t,x,y,z) << endl;
-  //         }
-  //       }
-  //     }
-  //   }
-  //   // cout << "xmu = <0,0,0,0> in EAgun: " << ini->Get_target_nucleon_density_lab(0,0,0,0) << endl;
-  //   fdensity.close();
-    
-  //   auto TargetNucleonPosition = ini->GetTargetNucleonPositions(); //segfault?
-  //   for(int i=0; i<TargetNucleonPosition.size(); i++) {
-  //       std::cout << TargetNucleonPosition[i][0] << "  " << TargetNucleonPosition[i][3] <<std::endl;
-  //   }
-
-  // }
-
-   /*
-  // Loop through particles
-
-  // Only top two
-  //for(int np = 0; np<2; ++np){
-
-  // Accept them all
-
-  //getting Breit frame for the event to set virtualities in
-  Pythia8::Vec4 pProton = event[1].p();
-  Pythia8::Vec4 peIn    = event[4].p();
-  Pythia8::Vec4 peOut   = event[6].p();
-  Pythia8::Vec4 pPhoton = peIn - peOut;
-  double Q2    = - pPhoton.m2Calc();
-  double W2    = (pProton + pPhoton).m2Calc();
-  double x     = Q2 / (2. * pProton * pPhoton);
-  double y     = (pProton * pPhoton) / (pProton * peIn);
-  //Pythia8::Vec4 pBreit  = 2*x*pProton + pPhoton;
-  Pythia8::Vec4 pQuark  = 2*x*pProton;
-  Pythia8::Vec4 pBreit2  = 2*x*pProton + pPhoton;
-  Pythia8::RotBstMatrix breitBoost = Pythia8::toCMframe(pQuark,pPhoton);
-  Pythia8::Vec4 pQuarkI= event[3].p();
-  Pythia8::Vec4 pQuarkF= event[5].p();
-  pQuarkI.rotbst(breitBoost);
-  pQuarkF.rotbst(breitBoost);
-
-  //test statements
-  pBreit2.rotbst(breitBoost);
-  pQuark.rotbst(breitBoost);
-  pPhoton.rotbst(breitBoost);
-  //JSINFO << "pQuark Initial: " << pQuarkI.px() << " " << pQuarkI.py() << " " << pQuarkI.pz() << " ";
-  //JSINFO << "pQuark Final: " << pQuarkF.px() << " " << pQuarkF.py() << " " << pQuarkF.pz() << " ";
-  //JSINFO << "pPhoton: " << pPhoton.px() << " " << pPhoton.py() << " " << pPhoton.pz() << " ";
-  //JSINFO << "Breit frame test: " << pBreit2.px() << " " << pBreit2.py() << " " << pBreit2.pz() << " ";
-  const double QS = 0.9;
-
-  int hCounter = 0;
-  for (int np = 0; np < p62.size(); ++np) {
-    Pythia8::Particle &particle = p62.at(np);
-    Pythia8::Vec4 partp = particle.p();
-    partp.rotbst(breitBoost);
-    double mass = particle.m();
-    double eCM = info.eCM();
-
-    //only doing vir setting for DIS
-    if(breitVir and particle.status() == 62 and !photoproduction){
-      //setting up max vir
-      double max_vir = (partp.pAbs() * partp.pAbs() - mass*mass) * vir_factor;
-      double min_vir = (QS * QS / 2.0) * (1.0 + std::sqrt(1.0 + 4.0 * particle.m() * particle.m() / QS / QS));
-      double tQ2 = 0.;
-
-      //using z axis for pT since thats the axis the photon quark collision happens on
-      if(initial_virtuality_pT){
-        max_vir = (partp.pz() * partp.pz()) * vir_factor;
-      }
-
-      //JSINFO << Q2factor;
-      max_vir *= pow(Q2/(info.s()),Q2pow) * Q2factor/sqrt(x);
-      //JSINFO << max_vir;
-
-      int iSplit = 0; // quark
-      if (particle.id() == gid) {
-        JSDEBUG << " parton is a gluon ";
-        iSplit = 1; // gluon
-      } else {
-        JSDEBUG << " parton is a quark ";
-      }
-
-      //evaluating virtuality for different cases
-      if (max_vir <= QS * QS){
-        tQ2 = 0.0;
-      }else{
-        double nu = (partp.e() + partp.pAbs())/sqrt(2.0);
-
-        if (abs(particle.id()) == 4 || abs(particle.id()) == 5) {
-          if (max_vir > min_vir) {
-              tQ2 =
-                  matterHelper.generate_vac_t_w_M(particle.id(), particle.m(), nu,
-                                    QS * QS / 2.0, max_vir, 0, iSplit);
-            } else {
-              tQ2 = QS * QS;
-            }
-            //  std::ofstream tdist;
-            //  tdist.open("tdist_heavy.dat", std::ios::app);
-            //  tdist << tQ2 << endl;
-            //  tdist.close();
-
-            VERBOSE(8) << BOLDYELLOW << " virtuality calculated as = " << tQ2;
-        } else if (particle.id() == gid) {
-            tQ2 = matterHelper.generate_vac_t_w_M(particle.id(), particle.m(), nu,
-                                    QS * QS / 2.0, max_vir, 0, iSplit);
-        } else {
-            tQ2 = matterHelper.generate_vac_t(particle.id(), nu, QS * QS / 2.0,
-                                max_vir, 0, iSplit);
-
+    //debug: should only get one parton out
+    if (p62.size()>1) { 
+        cout << "SIZE IS " << p62.size() << endl;
+        for (int np=0; np<p62.size(); np++) {
+            Pythia8::Particle &particle = p62.at(np);
+            std::cout << np << " Particle " << particle.id() << " E " << particle.e() << " MOM " << particle.px() << " " << particle.py() << " " << particle.pz() << endl;
         }
-
-        //tQ2 = test_vir;
-        //catching virtualitiies that are too high
-        if(sqrt(tQ2) > particle.pAbs()
-    
-    or sqrt(tQ2) > partp.pAbs()
-    
-    */
-    /*
-     ) tQ2 = min_vir;
-      }
-
-      //applying virtuality change to the parton
-      //JSINFO << BOLDYELLOW << "Particle with ID: " << particle.id();
-      //JSINFO << BOLDYELLOW << "initial momentum: " << particle.px() << " " << particle.py() << " " << particle.pz();
-      //JSINFO << BOLDYELLOW << "breit momentum: " << partp.px() << " " << partp.py() << " " << partp.pz();
-      //JSINFO << BOLDYELLOW << "Virtuality: " << sqrt(tQ2) << " ";
-*/
-/*
-      double scale = sqrt(particle.e()*particle.e() - tQ2 - particle.m2())/particle.pAbs();
-      particle.px(particle.px()*scale);
-      particle.py(particle.py()*scale);
-      particle.pz(particle.pz()*scale);
+        // exit(-2);
     }
 
-    VERBOSE(7) << "Adding particle with pid = " << particle.id()
-               << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
+    Pythia8::Particle particle, remnant;
+    Pythia8::Vec4 pPtn, pRmn;
+    FourVector pParton, pRemnant;
 
-    VERBOSE(7) << "Adding particle with pid = " << particle.id()
-               << ", pT = " << particle.pT() << ", y = " << particle.y()
-               << ", phi = " << particle.phi() << ", e = " << particle.e();
-
-    VERBOSE(7) << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
-
-*/
-
-    int hCounter = 0;
     for (int np=0; np<p62.size(); np++) {
-        Pythia8::Particle &particle = p62.at(np);
-        auto ptn = make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.eta(),particle.phi(), particle.e(), xLoc);
+        particle = p62.at(np);
+
+        pPtn = particle.p();
+        pPtn.rotbst(fixedtargBoost);
+
+        // std::ofstream fout4;
+        // fout4.open("fullrot-qout1-v4-19.txt", std::ios_base::app);
+        // fout4 << pPtn.px() << " " << pPtn.py() << " " << pPtn.pz() << endl;
+
+        pPtn.rotbst(polarRot);
+        pParton = FourVector(pPtn.px(), pPtn.py(), pPtn.pz(), pPtn.e());
+
+        auto ptn = make_shared<Parton>(0, particle.id(), 0, pParton, xLoc);
         ptn->set_color(particle.col());
         ptn->set_anti_color(particle.acol());
         ptn->set_max_color(1000 * (np + 1));
 
-        //adding mean formtime for partons that need it set
-        /*if(breitVir and particle.status() == 62 and !photoproduction)
-        {
-            double mean_form_time = (2.*ptn->e()) / (ptn->e()*ptn->e()
-                            - ptn->px()*ptn->px() - ptn->py()*ptn->py()
-                            - ptn->pz()*ptn->pz() - ptn->restmass()*ptn->restmass()
-                            + rounding_error) / fmToGeVinv;
-            ptn->set_form_time(mean_form_time);
-            ptn->set_mean_form_time();
-
-            double velocity[4];
-            velocity[0] = 1.0;
-            for (int j = 1; j <= 3; j++)
-            {
-                velocity[j] = ptn->p(j) / ptn->e();
-            }
-            ptn->set_jet_v(velocity);
-        }
-         */
-
-        std::cout << "Particle " << particle.id() << " " << particle.e() << endl;
         AddParton(ptn);
 
-        //make the remnant too
-        FourVector premnant = FourVector(-ptn->px(),-ptn->py(),pPhoton.pz()-ptn->pz(),pPhoton.e()+0.938-ptn->e()); //at rest
+        std::cout << "Struck " << particle.id() << " " << particle.status() << " E " << ptn->e() << " MOM " << ptn->px() << " " << ptn->py() << " " << ptn->pz() << endl;
 
-        int remnant_pid; //for now all nucleons are protons
-        switch (particle.id()) {
-          case 21:
-            remnant_pid = 21; break; //need a gluon to stay color neutral with recoiled gluon
-          case 1:
-            remnant_pid = 2203; break; //ud diquark left over
-          case 2:
-            remnant_pid = 2103; break; //uu diquark left over
-          default: 
-            remnant_pid = -1*particle.id(); break; //need to preserve overall strangeness etc
+        //log the momentum
+        // std::ofstream ptout;
+        // ptout.open("fullrot-qout2-v4-19.txt", std::ios_base::app);
+        // ptout << pPtn.px() << " " << pPtn.py() << " " << pPtn.pz() << endl;
+    }
+
+
+    for (int np=0; np<p63.size(); np++) {
+        remnant = p63.at(np);
+
+        pRmn = remnant.p();
+        pRmn.rotbst(fixedtargBoost);
+
+        // std::ofstream fout4;
+        // fout4.open("fullrot-remnout1-v4-19.txt", std::ios_base::app);
+        // fout4 << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
+
+        pRmn.rotbst(polarRot);
+        pRemnant = FourVector(pRmn.px(), pRmn.py(), pRmn.pz(), pRmn.e());
+
+        if (remnant.isHadron()) {
+            auto rmn = make_shared<Hadron>(0, remnant.id(), 0, pRemnant, xLoc);
+
+            AddHadron(rmn);
+            std::cout << "Remnant Hadron " << remnant.id() << " " << remnant.status() << " E " << rmn->e() << " MOM " << rmn->px() << " " << rmn->py() << " " << rmn->pz() << endl;
+        }
+        else {
+            auto rmn = make_shared<Parton>(0, remnant.id(), 0, pRemnant, xLoc);
+            rmn->set_color(remnant.col());
+            rmn->set_anti_color(remnant.acol());
+            rmn->set_max_color(1000 * (np + 1));
+
+            AddParton(rmn);
+            std::cout << "Remnant Parton " << remnant.id() << " " << remnant.status() << " E " << rmn->e() << " MOM " << rmn->px() << " " << rmn->py() << " " << rmn->pz() << endl;
         }
 
-        auto remnant = make_shared<Parton>(0, remnant_pid, -1, premnant, xLoc);
-        remnant->set_color(particle.acol()); //overall color neutral
-        remnant->set_anti_color(particle.col());
-        remnant->set_max_color(1000 * (np + 1));
 
-        std::cout << "Remnant " << remnant->pid() << " " << remnant->e() << endl;
 
-        AddParton(remnant);
-
+        //log the momentum
+        // std::ofstream ptout;
+        // ptout.open("fullrot-remnout2-v4-19.txt", std::ios_base::app);
+        // ptout << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
     }
+
+    randState = rndm.getState();
+    isFirstEvent = false;
 
     VERBOSE(8) << GetNHardPartons();
 }

@@ -83,7 +83,16 @@ JetScapeParticleBase::JetScapeParticleBase(int label, int id, int stat,
         set_restmass(InternalHelperPythia.particleData.m0(id));
   }
 
+  double pe,px,py,pz;
+  pe = p.t();
+  px = p.x();
+  py = p.y();
+  pz = p.z();
   reset_momentum(p);
+  if (!(p.t()==pe && p.x()==px && p.y()==py && p.z()==pz)) {
+    JSWARN << "\t\tBEFORE PMU " << p.t() << " " << p.x() << " " << p.y() << " " << p.z();
+    JSWARN << "\t\tAFTER PMU " << p.t() << " " << p.x() << " " << p.y() << " " << p.z();
+  }
   x_in_ = x;
   set_stat(stat);
 }
@@ -308,7 +317,7 @@ void Parton::CheckAcceptability(int id) {
   case 22: // photon
     break;
   default:
-    JSWARN << " error in id = " << id;
+    // JSWARN << " error in id = " << id;
     // throw std::runtime_error("pid not accepted for Parton");
     break;
   }

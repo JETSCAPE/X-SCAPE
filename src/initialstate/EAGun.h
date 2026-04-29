@@ -22,12 +22,16 @@
 #include "Matter.h"
 #include "JetScapeLogger.h"
 #include "Pythia8/Pythia.h"
+#include "Pythia8/Basics.h"
 
 using namespace Jetscape;
 
 class EAGun : public HardProcess, public Pythia8::Pythia {
 
 private:
+  Pythia8::RndmState randState;
+  bool isFirstEvent;
+
   double eProton   = 920.;
   double eElectron = 27.5;
   double vir_factor;
@@ -56,6 +60,9 @@ private:
   double numin = 10.-0.01;
   double numax = 10.+0.01;
 
+  int targZ;
+  int targA;
+  
   std::vector<std::array<double, 4>> nucleonPositions = {{0.,0.,0.,0.}};
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
