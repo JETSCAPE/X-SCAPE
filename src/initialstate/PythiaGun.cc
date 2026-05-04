@@ -20,7 +20,7 @@
 #include <iostream>
 #include <fstream>
 #define MAGENTA "\033[35m"
-
+ 
 using namespace std;
 
 // Register the module with the base class
@@ -32,6 +32,7 @@ void PythiaGun::InitTask() {
 
   JSDEBUG << "Initialize PythiaGun";
   VERBOSE(8);
+  // In C++
 
   // Show initialization at INFO level
   readString("Init:showProcesses = off");
@@ -44,7 +45,7 @@ void PythiaGun::InitTask() {
     readString("Init:showMultipartonInteractions = on");
     readString("Init:showChangedParticleData = on");
   }
-
+  readString("Print:quiet = on");
   // No event record printout.
   readString("Next:numberShowInfo = 0");
   readString("Next:numberShowProcess = 0");
@@ -73,9 +74,7 @@ void PythiaGun::InitTask() {
 
   pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
   pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
-  ImpParMean = GetXMLElementDouble({"Hard", "PythiaGun", "ImpParMean"});
-  s_1x = GetXMLElementDouble({"Hard", "PythiaGun", "s_1x"});
-  s_1y = GetXMLElementDouble({"Hard", "PythiaGun", "s_1y"});
+
 
   if(pTHatMin < 0.01){ //assuming low bin where softQCD should be used
     //running softQCD - inelastic nondiffrative (min-bias)
@@ -149,16 +148,6 @@ void PythiaGun::InitTask() {
       continue; // skip empty lines
     VERBOSE(7) << "Also reading in: " << s;
     readString(s);
-  }
-  
-  if (ImpParMean > 0.0){
-    auto pdfA = getPDFPtr(2212, 1, "A", true);
-    auto pdfB = getPDFPtr(2212, 1, "B", true);
-    VERBOSE(1) << "Only works for symmetric collision system";
-    double s1 = sqrt(pow(s_1x - ImpParMean/2.0, 2) + pow(s_1y, 2));
-    double s2 = sqrt(pow(s_1x + ImpParMean/2.0, 2) + pow(s_1y, 2));
-    pdfA->setSA(s1);
-    pdfB->setSB(s2);
   }
 
   // And initialize
