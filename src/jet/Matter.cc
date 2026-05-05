@@ -826,7 +826,10 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                     pi * dt_lrf / 0.1973;
 
 	        prob_el=prob_el*ModifiedProbability(QhatParametrizationType, tempLoc, sdLoc, enerLoc, pIn[i].t());
-          prob_el /= ModificationCorr;
+          if (ModificationFactor > 0.0){
+            ModificationCorr = 1.0 + pow(ModificationFactor / tempLoc, ModificationPower);
+            prob_el /= ModificationCorr;
+          }
           el_rand = ZeroOneDistribution(*GetMt19937Generator());
 
           //cout << "  qhat: " << qhatLoc << "  alphas: " << soln_alphas << "  ener: " << enerLoc << "  prob_el: " << prob_el << "  " << el_rand << endl;
@@ -5232,7 +5235,6 @@ double Matter::solve_alphas(double var_qhat, double var_ener, double var_temp) {
   double max_qhat =
       preFactor * pow(0.5, 2) * pow(var_temp, 3) *
       log(5.7 * max(var_ener, 2.0 * pi * var_temp) / 24 / pi / 0.5 / var_temp);
-
   if (max_qhat < var_qhat) {
     JSINFO << "qhat exceeds HTL calculation, use alpha_s = 0.5";
     return (0.5);

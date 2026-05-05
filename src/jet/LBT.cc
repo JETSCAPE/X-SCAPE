@@ -1051,6 +1051,11 @@ void LBT::LBT0(int &n, double &ti) {
             }
         }
         lim_low = sqrt(6.0 * pi * alphas) * temp0 / E;
+        if (ModificationFactor > 0.0){
+          ModificationCorr = 1.0 +  pow(ModificationFactor / temp0, ModificationPower);
+          lim_low /= pow(ModificationCorr, 1.0);
+        }
+
         if (abs(KATT1[i]) == 4 || abs(KATT1[i]) == 5)
           lim_high = 1.0;
         else
