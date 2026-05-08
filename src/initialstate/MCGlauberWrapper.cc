@@ -293,6 +293,11 @@ void MCGlauberWrapper::ExecuteTask() {
             std::exit(-1);
         }
     }
+    //Print ncoll to file
+    std::ofstream ncoll_out;
+    ncoll_out.open("ncoll_list.txt", std::ios::app);
+    ncoll_out << ncoll_ << std::endl;
+    ncoll_out.close();
 }
 
 void MCGlauberWrapper::SampleABinaryCollisionPoint(
