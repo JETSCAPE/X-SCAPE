@@ -379,6 +379,7 @@ void PythiaIsrGun::ExecuteTask() {
     ReDoSampling:
     do { // loop over samplings in each scattering
       NSamplings++;
+      flag62=false;
       p62.clear();
       IndexToSkip.clear();
       next();
