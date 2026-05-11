@@ -157,9 +157,9 @@ void PythiaIsrGun::InitTask() {
   proj_A = GetXMLElementInt({"proj_A"});
   targ_A = GetXMLElementInt({"targ_A"});
   if (proj_A<0 || targ_A<0){
-    JSWARN << "Projectile or target nuncleon numbers not set. Setting to d-Au values.";
-    proj_A=2;
-    targ_A=197;
+    JSWARN << "Projectile or target nuncleon numbers not set. Setting to pp values.";
+    proj_A=1;
+    targ_A=1;
   }
 
   std::stringstream lines;
@@ -201,10 +201,10 @@ void PythiaIsrGun::WriteTask(weak_ptr<JetScapeWriter> w) {
 void PythiaIsrGun::ExecuteTask() {
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
-  JSWARN << "Current Event #" << GetCurrentEvent() << "; PythiaIsrGun ExecuteTask called.";
-  JSWARN << "The pTHat vector size is " << ini->pTHat.size() << "before clearing. Now clearing";
-  ini->pTHat.clear();
-  JSWARN << "Have cleared the pTHat vector. The size is now " << ini->pTHat.size();
+  // JSWARN << "Current Event #" << GetCurrentEvent() << "; PythiaIsrGun ExecuteTask called.";
+  // JSWARN << "The pTHat vector size is " << ini->pTHat.size() << "before clearing. Now clearing";
+  // ini->pTHat.clear();
+  // JSWARN << "Have cleared the pTHat vector. The size is now " << ini->pTHat.size();
   //Reading vir_factor from xml for MATTER
   double vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
 
@@ -315,56 +315,56 @@ void PythiaIsrGun::ExecuteTask() {
     bool accept_scatter = true;
     double ratio = 1.0;
     //Debug
-    JSINFO << MAGENTA << "Entering new scattering loop: iscatt = " << iscatt << ". Ratio from last call= " << ratio;
+    // JSINFO << MAGENTA << "Entering new scattering loop: iscatt = " << iscatt << ". Ratio from last call= " << ratio;
 
     //Pick a collision point
     int icoll = -1;
     if (AcceptedCollisionPoints.size() == 0){
       icoll = index_list[iscatt]; //Automatically select first point
       //Debug
-      JSINFO << MAGENTA << "Selected collision point index " << icoll << " for scattering number " << iscatt;
+      // JSINFO << MAGENTA << "Selected collision point index " << icoll << " for scattering number " << iscatt;
     }
     else {
       //Debug
-      JSWARN << "Entered else statement line 319";
+      // JSWARN << "Entered else statement line 319";
       for (int accepted_idx : AcceptedCollisionPoints){
         //Debug
-        JSWARN << "At top of for loop over accepted indices";
-        JSINFO << MAGENTA << "Accepted index: " << accepted_idx;
+        // JSWARN << "At top of for loop over accepted indices";
+        // JSINFO << MAGENTA << "Accepted index: " << accepted_idx;
         for (int shuffled_idx : index_list){
           bool same_proj, same_targ = true;
           //Debug
-          JSWARN << "At top of for loop over shuffled indices";
-          JSINFO<< MAGENTA << "Shuffled index: " << shuffled_idx;
+          // JSWARN << "At top of for loop over shuffled indices";
+          // JSINFO<< MAGENTA << "Shuffled index: " << shuffled_idx;
           if (accepted_idx == shuffled_idx){
             //Debug
-            JSINFO << "Skipped already accepted index: " << accepted_idx;
+            // JSINFO << "Skipped already accepted index: " << accepted_idx;
             continue; //skip already accepted points
           }
           same_proj = same_location(all_projPos[accepted_idx], all_projPos[shuffled_idx]);
           same_targ = same_location(all_targPos[accepted_idx], all_targPos[shuffled_idx]);
           if (!same_proj && !same_targ){
             //Debug
-            JSINFO << "Found binary collision with no participant overlap from previous ones. Setting icoll";
-            icoll = shuffled_idx;
-            JSINFO << "icoll set to " << icoll << " for scatter number " << iscatt;
+            // JSINFO << "Found binary collision with no participant overlap from previous ones. Setting icoll";
+            // icoll = shuffled_idx;
+            // JSINFO << "icoll set to " << icoll << " for scatter number " << iscatt;
             break;
           }
         }
         //Debug
-        JSWARN << "Out of for loop over shuffled indices";
+        // JSWARN << "Out of for loop over shuffled indices";
         if (icoll != -1){//break if already found collision
           //Debug
-          JSINFO << MAGENTA << "Already found a collision point, breaking loop";
+          // JSINFO << MAGENTA << "Already found a collision point, breaking loop";
           break;
         }
       }
       //Debug
-      JSWARN << "Out of for loop over shuffled indices";
+      // JSWARN << "Out of for loop over shuffled indices";
     }
     //Check icoll and pushback the accepted point
     if (icoll == -1){
-      JSWARN << "All binary collision points have been used. Cannot add another scattering between nucleons";
+      // JSWARN << "All binary collision points have been used. Cannot add another scattering between nucleons";
       break; //exit the scattering loop
     }
     else { //Track accepted point and set binary collision position
@@ -474,8 +474,8 @@ void PythiaIsrGun::ExecuteTask() {
       first_sigmaErr = info.sigmaErr();
       first_ptHat = info.pTHat();
       first_weight = info.weight();
-      JSINFO << "first_sigma_gen = " << first_sigmaGen << " first_weight = " << first_weight << " first_ptHat = " << first_ptHat;
-      JSINFO << "Values returned from GetSigmaGen, GetEventWeight, and GetPtHat: " << GetSigmaGen() << ", " << GetEventWeight() << ", " << GetPtHat();
+      // JSINFO << "first_sigma_gen = " << first_sigmaGen << " first_weight = " << first_weight << " first_ptHat = " << first_ptHat;
+      // JSINFO << "Values returned from GetSigmaGen, GetEventWeight, and GetPtHat: " << GetSigmaGen() << ", " << GetEventWeight() << ", " << GetPtHat();
     }
     
     //Decide whether to push the information to the framework by putting break here.
@@ -485,10 +485,10 @@ void PythiaIsrGun::ExecuteTask() {
     // accept_scatter = true;
 
     //Debug
-    JSINFO << MAGENTA << "At decision point of scattering loop for scatter # " << iscatt;
-    JSINFO << MAGENTA << "weight = " << info.weight() << " sigmaGen = " << info.sigmaGen() << " cross_section = " << cross_section;
-    JSINFO << MAGENTA << "ratio = " << ratio << " r = " << r << " scatter_again = " << accept_scatter;
-    JSINFO << MAGENTA << "Total number of partons so far NPP = " << NPP << ". p62 size = " << p62.size();
+    // JSINFO << MAGENTA << "At decision point of scattering loop for scatter # " << iscatt;
+    // JSINFO << MAGENTA << "weight = " << info.weight() << " sigmaGen = " << info.sigmaGen() << " cross_section = " << cross_section;
+    // JSINFO << MAGENTA << "ratio = " << ratio << " r = " << r << " scatter_again = " << accept_scatter;
+    // JSINFO << MAGENTA << "Total number of partons so far NPP = " << NPP << ". p62 size = " << p62.size();
     // debug_file << "Accept scatter number " << iscatt << " (0=T, 1=F): " << accept_scatter << "\n";
 
     if ((!accept_scatter) && (iscatt != 0)) {break;}
