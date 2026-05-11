@@ -44,6 +44,7 @@ private:
   std::vector<std::unique_ptr<Pythia8::Pythia>> pythia_vec;
   void ConfigurePythia(Pythia8::Pythia& py, unsigned int seed);
   int GetPythiaGridIndex(double x, double y) const;
+  double  CrossSection;
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<PythiaTGun> reg;
 
@@ -58,7 +59,7 @@ public:
   double GetpTHatMax() const { return pTHatMax; }
 
   // Cross-section information in mb and event weight.
-  double GetSigmaGen() { return 0;}//infoPtr.sigmaGen(); };
+  double GetSigmaGen() { return CrossSection; }
   double GetSigmaErr() { return 0;}//infoPtr.sigmaErr(); };
   double GetPtHat() { return 0;}//infoPtr.pTHat(); };
   double GetEventWeight() { return 0;}//infoPtr.weight(); };

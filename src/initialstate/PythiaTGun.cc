@@ -174,7 +174,7 @@ void PythiaTGun::ExecuteTask() {
             std::ofstream sigma_printer;
             sigma_printer.open(printer, std::ios::out | std::ios::app);
 
-            sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
+            sigma_printer << "sigma = " << py.info.sigmaGen() << " Err =  " << py.info.sigmaErr() << endl ;
             //sigma_printer.close();
 
 //      JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
@@ -247,6 +247,7 @@ void PythiaTGun::ExecuteTask() {
     flag62 = true;
 
   } while (!flag62);
+  CrossSection += py.info.sigmaGen();
 
   int hCounter = 0;
   for (int np = 0; np < p62.size(); ++np) {
