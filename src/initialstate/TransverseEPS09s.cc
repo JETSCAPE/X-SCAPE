@@ -69,10 +69,10 @@ std::string fit_parameters::get_filename(int eps_order, int eps_pset){
   std::string filename;
   switch(eps_order){
   case 1:
-    filename = "../examples/eps09s/eps09sLO";
+    filename = "/wsu/home/hl/hl97/hl9735/eps09s/eps09sLO";
     break;
   case 2:
-    filename = "../examples/eps09s/eps09sNLO";
+    filename = "/wsu/home/hl/hl97/hl9735/eps09s/eps09sNLO";
     break;
   default: //Checks that order is valid
     std::cout << "Invalid EPS09s order!! order = " << eps_order << std::endl;
