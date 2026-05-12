@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -29,18 +30,19 @@ using namespace Jetscape;
 class MCGlauberGenStringWrapper : public Jetscape::InitialState {
   // this is second 3DMCGlauber wrapper class to generate strings
 
-public:
+ public:
   MCGlauberGenStringWrapper();
   ~MCGlauberGenStringWrapper() {}
 
-std::shared_ptr<InitialState> ini; // temporary pointer to initial state
+  std::shared_ptr<InitialState> ini;  // temporary pointer to initial state
   /** Default ExecuteTask() function. It can be overridden by other tasks.
    */
   void ExecuteTask();
   void InitTask();
   std::vector<double> Get_Proj_Remnant();
   std::vector<double> Get_Targ_Remnant();
-private:
+
+ private:
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberGenStringWrapper> reg;

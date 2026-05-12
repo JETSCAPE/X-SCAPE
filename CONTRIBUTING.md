@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions to JETSCAPE (new module, feature, bug fix, etc.) are welcome. To contribute, read through the instructions below and open a [Pull Request](https://github.com/JETSCAPE/JETSCAPE/pulls) with your changes, or an [Issue](https://github.com/JETSCAPE/JETSCAPE/issues) describing what you intend to do.
+Contributions to JETSCAPE (new module, feature, bug fix, etc.) are welcome. To contribute, read through the instructions below and open a [Pull Request](https://github.com/JETSCAPE/X-SCAPE/pulls) with your changes, or an [Issue](https://github.com/JETSCAPE/X-SCAPE/issues) describing what you intend to do.
 
 ## Developing modules
 
@@ -32,7 +32,15 @@ Once these steps are done, one can just add the module name to the XML, and it w
 
 ## Git Management
 
-Tips for git management are found on the corresponding [wiki page](https://github.com/JETSCAPE/JETSCAPE/wiki/Tips-for-git-management).
+Tips for git management are found on the corresponding [wiki page](https://github.com/JETSCAPE/X-SCAPE/wiki/Tips-for-git-management).
+
+## Code Formatting
+
+Tips for code formatting are found on the corresponding [wiki page](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Policy.CodeFormatting).
+
+## Unit Tests
+
+Please also see the [Unit Tests](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Policy.UnitTests) page for details about writing unit tests to accompany your code contributions.
 
 ## Doxygen documentation
 

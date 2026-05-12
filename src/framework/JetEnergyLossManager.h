@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -24,93 +25,186 @@
 #include <vector>
 
 namespace Jetscape {
-/** @class Jet energy loss manager.
-   */
+
+/**
+ * @class JetEnergyLossManager
+ * @brief Manager for jet energy loss tasks in the JETSCAPE framework.
+ *
+ * This class manages a collection of jet energy loss tasks, handling their
+ * initialization, execution, clearing, and output writing. It also implements
+ * the signal-slot philosophy to connect tasks such as `JetEnergyLoss` and
+ * `HardProcess` with relevant functions for energy loss and parton list
+ * retrieval.
+ */
 class JetEnergyLossManager
     : public JetScapeModuleBase,
       public std::enable_shared_from_this<JetEnergyLossManager> {
-
-public:
-  /** Default constructor to create a jet energy loss manager. Sets task ID as "JLossManager". Flag GetHardPartonListConnected is set to false.
+ public:
+  /**
+   * @brief Default constructor.
+   *
+   * Creates a JetEnergyLossManager with task ID `"JLossManager"`.
+   * The flag `GetHardPartonListConnected` is set to `false`.
    */
   JetEnergyLossManager();
 
-  /** Destructor for the jet energy loss manager.
+  /**
+   * @brief Destructor.
    */
   virtual ~JetEnergyLossManager();
 
-  /** It initializes the tasks attached to the jet energy loss manager. It also sends a signal to connect the JetEnergyLoss object to the GetHardPartonList() function of the HardProcess class. It can be overridden by other tasks.
-      @sa JetScapeSignalManager to understand the implementation of signal slots philosophy. Override Init (not InitTask) here as sub-tasks are called specifically.
+  /**
+   * @brief Initializes attached jet energy loss tasks.
+   *
+   * Sends a signal to connect a `JetEnergyLoss` object to the
+   * `GetHardPartonList()` function of the `HardProcess` class.
+   * Can be overridden by derived tasks.
+   *
+   * @sa JetScapeSignalManager
    */
   void Init() override;
 
-  /** It reads the Hard Patrons list and calls CreateSignalSlots() function. Then, it executes the energy loss tasks attached with the jet energy loss manager. This function also includes the parallel computing feature. It can be overridden by other tasks.
-  */
+  /**
+   * @brief Executes the jet energy loss tasks.
+   *
+   * Reads the hard parton list, calls `CreateSignalSlots()`, and executes the
+   * attached energy loss tasks. Supports parallel execution.
+   * Can be overridden by derived tasks.
+   */
   virtual void ExecuteTask();
 
-  /** It erases the tasks attached with the energy loss manager. It can be overridden by other tasks.
+  /**
+   * @brief Clears attached energy loss tasks.
+   *
+   * Erases all tasks attached to the manager.
+   * Can be overridden by derived tasks.
    */
   virtual void ClearTask();
 
+  /**
+   * @brief Writes output information of energy loss tasks to a file.
+   */
   virtual void CalculateTime();
 
+  /**
+   * @brief Executes the energy loss tasks at the module time step.
+   */
   virtual void ExecTime();
 
+  /**
+   * @brief Initializes per-event state for energy loss tasks.
+   */
   virtual void InitPerEvent();
 
+  /**
+   * @brief Finishes per-event state for energy loss tasks.
+   */
   virtual void FinishPerEvent();
 
-  /** It writes the output information relevant to the jet energy loss tasks/subtasks into a file. It can be overridden by other tasks.
-      @param w A pointer of type JetScapeWriter class.
-      @sa JetScapeWriter class for further information.
-  */
+  /**
+   * @brief Writes output from the jet energy loss tasks.
+   *
+   * Writes output information relevant to energy loss tasks/subtasks into
+   * the given writer.
+   *
+   * @param w Weak pointer to a JetScapeWriter instance.
+   * @sa JetScapeWriter
+   */
   virtual void WriteTask(weak_ptr<JetScapeWriter> w);
 
+  /**
+   * @brief Get the number of registered signals.
+   * @return Number of signals.
+   */
   int GetNumSignals();
 
-  /** Uses philosophy of signal slots. Checks whether the attached task is connected via signal slots to the functions UpdateEnergyDeposit(), GetEnergyDensity(), GetHydroCell() (defined in FluidDynamics class), and DoEnergyLoss() (defined in JetEnergyLoss class). If not, then, it sends a signal to these functions.
-      @sa JetScapeSignalManager to understand the implementation of signal slots philosophy.
+  /**
+   * @brief Create and connect signal slots.
+   *
+   * Ensures that tasks are connected via signals to:
+   * - `UpdateEnergyDeposit()`
+   * - `GetEnergyDensity()`
+   * - `GetHydroCell()` (from the FluidDynamics class)
+   * - `DoEnergyLoss()` (from the JetEnergyLoss class)
+   *
+   * If not connected, sends the required signals.
+   * Can be extended or overridden by derived tasks.
+   *
+   * @sa JetScapeSignalManager
    */
   void CreateSignalSlots();
 
-  /** A signal to connect the JetEnergyLossManager to the function GetHardPartonList() of the class HardProcess.
+  /**
+   * @brief Signal to connect JetEnergyLossManager to HardProcess.
+   *
+   * This signal connects the JetEnergyLossManager to the
+   * `GetHardPartonList()` function of the `HardProcess` class.
    */
   sigslot::signal1<vector<shared_ptr<Parton>> &> GetHardPartonList;
-  sigslot::signal1<vector<shared_ptr<PartonShower>>& > GetPartonShowerList;
+  sigslot::signal1<vector<shared_ptr<PartonShower>> &> GetPartonShowerList;
 
-  /** Use the flag m_GetHardPartonListConnected as true, if JetEnergyLossManager had sent a signal to function GetHardPartonList() of the class HardProcess.
-      @param m_GetHardPartonListConnected A boolean flag.
+  /**
+   * @brief Set the connection status of GetHardPartonList.
+   * @param m_GetHardPartonListConnected `true` if the signal was sent to
+   *        `HardProcess::GetHardPartonList()`.
    */
   void SetGetHardPartonListConnected(bool m_GetHardPartonListConnected) {
     GetHardPartonListConnected = m_GetHardPartonListConnected;
   }
 
-  /** @return GetHardPartonListConnected A boolean flag. Its status indicates whether JetEnergyLossManager had sent a signal to the function GetHardPartonList() of the class HardProcess.
+  /**
+   * @brief Get the connection status of GetHardPartonList.
+   * @return `true` if the signal was sent to
+   * `HardProcess::GetHardPartonList()`.
    */
   const bool GetGetHardPartonListConnected() {
     return GetHardPartonListConnected;
   }
 
-  const bool GetUseIntialPartonShower() const {return useShower;}
+  /**
+   * @brief Set whether to use the initial parton shower for energy loss.
+   * @param m_Use `true` to use the initial parton shower, `
+   */
+  const bool GetUseIntialPartonShower() const { return useShower; }
 
-  void SetUseIntialPartonShower(bool m_Use) {useShower=m_Use;}
+  /**
+   * @brief Set whether to use the initial parton shower for energy loss.
+   * @param m_Use `true` to use the initial parton shower, `
+   */
+  void SetUseIntialPartonShower(bool m_Use) { useShower = m_Use; }
 
-  // The Slot method to send the vector of Hadronization module
-  void GetFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons); 
+  /**
+   * @brief Slot to get the final state partons for hadronization.
+   *
+   * Slot method to send the vector of Hadronization module.
+   */
+  void GetFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons);
 
-private:
-
+ private:
   void MakeCopies();
   bool copiesMade;
 
-  bool useShower=false;
+  /**
+   * @brief Flag indicating whether to use the initial parton shower
+   */
+  bool useShower = false;
 
+  /**
+   * @brief Flag indicating if GetHardPartonList is connected.
+   */
   bool GetHardPartonListConnected;
-  vector<shared_ptr<Parton>> hp;
-  vector<shared_ptr<PartonShower>> ps;
 
+  /**
+   * @brief Lists of hard partons managed by this class.
+   */
+  vector<shared_ptr<Parton>> hp;
+
+  /**
+   * @brief List of parton showers managed by this class.
+   */
+  vector<shared_ptr<PartonShower>> ps;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

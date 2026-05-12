@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -23,7 +24,19 @@
 
 namespace Jetscape {
 
-// convert the string type entry name to enum type EntryNames
+/**
+ * @brief Converts a string representation of an entry name to the corresponding
+ * enum type EntryName.
+ *
+ * This function takes a string as input and attempts to resolve it to a
+ * corresponding EntryName enum value. If the input string matches a known entry
+ * name, the associated enum value is returned. If no match is found,
+ * ENTRY_INVALID is returned.
+ *
+ * @param input A string representing the entry name.
+ * @return The corresponding EntryName enum value, or ENTRY_INVALID if the input
+ * is not recognized.
+ */
 EntryName ResolveEntryName(std::string input) {
   static const std::map<std::string, EntryName> optionStrings = {
       {"energy_density", ENTRY_ENERGY_DENSITY},
@@ -57,8 +70,21 @@ EntryName ResolveEntryName(std::string input) {
   }
 }
 
-// It checks whether a space-time point (tau, x, y, eta) is inside evolution
-// history or outside.
+/**
+ * @brief Checks whether a given space-time point is within the evolution
+ * history range.
+ *
+ * This function determines if the provided light-cone coordinates (tau, eta)
+ * and spatial coordinates (x, y) fall within the defined limits of the
+ * evolution history. If any of the coordinates are out of bounds, a warning
+ * message is generated, and the function returns 0. Otherwise, it returns 1.
+ *
+ * @param tau Light-cone coordinate representing proper time.
+ * @param x   Spatial coordinate in the x-direction.
+ * @param y   Spatial coordinate in the y-direction.
+ * @param eta Light-cone coordinate representing space-time rapidity.
+ * @return int Returns 1 if the point is within range, 0 otherwise.
+ */
 int EvolutionHistory::CheckInRange(Jetscape::real tau, Jetscape::real x,
                                    Jetscape::real y, Jetscape::real eta) const {
   int status = 1;
@@ -66,24 +92,24 @@ int EvolutionHistory::CheckInRange(Jetscape::real tau, Jetscape::real x,
     std::string warn_message =
         ("tau=" + std::to_string(tau) + " is not in range [" +
          std::to_string(tau_min) + "," + std::to_string(TauMax()) + "]");
-    //throw InvalidSpaceTimeRange(warn_message);
-    //JSWARN << warn_message;
+    // throw InvalidSpaceTimeRange(warn_message);
+    // JSWARN << warn_message;
     status = 0;
   }
   if (x < x_min || x > XMax()) {
     std::string warn_message =
         ("x=" + std::to_string(x) + " is not in range [" +
          std::to_string(x_min) + "," + std::to_string(XMax()) + "]");
-    //throw InvalidSpaceTimeRange(warn_message);
-    //JSWARN << warn_message;
+    // throw InvalidSpaceTimeRange(warn_message);
+    // JSWARN << warn_message;
     status = 0;
   }
   if (y < y_min || y > YMax()) {
     std::string warn_message =
         ("y=" + std::to_string(y) + " is not in range [" +
          std::to_string(y_min) + "," + std::to_string(YMax()) + "]");
-    //throw InvalidSpaceTimeRange(warn_message);
-    //JSWARN << warn_message;
+    // throw InvalidSpaceTimeRange(warn_message);
+    // JSWARN << warn_message;
     status = 0;
   }
   if (!boost_invariant) {
@@ -91,15 +117,39 @@ int EvolutionHistory::CheckInRange(Jetscape::real tau, Jetscape::real x,
       std::string warn_message =
           ("eta=" + std::to_string(eta) + " is not in range [" +
            std::to_string(eta_min) + "," + std::to_string(EtaMax()) + "]");
-      //throw InvalidSpaceTimeRange(warn_message);
-      //JSWARN << warn_message;
+      // throw InvalidSpaceTimeRange(warn_message);
+      // JSWARN << warn_message;
       status = 0;
     }
   }
   return (status);
 }
 
-/** Construct evolution history given the bulk_data and the data_info */
+/**
+ * @brief Reads hydro evolution history from an external fluid dynamic module.
+ *
+ * This function processes evolution history data stored in a
+ * std::vector<float>. The data must be structured such that its size equals
+ * @f$ ntau \times nx \times ny \times neta \times data\_info\_.size() @f$.
+ * Each segment of length `data_info_.size()` contains float values
+ * corresponding to the names in `data_info_`.
+ *
+ * @param data_ The input vector containing hydro evolution history data.
+ * @param data_info_ A vector of strings indicating the meaning of each data
+ * field.
+ * @param tau_min Minimum proper time value.
+ * @param dtau Proper time step size.
+ * @param x_min Minimum x-coordinate.
+ * @param dx Step size in x-direction.
+ * @param nx Number of grid points in the x-direction.
+ * @param y_min Minimum y-coordinate.
+ * @param dy Step size in y-direction.
+ * @param ny Number of grid points in the y-direction.
+ * @param eta_min Minimum space-time rapidity.
+ * @param deta Step size in the eta direction.
+ * @param neta Number of grid points in the eta direction.
+ * @param tau_eta_is_tz Flag indicating whether tau-eta coordinates are used.
+ */
 void EvolutionHistory::FromVector(const std::vector<float> &data_,
                                   const std::vector<std::string> &data_info_,
                                   float tau_min_, float dtau_, float x_min_,
@@ -123,8 +173,21 @@ void EvolutionHistory::FromVector(const std::vector<float> &data_,
   ntau = data_.size() / (data_info_.size() * nx * ny * neta);
 }
 
-/* This function will read the sparse data stored in data_ with associated 
- * information data_info_ into to FluidCellInfo object */
+/**
+ * @brief Retrieves fluid cell information for a given lattice cell.
+ *
+ * This function reads the sparse data stored in `data_` with associated
+ * information from `data_info_` to construct a `FluidCellInfo` object.
+ * If the data is not stored in a sparse format, it retrieves the
+ * corresponding `FluidCellInfo` object directly from `data_`.
+ *
+ * @param id_tau Temporal index of the cell.
+ * @param id_x Spatial index along the x-axis.
+ * @param id_y Spatial index along the y-axis.
+ * @param id_eta Spatial index along the eta-axis. In 2+1D mode, this
+ *               value is set to zero internally.
+ * @return FluidCellInfo The reconstructed fluid cell information.
+ */
 FluidCellInfo EvolutionHistory::GetFluidCell(int id_tau, int id_x, int id_y,
                                              int id_eta) const {
   int entries_per_record = data_info.size();
@@ -149,92 +212,104 @@ FluidCellInfo EvolutionHistory::GetFluidCell(int id_tau, int id_x, int id_y,
     auto entry_name = ResolveEntryName(data_info.at(i));
     auto entry_data = data_vector.at(record_starting_id + i);
     switch (entry_name) {
-    case ENTRY_ENERGY_DENSITY:
-      fluid_cell_ptr->energy_density = entry_data;
-      break;
-    case ENTRY_ENTROPY_DENSITY:
-      fluid_cell_ptr->entropy_density = entry_data;
-      break;
-    case ENTRY_TEMPERATURE:
-      fluid_cell_ptr->temperature = entry_data;
-      break;
-    case ENTRY_PRESSURE:
-      fluid_cell_ptr->pressure = entry_data;
-      break;
-    case ENTRY_QGP_FRACTION:
-      fluid_cell_ptr->qgp_fraction = entry_data;
-      break;
-    case ENTRY_MU_B:
-      fluid_cell_ptr->mu_B = entry_data;
-      break;
-    case ENTRY_MU_C:
-      fluid_cell_ptr->mu_C = entry_data;
-      break;
-    case ENTRY_MU_S:
-      fluid_cell_ptr->mu_S = entry_data;
-      break;
-    case ENTRY_VX:
-      fluid_cell_ptr->vx = entry_data;
-      break;
-    case ENTRY_VY:
-      fluid_cell_ptr->vy = entry_data;
-      break;
-    case ENTRY_VZ:
-      fluid_cell_ptr->vz = entry_data;
-      break;
-    case ENTRY_PI00:
-      fluid_cell_ptr->pi[0][0] = entry_data;
-      break;
-    case ENTRY_PI01:
-      fluid_cell_ptr->pi[0][1] = entry_data;
-      fluid_cell_ptr->pi[1][0] = entry_data;
-      break;
-    case ENTRY_PI02:
-      fluid_cell_ptr->pi[0][2] = entry_data;
-      fluid_cell_ptr->pi[2][0] = entry_data;
-      break;
-    case ENTRY_PI03:
-      fluid_cell_ptr->pi[0][3] = entry_data;
-      fluid_cell_ptr->pi[3][0] = entry_data;
-      break;
-    case ENTRY_PI11:
-      fluid_cell_ptr->pi[1][1] = entry_data;
-      break;
-    case ENTRY_PI12:
-      fluid_cell_ptr->pi[1][2] = entry_data;
-      fluid_cell_ptr->pi[2][1] = entry_data;
-      break;
-    case ENTRY_PI13:
-      fluid_cell_ptr->pi[1][3] = entry_data;
-      fluid_cell_ptr->pi[3][1] = entry_data;
-      break;
-    case ENTRY_PI22:
-      fluid_cell_ptr->pi[2][2] = entry_data;
-      break;
-    case ENTRY_PI23:
-      fluid_cell_ptr->pi[2][3] = entry_data;
-      fluid_cell_ptr->pi[3][2] = entry_data;
-      break;
-    case ENTRY_PI33:
-      fluid_cell_ptr->pi[3][3] = entry_data;
-      break;
-    case ENTRY_BULK_PI:
-      fluid_cell_ptr->bulk_Pi = entry_data;
-      break;
-    default:
-      JSWARN << "The entry name in data_info_ must be one of the \
+      case ENTRY_ENERGY_DENSITY:
+        fluid_cell_ptr->energy_density = entry_data;
+        break;
+      case ENTRY_ENTROPY_DENSITY:
+        fluid_cell_ptr->entropy_density = entry_data;
+        break;
+      case ENTRY_TEMPERATURE:
+        fluid_cell_ptr->temperature = entry_data;
+        break;
+      case ENTRY_PRESSURE:
+        fluid_cell_ptr->pressure = entry_data;
+        break;
+      case ENTRY_QGP_FRACTION:
+        fluid_cell_ptr->qgp_fraction = entry_data;
+        break;
+      case ENTRY_MU_B:
+        fluid_cell_ptr->mu_B = entry_data;
+        break;
+      case ENTRY_MU_C:
+        fluid_cell_ptr->mu_C = entry_data;
+        break;
+      case ENTRY_MU_S:
+        fluid_cell_ptr->mu_S = entry_data;
+        break;
+      case ENTRY_VX:
+        fluid_cell_ptr->vx = entry_data;
+        break;
+      case ENTRY_VY:
+        fluid_cell_ptr->vy = entry_data;
+        break;
+      case ENTRY_VZ:
+        fluid_cell_ptr->vz = entry_data;
+        break;
+      case ENTRY_PI00:
+        fluid_cell_ptr->pi[0][0] = entry_data;
+        break;
+      case ENTRY_PI01:
+        fluid_cell_ptr->pi[0][1] = entry_data;
+        fluid_cell_ptr->pi[1][0] = entry_data;
+        break;
+      case ENTRY_PI02:
+        fluid_cell_ptr->pi[0][2] = entry_data;
+        fluid_cell_ptr->pi[2][0] = entry_data;
+        break;
+      case ENTRY_PI03:
+        fluid_cell_ptr->pi[0][3] = entry_data;
+        fluid_cell_ptr->pi[3][0] = entry_data;
+        break;
+      case ENTRY_PI11:
+        fluid_cell_ptr->pi[1][1] = entry_data;
+        break;
+      case ENTRY_PI12:
+        fluid_cell_ptr->pi[1][2] = entry_data;
+        fluid_cell_ptr->pi[2][1] = entry_data;
+        break;
+      case ENTRY_PI13:
+        fluid_cell_ptr->pi[1][3] = entry_data;
+        fluid_cell_ptr->pi[3][1] = entry_data;
+        break;
+      case ENTRY_PI22:
+        fluid_cell_ptr->pi[2][2] = entry_data;
+        break;
+      case ENTRY_PI23:
+        fluid_cell_ptr->pi[2][3] = entry_data;
+        fluid_cell_ptr->pi[3][2] = entry_data;
+        break;
+      case ENTRY_PI33:
+        fluid_cell_ptr->pi[3][3] = entry_data;
+        break;
+      case ENTRY_BULK_PI:
+        fluid_cell_ptr->bulk_Pi = entry_data;
+        break;
+      default:
+        JSWARN << "The entry name in data_info_ must be one of the \
                         energy_density, entropy_density, temperature, pressure, qgp_fraction, \
                         mu_b, mu_c, mu_s, vx, vy, vz, pi00, pi01, pi02, pi03, pi11, pi12, \
                         pi13, pi22, pi23, pi33, bulk_pi";
-      break;
+        break;
     }
   }
 
   return *fluid_cell_ptr;
 }
 
-/** For one given time step id_tau,
- * get FluidCellInfo at spatial point (x, y, eta)*/
+/**
+ * @brief Retrieves the FluidCellInfo at a given spatial point and time step.
+ *
+ * This function fetches the fluid cell information at a specific
+ * (x, y, eta) coordinate for a given time step id_tau. If boost invariance
+ * is not assumed, it interpolates in the eta direction as well.
+ *
+ * @param id_tau The tau-step number (time step index).
+ * @param x The x-coordinate of the spatial point.
+ * @param y The y-coordinate of the spatial point.
+ * @param eta The light-cone coordinate.
+ * @return The FluidCellInfo at the specified (x, y, eta) location and time
+ * step.
+ */
 FluidCellInfo EvolutionHistory::GetAtTimeStep(int id_tau, Jetscape::real x,
                                               Jetscape::real y,
                                               Jetscape::real eta) const {
@@ -265,8 +340,22 @@ FluidCellInfo EvolutionHistory::GetAtTimeStep(int id_tau, Jetscape::real x,
                       c101, c110, c111, x, y, eta);
 }
 
-// do interpolation along time direction; we may also need high order
-// interpolation functions
+/**
+ * @brief Interpolates FluidCellInfo along the time direction.
+ *
+ * This function performs interpolation to retrieve the FluidCellInfo at a
+ * specified space-time point. It interpolates along the time direction (tau)
+ * between the two closest time steps. If the requested point is outside the
+ * valid range, a default "zero" fluid cell is returned.
+ *
+ * @param tau The light-cone time coordinate to retrieve the fluid information
+ * at.
+ * @param x The spatial x-coordinate.
+ * @param y The spatial y-coordinate.
+ * @param eta The eta coordinate, which is a light-cone coordinate.
+ * @return FluidCellInfo The interpolated fluid information at the given
+ * space-time point.
+ */
 FluidCellInfo EvolutionHistory::get(Jetscape::real tau, Jetscape::real x,
                                     Jetscape::real y,
                                     Jetscape::real eta) const {
@@ -283,6 +372,28 @@ FluidCellInfo EvolutionHistory::get(Jetscape::real tau, Jetscape::real x,
   return (LinearInt(tau0, tau1, bulk0, bulk1, tau));
 }
 
+/**
+ * @brief Computes the fluid cell information at a given spacetime point.
+ *
+ * This function calculates the fluid cell information for a given time, spatial
+ * coordinates (x, y), and the longitudinal position (z) in spacetime. It first
+ * checks if the point lies within the light cone (i.e., if t^2 > z^2) and, if
+ * valid, computes the proper time (tau) and the rapidity (eta) based on the
+ * provided coordinates. If the point is outside the light cone, a warning is
+ * logged.
+ *
+ * @param t The time coordinate of the spacetime point.
+ * @param x The spatial x-coordinate of the point.
+ * @param y The spatial y-coordinate of the point.
+ * @param z The longitudinal spatial coordinate of the point.
+ *
+ * @return A FluidCellInfo object containing the computed fluid cell data for
+ * the given spacetime point.
+ *
+ * @note The function assumes the spacetime coordinates are consistent with the
+ * relativistic framework and that the point is within the light cone for valid
+ * results.
+ */
 FluidCellInfo EvolutionHistory::get_tz(Jetscape::real t, Jetscape::real x,
                                        Jetscape::real y,
                                        Jetscape::real z) const {
@@ -305,4 +416,4 @@ FluidCellInfo EvolutionHistory::get_tz(Jetscape::real t, Jetscape::real x,
   return (cell);
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

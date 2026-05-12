@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -24,7 +25,7 @@ using namespace Jetscape;
 
 class ColorlessHadronization
     : public HadronizationModule<ColorlessHadronization> {
-public:
+ public:
   ColorlessHadronization();
   virtual ~ColorlessHadronization();
 
@@ -34,17 +35,18 @@ public:
                        vector<shared_ptr<Parton>> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
 
-private:
+ private:
   double p_fake;
   bool take_recoil;
   double Lambda_QCD;
 
-  // Allows the registration of the module so that it is available to be used by the Jetscape framework.
+  // Allows the registration of the module so that it is available to be used by
+  // the Jetscape framework.
   static RegisterJetScapeModule<ColorlessHadronization> reg;
 
-protected:
+ protected:
   static Pythia8::Pythia pythia;
   std::uniform_real_distribution<double> ZeroOneDistribution;
 };
 
-#endif // COLORLESSHADRONIZATION_H
+#endif  // COLORLESSHADRONIZATION_H

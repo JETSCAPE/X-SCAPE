@@ -20,19 +20,6 @@
     </PythiaGun>
   </Hard>
   
-  <!--Preequilibrium Dynamics Module -->
-  <!--Preequilibrium>
-    <NullPreDynamics> </NullPreDynamics>
-  </Preequilibrium-->
-  
-  <!-- Hydro  Module  -->
-  <Hydro>
-    <MUSIC>
-      <name>MUSIC</name>
-      <InitialProfile>42</InitialProfile>
-    </MUSIC>
-  </Hydro>
-  
   <!--Eloss Modules -->
   <Eloss>
     <Matter>

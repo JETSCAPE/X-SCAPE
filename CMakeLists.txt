@@ -1,9 +1,9 @@
-###########################
-### Initial Cmake Setup ###
-###########################
+# ##############################################################################
+# Initial Cmake Setup ###
+# ##############################################################################
 
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project (JetScape CXX C)
+project(JetScape CXX C)
 
 # Fail if cmake is called in the source directory
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
@@ -14,7 +14,7 @@ endif()
 
 # Default to the release build.
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 # for mac compliance
@@ -24,73 +24,80 @@ cmake_policy(SET CMP0054 NEW)
 # Tell cmake where to find modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmakemodules")
 
-###########################
-### Parse options       ###
-###########################
+# ##############################################################################
+# Parse options       ###
+# ##############################################################################
 
 # Unit Tests. Turn off with 'cmake -Dunittests=OFF'.
 option(unittests "Build all unittests." ON)
 
-# freestream. Turn on with 'cmake -DUSE_FREESTREAM=ON'.
-# Note that some warnings are generated. Could be turned off by adding the following to CFLAGS in
-# external_packages/freestream-milne/Makefile
-# -Wno-unknown-pragmas -Wno-writable-strings -Wno-return-type -Wc++11-compat-deprecated-writable-strings
+# freestream. Turn on with 'cmake -DUSE_FREESTREAM=ON'. Note that some warnings
+# are generated. Could be turned off by adding the following to CFLAGS in
+# external_packages/freestream-milne/Makefile -Wno-unknown-pragmas
+# -Wno-writable-strings -Wno-return-type
+# -Wc++11-compat-deprecated-writable-strings
 option(USE_FREESTREAM "Build tests for freestream-milne" OFF)
-if (USE_FREESTREAM)
+if(USE_FREESTREAM)
   message("Includes for freestream ...")
   include_directories(./external_packages/freestream-milne/src)
-endif (USE_FREESTREAM)
+endif(USE_FREESTREAM)
 
 option(USE_3DGlauber "Build tests for 3DGlauber" OFF)
-if (USE_3DGlauber)
+if(USE_3DGlauber)
   message("Includes for 3DGlauber ...")
-  include_directories(./external_packages/3dMCGlauber ./external_packages/3dMCGlauber/src)
+  include_directories(./external_packages/3dMCGlauber
+                      ./external_packages/3dMCGlauber/src)
   include_directories(./external_packages/3dMCGlauber/LHAPDF_Lib/include)
   include_directories(./external_packages/3dMCGlauber/eps09)
   link_directories(./external_packages/3dMCGlauber/LHAPDF_Lib/lib)
-endif (USE_3DGlauber)
+endif(USE_3DGlauber)
 
 # CLVisc. Trun on with 'cmake -DUSE_CLVISC=ON'.
 find_package(OpenCL)
 
 option(USE_CLVISC "Build tests for CLVisc" OFF)
-if (OPENCL_FOUND)
+if(OPENCL_FOUND)
   message("Found OpenCL, try clvisc with cmake -DUSE_CLVISC=ON")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
-  if (USE_CLVISC)
-      message("Includes for clvisc ...")
-      include_directories(./external_packages/clvisc_wrapper/include/)
-      include_directories(./external_packages/clvisc_wrapper/)
-      if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/PyVisc")
-          message(FATAL_ERROR "Error: CLVisc source has not been downloaded in external_packages by ./get_clvisc.sh")
-      endif()
-  endif (USE_CLVISC)
-endif (OPENCL_FOUND)
+  if(USE_CLVISC)
+    message("Includes for clvisc ...")
+    include_directories(./external_packages/clvisc_wrapper/include/)
+    include_directories(./external_packages/clvisc_wrapper/)
+    if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/PyVisc")
+      message(
+        FATAL_ERROR
+          "Error: CLVisc source has not been downloaded in external_packages by ./get_clvisc.sh"
+      )
+    endif()
+  endif(USE_CLVISC)
+endif(OPENCL_FOUND)
 
 # IP-Glasma. Turn on with 'cmake -DUSE_IPGLASMA=ON'.
 option(USE_IPGLASMA "Build with IP-Glasma" OFF)
-if (USE_IPGLASMA)
-    message("Includes for IP-Glasma ...")
-    include_directories(./external_packages/ipglasma ./external_packages/ipglasma/src)
-endif (USE_IPGLASMA)
+if(USE_IPGLASMA)
+  message("Includes for IP-Glasma ...")
+  include_directories(./external_packages/ipglasma
+                      ./external_packages/ipglasma/src)
+endif(USE_IPGLASMA)
 
 # MUSIC. Turn on with 'cmake -DUSE_MUSIC=ON'.
 option(USE_MUSIC "Build tests for MUSIC" OFF)
-if (USE_MUSIC)
-    message("Includes for MUSIC ...")
-    include_directories(./external_packages/music ./external_packages/music/src)
-endif (USE_MUSIC)
+if(USE_MUSIC)
+  message("Includes for MUSIC ...")
+  include_directories(./external_packages/music ./external_packages/music/src)
+endif(USE_MUSIC)
 
 # Soft Particlization. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON'.
 option(USE_ISS "Build tests for iSS" OFF)
-if (USE_ISS)
+if(USE_ISS)
   message("Includes for iSS ...")
   include_directories(./external_packages/iSS ./external_packages/iSS/src)
-endif (USE_ISS)
+endif(USE_ISS)
 
-# SMASH afterburner. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_SMASH=ON'.
+# SMASH afterburner. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON
+# -DUSE_SMASH=ON'.
 option(USE_SMASH "Build tests for SMASH" OFF)
-if (USE_SMASH)
+if(USE_SMASH)
   message("SMASH includes and library ...")
   find_package(SMASH)
   if(${SMASH_FOUND})
@@ -98,106 +105,161 @@ if (USE_SMASH)
   else()
     message(FATAL_ERROR "SMASH is not found. Ensure SMASH_DIR is properly set.")
   endif(${SMASH_FOUND})
-endif (USE_SMASH)
+endif(USE_SMASH)
 
-###############################
-### Compiler & Linker Flags ###
-###############################
+# js-contrib extensions. Turn on with 'cmake -DUSE_JS_CONTRIB=ON'.
+# Individual contribs are gated by their own sub-options (all OFF by default).
+option(USE_JS_CONTRIB "Enable js-contrib extensions" OFF)
+if(USE_JS_CONTRIB)
+  option(USE_JS_FNO_HYDRO
+    "Build FnoHydro contrib (requires libtorch ~2 GB and ROOT)" OFF)
+  option(USE_JS_PYJETSCAPE
+    "Build PyJetscape pybind11 Python bindings (compile from source)" OFF)
+  if(USE_JS_FNO_HYDRO OR USE_JS_PYJETSCAPE)
+    message("Enabling js-contrib extensions ...")
+  endif()
+endif(USE_JS_CONTRIB)
+
+# Compile with OpenMP support
+if(APPLE)
+  # Locate Homebrew libomp dynamically so the same CMakeLists.txt works on
+  # both Intel (/usr/local) and Apple Silicon (/opt/homebrew) Macs.
+  if(NOT DEFINED OpenMP_libomp_PREFIX)
+    find_program(_brew brew)
+    if(_brew)
+      execute_process(
+        COMMAND "${_brew}" --prefix libomp
+        OUTPUT_VARIABLE OpenMP_libomp_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE _brew_result
+      )
+      if(NOT _brew_result EQUAL 0)
+        # Fall back to the Intel default if brew query failed
+        set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
+      endif()
+    else()
+      set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
+    endif()
+  endif()
+  message(STATUS "Homebrew libomp prefix: ${OpenMP_libomp_PREFIX}")
+  set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
+  set(OpenMP_CXX_LIB_NAMES "libomp")
+  set(OpenMP_libomp_LIBRARY "${OpenMP_libomp_PREFIX}/lib/libomp.dylib")
+  # Make omp.h findable for all targets (avoids 'omp.h file not found')
+  include_directories("${OpenMP_libomp_PREFIX}/include")
+endif()
+find_package(OpenMP)
+if(OPENMP_FOUND)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+
+# ##############################################################################
+# Compiler & Linker Flags ###
+# ##############################################################################
 message("Compiler and Linker flags ...")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pipe -Wall")
-## can turn off some warnings
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder -Wno-unused-variable -Wno-inconsistent-missing-override -Wno-unused-private-field")
-## Then set the build type specific options. These will be automatically appended.
+# can turn off some warnings
+set(CMAKE_CXX_FLAGS
+    "${CMAKE_CXX_FLAGS} -Wno-reorder -Wno-unused-variable -Wno-inconsistent-missing-override -Wno-unused-private-field"
+)
+# Then set the build type specific options. These will be automatically
+# appended.
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-## can turn on debugging information
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+# can turn on debugging information set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-### system dependence.
-### note that APPLE also defines UNIX, hence the elseif to differentiate
-if (APPLE)
-    message( STATUS "Apple : " ${CMAKE_HOST_SYSTEM})
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++" )
-    elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-but-set-variable -Wno-parentheses -fext-numeric-literals")
-    endif()
+# system dependence. note that APPLE also defines UNIX, hence the elseif to
+# differentiate
+if(APPLE)
+  message(STATUS "Apple : " ${CMAKE_HOST_SYSTEM})
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-but-set-variable -Wno-parentheses -fext-numeric-literals"
+    )
+  endif()
 
-    ## can turn off some warnings
-    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
+  # can turn off some warnings set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}
+  # -Wno-unused-private-field")
 elseif(UNIX)
-    message( STATUS "Linux : " ${CMAKE_HOST_SYSTEM})
-    ## can turn off some warnings
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-but-set-variable -Wno-parentheses -fext-numeric-literals")
-    endif()
+  message(STATUS "Linux : " ${CMAKE_HOST_SYSTEM})
+  # can turn off some warnings
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Wno-sign-compare -Wno-unused-but-set-variable -Wno-parentheses -fext-numeric-literals"
+    )
+  endif()
 
-    ## Additional options
-    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+  # Additional options set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs
+  # -ftest-coverage")
 endif()
 
 message(STATUS "CXX_FLAGS = " ${CMAKE_CXX_FLAGS})
-#message(STATUS "LD_FLAGS = " ${CMAKE_EXE_LINKER_FLAGS})
+# message(STATUS "LD_FLAGS = " ${CMAKE_EXE_LINKER_FLAGS})
 
-###########################
-# add the library path and inclusion path of trento to jetscape
-# Placement of this package is important.
-# Needs to come after CXX flags (cause it needs to pickup fPIC)
-# and before install options (cause it overwrites the default location)
+# ##############################################################################
+# add the library path and inclusion path of trento to jetscape Placement of
+# this package is important. Needs to come after CXX flags (cause it needs to
+# pickup fPIC) and before install options (cause it overwrites the default
+# location)
 add_subdirectory(external_packages/trento/)
 include_directories("${CMAKE_SOURCE_DIR}/external_packages/trento/src/")
-###########################
+# ##############################################################################
 
 add_subdirectory(external_packages/googletest/)
-include_directories("${CMAKE_SOURCE_DIR}/external_packages/googletest/googletest/include/")
+include_directories(
+  "${CMAKE_SOURCE_DIR}/external_packages/googletest/googletest/include/")
 
-#############################################
-### Installing Header and Library Files   ###
-#############################################
-## Run with, e.g., cmake -DCMAKE_INSTALL_PREFIX=~/tmp ..
-## default directory is the build directory
-## Note that trento also automatically populates a bin directory
-## and we cannot disable this behavior
-## Also, iSS and mpihydro install binaries in CMAKE_HOME_DIR. Sigh.
-###
-# Install header files
-# default install prefix: build directory
+# ##############################################################################
+# Installing Header and Library Files   ###
+# ##############################################################################
+# Run with, e.g., cmake -DCMAKE_INSTALL_PREFIX=~/tmp .. default directory is the
+# build directory Note that trento also automatically populates a bin directory
+# and we cannot disable this behavior Also, iSS and mpihydro install binaries in
+# CMAKE_HOME_DIR. Sigh.
+#
+# Install header files default install prefix: build directory
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}"
-    CACHE PATH "Install path prefix, prepended onto install directories."
-    FORCE)
+  set(CMAKE_INSTALL_PREFIX
+      "${PROJECT_BINARY_DIR}"
+      CACHE PATH "Install path prefix, prepended onto install directories."
+            FORCE)
 endif()
 message(STATUS "Now: install prefix is ${CMAKE_INSTALL_PREFIX}")
 
 install(
   # source directory
   DIRECTORY
-  # our source
-  "${CMAKE_SOURCE_DIR}/src/framework/"
-  "${CMAKE_SOURCE_DIR}/src/hadronization/"
-  "${CMAKE_SOURCE_DIR}/src/initialstate/"
-  "${CMAKE_SOURCE_DIR}/src/hydro/"
-  "${CMAKE_SOURCE_DIR}/src/afterburner/"
-  "${CMAKE_SOURCE_DIR}/src/jet/"
-  "${CMAKE_SOURCE_DIR}/src/reader/"
-  # external packages
-  "${CMAKE_SOURCE_DIR}/external_packages/"
-  "${CMAKE_SOURCE_DIR}/external_packages/ipglasma/src/"
-  "${CMAKE_SOURCE_DIR}/external_packages/iSS/src/"
-  "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/src/"
-  "${CMAKE_SOURCE_DIR}/external_packages/hydro_from_external_file/src/"
-  "${CMAKE_SOURCE_DIR}/external_packages/music/src/"
-  "${CMAKE_SOURCE_DIR}/external_packages/trento/src/"
-  "${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper/"
-  "${CMAKE_SOURCE_DIR}/external_packages/smash/smash_code/src/"
-  "${CMAKE_SOURCE_DIR}/external_packages/googletest/googletest/src/"
+    # our source
+    "${CMAKE_SOURCE_DIR}/src/framework/"
+    "${CMAKE_SOURCE_DIR}/src/hadronization/"
+    "${CMAKE_SOURCE_DIR}/src/initialstate/"
+    "${CMAKE_SOURCE_DIR}/src/hydro/"
+    "${CMAKE_SOURCE_DIR}/src/afterburner/"
+    "${CMAKE_SOURCE_DIR}/src/jet/"
+    "${CMAKE_SOURCE_DIR}/src/reader/"
+    # external packages
+    "${CMAKE_SOURCE_DIR}/external_packages/"
+    "${CMAKE_SOURCE_DIR}/external_packages/ipglasma/src/"
+    "${CMAKE_SOURCE_DIR}/external_packages/iSS/src/"
+    "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/src/"
+    "${CMAKE_SOURCE_DIR}/external_packages/hydro_from_external_file/src/"
+    "${CMAKE_SOURCE_DIR}/external_packages/music/src/"
+    "${CMAKE_SOURCE_DIR}/external_packages/trento/src/"
+    "${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper/"
+    "${CMAKE_SOURCE_DIR}/external_packages/smash/smash_code/src/"
+    "${CMAKE_SOURCE_DIR}/external_packages/googletest/googletest/src/"
   DESTINATION "include" # target directory
   FILES_MATCHING # install only matched files
   PATTERN "*.h*" # select header files
-  ## Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
+  # Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
   PATTERN "gtl" EXCLUDE
   PATTERN "iSS" EXCLUDE
   PATTERN "hydro_from_external_file" EXCLUDE
@@ -209,114 +271,110 @@ install(
   PATTERN "data_table" EXCLUDE
   PATTERN "LBT-tables" EXCLUDE
   PATTERN "Martini" EXCLUDE
-  PATTERN "googletest" EXCLUDE
-  )
+  PATTERN "googletest" EXCLUDE)
 
-## We have includes of the form #include "GTL/dijkstra.h"
-## which needs to be handled separately
+# We have includes of the form #include "GTL/dijkstra.h" which needs to be
+# handled separately
 install(
   # source directory
-  DIRECTORY
-  "${CMAKE_SOURCE_DIR}/external_packages/gtl/include/"
+  DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/gtl/include/"
   DESTINATION "include" # target directory
   FILES_MATCHING # install only matched files
   PATTERN "GTL/*.h*" # select header files
-  ## Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
+  # Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
   # PATTERN "gtl/src" EXCLUDE
-  )
+)
+
+install(
+  # source directory
+  DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper/include/"
+  DESTINATION "include" # target directory
+  FILES_MATCHING # install only matched files
+  PATTERN "*.h*" # select header files
+  # Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
+)
 
 install(
   # source directory
   DIRECTORY
-  "${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper/include/"
+    "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/include/"
   DESTINATION "include" # target directory
   FILES_MATCHING # install only matched files
   PATTERN "*.h*" # select header files
-  ## Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
-  )
-
-install(
-  # source directory
-  DIRECTORY
-  "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/include/"
-  DESTINATION "include" # target directory
-  FILES_MATCHING # install only matched files
-  PATTERN "*.h*" # select header files
-  ## Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
-  )
+  # Necessary to exclude directories to prevent a whole (mostly empty) hierarchy
+)
 
 # Install lib files
 install(
   # our libraries
-  DIRECTORY
-  "${PROJECT_BINARY_DIR}/src/lib/"
-  "${PROJECT_BINARY_DIR}/lib/"
-  # external packages
-  "${PROJECT_BINARY_DIR}/external_packages/gtl/lib/"
-  "${PROJECT_BINARY_DIR}/external_packages/ipglasma/src/"
-  "${PROJECT_BINARY_DIR}/external_packages/iSS/src/"
-  "${PROJECT_BINARY_DIR}/external_packages/3dMCGlauber/src/"
-  "${PROJECT_BINARY_DIR}/external_packages/music/src/"
-  "${PROJECT_BINARY_DIR}/external_packages/trento/src/"
-  "${PROJECT_BINARY_DIR}/external_packages/clvisc_wrapper/"
+  DIRECTORY "${PROJECT_BINARY_DIR}/src/lib/"
+            "${PROJECT_BINARY_DIR}/lib/"
+            # external packages
+            "${PROJECT_BINARY_DIR}/external_packages/gtl/lib/"
+            "${PROJECT_BINARY_DIR}/external_packages/ipglasma/src/"
+            "${PROJECT_BINARY_DIR}/external_packages/iSS/src/"
+            "${PROJECT_BINARY_DIR}/external_packages/3dMCGlauber/src/"
+            "${PROJECT_BINARY_DIR}/external_packages/music/src/"
+            "${PROJECT_BINARY_DIR}/external_packages/trento/src/"
+            "${PROJECT_BINARY_DIR}/external_packages/clvisc_wrapper/"
   DESTINATION "lib" # target directory
   FILES_MATCHING # install only matched files
   PATTERN "lib*.*" # selects .so, .a, .dylib, ...
-  PATTERN "CMakeFiles" EXCLUDE
-  )
+  PATTERN "CMakeFiles" EXCLUDE)
 
-###########################
-### Required packages   ###
-###########################
+# ##############################################################################
+# Required packages   ###
+# ##############################################################################
 
 # Find and use Boost.
 message("Looking for Boost ...")
 find_package(Boost 1.67 REQUIRED COMPONENTS filesystem program_options system)
-Message(STATUS "Boost Include dirs : " ${Boost_INCLUDE_DIRS})
-## boost needs special treatment. For reasons.
+message(STATUS "Boost Include dirs : " ${Boost_INCLUDE_DIRS})
+# boost needs special treatment. For reasons.
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 message("Looking for ZLIB ...")
 find_package(ZLIB REQUIRED)
 message(STATUS "ZLib found")
-set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DUSE_GZIP" )
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_GZIP")
 
 message("Looking for Pythia8 ...")
 find_package(Pythia8 REQUIRED)
 include_directories(${PYTHIA8_INCLUDE_DIR})
-Message(STATUS "Pythia8 Include dir : " ${PYTHIA8_INCLUDE_DIR})
+message(STATUS "Pythia8 Include dir : " ${PYTHIA8_INCLUDE_DIR})
 
 message("Looking for HDF5 ...")
 find_package(HDF5 REQUIRED)
 include_directories(${HDF5_INCLUDE_DIRS})
-set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DUSE_HDF5" )
-set( _hdf5_libs ${HDF5_CXX_LIB} ${HDF5_C_LIB} ${ZLIB} ${HDF5_HL_LIBRARIES})
-message(STATUS "HDF5 include dir and libs : ${HDF5_INCLUDE_DIRS} ${_hdf5_libs} ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_HDF5")
+set(_hdf5_libs ${HDF5_CXX_LIB} ${HDF5_C_LIB} ${ZLIB} ${HDF5_HL_LIBRARIES})
+message(
+  STATUS "HDF5 include dir and libs : ${HDF5_INCLUDE_DIRS} ${_hdf5_libs} ")
 
-###########################
-### Optional packages   ###
-###########################
+# ##############################################################################
+# Optional packages   ###
+# ##############################################################################
 unset(USE_HEPMC)
 message("Looking for HepMC ...")
 find_package(HEPMC)
-if (${HEPMC_FOUND})
+if(${HEPMC_FOUND})
   include_directories(${HEPMC_INCLUDE_DIR})
-  set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DUSE_HEPMC" )
-  Message(STATUS "HepMC Include dir : " ${HEPMC_INCLUDE_DIR})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_HEPMC")
+  message(STATUS "HepMC Include dir : " ${HEPMC_INCLUDE_DIR})
 endif()
 
 option(USE_ROOT "Build using ROOT Libraries and Output" OFF)
-if (USE_ROOT)
+if(USE_ROOT)
   message("Looking for ROOT ...")
-  #find_package(ROOT)
+  # find_package(ROOT)
   list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
   find_package(ROOT)
-  if (${ROOT_FOUND})
-    #include_directories(${ROOT_INCLUDES})
+  if(${ROOT_FOUND})
+    # include_directories(${ROOT_INCLUDES})
     include_directories(${ROOT_INCLUDE_DIRS})
-    set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -DUSE_ROOT" )
-    Message(STATUS "ROOT Include dir : " ${ROOT_INCLUDE_DIRS})
-    Message(STATUS "ROOT Libraries : " ${ROOT_LIBRARIES})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_ROOT")
+    message(STATUS "ROOT Include dir : " ${ROOT_INCLUDE_DIRS})
+    message(STATUS "ROOT Libraries : " ${ROOT_LIBRARIES})
   endif()
 endif(USE_ROOT)
 
@@ -330,279 +388,365 @@ endif(${MPI_FOUND})
 message("Looking for GSL ...")
 find_package(GSL)
 if(${GSL_FOUND})
-  message(STATUS "GSL_INCLUDE_DIR : " ${GSL_INCLUDE_DIR} ${GSLCBLAS_INCLUDE_DIRS})
+  message(STATUS "GSL_INCLUDE_DIR : " ${GSL_INCLUDE_DIR}
+                 ${GSLCBLAS_INCLUDE_DIRS})
   include_directories(${GSL_INCLUDE_DIR} ${GSLCBLAS_INCLUDE_DIRS})
 endif(${GSL_FOUND})
 
-###########################
-### Framework Includes  ###
-###########################
-message ("Include Directories ...")
-include_directories(./src/ )
-include_directories(./src/framework )
-include_directories(./src/initialstate )
-include_directories(./src/preequilibrium )
-include_directories(./src/liquefier )
-include_directories(./src/hadronicEMT )
-include_directories(./src/hydro )
-include_directories(./src/hadronization )
-include_directories(./src/afterburner )
-include_directories(./src/jet )
-include_directories(./src/reader )
+# ##############################################################################
+# Framework Includes  ###
+# ##############################################################################
+message("Include Directories ...")
+include_directories(./src/)
+include_directories(./src/framework)
+include_directories(./src/initialstate)
+include_directories(./src/preequilibrium)
+include_directories(./src/liquefier)
+include_directories(./src/hadronicEMT)
+include_directories(./src/hydro)
+include_directories(./src/hadronization)
+include_directories(./src/afterburner)
+include_directories(./src/jet)
+include_directories(./src/reader)
 include_directories(./external_packages/)
-include_directories(./external_packages/gtl/include )
-include_directories(./external_packages/hydro_from_external_file )
-include_directories(./examples/ )
+include_directories(./external_packages/gtl/include)
+include_directories(./external_packages/hydro_from_external_file)
+include_directories(./external_packages/Random123)
+include_directories(./examples/)
+# Note: the Homebrew libomp include directory is added earlier in the
+# OpenMP section via include_directories("${OpenMP_libomp_PREFIX}/include"),
+# so no manual env-var workaround is needed here.
 
-if (USE_ROOT)
-  if ("${ROOT_FOUND}")
+if(USE_ROOT)
+  if("${ROOT_FOUND}")
     include_directories(./src/root)
-    #add_subdirectory(./src/root)
+    # add_subdirectory(./src/root)
   endif()
 endif(USE_ROOT)
 
-### include_directories will be expanded as packages are found
+# include_directories will be expanded as packages are found
 
-###################################################
-### Some additional settings for subdirectories ###
-###################################################
+# ##############################################################################
+# Some additional settings for subdirectories ###
+# ##############################################################################
 add_subdirectory(./external_packages)
 add_subdirectory(./external_packages/gtl)
 add_subdirectory(./src)
 
-if (unittests)
-    add_subdirectory(./examples/unittests/)
-endif (unittests)
+if(unittests)
+  add_subdirectory(./examples/unittests/)
+endif(unittests)
 
-if (USE_SMASH)
+if(USE_SMASH)
   target_compile_definitions(JetScape PRIVATE USE_SMASH)
-endif (USE_SMASH)
+endif(USE_SMASH)
 
-if (USE_FREESTREAM)
+if(USE_FREESTREAM)
   if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/freestream-milne")
-    message(FATAL_ERROR "Error: freestream-milne source has not been downloaded in external_packages by ./get_freestream-milne.sh")
+    message(
+      FATAL_ERROR
+        "Error: freestream-milne source has not been downloaded in external_packages by ./get_freestream-milne.sh"
+    )
   endif()
   message("Building freestream-milne ...")
-  if (${GSL_FOUND})
+  if(${GSL_FOUND})
     add_subdirectory(./external_packages/freestream-milne)
   else()
-      message (FATAL_ERROR "GSL are necessary for Freestreaming" )
+    message(FATAL_ERROR "GSL are necessary for Freestreaming")
   endif()
   target_compile_definitions(JetScape PRIVATE USE_FREESTREAM)
-endif (USE_FREESTREAM)
+endif(USE_FREESTREAM)
 
-if (USE_3DGlauber)
+if(USE_3DGlauber)
   if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber")
-    message(FATAL_ERROR "Error: 3D-MCGlauber source has not been downloaded in external_packages by ./get_3dglauber.sh")
+    message(
+      FATAL_ERROR
+        "Error: 3D-MCGlauber source has not been downloaded in external_packages by ./get_3dglauber.sh"
+    )
   endif()
-  if (${GSL_FOUND})
+  if(${GSL_FOUND})
     message("Building 3D-MCGlauber ...")
     add_subdirectory(./external_packages/3dMCGlauber)
   else()
-    message (FATAL_ERROR "GSL are necessary for 3dMCGlauber" )
+    message(FATAL_ERROR "GSL are necessary for 3dMCGlauber")
   endif()
   target_compile_definitions(JetScape PRIVATE USE_3DGlauber)
 endif()
 
-
-if (USE_IPGLASMA)
+if(USE_IPGLASMA)
   if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/ipglasma")
-      message(FATAL_ERROR "Error: IP-Glasma source has not been downloaded in external_packages by ./get_ipglasma.sh")
+    message(
+      FATAL_ERROR
+        "Error: IP-Glasma source has not been downloaded in external_packages by ./get_ipglasma.sh"
+    )
   endif()
-  if (${GSL_FOUND})
+  if(${GSL_FOUND})
     message("Building IP-Glasma ...")
     add_subdirectory(./external_packages/ipglasma)
   else()
-    message (FATAL_ERROR "GSL is necessary for IP-Glasma" )
+    message(FATAL_ERROR "GSL is necessary for IP-Glasma")
   endif()
   target_compile_definitions(JetScape PRIVATE USE_IPGLASMA)
 endif()
 
-if (USE_MUSIC)
+if(USE_MUSIC)
   if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/music")
-    message(FATAL_ERROR "Error: MUSIC source has not been downloaded in external_packages by ./get_music.sh")
+    message(
+      FATAL_ERROR
+        "Error: MUSIC source has not been downloaded in external_packages by ./get_music.sh"
+    )
   endif()
-  if (${GSL_FOUND})
+  if(${GSL_FOUND})
     message("Building MUSIC ...")
     add_subdirectory(./external_packages/music)
   else()
-    message (FATAL_ERROR "GSL are necessary for MUSIC" )
+    message(FATAL_ERROR "GSL are necessary for MUSIC")
   endif()
   target_compile_definitions(JetScape PRIVATE USE_MUSIC)
 endif()
 
-if (USE_ISS)
+if(USE_ISS)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/iSS")
-    add_subdirectory( ${CMAKE_SOURCE_DIR}/external_packages/iSS )
+    add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/iSS)
   else()
-    message(FATAL_ERROR "Error: iSS source has not been downloaded in external_packages by ./get_iSS.sh")
+    message(
+      FATAL_ERROR
+        "Error: iSS source has not been downloaded in external_packages by ./get_iSS.sh"
+    )
   endif()
   target_compile_definitions(JetScape PRIVATE iSpectraSampler)
-endif (USE_ISS)
+endif(USE_ISS)
 
-if (OPENCL_FOUND AND USE_CLVISC)
-  add_subdirectory( ${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper )
-endif (OPENCL_FOUND AND USE_CLVISC)
+if(OPENCL_FOUND AND USE_CLVISC)
+  add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper)
+endif(OPENCL_FOUND AND USE_CLVISC)
 
-###########################
-### Binary location     ###
-###########################
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+if(USE_JS_CONTRIB)
+  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/js-contrib")
+    message(
+      FATAL_ERROR
+        "Error: js-contrib has not been downloaded in external_packages by ./external_packages/get_js_contrib.sh"
+    )
+  endif()
+  # Pass the per-contrib flags through to the js-contrib CMakeLists
+  set(BUILD_FNO_HYDRO ${USE_JS_FNO_HYDRO})
+  set(BUILD_PYJETSCAPE ${USE_JS_PYJETSCAPE})
+  add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/js-contrib)
+endif(USE_JS_CONTRIB)
 
-##############################
-### Standalone Reader lib  ###
-##############################
-FILE(GLOB LIBREADERSOURCES src/reader/*.cc)
-set (LIBREADERSOURCES ${LIBREADERSOURCES} )
-set (LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/JetScapeParticles.cc )
-set (LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/StringTokenizer.cc )
-set (LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/JetClass.cc )
-set (LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/JetScapeLogger.cc )
-set (LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/PartonShower.cc )
+if(OPENMP_FOUND)
+  target_compile_definitions(JetScape PRIVATE USE_OPENMP)
+endif()
+
+# ##############################################################################
+# Binary location     ###
+# ##############################################################################
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+
+# ##############################################################################
+# Standalone Reader lib  ###
+# ##############################################################################
+file(GLOB LIBREADERSOURCES src/reader/*.cc)
+set(LIBREADERSOURCES ${LIBREADERSOURCES})
+set(LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/JetScapeParticles.cc)
+set(LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/StringTokenizer.cc)
+set(LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/JetClass.cc)
+set(LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/JetScapeLogger.cc)
+set(LIBREADERSOURCES ${LIBREADERSOURCES} src/framework/PartonShower.cc)
 
 add_library(JetScapeReader SHARED ${LIBREADERSOURCES})
-set_target_properties(JetScapeReader PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib )
+set_target_properties(JetScapeReader PROPERTIES LIBRARY_OUTPUT_DIRECTORY
+                                                ${PROJECT_BINARY_DIR}/lib)
 target_link_libraries(JetScapeReader JetScapeThird GTL ${PYTHIA8_LIBRARIES})
 
-###########################
-### Executables         ###
-###########################
+# ##############################################################################
+# Executables         ###
+# ##############################################################################
 
-### Run Jetscape
+# Run Jetscape
 add_executable(runJetscape ./examples/runJetscape.cc)
-target_link_libraries(runJetscape JetScape )
+target_link_libraries(runJetscape JetScape)
 
-### Read Jetscape output
+# Read Jetscape output
 add_executable(readerTest ./examples/readerTest.cc)
-target_link_libraries(readerTest JetScape )
+target_link_libraries(readerTest JetScape)
 
 add_executable(FinalStateHadrons ./examples/FinalStateHadrons.cc)
-target_link_libraries(FinalStateHadrons JetScape )
+target_link_libraries(FinalStateHadrons JetScape)
 
 add_executable(FinalStatePartons ./examples/FinalStatePartons.cc)
-target_link_libraries(FinalStatePartons JetScape )
+target_link_libraries(FinalStatePartons JetScape)
 
 add_executable(PythiaBrickTest ./examples/custom_examples/PythiaBrickTest.cc)
-target_link_libraries(PythiaBrickTest JetScape )
-
+target_link_libraries(PythiaBrickTest JetScape)
 
 if(USE_MUSIC AND USE_ISS)
-  add_executable(MUSICMainClockTest ./examples/custom_examples/MUSICMainClockTest.cc)
-  target_link_libraries(MUSICMainClockTest JetScape )
+  add_executable(MUSICMainClockTest
+                 ./examples/custom_examples/MUSICMainClockTest.cc)
+  target_link_libraries(MUSICMainClockTest JetScape)
   add_executable(MUSICTest ./examples/custom_examples/MUSICTest.cc)
-  target_link_libraries(MUSICTest JetScape )
+  target_link_libraries(MUSICTest JetScape)
   if(USE_3DGlauber)
     add_executable(PythiaIsrTest ./examples/PythiaIsrTest.cc)
-    target_link_libraries(PythiaIsrTest JetScape )
+    target_link_libraries(PythiaIsrTest JetScape)
     add_executable(PythiaIsrMUSIC ./examples/custom_examples/PythiaIsrMUSIC.cc)
-    target_link_libraries(PythiaIsrMUSIC JetScape )
-  endif (USE_3DGlauber)
-endif (USE_MUSIC AND USE_ISS )
+    target_link_libraries(PythiaIsrMUSIC JetScape)
+  endif(USE_3DGlauber)
+endif(USE_MUSIC AND USE_ISS)
 
-#add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
-#target_link_libraries(PythiaBDMTest JetScape )
+# add_executable(PythiaBDMTest ./examples/custom_examples/PythiaBDMTest.cc)
+# target_link_libraries(PythiaBDMTest JetScape )
 
-#add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
-#target_link_libraries(PythiaNoBDMTest JetScape )
+# add_executable(PythiaNoBDMTest ./examples/custom_examples/PythiaNoBDMTest.cc)
+# target_link_libraries(PythiaNoBDMTest JetScape )
 
-#add_executable(PythiaBDMTest_Hydro_Cascade ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
-#target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
+# add_executable(PythiaBDMTest_Hydro_Cascade
+# ./examples/custom_examples/PythiaBDMTest_Hydro_Cascade.cc)
+# target_link_libraries(PythiaBDMTest_Hydro_Cascade JetScape )
 
-if ( USE_SMASH )
-    add_executable(SMASHInitialCondition ./examples/custom_examples/SMASHInitialCondition.cc)
-    target_link_libraries(SMASHInitialCondition JetScape )
+if(USE_SMASH)
+  add_executable(SMASHInitialCondition
+                 ./examples/custom_examples/SMASHInitialCondition.cc)
+  target_link_libraries(SMASHInitialCondition JetScape)
 
-    add_executable(SMASHNucleusTest ./examples/custom_examples/SMASHNucleusTest.cc)
-    target_link_libraries(SMASHNucleusTest JetScape )
-endif (USE_SMASH )
-
+  add_executable(SMASHNucleusTest
+                 ./examples/custom_examples/SMASHNucleusTest.cc)
+  target_link_libraries(SMASHNucleusTest JetScape)
+endif(USE_SMASH)
 
 # executables with additional dependencies
-if ( USE_IPGLASMA )
-    target_link_libraries(runJetscape ${GSL_LIBRARIES})
-endif (USE_IPGLASMA )
-if ( USE_MUSIC AND USE_ISS )
-    target_link_libraries(runJetscape ${GSL_LIBRARIES})
-endif (USE_MUSIC AND USE_ISS )
+if(USE_IPGLASMA)
+  target_link_libraries(runJetscape ${GSL_LIBRARIES})
+endif(USE_IPGLASMA)
+if(USE_MUSIC AND USE_ISS)
+  target_link_libraries(runJetscape ${GSL_LIBRARIES})
+endif(USE_MUSIC AND USE_ISS)
 
-if ( USE_MUSIC AND USE_ISS AND USE_SMASH )
-    include_directories(${SMASH_INCLUDE_DIR})
-    # "-lubsan -lasan")
-    target_link_libraries(runJetscape ${SMASH_LIBRARIES} ${MPI_LIBRARIES} ${GSL_LIBRARIES})
-endif ( USE_MUSIC AND USE_ISS AND USE_SMASH )
+if(USE_MUSIC
+   AND USE_ISS
+   AND USE_SMASH)
+  include_directories(${SMASH_INCLUDE_DIR})
+  # "-lubsan -lasan")
+  target_link_libraries(runJetscape ${SMASH_LIBRARIES} ${MPI_LIBRARIES}
+                        ${GSL_LIBRARIES})
+endif(
+  USE_MUSIC
+  AND USE_ISS
+  AND USE_SMASH)
 
-if (USE_ROOT)
-  #if (${ROOT_FOUND})
-  #  add_executable(PythiaBrickTestRoot ./examples/custom_examples/PythiaBrickTestRoot.cc)
-  #  target_link_libraries(PythiaBrickTestRoot JetScape)
-  #endif(${ROOT_FOUND})
+if(USE_ROOT)
+  # if (${ROOT_FOUND}) add_executable(PythiaBrickTestRoot
+  # ./examples/custom_examples/PythiaBrickTestRoot.cc)
+  # target_link_libraries(PythiaBrickTestRoot JetScape) endif(${ROOT_FOUND})
 endif(USE_ROOT)
 
-
 # -----------------------------------------------------------
-#### copy essential files for MUSIC to build/
-file(COPY ./external_packages/trento/nucleusConfigs DESTINATION ${CMAKE_BINARY_DIR}/)
-if (USE_IPGLASMA)
+# copy essential files for MUSIC to build/
+file(COPY ./external_packages/trento/nucleusConfigs
+     DESTINATION ${CMAKE_BINARY_DIR}/)
+if(USE_IPGLASMA)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/ipglasma/")
-    file(COPY ${CMAKE_SOURCE_DIR}/examples/test_ipglasma_files/ipglasma.input DESTINATION ${CMAKE_BINARY_DIR}/)
-    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/ipglasma/qs2Adj_vs_Tp_vs_Y_200.in DESTINATION ${CMAKE_BINARY_DIR}/)
+    file(COPY ${CMAKE_SOURCE_DIR}/examples/test_ipglasma_files/ipglasma.input
+         DESTINATION ${CMAKE_BINARY_DIR}/)
+    file(
+      COPY ${CMAKE_SOURCE_DIR}/external_packages/ipglasma/qs2Adj_vs_Tp_vs_Y_200.in
+      DESTINATION ${CMAKE_BINARY_DIR}/)
   else()
     message(FATAL_ERROR "Error: Cannot find files for IP-Glasma.")
   endif()
 endif()
-if (USE_FREESTREAM)
+if(USE_FREESTREAM)
   if(EXISTS "${CMAKE_SOURCE_DIR}/examples/test_freestream_files/")
     file(COPY ./examples/test_freestream_files/freestream_input
-      DESTINATION ${CMAKE_BINARY_DIR})
+         DESTINATION ${CMAKE_BINARY_DIR})
   else()
     message(FATAL_ERROR "Error: Cannot find files for freestream-milne.")
   endif()
-endif (USE_FREESTREAM)
-if (USE_3DGlauber)
+endif(USE_FREESTREAM)
+if(USE_3DGlauber)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/")
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/LHAPDF_Lib)
     file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/
-       DESTINATION ${CMAKE_BINARY_DIR}/LHAPDF_Lib)
+         DESTINATION ${CMAKE_BINARY_DIR}/LHAPDF_Lib)
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/eps09)
     file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/eps09/
-       DESTINATION ${CMAKE_BINARY_DIR}/eps09)
+         DESTINATION ${CMAKE_BINARY_DIR}/eps09)
     file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/tables/
-       DESTINATION ${CMAKE_BINARY_DIR}/tables)
-#    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input
-#        ${CMAKE_BINARY_DIR}/mcglauber.input)
-    configure_file(${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input ${CMAKE_BINARY_DIR}/mcglauber.input COPYONLY)
-
+         DESTINATION ${CMAKE_BINARY_DIR}/tables)
+    # file(COPY ${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input
+    # ${CMAKE_BINARY_DIR}/mcglauber.input)
+    configure_file(${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input
+                   ${CMAKE_BINARY_DIR}/mcglauber.input COPYONLY)
 
   else()
     message(FATAL_ERROR "Error: Cannot find files for 3dMCGlauber.")
   endif()
 endif()
 
-if (USE_MUSIC)
+if(USE_MUSIC)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/music/EOS/")
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/EOS)
     file(COPY ${CMAKE_SOURCE_DIR}/external_packages/music/EOS/
-      DESTINATION ${CMAKE_BINARY_DIR}/EOS)
+         DESTINATION ${CMAKE_BINARY_DIR}/EOS)
     file(COPY ${CMAKE_SOURCE_DIR}/examples/test_music_files/music_input
-      DESTINATION ${CMAKE_BINARY_DIR})
+         DESTINATION ${CMAKE_BINARY_DIR})
   else()
     message(FATAL_ERROR "Error: Cannot find files for MUSIC.")
   endif()
 endif()
 
-#### copy essential files for iSS to build/
-if (USE_ISS)
+# copy essential files for iSS to build/
+if(USE_ISS)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_tables")
-    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_tables DESTINATION ${CMAKE_BINARY_DIR}/)
-    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_parameters.dat DESTINATION ${CMAKE_BINARY_DIR}/)
+    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_tables
+         DESTINATION ${CMAKE_BINARY_DIR}/)
+    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_parameters.dat
+         DESTINATION ${CMAKE_BINARY_DIR}/)
   else()
-    message(FATAL_ERROR "Error: iSS tables have not been downloaded in external_packages by ./get_iSS.sh")
+    message(
+      FATAL_ERROR
+        "Error: iSS tables have not been downloaded in external_packages by ./get_iSS.sh"
+    )
   endif()
-endif (USE_ISS)
+endif(USE_ISS)
 
-#### copy essential files for LBT to build/
+# copy essential files for LBT to build/
 if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/LBT-tables")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/external_packages/LBT-tables ${CMAKE_BINARY_DIR}/LBT-tables)
+  execute_process(
+    COMMAND
+      ${CMAKE_COMMAND} -E create_symlink
+      ${CMAKE_SOURCE_DIR}/external_packages/LBT-tables
+      ${CMAKE_BINARY_DIR}/LBT-tables)
 else()
-  message("Warning: LBT-tables have not been downloaded in external_packages by ./get_lbtTab.sh; LBT-brickTest will NOT run properly.")
+  message(
+    "Warning: LBT-tables have not been downloaded in external_packages by ./get_lbtTab.sh; LBT-brickTest will NOT run properly."
+  )
 endif()
+
+# ##############################################################################
+# Build-tree export for js-contrib and other out-of-tree consumers          ###
+# Must live here — AFTER all optional add_subdirectory() calls — so every   ###
+# in-tree target already exists when export() is invoked.                   ###
+# ##############################################################################
+set(_js_export_targets JetScape JetScapeThird GTL libtrento Cornelius)
+if(${HDF5_FOUND})
+  list(APPEND _js_export_targets hydroFromFile)
+endif()
+if(USE_IPGLASMA)
+  list(APPEND _js_export_targets ipglasma_lib)
+endif()
+if(USE_3DGlauber)
+  list(APPEND _js_export_targets 3dMCGlb)
+endif()
+if(USE_MUSIC)
+  list(APPEND _js_export_targets music)
+endif()
+if(USE_ISS)
+  list(APPEND _js_export_targets iSS)
+endif()
+if(OPENCL_FOUND AND USE_CLVISC)
+  list(APPEND _js_export_targets clviscwrapper)
+endif()
+export(TARGETS ${_js_export_targets} FILE "${CMAKE_BINARY_DIR}/JetScapeTargets.cmake")
+configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
+               "${CMAKE_BINARY_DIR}/JetScapeConfig.cmake" @ONLY)

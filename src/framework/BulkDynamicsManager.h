@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -30,144 +31,265 @@
 #include <vector>
 
 namespace Jetscape {
-/** @class Bulk dynamics manager manager.
-   */
+/**
+ * @class BulkDynamicsManager
+ * @brief Orchestrates the bulk-medium stages and their hand-off to transport.
+ *
+ * The manager coordinates initial-state hadronic transport, hydrodynamics,
+ * soft particlization, and afterburner evolution. It also mediates access to
+ * bulk-medium properties and tracks hadron lists exchanged across timesteps.
+ */
 class BulkDynamicsManager
     : public JetScapeModuleBase,
       public std::enable_shared_from_this<BulkDynamicsManager> {
-
-public:
-  /** Default constructor to create a bulk dynamics manager. Sets task ID as "BulkDynamicsManager".
+ public:
+  /**
+   * @brief Construct a bulk dynamics manager.
+   *
+   * Initializes the module id to "BulkDynamicsManager".
    */
   BulkDynamicsManager();
 
-  /** Destructor for the bulk dynamics manager.
+  /**
+   * @brief Destroy the bulk dynamics manager.
    */
   virtual ~BulkDynamicsManager();
 
-  /** It initializes the tasks attached to the bulk dynamics manager.
+  /**
+   * @brief Initialize attached bulk-dynamics tasks and configuration.
    */
   virtual void InitTask();
 
   /**
-  */
+   * @brief Execute the manager task-level entry point.
+   */
   virtual void ExecuteTask();
 
-  /** It erases the tasks attached with the bulk dynamics manager. It can be overridden by other tasks.
+  /**
+   * @brief Clear attached tasks and signal connections.
+   *
+   * Can be overridden by derived tasks.
    */
   virtual void ClearTask();
 
+  /**
+   * @brief Perform per-timestep calculation for all active child tasks.
+   */
   virtual void CalculateTime();
 
+  /**
+   * @brief Execute one manager-controlled timestep.
+   */
   virtual void ExecTime();
 
+  /**
+   * @brief Perform event-level initialization.
+   */
   virtual void InitPerEvent();
 
+  /**
+   * @brief Perform event-level finalization and cleanup.
+   */
   virtual void FinishPerEvent();
 
+  /**
+   * @brief Write manager-controlled output via a JetScape writer.
+   * @param w Weak pointer to the output writer.
+   */
   void WriteTask(weak_ptr<JetScapeWriter> w);
 
-  void UpdateEnergyDeposit(int t, double edop){ UpdateEnergyDepositFromModules(t, edop); }
+  /**
+   * @brief Forward an energy-deposit update to attached media modules.
+   * @param t Discrete time index.
+   * @param edop Energy deposit to inject.
+   */
+  void UpdateEnergyDeposit(int t, double edop) {
+    UpdateEnergyDepositFromModules(t, edop);
+  }
 
-  void GetEnergyDensity(int t, double &edensity){ GetEnergyDensityFromModules(t, edensity); }
+  /**
+   * @brief Query energy density from attached media modules.
+   * @param t Discrete time index.
+   * @param edensity Output reference for energy density.
+   */
+  void GetEnergyDensity(int t, double &edensity) {
+    GetEnergyDensityFromModules(t, edensity);
+  }
 
+  /**
+   * @brief Query hydro cell information at spacetime point $(t,x,y,z)$.
+   * @param t Time coordinate.
+   * @param x Spatial x coordinate.
+   * @param y Spatial y coordinate.
+   * @param z Spatial z coordinate.
+   * @param fCell Output fluid-cell container.
+   */
   void GetHydroCell(double t, double x, double y, double z,
-                            std::unique_ptr<FluidCellInfo> &fCell) { GetHydroInfoFromModules(t, x, y, z, fCell); }
+                    std::unique_ptr<FluidCellInfo> &fCell) {
+    GetHydroInfoFromModules(t, x, y, z, fCell);
+  }
 
-  void GetHydroStartTime(double &tau0){GetHydroStartTimeFromModules(tau0); }
+  /**
+   * @brief Query the hydro start time from attached media modules.
+   * @param tau0 Output reference to the hydro start proper time.
+   */
+  void GetHydroStartTime(double &tau0) { GetHydroStartTimeFromModules(tau0); }
 
+  /**
+   * @brief Forward energy-deposit update to all compatible child modules.
+   * @param t Discrete time index.
+   * @param edop Energy deposit to inject.
+   */
   void UpdateEnergyDepositFromModules(int t, double edop);
 
+  /**
+   * @brief Retrieve energy density from all compatible child modules.
+   * @param t Discrete time index.
+   * @param edensity Output reference for energy density.
+   */
   void GetEnergyDensityFromModules(int t, double &edensity);
 
-  void GetHydroInfoFromModules(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
-			    std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
+  /**
+   * @brief Retrieve hydro information from attached modules.
+   * @param t Time coordinate.
+   * @param x Spatial x coordinate.
+   * @param y Spatial y coordinate.
+   * @param z Spatial z coordinate.
+   * @param fluid_cell_info_ptr Output fluid-cell information.
+   */
+  void GetHydroInfoFromModules(
+      Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
+      std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
 
+  /**
+   * @brief Query hydro start time from attached fluid-dynamics modules.
+   * @param tau0 Output reference to hydro start proper time.
+   */
   void GetHydroStartTimeFromModules(double &tau0);
 
-  void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
-                            std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
+  /**
+   * @brief Query active bulk information with hydro/hadronic fallback logic.
+   * @param t Time coordinate.
+   * @param x Spatial x coordinate.
+   * @param y Spatial y coordinate.
+   * @param z Spatial z coordinate.
+   * @param fluid_cell_info_ptr Output fluid-cell information.
+   */
+  void GetBulkInfo(Jetscape::real t, Jetscape::real x, Jetscape::real y,
+                   Jetscape::real z,
+                   std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr);
 
-  void InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr, std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
+  /**
+   * @brief Convert generic bulk-medium info into `FluidCellInfo`.
+   * @param fluid_cell_info_ptr Output fluid-cell information object.
+   * @param bulk_info_ptr Input bulk-medium information object.
+   */
+  void InfoWrapper(std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr,
+                   std::unique_ptr<BulkMediaInfo> &bulk_info_ptr);
 
-  /** Get the new hadrons for the upcoming timesteps and clear the vector for the next timestep
+  /**
+   * @brief Get and clear hadrons scheduled to be injected next timestep.
+   * @return Vector of hadrons to add to transport.
    */
   std::vector<shared_ptr<Hadron>> GetNewHadronsAndClear();
 
-  /** Get the hadrons to be removed in the upcoming timestep and clear the vector for the next timestep
+  /**
+   * @brief Get and clear hadrons scheduled for removal next timestep.
+   * @return Vector of hadrons to remove from transport.
    */
   std::vector<shared_ptr<Hadron>> GetHadronsToRemoveAndClear();
 
-  /** Determine if a hadron has crossed the iso-tau hypersurface
+  /**
+   * @brief Mark hadrons that crossed the extraction iso-$\tau$ hypersurface.
+   * @param current_hadrons Current hadron list to inspect.
    */
-  void DetermineHadronsCrossingIsoTau(std::vector<shared_ptr<Hadron>> &current_hadrons);
+  void DetermineHadronsCrossingIsoTau(
+      std::vector<shared_ptr<Hadron>> &current_hadrons);
 
-  /** Extract hadrons from the transport initial condition at the iso-tau surface.
-   * This adds participant hadrons to store_source_term_hadrons_iso_tau_
-   * and spectator hadrons to store_spectator_hadrons_iso_tau_.
-  */
-  void ExtractHadronsFromTransportInitialConditionIsoTau(bool &AllHadronsCrossedIsoTau);
-
-  /** Propagate a hadron's position using free streaming to a given proper time.
+  /**
+   * @brief Extract hadrons from transport IC at the extraction iso-$\tau$.
+   *
+   * Participant hadrons are stored in
+   * `store_source_term_hadrons_iso_tau_`, spectator hadrons in
+   * `store_spectator_hadrons_iso_tau_`.
+   *
+   * @param AllHadronsCrossedIsoTau Output flag indicating completion.
    */
-  void PropagateHadronFreeStreamingToTau(double tau, std::shared_ptr<Hadron> &hadron);
+  void ExtractHadronsFromTransportInitialConditionIsoTau(
+      bool &AllHadronsCrossedIsoTau);
 
-  /** Create hadronic source terms for hydro initialization from the hadrons
-   * at an iso-tau surface.
-  */
+  /**
+   * @brief Free-stream a hadron to a target proper time.
+   * @param tau Target proper time.
+   * @param hadron Hadron to propagate.
+   */
+  void PropagateHadronFreeStreamingToTau(double tau,
+                                         std::shared_ptr<Hadron> &hadron);
+
+  /**
+   * @brief Build hydro source terms from hadrons at extraction iso-$\tau$.
+   */
   void CreateHadronicSourceTermsForHydroInitializationIsoTau();
 
-  /** Store hadrons from the soft particlization in store_hadrons_soft_particlization_
-  */
+  /**
+   * @brief Store newly produced hadrons from soft particlization.
+   */
   void StoreHadronsFromSoftParticlization();
 
-  /** Add one new hadron for transport to hadron list for new timestep
+  /**
+   * @brief Queue one hadron to be injected into transport next timestep.
+   * @param new_hadron Hadron to add.
    */
-  void AddNewHadron(const shared_ptr<Hadron>& new_hadron) {
+  void AddNewHadron(const shared_ptr<Hadron> &new_hadron) {
     new_hadrons_for_timestep_.push_back(new_hadron);
   }
 
-  /** Add list of new hadrons for transport to hadron list for new timestep
+  /**
+   * @brief Queue multiple hadrons to be injected next timestep.
+   * @param new_hadrons Hadrons to add.
    */
-  void AddNewHadrons(const std::vector<shared_ptr<Hadron>>& new_hadrons) {
-    for (const auto& had : new_hadrons) {
+  void AddNewHadrons(const std::vector<shared_ptr<Hadron>> &new_hadrons) {
+    for (const auto &had : new_hadrons) {
       AddNewHadron(had);
     }
   }
 
-  /** Remove one hadron from transport, add it to remove hadron list for new timestep
+  /**
+   * @brief Queue one hadron for removal from transport next timestep.
+   * @param hadron Hadron to remove.
    */
-  void RemoveHadron(const shared_ptr<Hadron>& hadron) {
+  void RemoveHadron(const shared_ptr<Hadron> &hadron) {
     remove_hadrons_for_timestep_.push_back(hadron);
   }
 
-  /** Remove list of hadrons from transport, add it to remove hadron list for new timestep
+  /**
+   * @brief Queue multiple hadrons for removal next timestep.
+   * @param hadrons Hadrons to remove.
    */
-  void RemoveHadrons(const std::vector<shared_ptr<Hadron>>& hadrons) {
-    for (const auto& had : hadrons) {
+  void RemoveHadrons(const std::vector<shared_ptr<Hadron>> &hadrons) {
+    for (const auto &had : hadrons) {
       RemoveHadron(had);
     }
   }
 
-private:
-
+ private:
   /** New hadrons for upcoming timestep of transport evolution,
    * to be filled at end of timestep by particlization routine.
    */
   std::vector<shared_ptr<Hadron>> new_hadrons_for_timestep_;
 
-  /** Hadrons to be removed from the transport evolution in the 
-   * upcoming timestep, to be determined at the end of timestep 
-   * by some criterion (iso-tau surface, energy density, ...) 
+  /** Hadrons to be removed from the transport evolution in the
+   * upcoming timestep, to be determined at the end of timestep
+   * by some criterion (iso-tau surface, energy density, ...)
    */
   std::vector<shared_ptr<Hadron>> remove_hadrons_for_timestep_;
 
-  /** Store the hadrons extracted when the SMASH initial condition is used and 
-   * the hydro does not run in Cartesian coordinates. 
+  /** Store the hadrons extracted when the SMASH initial condition is used and
+   * the hydro does not run in Cartesian coordinates.
    * In this case, SMASH has to run first (up to some large time), and the
    * particles have to be extracted at an iso-tau surface. Afterwards they can
    * be used as source terms in the hydro.
-  */
+   */
   std::vector<shared_ptr<Hadron>> store_source_term_hadrons_iso_tau_;
   std::vector<shared_ptr<Hadron>> store_spectator_hadrons_iso_tau_;
 
@@ -175,7 +297,7 @@ private:
    * Milne coordinates. Then they are fed into SMASH after the hydro has run.
    * Add also hadrons that have a too large gamma factor to be added to the
    * hydro evolution.
-  */
+   */
   std::vector<shared_ptr<Hadron>> store_hadrons_soft_particlization_;
 
   /** Store BDM final state hadrons for output
@@ -196,46 +318,47 @@ private:
   double ec_;
 
   /** Switching proper time, when particles from transport initial condition are
-   * fed into the hydro 
+   * fed into the hydro
    */
   double IC_particle_extraction_tau_;
 
-  /** Flag and pointer to create a file output of the hadronic time evolution. 
+  /** Flag and pointer to create a file output of the hadronic time evolution.
    * This can be used to create a video of the hadronic evolution.
-  */
+   */
   bool hadronic_time_evolution_to_file_;
   std::unique_ptr<ofstream> hadronic_time_evolution_file_;
 
-  /** Function to create the hadronic_time_evolution_file_ 
-   * if the flag hadronic_time_evolution_to_file_ is set to true.
-  */
+  /**
+   * @brief Create hadronic time-evolution output file when enabled.
+   */
   void CreateHadronicTimeEvolutionFileIfNecessary() {
     if (hadronic_time_evolution_to_file_) {
-      hadronic_time_evolution_file_ = 
-        std::make_unique<ofstream>("hadronic_time_evolution_BDM.dat");
+      hadronic_time_evolution_file_ =
+          std::make_unique<ofstream>("hadronic_time_evolution_BDM.dat");
     }
   }
 
-  /** Function to close the hadronic_time_evolution_file_ 
-   * if the flag hadronic_time_evolution_to_file_ is set to true.
-  */
+  /**
+   * @brief Close hadronic time-evolution output file when enabled.
+   */
   void CloseHadronicTimeEvolutionFileIfNecessary() {
     if (hadronic_time_evolution_to_file_) {
       hadronic_time_evolution_file_->close();
     }
   }
 
-  /** Function to print the hadronic content of the time evolution to the file
+  /**
+   * @brief Write hadronic state snapshot to the optional evolution file.
    */
   void PrintHadronicTimeEvolutionToFileIfNecessary();
 
   /**
-   * Is the hydro in cartesian or not? Needed to decide whether SMASH IC has to 
+   * Is the hydro in cartesian or not? Needed to decide whether SMASH IC has to
    * run first, or if it can run concurrently with hydro.
    */
   bool hydro_Cartesian_;
   bool SMASH_IC_attached_;
-  
+
   bool SMASH_IC_in_progress_;
   bool reset_time_hydro_Milne_;
   bool hydro_in_progress_;
@@ -258,14 +381,13 @@ private:
   double rapidity_cut_;
   int counter_hadrons_already_added_;
 
-  protected:
-    std::weak_ptr<LiquefierBase> liquefier_ptr_;
-    std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr_;
+ protected:
+  std::weak_ptr<LiquefierBase> liquefier_ptr_;
+  std::weak_ptr<HadronicLiquefier> hadronic_liquefier_ptr_;
 
-    std::uniform_real_distribution<double> ZeroOneDistribution;
-
+  std::uniform_real_distribution<double> ZeroOneDistribution;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
 #endif

@@ -1,4 +1,4 @@
-# X-SCAPE 2.0.1
+# X-SCAPE 2.1
 
 The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (X-SCAPE) is the enhanced (and 2nd) project of the JETSCAPE
 collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions.
@@ -283,6 +283,141 @@ For reasonable physics with SMASH these decays should be switched off.
 ## More information
 
 More material on the physics behind JETSCAPE and how to use it can be found in the material of the JETSCAPE Summer Schools. The schools are a yearly event explaining the details of the approach. You can either sign-up for the next one or go through the material of the last school yourself. The material is found in the SummerSchool repositories under [the JETSCAPE organization](https://github.com/JETSCAPE).
+
+## js-contrib community extensions
+
+[js-contrib](https://github.com/jhputschke/js-contrib) provides community-maintained physics modules
+(analogous to [fastjet-contrib](https://fastjet.hepforge.org/contrib/)) that can be compiled
+directly into X-SCAPE.  Current contribs:
+
+| Contrib | Description | Extra deps |
+|---------|-------------|------------|
+| FnoHydro | Neural-network (FNO) hydrodynamics via LibTorch | ROOT, libtorch (~2 GB) |
+| PyJetscape | pybind11 Python bindings + PyFNOHydro trampoline | pybind11, PyTorch |
+
+### Quick start (current X-SCAPE)
+
+Up-to-date X-SCAPE already contains the required `get_js_contrib.sh` script and CMake hooks.
+Run:
+
+```bash
+cd external_packages
+./get_js_contrib.sh        # clones js-contrib into external_packages/js-contrib
+
+cd ../build
+cmake .. -DUSE_JS_CONTRIB=ON -DUSE_JS_FNO_HYDRO=ON   # add -DUSE_JS_PYJETSCAPE=ON if needed
+make -j$(nproc)
+```
+
+### Manual integration into older X-SCAPE checkouts
+
+If your X-SCAPE checkout predates the js-contrib integration, apply the two
+steps below by hand.
+
+#### Step 1 — add the fetch script
+
+Copy (or create) `external_packages/get_js_contrib.sh` with the following content:
+
+```bash
+#!/usr/bin/env bash
+###############################################################################
+# Copyright (c) The JETSCAPE Collaboration, 2018
+#
+# Distributed under the GNU General Public License 3.0 (GPLv3 or later).
+# See COPYING for details.
+###############################################################################
+# Clone js-contrib into external_packages/js-contrib
+# Use with: cmake -DUSE_JS_CONTRIB=ON [-DUSE_JS_FNO_HYDRO=ON] [-DUSE_JS_PYJETSCAPE=ON]
+
+folderName="js-contrib"
+
+if [ -d "$folderName" ]; then
+  echo "$folderName already exists — skipping clone."
+  exit 0
+fi
+
+git clone https://github.com/jhputschke/js-contrib.git "$folderName"
+```
+
+Make the script executable:
+
+```bash
+chmod +x external_packages/get_js_contrib.sh
+```
+
+#### Step 2 — patch `CMakeLists.txt`
+
+Two blocks must be added to the top-level `CMakeLists.txt`, and one block must be patched in `src/CMakeLists.txt`.
+
+**Block A — option declarations** (add after the `USE_SMASH` option block,
+around the line that reads `# Compile with OpenMP support`):
+
+```cmake
+# js-contrib extensions. Turn on with 'cmake -DUSE_JS_CONTRIB=ON'.
+# Individual contribs are gated by their own sub-options (all OFF by default).
+option(USE_JS_CONTRIB "Enable js-contrib extensions" OFF)
+if(USE_JS_CONTRIB)
+  option(USE_JS_FNO_HYDRO
+    "Build FnoHydro contrib (requires libtorch ~2 GB and ROOT)" OFF)
+  option(USE_JS_PYJETSCAPE
+    "Build PyJetscape pybind11 Python bindings (compile from source)" OFF)
+  if(USE_JS_FNO_HYDRO OR USE_JS_PYJETSCAPE)
+    message("Enabling js-contrib extensions ...")
+  endif()
+endif(USE_JS_CONTRIB)
+```
+
+**Block B — subdirectory hook** (add after the `if(USE_ISS)` / `if(OPENCL_FOUND AND USE_CLVISC)` block
+and before the `if(OPENMP_FOUND)` definition block):
+
+```cmake
+if(USE_JS_CONTRIB)
+  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/js-contrib")
+    message(
+      FATAL_ERROR
+        "Error: js-contrib has not been downloaded in external_packages by ./external_packages/get_js_contrib.sh"
+    )
+  endif()
+  # Pass the per-contrib flags through to the js-contrib CMakeLists
+  set(BUILD_FNO_HYDRO ${USE_JS_FNO_HYDRO})
+  set(BUILD_PYJETSCAPE ${USE_JS_PYJETSCAPE})
+  add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/js-contrib)
+endif(USE_JS_CONTRIB)
+```
+
+**Block C — build-tree export in the top-level `CMakeLists.txt`** — js-contrib discovers JetScape
+via a build-tree `export()`. CMake requires every in-tree target reachable through `JetScape`'s
+`target_link_libraries` to be in the same export set, and `export()` must be called **after**
+all the optional `add_subdirectory()` calls that define those targets. Remove any existing
+`export(TARGETS JetScape …)` from `src/CMakeLists.txt` and **append** this block at the very
+end of the top-level `CMakeLists.txt`:
+
+```cmake
+set(_js_export_targets JetScape JetScapeThird GTL libtrento Cornelius)
+if(${HDF5_FOUND})
+  list(APPEND _js_export_targets hydroFromFile)
+endif()
+if(USE_IPGLASMA)
+  list(APPEND _js_export_targets ipglasma_lib)
+endif()
+if(USE_3DGlauber)
+  list(APPEND _js_export_targets 3dMCGlb)
+endif()
+if(USE_MUSIC)
+  list(APPEND _js_export_targets music)
+endif()
+if(USE_ISS)
+  list(APPEND _js_export_targets iSS)
+endif()
+if(OPENCL_FOUND AND USE_CLVISC)
+  list(APPEND _js_export_targets clviscwrapper)
+endif()
+export(TARGETS ${_js_export_targets} FILE "${CMAKE_BINARY_DIR}/JetScapeTargets.cmake")
+configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
+               "${CMAKE_BINARY_DIR}/JetScapeConfig.cmake" @ONLY)
+```
+
+After applying all three blocks, fetch and build as in the quick-start above.
 
 ## Troubleshooting
 

@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -22,9 +23,7 @@
 #include "JetScapeXML.h"
 
 namespace Jetscape {
-HadronicLiquefier::HadronicLiquefier() {
-  InitializeParameters();
-}
+HadronicLiquefier::HadronicLiquefier() { InitializeParameters(); }
 
 HadronicLiquefier::HadronicLiquefier(bool covariant, double sigma_transverse,
                                      double sigma_longitudinal, double xMax,
@@ -39,9 +38,9 @@ HadronicLiquefier::HadronicLiquefier(bool covariant, double sigma_transverse,
   Nx_ = Nx;
   Ny_ = Ny;
   Nz_ = Nz;
-  dx_ = 2. * xMax_ / (Nx_-1.);
-  dy_ = 2. * yMax_ / (Ny_-1.);
-  dz_ = 2. * zMax_ / (Nz_-1.);
+  dx_ = 2. * xMax_ / (Nx_ - 1.);
+  dy_ = 2. * yMax_ / (Ny_ - 1.);
+  dz_ = 2. * zMax_ / (Nz_ - 1.);
   hydro_Cartesian_ = hydro_Cartesian;
   gamma_factor_max_ = 5.0;
 }
@@ -94,7 +93,6 @@ double HadronicLiquefier::smearing_kernel_covariant_Milne(
     const double x_diff, const double y_diff, const double eta_diff,
     const double ux, const double uy, const double ueta, const double tau,
     const double gamma) const {
-
   const double N = (tau * gamma) / (pow(M_PI, 1.5) * sigma_transverse_ *
                                     sigma_transverse_ * sigma_transverse_);
   // compute the squared distance and the scalar product r*u
@@ -110,9 +108,8 @@ double HadronicLiquefier::smearing_kernel_covariant_Cartesian(
     const double x_diff, const double y_diff, const double z_diff,
     const double ux, const double uy, const double uz,
     const double gamma) const {
-
   const double N = gamma / (pow(M_PI, 1.5) * sigma_transverse_ *
-                   sigma_transverse_ * sigma_transverse_);
+                            sigma_transverse_ * sigma_transverse_);
   // compute the squared distance and the scalar product r*u
   const double dr_squared =
       (x_diff * x_diff + y_diff * y_diff + z_diff * z_diff);
@@ -171,7 +168,7 @@ double HadronicLiquefier::compute_drop_kernel_normalization(
         if (abs(y_diff) > skip_dis_x) {
           continue;
         }
-        const double eta_s = xmu_i[3]; // Cartesian z, Milne eta
+        const double eta_s = xmu_i[3];  // Cartesian z, Milne eta
         double eta_diff = eta - xmu_i[3];
         if (abs(eta_diff) > skip_dis_eta) {
           continue;
@@ -180,10 +177,10 @@ double HadronicLiquefier::compute_drop_kernel_normalization(
         const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
                                  pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
         if (mass <= 1e-16) {
-          continue; // skip massless particles
+          continue;  // skip massless particles
         }
         const double mT =
-          sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
+            sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
         double rapidity;
         if (mT >= 1e-16) {
           rapidity = std::asinh(pmu_i[3] / mT);
@@ -219,9 +216,9 @@ double HadronicLiquefier::compute_drop_kernel_normalization(
   return normalization * dx_ * dy_ * dz_;
 }
 
-void HadronicLiquefier::get_source_energy(
-    const double tau, const double x, const double y, const double eta,
-    std::array<double, 4> &jmu) const {
+void HadronicLiquefier::get_source_energy(const double tau, const double x,
+                                          const double y, const double eta,
+                                          std::array<double, 4> &jmu) const {
   jmu = {0., 0., 0., 0.};
   const double skip_dis_x = skip_n_sigma_transverse_ * sigma_transverse_;
   double skip_dis_eta;
@@ -239,8 +236,8 @@ void HadronicLiquefier::get_source_energy(
   double value_kernel = 0.;
   for (const auto &drop_i : hadron_droplets_list) {
     auto xmu_i = drop_i.get_xmu();
-    if (dtau_ > 0 && ((xmu_i[0] < tau - 0.5 * dtau_) 
-        || (xmu_i[0] >= tau + 0.5 * dtau_))) {
+    if (dtau_ > 0 &&
+        ((xmu_i[0] < tau - 0.5 * dtau_) || (xmu_i[0] >= tau + 0.5 * dtau_))) {
       continue;
     }
 
@@ -252,7 +249,7 @@ void HadronicLiquefier::get_source_energy(
     if (abs(y_diff) > skip_dis_x) {
       continue;
     }
-    const double eta_s = xmu_i[3]; // Cartesian z, Milne eta
+    const double eta_s = xmu_i[3];  // Cartesian z, Milne eta
     double eta_diff = eta - eta_s;
     if (abs(eta_diff) > skip_dis_eta) {
       continue;
@@ -262,7 +259,7 @@ void HadronicLiquefier::get_source_energy(
     const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
                              pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
     if (mass <= 1e-16) {
-      continue; // skip massless particles
+      continue;  // skip massless particles
     }
     const double mT =
         sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
@@ -281,7 +278,8 @@ void HadronicLiquefier::get_source_energy(
       const double gamma = mT * cosh(rapidity - eta_s) / mass;
 
       value_kernel = smearing_kernel_covariant_Milne(x_diff, y_diff, eta_diff,
-                                              ux, uy, ueta, tau, gamma) / tau;
+                                                     ux, uy, ueta, tau, gamma) /
+                     tau;
     } else if (!covariant_smearing_ && !hydro_Cartesian_) {
       value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff) / tau;
     } else if (covariant_smearing_ && hydro_Cartesian_) {
@@ -309,10 +307,8 @@ void HadronicLiquefier::get_source_energy(
   }
 }
 
-double HadronicLiquefier::get_source_quantity(const double tau,
-                                              const double x,
-                                              const double y,
-                                              const double eta,
+double HadronicLiquefier::get_source_quantity(const double tau, const double x,
+                                              const double y, const double eta,
                                               const QuantityType qtype) const {
   double result = 0.;
   const double skip_dis_x = skip_n_sigma_transverse_ * sigma_transverse_;
@@ -346,8 +342,8 @@ double HadronicLiquefier::get_source_quantity(const double tau,
     }
 
     auto xmu_i = drop_i.get_xmu();
-    if (dtau_ > 0 && ((xmu_i[0] < tau - 0.5 * dtau_) 
-          || (xmu_i[0] >= tau + 0.5 * dtau_))) {
+    if (dtau_ > 0 &&
+        ((xmu_i[0] < tau - 0.5 * dtau_) || (xmu_i[0] >= tau + 0.5 * dtau_))) {
       continue;
     }
 
@@ -359,7 +355,7 @@ double HadronicLiquefier::get_source_quantity(const double tau,
     if (abs(y_diff) > skip_dis_x) {
       continue;
     }
-    const double eta_s = xmu_i[3]; // Cartesian z, Milne eta
+    const double eta_s = xmu_i[3];  // Cartesian z, Milne eta
     double eta_diff = eta - xmu_i[3];
     if (abs(eta_diff) > skip_dis_eta) {
       continue;
@@ -369,7 +365,7 @@ double HadronicLiquefier::get_source_quantity(const double tau,
     const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
                              pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
     if (mass <= 1e-16) {
-      continue; // skip massless particles
+      continue;  // skip massless particles
     }
     const double mT =
         sqrt(mass * mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
@@ -388,7 +384,8 @@ double HadronicLiquefier::get_source_quantity(const double tau,
       const double gamma = mT * cosh(rapidity - eta_s) / mass;
 
       value_kernel = smearing_kernel_covariant_Milne(x_diff, y_diff, eta_diff,
-                                              ux, uy, ueta, tau, gamma) / tau;
+                                                     ux, uy, ueta, tau, gamma) /
+                     tau;
     } else if (!covariant_smearing_ && !hydro_Cartesian_) {
       value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff) / tau;
     } else if (covariant_smearing_ && hydro_Cartesian_) {
@@ -434,19 +431,18 @@ double HadronicLiquefier::get_source_rhos(const double tau, const double x,
   return get_source_quantity(tau, x, y, eta, qtype);
 }
 
-bool HadronicLiquefier::gamma_factor_too_large_check(const Hadron &hadron) const {
+bool HadronicLiquefier::gamma_factor_too_large_check(
+    const Hadron &hadron) const {
   auto p_init = hadron.p_in();
   // compute the hadron mass and rapidity
   std::array<double, 4> pmu_i = {
-    static_cast<double>(p_init.t()),
-    static_cast<double>(p_init.x()),
-    static_cast<double>(p_init.y()),
-    static_cast<double>(p_init.z())};
-    
+      static_cast<double>(p_init.t()), static_cast<double>(p_init.x()),
+      static_cast<double>(p_init.y()), static_cast<double>(p_init.z())};
+
   const double mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
-    pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
+                           pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
   if (mass <= 1e-16) {
-    return true; // skip massless particles
+    return true;  // skip massless particles
   }
   auto x_init = hadron.x_in();
   const double eta_s =
@@ -477,19 +473,20 @@ bool HadronicLiquefier::gamma_factor_too_large_check(const Hadron &hadron) const
   // Check if the gamma factor is larger than the maximum allowed value
   if (gamma > gamma_factor_max_) {
     VERBOSE(3) << "HadronicLiquefier: Gamma factor too large for hadron with "
-              << "mass " << mass << ", rapidity " << rapidity
-              << ", eta_s " << eta_s << ", and gamma " << gamma
-              << ". Not added to hydro sources. Maximum allowed gamma = "
-              << gamma_factor_max_;
-    return true; // Too large gamma factor, do not add to hydro sources
+               << "mass " << mass << ", rapidity " << rapidity << ", eta_s "
+               << eta_s << ", and gamma " << gamma
+               << ". Not added to hydro sources. Maximum allowed gamma = "
+               << gamma_factor_max_;
+    return true;  // Too large gamma factor, do not add to hydro sources
   }
-  return false; // Gamma factor is acceptable
+  return false;  // Gamma factor is acceptable
 }
 
-std::vector<shared_ptr<Hadron>> HadronicLiquefier::add_hydro_sources_hadrons(std::vector<Hadron> &hIn) {
+std::vector<shared_ptr<Hadron>> HadronicLiquefier::add_hydro_sources_hadrons(
+    std::vector<Hadron> &hIn) {
   // Create vector to store hadrons not added to the hydro sources
   std::vector<shared_ptr<Hadron>> hadrons_not_added;
-  
+
   // Create droplets from the hadrons
   for (const auto &hadron : hIn) {
     // Check if the gamma factor is too large for covariant smearing
@@ -502,30 +499,26 @@ std::vector<shared_ptr<Hadron>> HadronicLiquefier::add_hydro_sources_hadrons(std
     std::array<double, 4> x_hadron = {0.0, 0.0, 0.0, 0.0};
     if (hydro_Cartesian_) {
       x_hadron = {
-        static_cast<double>(x_init.t()),
-        static_cast<double>(x_init.x()),
-        static_cast<double>(x_init.y()),
-        static_cast<double>(x_init.z())};
+          static_cast<double>(x_init.t()), static_cast<double>(x_init.x()),
+          static_cast<double>(x_init.y()), static_cast<double>(x_init.z())};
     } else {
-      const double tau = sqrt(x_init.t() * x_init.t() - x_init.z() * x_init.z());
+      const double tau =
+          sqrt(x_init.t() * x_init.t() - x_init.z() * x_init.z());
       const double eta_s =
           0.5 * log((x_init.t() + x_init.z()) / (x_init.t() - x_init.z()));
-      x_hadron = {
-        static_cast<double>(tau),
-        static_cast<double>(x_init.x()),
-        static_cast<double>(x_init.y()),
-        static_cast<double>(eta_s)};
+      x_hadron = {static_cast<double>(tau), static_cast<double>(x_init.x()),
+                  static_cast<double>(x_init.y()), static_cast<double>(eta_s)};
     }
     std::array<double, 4> p_hadron = {
-      static_cast<double>(p_init.t()),
-      static_cast<double>(p_init.x()),
-      static_cast<double>(p_init.y()),
-      static_cast<double>(p_init.z())};
+        static_cast<double>(p_init.t()), static_cast<double>(p_init.x()),
+        static_cast<double>(p_init.y()), static_cast<double>(p_init.z())};
 
-    HadronDroplet hadron_droplet = HadronDroplet(x_hadron, p_hadron, 
-      hadron.baryon_number(), hadron.charge(), hadron.strangeness());
+    HadronDroplet hadron_droplet =
+        HadronDroplet(x_hadron, p_hadron, hadron.baryon_number(),
+                      hadron.charge(), hadron.strangeness());
 
-    double norm = compute_drop_kernel_normalization(x_hadron[0], hadron_droplet);
+    double norm =
+        compute_drop_kernel_normalization(x_hadron[0], hadron_droplet);
     hadron_droplet.set_normalization(norm);
     hadron_droplets_list.push_back(hadron_droplet);
   }
@@ -566,4 +559,4 @@ Jetscape::real HadronicLiquefier::get_dropletlist_net_strangeness() const {
 
 void HadronicLiquefier::ClearTask() { hadron_droplets_list.clear(); }
 
-}; // namespace Jetscape
+};  // namespace Jetscape

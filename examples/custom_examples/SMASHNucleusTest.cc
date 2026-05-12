@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -46,8 +47,9 @@ int main(int argc, char **argv) {
   JetScapeLogger::Instance()->SetInfo(true);
   JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
-  //SetVerboseLevel (9 a lot of additional debug output ...)
-  //If you want to suppress it: use SetVerboseLevel(0) or max  SetVerboseLevel(9) or 10
+  // SetVerboseLevel (9 a lot of additional debug output ...)
+  // If you want to suppress it: use SetVerboseLevel(0) or max
+  // SetVerboseLevel(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
 
   Show();
@@ -88,11 +90,12 @@ int main(int argc, char **argv) {
 
   // Check that all nucleons are in a range of x, y, z from -15 to 15
   for (const auto &hadron : h_list) {
-    if (std::abs(hadron.x_in().x()) > 15.0 || 
+    if (std::abs(hadron.x_in().x()) > 15.0 ||
         std::abs(hadron.x_in().y()) > 15.0 ||
         std::abs(hadron.x_in().z()) > 15.0) {
       JSWARN << "Hadron at position (" << hadron.x_in().x() << ", "
-             << hadron.x_in().y() << ", " << hadron.x_in().z() << ") is out of range!";
+             << hadron.x_in().y() << ", " << hadron.x_in().z()
+             << ") is out of range!";
       exit(1);
     }
   }
@@ -103,23 +106,25 @@ int main(int argc, char **argv) {
     JSWARN << "Number of hadrons is not 208 after second call!";
     exit(1);
   } else {
-    JSINFO << "Number of hadrons is still 208 after second call! This is the good result!";
+    JSINFO << "Number of hadrons is still 208 after second call! This is the "
+              "good result!";
   }
 
   // Test the IsHadronAtPosition() function
   double t_had = 0.0, x_had = 1.21692, y_had = -5.85427, z_had = -3.31002;
   if (smash_nucleus->IsHadronAtPosition(t_had, x_had, y_had, z_had)) {
-    JSINFO << "There is a hadron at position (" << t_had << ", " << x_had 
-          << ", " << y_had << ", " << z_had << ")";
+    JSINFO << "There is a hadron at position (" << t_had << ", " << x_had
+           << ", " << y_had << ", " << z_had << ")";
   } else {
-    JSWARN << "There is no hadron at position (" << t_had << ", " << x_had 
+    JSWARN << "There is no hadron at position (" << t_had << ", " << x_had
            << ", " << y_had << ", " << z_had << ")";
     exit(1);
   }
 
   // Boost the nucleus with a velocity vx = 0, vy = 0, vz = 0.8
   double vx = 0.0, vy = 0.0, vz = 0.8;
-  std::vector<Hadron> h_list_boosted = smash_nucleus->GetCurrentHadronListBoosted(vx, vy, vz);
+  std::vector<Hadron> h_list_boosted =
+      smash_nucleus->GetCurrentHadronListBoosted(vx, vy, vz);
 
   // Write the boosted hadrons to file
   std::ofstream outfile_boosted("SMASHNucleusTest_Boosted.csv");
@@ -127,10 +132,11 @@ int main(int argc, char **argv) {
   for (const auto &hadron : h_list_boosted) {
     const FourVector hadron_r = hadron.x_in();
     const FourVector hadron_p = hadron.p_in();
-    outfile_boosted << hadron.pid() << "," << hadron.charge() << "," << hadron_r.t()
-                    << "," << hadron_r.x() << "," << hadron_r.y() << "," << hadron_r.z()
-                    << "," << hadron_p.t() << "," << hadron_p.x() << "," << hadron_p.y()
-                    << "," << hadron_p.z() << std::endl;
+    outfile_boosted << hadron.pid() << "," << hadron.charge() << ","
+                    << hadron_r.t() << "," << hadron_r.x() << ","
+                    << hadron_r.y() << "," << hadron_r.z() << ","
+                    << hadron_p.t() << "," << hadron_p.x() << ","
+                    << hadron_p.y() << "," << hadron_p.z() << std::endl;
   }
   outfile_boosted.close();
 

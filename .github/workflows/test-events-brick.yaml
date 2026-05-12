@@ -4,12 +4,12 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-2.0.1-RC
+      - XSCAPE-2.1-RC
 
   push:
     branches:
       - main
-      - XSCAPE-2.0.1-RC
+      - XSCAPE-2.1-RC
 
 env:
   REPO_NAME: ${{ github.event.repository.name }}
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v1.13
+      image: jetscape/base:v2.0
       options: --user root
 
     steps:
@@ -47,8 +47,11 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: JETSCAPE/TEST-EXAMPLES
-        ref: xscape-2.0.1
+        ref: jetscape-4.0.2
         path: TEST-EXAMPLES
 
     - name: Run Brick Matter Lbt tests
       run: ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_matter_lbt/runBrickMatterLbtTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_matter_lbt/config/jetscape_user.xml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_matter_lbt/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_matter_lbt/output/latest
+
+    - name: Run Brick rMatter Lbt tests
+      run: ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_rMatter_lbt/runBrickRMatterLbtTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_rMatter_lbt/config/jetscape_user_rMatterLbt.xml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_rMatter_lbt/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/brick_rMatter_lbt/output/latest

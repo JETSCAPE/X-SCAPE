@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -54,7 +55,6 @@ void ElossValidate::WriteTask(weak_ptr<JetScapeWriter> w) {
 
 void ElossValidate::DoEnergyLoss(double deltaT, double time, double Q2,
                                  vector<Parton> &pIn, vector<Parton> &pOut) {
-
   VERBOSESHOWER(8) << MAGENTA << "SentInPartons Signal received : " << deltaT
                    << " " << Q2 << " " << &pIn;
 
@@ -75,8 +75,8 @@ void ElossValidate::DoEnergyLoss(double deltaT, double time, double Q2,
          << " anti-color = " << pIn[0].anti_color();
 
   for (int i = 0; i < pIn.size(); i++) {
-    TakeResponsibilityFor(
-        pIn[i]); // Generate error if another module already has responsibility.
+    TakeResponsibilityFor(pIn[i]);  // Generate error if another module already
+                                    // has responsibility.
     JSINFO << " Parton Q2= " << pIn[i].t();
     JSINFO << " Parton Id= " << pIn[i].pid()
            << " and mass= " << pIn[i].restmass();
@@ -88,7 +88,7 @@ void ElossValidate::DoEnergyLoss(double deltaT, double time, double Q2,
     }
 
     if (pIn[i].form_time() <
-        0.0) { /// A parton without a virtuality or formation time, must set...
+        0.0) {  /// A parton without a virtuality or formation time, must set...
       pIn[i].set_jet_v(velocity);
       pIn[i].set_t(QS * 2.);
       pIn[i].set_mean_form_time();

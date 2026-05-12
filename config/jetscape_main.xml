@@ -287,6 +287,7 @@
     <tStart> 0.6 </tStart> <!-- Start time of jet quenching, proper time, fm/c   -->
     <mutex>ON</mutex>
     <AddLiquefier> false </AddLiquefier>
+    <ModificationFactor> -1 </ModificationFactor> <!-- Modification factor for the energy loss, used in the Lbt module -->
     <lambdaQCD>0.2</lambdaQCD> <!-- 0.2 JETSCAPE standard value, 0.4 is the value chosen in JETSET -->
 
     <Matter>
@@ -590,6 +591,47 @@
       <result_directory>./</result_directory>
       <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
     </CLVisc>
+
+    <!-- js-contrib: FnoHydro defaults (required so user XMLs with <FNO>/<FNOROOIN>
+         blocks pass the recurseToSearch check in JetScape.cc) -->
+    <FNO>
+      <model_file>../fno_hydro/models/default.pt</model_file>
+      <centrality-low>0</centrality-low>
+      <centrality-high>10</centrality-high>
+      <EOS_id_MUSIC>91</EOS_id_MUSIC>
+      <n_features>3</n_features>
+      <freezeout_temperature>0.136</freezeout_temperature>
+      <nx>60</nx>
+      <ny>60</ny>
+      <ntau>50</ntau>
+      <x_min>-15.0</x_min>
+      <y_min>-15.0</y_min>
+      <dtau>0.1</dtau>
+      <neta>1</neta>
+      <deta>0</deta>
+    </FNO>
+
+    <FNOROOIN>
+      <model_file>../fno_hydro/models/default.pt</model_file>
+      <root_file>default.root</root_file>
+      <fullHydroIn>0</fullHydroIn>
+      <bulkHadroFull>0</bulkHadroFull>
+      <QAoutput>0</QAoutput>
+      <centrality-low>0</centrality-low>
+      <centrality-high>10</centrality-high>
+      <EOS_id_MUSIC>91</EOS_id_MUSIC>
+      <n_features>3</n_features>
+      <tau0>0.5</tau0>
+      <freezeout_temperature>0.136</freezeout_temperature>
+      <nx>60</nx>
+      <ny>60</ny>
+      <neta>1</neta>
+      <ntau>50</ntau>
+      <x_min>-15.0</x_min>
+      <y_min>-15.0</y_min>
+      <dtau>0.1</dtau>
+      <deta>0</deta>
+    </FNOROOIN>
 
   </Hydro>
 

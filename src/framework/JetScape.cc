@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -31,9 +32,9 @@
 
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
-  #ifdef USE_ROOT
-  #include "JetScapeWriterRootHepMC.h"
-  #endif
+#ifdef USE_ROOT
+#include "JetScapeWriterRootHepMC.h"
+#endif
 #endif
 
 #include <iostream>
@@ -45,12 +46,19 @@ using namespace std;
 
 namespace Jetscape {
 
-/** Default constructor to create the main task of the JetScape framework. It sets the total number of events to 1.
-   * By default, hydro events are used only once
-   */
+/** Default constructor to create the main task of the JetScape framework. It
+ * sets the total number of events to 1. By default, hydro events are used only
+ * once
+ */
 JetScape::JetScape()
-    : JetScapeModuleBase(), n_events(1), n_events_printout(100), reuse_hydro_(false), n_reuse_hydro_(1),
-      liquefier(nullptr), hadronicLiquefier(nullptr), hadronicEMT(nullptr),
+    : JetScapeModuleBase(),
+      n_events(1),
+      n_events_printout(100),
+      reuse_hydro_(false),
+      n_reuse_hydro_(1),
+      liquefier(nullptr),
+      hadronicLiquefier(nullptr),
+      hadronicEMT(nullptr),
       fEnableAutomaticTaskListDetermination(true) {
   VERBOSE(8);
   SetId("primary");
@@ -58,8 +66,8 @@ JetScape::JetScape()
 
 JetScape::~JetScape() {
   VERBOSE(8);
-  //JetScapeSignalManager::Instance()->Clear();
-  //not needed, use weak_ptr in JetScapeSignalManager class (=not owning)
+  // JetScapeSignalManager::Instance()->Clear();
+  // not needed, use weak_ptr in JetScapeSignalManager class (=not owning)
 }
 
 void JetScape::Show() { ShowXscapeBanner(); }
@@ -75,13 +83,15 @@ void JetScape::Init() {
   JetScapeXML::Instance()->OpenXMLUserFile(GetXMLUserFileName());
   JSINFO << "================================================================";
 
-  // Check whether XML elements in the User file are not included in the Main file
+  // Check whether XML elements in the User file are not included in the Main
+  // file
   CompareElementsFromXML();
 
   // Read some general parameters from the XML configuration file
   ReadGeneralParametersFromXML();
 
-  // Loop through the XML User file elements to determine the task list, if enabled
+  // Loop through the XML User file elements to determine the task list, if
+  // enabled
   if (fEnableAutomaticTaskListDetermination) {
     DetermineTaskListFromXML();
     DetermineWritersFromXML();
@@ -91,8 +101,8 @@ void JetScape::Init() {
 
   QueryHistory::Instance()->AddMainTask(shared_from_this());
 
-  // Has to be called explicitly since not really fully recursively (if ever needed)
-  // So --> JetScape is "Task Manager" of all modules ...
+  // Has to be called explicitly since not really fully recursively (if ever
+  // needed) So --> JetScape is "Task Manager" of all modules ...
   JSINFO << "Found " << GetNumberOfTasks() << " Modules Initialize them ... ";
   SetPointers();
   JSINFO << "Calling JetScape InitTasks()...";
@@ -100,8 +110,8 @@ void JetScape::Init() {
 }
 
 //________________________________________________________________
-void JetScape::recurseToBuild(std::vector<std::string> &elems, tinyxml2::XMLElement *mElement)
-{
+void JetScape::recurseToBuild(std::vector<std::string> &elems,
+                              tinyxml2::XMLElement *mElement) {
   tinyxml2::XMLElement *nextElement = mElement->FirstChildElement();
 
   if (nextElement != nullptr)
@@ -116,8 +126,8 @@ void JetScape::recurseToBuild(std::vector<std::string> &elems, tinyxml2::XMLElem
 }
 
 //________________________________________________________________
-void JetScape::recurseToSearch(std::vector<std::string> &elems, tinyxml2::XMLElement *uElement)
-{
+void JetScape::recurseToSearch(std::vector<std::string> &elems,
+                               tinyxml2::XMLElement *uElement) {
   tinyxml2::XMLElement *nextElement = uElement->FirstChildElement();
 
   if (nextElement != nullptr)
@@ -129,16 +139,19 @@ void JetScape::recurseToSearch(std::vector<std::string> &elems, tinyxml2::XMLEle
     recurseToSearch(elems, nextElement);
 
   if (!std::binary_search(elems.begin(), elems.end(), uElement->Name())) {
-    JSWARN << "User XML tag <" << uElement->Name() << "> is unrecognized. A default entry in the main XML file is required.";
+    JSWARN << "User XML tag <" << uElement->Name()
+           << "> is unrecognized. A default entry in the main XML file is "
+              "required.";
     exit(-1);
   }
 }
 
 //________________________________________________________________
 void JetScape::CompareElementsFromXML() {
-
-  tinyxml2::XMLElement *uElement = JetScapeXML::Instance()->GetXMLRootUser()->FirstChildElement();
-  tinyxml2::XMLElement *mElement = JetScapeXML::Instance()->GetXMLRootMain()->FirstChildElement();
+  tinyxml2::XMLElement *uElement =
+      JetScapeXML::Instance()->GetXMLRootUser()->FirstChildElement();
+  tinyxml2::XMLElement *mElement =
+      JetScapeXML::Instance()->GetXMLRootMain()->FirstChildElement();
 
   std::vector<std::string> elems;
 
@@ -149,7 +162,6 @@ void JetScape::CompareElementsFromXML() {
 
 //________________________________________________________________
 void JetScape::ReadGeneralParametersFromXML() {
-
   // Debug level
   std::string log_debug = GetXMLElementText({"debug"});
   if ((int)log_debug.find("on") >= 0)
@@ -212,8 +224,8 @@ void JetScape::ReadGeneralParametersFromXML() {
 
 //________________________________________________________________
 void JetScape::DetermineTaskListFromXML() {
-
-  // First, check for Liquefier and create it if so (since it needs to be passed to other modules)
+  // First, check for Liquefier and create it if so (since it needs to be passed
+  // to other modules)
   VERBOSE(2) << "Checking if CausalLiquefier should be created...";
   tinyxml2::XMLElement *elementXML =
       (tinyxml2::XMLElement *)JetScapeXML::Instance()
@@ -269,7 +281,6 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Initial state
     if (elementName == "IS") {
-
       tinyxml2::XMLElement *childElement =
           (tinyxml2::XMLElement *)element->FirstChildElement();
       while (childElement) {
@@ -312,7 +323,7 @@ void JetScape::DetermineTaskListFromXML() {
             Add(mcglauber);
             JSINFO << "JetScape::DetermineTaskList() -- Initial State: Added "
                       "MCGlauber module to task list.";
-          }        
+          }
         } else if (childElementName == "initial_Ncoll_list") {
           auto initial =
               JetScapeModuleFactory::createInstance("NcollListFromFile");
@@ -339,7 +350,6 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Hard process
     else if (elementName == "Hard") {
-
       tinyxml2::XMLElement *childElement =
           (tinyxml2::XMLElement *)element->FirstChildElement();
       while (childElement) {
@@ -374,17 +384,14 @@ void JetScape::DetermineTaskListFromXML() {
             JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
                       "epemGun to task list.";
           }
-        }
-        else if (childElementName == "EPGun") {
-          auto EPGun =
-              JetScapeModuleFactory::createInstance(childElementName);
+        } else if (childElementName == "EPGun") {
+          auto EPGun = JetScapeModuleFactory::createInstance(childElementName);
           if (EPGun) {
             Add(EPGun);
             JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
                       "EPGun to task list.";
           }
-        }
-        else if (((int)childElementName.find("CustomModule") >= 0)) {
+        } else if (((int)childElementName.find("CustomModule") >= 0)) {
           auto customModule =
               JetScapeModuleFactory::createInstance(childElementName);
           if (customModule) {
@@ -401,7 +408,6 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Pre-equilibrium
     else if (elementName == "Preequilibrium") {
-
       tinyxml2::XMLElement *childElement =
           (tinyxml2::XMLElement *)element->FirstChildElement();
       while (childElement) {
@@ -426,7 +432,7 @@ void JetScape::DetermineTaskListFromXML() {
                       "Glasma to task list.";
           }
         } else if (childElementName == "FreestreamMilne") {
-        //    - FreestreamMilne
+          //    - FreestreamMilne
 #ifdef USE_FREESTREAM
           auto predynamics =
               JetScapeModuleFactory::createInstance(childElementName);
@@ -440,7 +446,7 @@ void JetScape::DetermineTaskListFromXML() {
                     "is not installed!";
 #endif
         } else if (((int)childElementName.find("CustomModule") >= 0)) {
-        //   - Custom module
+          //   - Custom module
           auto customModule =
               JetScapeModuleFactory::createInstance(childElementName);
           if (customModule) {
@@ -457,8 +463,8 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Hydro
     else if (elementName == "Hydro") {
-
-      // First, check if liquefier should be added (Note: Can't use GetXMLElementText(), since that only works for unique tags)
+      // First, check if liquefier should be added (Note: Can't use
+      // GetXMLElementText(), since that only works for unique tags)
       VERBOSE(2) << "Checking if liquefier should be added: Hydro";
       bool bAddLiquefier = false;
       tinyxml2::XMLElement *childElementLiquefier =
@@ -487,7 +493,8 @@ void JetScape::DetermineTaskListFromXML() {
         std::string childElementName = childElementHadronicLiquefier->Name();
         VERBOSE(2) << "Parsing childElementHadronicLiq: " << childElementName;
         if (childElementName == "AddHadronicLiquefier") {
-          std::string strAddLiquefier = childElementHadronicLiquefier->GetText();
+          std::string strAddLiquefier =
+              childElementHadronicLiquefier->GetText();
           if ((int)strAddLiquefier.find("true") >= 0) {
             bAddHadronicLiquefier = true;
             VERBOSE(1) << "Add hadronic_liquefier to Hydro: True.";
@@ -495,7 +502,8 @@ void JetScape::DetermineTaskListFromXML() {
             VERBOSE(1) << "Add hadronic_liquefier to Hydro: False.";
           }
         }
-        childElementHadronicLiquefier = childElementHadronicLiquefier->NextSiblingElement();
+        childElementHadronicLiquefier =
+            childElementHadronicLiquefier->NextSiblingElement();
       }
 
       // Loop through elements to look for specific hydro module
@@ -520,8 +528,8 @@ void JetScape::DetermineTaskListFromXML() {
                         "liquefier to Brick.";
             }
             if (bAddHadronicLiquefier) {
-              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
-                hadronicLiquefier);
+              dynamic_pointer_cast<FluidDynamics>(hydro)
+                  ->add_a_hadronic_liquefier(hadronicLiquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "hadronic liquefier to Brick.";
             }
@@ -542,8 +550,8 @@ void JetScape::DetermineTaskListFromXML() {
                         "liquefier to Gubser.";
             }
             if (bAddHadronicLiquefier) {
-              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
-                hadronicLiquefier);
+              dynamic_pointer_cast<FluidDynamics>(hydro)
+                  ->add_a_hadronic_liquefier(hadronicLiquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "hadronic liquefier to Gubser.";
             }
@@ -564,8 +572,8 @@ void JetScape::DetermineTaskListFromXML() {
                         "liquefier to hydro_from_file.";
             }
             if (bAddHadronicLiquefier) {
-              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
-                hadronicLiquefier);
+              dynamic_pointer_cast<FluidDynamics>(hydro)
+                  ->add_a_hadronic_liquefier(hadronicLiquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "hadronic liquefier to hydro_from_file.";
             }
@@ -587,8 +595,8 @@ void JetScape::DetermineTaskListFromXML() {
                         "liquefier to MUSIC.";
             }
             if (bAddHadronicLiquefier) {
-              dynamic_pointer_cast<FluidDynamics>(hydro)->add_a_hadronic_liquefier(
-                hadronicLiquefier);
+              dynamic_pointer_cast<FluidDynamics>(hydro)
+                  ->add_a_hadronic_liquefier(hadronicLiquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "hadronic liquefier to MUSIC.";
             }
@@ -626,8 +634,8 @@ void JetScape::DetermineTaskListFromXML() {
                         "liquefier to CustomModule.";
             }
             if (bAddHadronicLiquefier) {
-              dynamic_pointer_cast<FluidDynamics>(customModule)->add_a_hadronic_liquefier(
-                hadronicLiquefier);
+              dynamic_pointer_cast<FluidDynamics>(customModule)
+                  ->add_a_hadronic_liquefier(hadronicLiquefier);
               JSINFO << "JetScape::DetermineTaskList() -- Hydro: Added "
                         "hadronic liquefier to CustomModule.";
             }
@@ -640,7 +648,6 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Eloss
     else if (elementName == "Eloss") {
-
       auto jlossmanager = make_shared<JetEnergyLossManager>();
       auto jloss = make_shared<JetEnergyLoss>();
 
@@ -665,8 +672,8 @@ void JetScape::DetermineTaskListFromXML() {
         if (childElementName == "Matter") {
           auto matter = JetScapeModuleFactory::createInstance(childElementName);
           if (matter) {
-            jloss->Add(
-                matter); // Note: if you use Matter, it MUST come first (to set virtuality)
+            jloss->Add(matter);  // Note: if you use Matter, it MUST come first
+                                 // (to set virtuality)
             JSINFO << "JetScape::DetermineTaskList() -- Eloss: Added Matter to "
                       "Eloss list.";
           }
@@ -675,8 +682,8 @@ void JetScape::DetermineTaskListFromXML() {
         else if (childElementName == "Lbt") {
           auto lbt = JetScapeModuleFactory::createInstance(childElementName);
           if (lbt) {
-            jloss->Add(
-                lbt); // go to 3rd party and ./get_lbtTab before adding this module
+            jloss->Add(lbt);  // go to 3rd party and ./get_lbtTab before adding
+                              // this module
             JSINFO << "JetScape::DetermineTaskList() -- Eloss: Added LBT to "
                       "Eloss list.";
           }
@@ -720,7 +727,6 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Jet Hadronization
     else if (elementName == "JetHadronization") {
-
       // Create hadronization manager and module
       auto hadroMgr = make_shared<HadronizationManager>();
       auto hadro = make_shared<Hadronization>();
@@ -770,7 +776,6 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Soft Particlization
     else if (elementName == "SoftParticlization") {
-
       tinyxml2::XMLElement *childElement =
           (tinyxml2::XMLElement *)element->FirstChildElement();
       while (childElement) {
@@ -809,7 +814,6 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Afterburner
     else if (elementName == "Afterburner") {
-
       tinyxml2::XMLElement *childElement =
           (tinyxml2::XMLElement *)element->FirstChildElement();
       while (childElement) {
@@ -848,15 +852,13 @@ void JetScape::DetermineTaskListFromXML() {
 
     // Parton printer
     else if (elementName == "PartonPrinter") {
-
       auto partonPrinter = JetScapeModuleFactory::createInstance(elementName);
       if (partonPrinter) {
         Add(partonPrinter);
         JSINFO << "JetScape::DetermineTaskList() -- Added PartonPrinter to "
                   "task list.";
       }
-    }
-    else if (elementName == "HadronPrinter") {
+    } else if (elementName == "HadronPrinter") {
       auto hadronPrinter = JetScapeModuleFactory::createInstance(elementName);
       if (hadronPrinter) {
         Add(hadronPrinter);
@@ -886,7 +888,6 @@ void JetScape::DetermineTaskListFromXML() {
 //________________________________________________________________
 void JetScape::SetModuleId(tinyxml2::XMLElement *moduleElement,
                            shared_ptr<JetScapeModuleBase> module) {
-
   tinyxml2::XMLElement *childElement =
       (tinyxml2::XMLElement *)moduleElement->FirstChildElement();
   while (childElement) {
@@ -902,8 +903,8 @@ void JetScape::SetModuleId(tinyxml2::XMLElement *moduleElement,
 
 //________________________________________________________________
 void JetScape::DetermineWritersFromXML() {
-
-  // Get file output name to write to (without file extension, except if custom writer)
+  // Get file output name to write to (without file extension, except if custom
+  // writer)
   std::string outputFilename = GetXMLElementText({"outputFilename"});
 
   // Copy string in order to set file extensions for each type
@@ -924,10 +925,12 @@ void JetScape::DetermineWritersFromXML() {
                         outputFilenameHepMC.append(".hepmc"));
   CheckForWriterFromXML("JetScapeWriterRootHepMC",
                         outputFilenameRootHepMC.append("_hepmc.root"));
-  CheckForWriterFromXML("JetScapeWriterFinalStatePartonsAscii",
-                        outputFilenameFinalStatePartonsAscii.append("_final_state_partons.dat"));
-  CheckForWriterFromXML("JetScapeWriterFinalStateHadronsAscii",
-                        outputFilenameFinalStateHadronsAscii.append("_final_state_hadrons.dat"));
+  CheckForWriterFromXML(
+      "JetScapeWriterFinalStatePartonsAscii",
+      outputFilenameFinalStatePartonsAscii.append("_final_state_partons.dat"));
+  CheckForWriterFromXML(
+      "JetScapeWriterFinalStateHadronsAscii",
+      outputFilenameFinalStateHadronsAscii.append("_final_state_hadrons.dat"));
   CheckForWriterFromXML("JetScapeWriterQnVectorAscii",
                         outputFilenameQnVectorAscii.append("_QnVector.dat"));
 
@@ -950,7 +953,6 @@ void JetScape::DetermineWritersFromXML() {
 //________________________________________________________________
 void JetScape::CheckForWriterFromXML(const char *writerName,
                                      std::string outputFilename) {
-
   std::string enableWriter = GetXMLElementText({writerName});
   VERBOSE(2) << "Parsing writer: " << writerName;
   if ((int)enableWriter.find("on") >= 0) {
@@ -963,8 +965,9 @@ void JetScape::CheckForWriterFromXML(const char *writerName,
       JSINFO << "JetScape::DetermineTaskList() -- " << writerName << " ("
              << outputFilename.c_str() << ") added to task list.";
     }
-    // Manually create HepMC writer if it is enabled, since JetScapeModuleFactor::map_type assumes single inheritance
-    // from JetScapeModuleBase -- but JetScapeWriterHepMC has multiple inheritance
+    // Manually create HepMC writer if it is enabled, since
+    // JetScapeModuleFactor::map_type assumes single inheritance from
+    // JetScapeModuleBase -- but JetScapeWriterHepMC has multiple inheritance
     else if (strcmp(writerName, "JetScapeWriterHepMC") == 0) {
 #ifdef USE_HEPMC
       VERBOSE(2) << "Manually creating JetScapeWriterHepMC (due to multiple "
@@ -974,17 +977,17 @@ void JetScape::CheckForWriterFromXML(const char *writerName,
       JSINFO << "JetScape::DetermineTaskList() -- " << writerName << " ("
              << outputFilename.c_str() << ") added to task list.";
 #endif
-    }
-    else if (strcmp(writerName, "JetScapeWriterRootHepMC") == 0) {
+    } else if (strcmp(writerName, "JetScapeWriterRootHepMC") == 0) {
 #ifdef USE_HEPMC
-      #ifdef USE_ROOT
-      VERBOSE(2) << "Manually creating JetScapeWriterRootHepMC (due to multiple "
-                    "inheritance)";
+#ifdef USE_ROOT
+      VERBOSE(2)
+          << "Manually creating JetScapeWriterRootHepMC (due to multiple "
+             "inheritance)";
       auto writer = std::make_shared<JetScapeWriterRootHepMC>(outputFilename);
       Add(writer);
       JSINFO << "JetScape::DetermineTaskList() -- " << writerName << " ("
              << outputFilename.c_str() << ") added to task list.";
-      #endif
+#endif
 #endif
     } else {
       VERBOSE(2) << "Writer is NOT created...";
@@ -1023,7 +1026,8 @@ void JetScape::SetPointers() {
       JetScapeSignalManager::Instance()->SetBulkDynamicsManagerPointer(
           dynamic_pointer_cast<BulkDynamicsManager>(it));
       bulk_pointer_is_set = true;
-    } else if (dynamic_pointer_cast<JetEnergyLossManager>(it) && !dynamic_pointer_cast<IsrManager>(it)) {
+    } else if (dynamic_pointer_cast<JetEnergyLossManager>(it) &&
+               !dynamic_pointer_cast<IsrManager>(it)) {
       JetScapeSignalManager::Instance()->SetJetEnergyLossManagerPointer(
           dynamic_pointer_cast<JetEnergyLossManager>(it));
     } else if (dynamic_pointer_cast<HardProcess>(it)) {
@@ -1046,44 +1050,43 @@ void JetScape::SetPointers() {
           dynamic_pointer_cast<SoftParticlization>(it));
     } else if (dynamic_pointer_cast<HadronizationManager>(it)) {
       JetScapeSignalManager::Instance()->SetHadronizationManagerPointer(
-										dynamic_pointer_cast<HadronizationManager>(it));
+          dynamic_pointer_cast<HadronizationManager>(it));
     } else if (dynamic_pointer_cast<HadronPrinter>(it)) {
       JetScapeSignalManager::Instance()->SetHadronPrinterPointer(
-										dynamic_pointer_cast<HadronPrinter>(it));
-				}
+          dynamic_pointer_cast<HadronPrinter>(it));
+    }
   }
 }
 
-void JetScape::SetPerEventExecFlags(bool start_of_event)
-{
+void JetScape::SetPerEventExecFlags(bool start_of_event) {
   for (auto it : GetTaskList()) {
-
     auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
 
-    if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it)) {
-
-      if (std::dynamic_pointer_cast<HadronizationManager>(module) || std::dynamic_pointer_cast<Afterburner>(module)) {
+    if (module && !module->IsTimeStepped() &&
+        !std::dynamic_pointer_cast<JetScapeWriter>(it)) {
+      if (std::dynamic_pointer_cast<HadronizationManager>(module) ||
+          std::dynamic_pointer_cast<Afterburner>(module)) {
         if (start_of_event)
           module->SetActive(false);
         else
           module->SetActive(true);
-      }
-      else {
+      } else {
         if (start_of_event)
-          module->SetActive(taskOrgActiveMap.find(module->GetTaskNumber())->second);
+          module->SetActive(
+              taskOrgActiveMap.find(module->GetTaskNumber())->second);
         else
           module->SetActive(false);
       }
-   }
+    }
   }
 }
 
-void JetScape::ResetPerEventExecFlags()
-{
+void JetScape::ResetPerEventExecFlags() {
   for (auto it : GetTaskList()) {
     auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
 
-    if (module && !module->IsTimeStepped() && !std::dynamic_pointer_cast<JetScapeWriter>(it))
+    if (module && !module->IsTimeStepped() &&
+        !std::dynamic_pointer_cast<JetScapeWriter>(it))
       module->SetActive(taskOrgActiveMap.find(module->GetTaskNumber())->second);
   }
 }
@@ -1092,7 +1095,8 @@ void JetScape::Exec() {
   JSINFO << BOLDRED << "Run JetScape ...";
   JSINFO << BOLDRED << "Number of Events = " << GetNumberOfEvents();
 
-  // JetScapeTask::ExecuteTasks(); Has to be called explicitly since not really fully recursively (if ever needed)
+  // JetScapeTask::ExecuteTasks(); Has to be called explicitly since not really
+  // fully recursively (if ever needed)
   // --> JetScape is "Task Manager" of all modules ...
 
   // Simple way of passing the writer module pointer
@@ -1108,9 +1112,10 @@ void JetScape::Exec() {
       dynamic_pointer_cast<JetScapeModuleBase>(it)->CheckExec();
     }
 
-    //JP: Maybe a map (unordered) might not be truly necessary, since there is an
-    // order, maybe a vector<bool> would suffice, certainly this is more generic
-    // using the task number ... (TBD)
+    // JP: Maybe a map (unordered) might not be truly necessary, since there is
+    // an
+    //  order, maybe a vector<bool> would suffice, certainly this is more
+    //  generic using the task number ... (TBD)
     taskOrgActiveMap.emplace(it->GetTaskNumber(), it->GetActive());
   }
 
@@ -1121,14 +1126,13 @@ void JetScape::Exec() {
     VERBOSE(1) << BOLDRED << "Run Event # = " << i;
     JSDEBUG << "Found " << GetNumberOfTasks() << " Modules Execute them ... ";
 
-
     // Execute and run per time step for modules if implemented ...
-    if (ClockUsed())
-    {
-      VERBOSE(3)<<"Main Clock Reset ...";
+    if (ClockUsed()) {
+      VERBOSE(3) << "Main Clock Reset ...";
 
-      // Do per event execution except for Hadronization and Afterburner (if not timestepped) ...
-      // Set the proper pre per event active etc flags first ...
+      // Do per event execution except for Hadronization and Afterburner (if not
+      // timestepped) ... Set the proper pre per event active etc flags first
+      // ...
       SetPerEventExecFlags(true);
       ExecuteTasks();
 
@@ -1136,26 +1140,29 @@ void JetScape::Exec() {
 
       JetScapeModuleBase::InitPerEventTasks();
 
-      //JP: Quick and dirty to see all tasks ... make recursive if needed
+      // JP: Quick and dirty to see all tasks ... make recursive if needed
       QueryHistory::Instance()->UpdateTaskMap();
 
-      //QueryHistory::Instance()->PrintTaskMap();
-      //JP: Quick and dirty to see all tasks ... make recursive ...
-      //QueryHistory::Instance()->PrintTasks();
+      // QueryHistory::Instance()->PrintTaskMap();
+      // JP: Quick and dirty to see all tasks ... make recursive ...
+      // QueryHistory::Instance()->PrintTasks();
 
       do {
+        VERBOSE(3) << BOLDRED << "Current Main Clock Time = "
+                   << GetMainClock()->GetCurrentTime()
+                   << " dT = " << GetMainClock()->GetDeltaT();
 
-        VERBOSE(3)<< BOLDRED << "Current Main Clock Time = "<<GetMainClock()->GetCurrentTime()<<" dT = "<<GetMainClock()->GetDeltaT();
-
-        // quick and dirty here ... (mainly for curiosity ...) and only for CalculateTime assuming that in any case this should take the longest and/or avoiding issues
-        // via data exchanges in executive part ... as said, just a first quick look at how things could work out .,,.
+        // quick and dirty here ... (mainly for curiosity ...) and only for
+        // CalculateTime assuming that in any case this should take the longest
+        // and/or avoiding issues via data exchanges in executive part ... as
+        // said, just a first quick look at how things could work out .,,.
         bool multiTask = false;
 
-        //JP: silly to do everything per time step, everything with task map and task vectors could be done in InitPerTimeStep ...
-        //   --> to be changed!!!
+        // JP: silly to do everything per time step, everything with task map
+        // and task vectors could be done in InitPerTimeStep ...
+        //    --> to be changed!!!
 
         if (multiTask) {
-
           int nTasks = GetNumberOfTasks();
           int nCPUs = thread::hardware_concurrency();
 
@@ -1168,81 +1175,85 @@ void JetScape::Exec() {
           std::vector<std::weak_ptr<JetScapeTask>> vTask;
 
           VERBOSE(2) << " Use multi-threading: (max) # of threads = # of CPU's "
-               << nCPUs << " (found) * 2";
+                     << nCPUs << " (found) * 2";
 
-           // JP: also quick and dirty via task map from QueryHistory instance ...
+          // JP: also quick and dirty via task map from QueryHistory instance
+          // ...
           auto tMap = QueryHistory::Instance()->GetTaskMap();
 
-          for(const auto &x: tMap){
-            //if (std::dynamic_pointer_cast<JetScapeModuleBase>(x.second.lock()))
+          for (const auto &x : tMap) {
+            // if
+            // (std::dynamic_pointer_cast<JetScapeModuleBase>(x.second.lock()))
             if (x.second.lock()->GetMultiThread()) {
-              //DEBUG
-              //cout<<x.second.lock()->GetId()<<endl;
+              // DEBUG
+              // cout<<x.second.lock()->GetId()<<endl;
               vTaskMulti.push_back(x.second);
-            }
-            else
+            } else
               vTask.push_back(x.second);
           }
 
-          //DEBUG:
-          //cout<<vTaskMulti.size()<<" "<<vTask.size()<<endl;
+          // DEBUG:
+          // cout<<vTaskMulti.size()<<" "<<vTask.size()<<endl;
 
-          for (auto t : vTaskMulti)
-          {
+          for (auto t : vTaskMulti) {
             if (std::dynamic_pointer_cast<JetScapeModuleBase>(t.lock()))
-              threads.push_back(thread(&JetScapeModuleBase::CalculateTime, dynamic_pointer_cast<JetScapeModuleBase>(t.lock())));
+              threads.push_back(
+                  thread(&JetScapeModuleBase::CalculateTime,
+                         dynamic_pointer_cast<JetScapeModuleBase>(t.lock())));
           }
 
-          for (auto t : vTask)
-          {
+          for (auto t : vTask) {
             if (std::dynamic_pointer_cast<JetScapeModuleBase>(t.lock()))
-              //threads.push_back(thread(&JetScapeModuleBase::CalculateTime, dynamic_pointer_cast<JetScapeModuleBase>(t.lock())));
-              std::dynamic_pointer_cast<JetScapeModuleBase>(t.lock())->CalculateTime();
+              // threads.push_back(thread(&JetScapeModuleBase::CalculateTime,
+              // dynamic_pointer_cast<JetScapeModuleBase>(t.lock())));
+              std::dynamic_pointer_cast<JetScapeModuleBase>(t.lock())
+                  ->CalculateTime();
           }
 
           for (auto &th : threads)
             th.join();
 
-          threads.clear(); vTaskMulti.clear(); vTask.clear();
-        }
-        else
+          threads.clear();
+          vTaskMulti.clear();
+          vTask.clear();
+        } else
           JetScapeModuleBase::CalculateTimeTasks();
 
         JetScapeModuleBase::ExecTimeTasks();
 
       } while (GetMainClock()->Tick());
 
-      // Follow upo with per event execution of Hadronization and Afterburner (if not timestepped)  ...
-      // Set the proper pre per event active etc flags first ...
+      // Follow upo with per event execution of Hadronization and Afterburner
+      // (if not timestepped)  ... Set the proper pre per event active etc flags
+      // first ...
       SetPerEventExecFlags(false);
       ExecuteTasks();
 
       // Reset per event flags to orginal state to allow ClearTasks etc to
       // be executed properly and as expected ...
       ResetPerEventExecFlags();
-    }
-    else
-    {
+    } else {
       ExecuteTasks();
-      //JP: Quick and dirty to see all tasks ... make recursive if needed
+      // JP: Quick and dirty to see all tasks ... make recursive if needed
       QueryHistory::Instance()->UpdateTaskMap();
     }
 
     // Then hand around the collection of writers and ask
     // modules to write what they like
     // Sequence of events:
-    // -- writer->Exec is called and redirects to WriteEvent, which starts a new event line
+    // -- writer->Exec is called and redirects to WriteEvent, which starts a new
+    // event line
     // -- any remaining exec's finish
     // -- all modules write their headers
     // -- Now all header info is known to the writers, so write out the header
     // -- all other Write()'s are being called
-    // the result still confuses me. It's in the best possible order but it shouldn't be.
+    // the result still confuses me. It's in the best possible order but it
+    // shouldn't be.
 
-
-    // JP: If task not active then per time step is active (see above), which could lead to issues with hydro resuse. Follow up!
-    // JS: New is timestepped flag should resolve this issue. Anything to undo below?
-    // For reusal, deactivate task after it has finished
-    // but before it gets cleaned up.
+    // JP: If task not active then per time step is active (see above), which
+    // could lead to issues with hydro resuse. Follow up! JS: New is timestepped
+    // flag should resolve this issue. Anything to undo below? For reusal,
+    // deactivate task after it has finished but before it gets cleaned up.
     if (reuse_hydro_) {
       if (n_reuse_hydro_ <= 0) {
         JSWARN << " reuse_hydro is set, but n_reuse_hydro = " << n_reuse_hydro_;
@@ -1251,11 +1262,11 @@ void JetScape::Exec() {
       // Check if iMatter/ISR is used
       bool imatter_is_used = false;
       for (auto it : GetTaskList()) {
-        if (it->GetId() == "PythiaGun"){
-          for(auto itt : it->GetTaskList()){
+        if (it->GetId() == "PythiaGun") {
+          for (auto itt : it->GetTaskList()) {
             if (itt->GetId() == "IsrManager") {
               VERBOSE(1) << " iMatter is used with reuse_hydro,"
-                      << " so initial state is rerun for each event.";
+                         << " so initial state is rerun for each event.";
               imatter_is_used = true;
               break;
             }
@@ -1272,18 +1283,20 @@ void JetScape::Exec() {
           continue;
         }
 
-        // IS: For ISR+3DGlauber, the initial state 3D Glauber is not used 
+        // IS: For ISR+3DGlauber, the initial state 3D Glauber is not used
         // if imatter is not used, then initial state is rerun
-        // This behavior must be rethaught for Au+Au 
+        // This behavior must be rethaught for Au+Au
         // where we would expect the InitialState to be run per hydro event
         if (imatter_is_used && dynamic_pointer_cast<InitialState>(it)) {
           continue;
         }
 
         if (dynamic_pointer_cast<FluidDynamics>(it))
-          if(dynamic_pointer_cast<FluidDynamics>(it)->IsTimeStepped()) {
-            JSWARN << " Reusing hydro with per time stepped = true not allowed!";
-            throw std::runtime_error("Reusing hydro with per time stepped = true not allowed.");
+          if (dynamic_pointer_cast<FluidDynamics>(it)->IsTimeStepped()) {
+            JSWARN
+                << " Reusing hydro with per time stepped = true not allowed!";
+            throw std::runtime_error(
+                "Reusing hydro with per time stepped = true not allowed.");
           }
 
         // only deactivate the first hydro
@@ -1308,15 +1321,18 @@ void JetScape::Exec() {
             hydro_pointer_is_set = true;
           }
         }
-        // Do the soft hadronization only at once 
+        // Do the soft hadronization only at once
         if (dynamic_pointer_cast<SoftParticlization>(it))
-          if(dynamic_pointer_cast<SoftParticlization>(it)->IsTimeStepped()) {
-            JSWARN << " Reusing hydro with per time stepped = true not allowed!";
-            throw std::runtime_error("Reusing hydro with per time stepped = true not allowed.");
+          if (dynamic_pointer_cast<SoftParticlization>(it)->IsTimeStepped()) {
+            JSWARN
+                << " Reusing hydro with per time stepped = true not allowed!";
+            throw std::runtime_error(
+                "Reusing hydro with per time stepped = true not allowed.");
           }
 
         // only deactivate the first iSS
-        if (dynamic_pointer_cast<SoftParticlization>(it) && iss_pointer_is_set) {
+        if (dynamic_pointer_cast<SoftParticlization>(it) &&
+            iss_pointer_is_set) {
           continue;
         }
 
@@ -1339,9 +1355,8 @@ void JetScape::Exec() {
         }
       }
     }
-    
-    if (ClockUsed())
-    {
+
+    if (ClockUsed()) {
       VERBOSE(3) << "Clock is used and FinishPerEventTasks is called!";
       JetScapeModuleBase::FinishPerEventTasks();
     }
@@ -1394,9 +1409,9 @@ void JetScape::Exec() {
     VERBOSE(3) << "Clearing tasks ...";
     JetScapeModuleBase::ClearTasks();
 
-    //have to call this after writer and call explcitly the clear functions
-    //in finish per event, because like writer, clear only for active tasks ...
-    //have to think a bit more how to make this workflow more consistent ...
+    // have to call this after writer and call explcitly the clear functions
+    // in finish per event, because like writer, clear only for active tasks ...
+    // have to think a bit more how to make this workflow more consistent ...
 
     IncrementCurrentEvent();
     VERBOSE(3) << "End of Event " << i;
@@ -1409,4 +1424,4 @@ void JetScape::FinishTask() {
   JSDEBUG << "More infos wrap up/saving to file/closing file ...";
 }
 
-} // end namespace Jetscape
+}  // end namespace Jetscape

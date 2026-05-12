@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -27,7 +28,7 @@
 namespace Jetscape {
 
 class HadronDroplet {
-private:
+ private:
   std::array<double, 4> xmu;
   std::array<double, 4> pmu;
   int baryon_number;
@@ -35,19 +36,16 @@ private:
   int strangeness;
   double normalization;
 
-public:
+ public:
   HadronDroplet() = default;
-  HadronDroplet(std::array<double, 4> x_in,
-          std::array<double, 4> p_in) {
+  HadronDroplet(std::array<double, 4> x_in, std::array<double, 4> p_in) {
     xmu = x_in;
     pmu = p_in;
   }
 
-  HadronDroplet(std::array<double, 4> x_in,
-          std::array<double, 4> p_in,
-          int baryon_number_in,
-          int electric_charge_in,
-          int strangeness_in) {
+  HadronDroplet(std::array<double, 4> x_in, std::array<double, 4> p_in,
+                int baryon_number_in, int electric_charge_in,
+                int strangeness_in) {
     xmu = x_in;
     pmu = p_in;
     baryon_number = baryon_number_in;
@@ -67,8 +65,8 @@ public:
   double get_normalization() const { return normalization; }
 };
 
-class HadronicLiquefier : public LiquefierBase{
-private:
+class HadronicLiquefier : public LiquefierBase {
+ private:
   bool covariant_smearing_;
   bool hydro_Cartesian_;
   double gamma_factor_max_;
@@ -84,31 +82,29 @@ private:
   std::vector<HadronDroplet> hadron_droplets_list;
 
   // this is the dtau of the hydro, set from the hydro module
-  double dtau_ = -1.0; 
-
+  double dtau_ = -1.0;
 
   enum QuantityType { BARYON_NUMBER, ELECTRIC_CHARGE, STRANGENESS };
 
-public:
+ public:
   /**
    * Default constructor. This reads the parameters from an XML file.
-  */
+   */
   HadronicLiquefier();
-  
+
   /**
-   * Alternative constructor for unit testing. This sets all the needed parameters
-   * manually instead of reading them from an XML file.
-  */
+   * Alternative constructor for unit testing. This sets all the needed
+   * parameters manually instead of reading them from an XML file.
+   */
   HadronicLiquefier(bool covariant, double sigma_transverse,
-                    double sigma_longitudinal, double xMax,
-                    double yMax, double zMax, int Nx, int Ny,
-                    int Nz, bool hydro_Cartesian);
+                    double sigma_longitudinal, double xMax, double yMax,
+                    double zMax, int Nx, int Ny, int Nz, bool hydro_Cartesian);
 
   ~HadronicLiquefier() { ClearTask(); }
 
   /**
    * Getter functions for the parameters.
-  */
+   */
   bool get_covariant_smearing() { return covariant_smearing_; }
   bool get_hydro_Cartesian() { return hydro_Cartesian_; }
   int get_Nx() { return Nx_; }
@@ -125,18 +121,18 @@ public:
 
   /**
    * Set the dtau of the hydro.
-  */
+   */
   void set_hydro_dtau(double val) { dtau_ = val; };
 
   /**
    * Function to initialize all parameters from an XML file.
-  */
+   */
   void InitializeParameters();
 
   /**
    * Covariant smearing kernel for Milne coordinates. Should be used in case of
    * a Milne evolution in the hydrodynamic model.
-  */
+   */
   double smearing_kernel_covariant_Milne(const double x_diff,
                                          const double y_diff,
                                          const double eta_diff, const double ux,
@@ -145,9 +141,9 @@ public:
                                          const double gamma) const;
 
   /**
-   * Covariant smearing kernel for Cartesian coordinates. Should be used in case 
+   * Covariant smearing kernel for Cartesian coordinates. Should be used in case
    * of a Cartesian evolution in the hydrodynamic model.
-  */
+   */
   double smearing_kernel_covariant_Cartesian(const double x_diff,
                                              const double y_diff,
                                              const double z_diff,
@@ -157,72 +153,72 @@ public:
 
   /**
    * Gaussian smearing kernel for Cartesian coordinates.
-  */
+   */
   double smearing_kernel_gaussian(const double x_diff, const double y_diff,
                                   const double eta_diff) const;
 
   /**
    * Function to compute the source energy at a given position in spacetime.
-  */
+   */
   void get_source_energy(const double tau, const double x, const double y,
-                         const double eta,
-                         std::array<double, 4> &jmu) const;
+                         const double eta, std::array<double, 4> &jmu) const;
 
   /**
-   * Function to compute the source for a QuantityType at a given position in 
+   * Function to compute the source for a QuantityType at a given position in
    * spacetime. The QuantityType can be BARYON_NUMBER, ELECTRIC_CHARGE, or
    * STRANGENESS.
-  */
-  double get_source_quantity(const double tau, const double x,
-                             const double y, const double eta,
-                             const QuantityType qtype) const;
+   */
+  double get_source_quantity(const double tau, const double x, const double y,
+                             const double eta, const QuantityType qtype) const;
 
   /**
    * Function to compute the source for the baryon density at a given position
    * in spacetime.
-  */
+   */
   double get_source_rhob(const double tau, const double x, const double y,
                          const double eta) const;
-  
+
   /**
    * Function to compute the source for the charge density at a given position
    * in spacetime.
-  */
+   */
   double get_source_rhoq(const double tau, const double x, const double y,
                          const double eta) const;
-  
+
   /**
    * Function to compute the source for the strangeness density at a given
    * position in spacetime.
-  */
+   */
   double get_source_rhos(const double tau, const double x, const double y,
                          const double eta) const;
 
   /**
    * Function to compute the normalization factor for the smearing kernel and a
    * given Droplet. This is used to normalize the source due to grid effects.
-   * In the Cartesian case, the tau parameter is not used. 
-  */
-  double compute_drop_kernel_normalization(
-      const double tau, const HadronDroplet &drop_i) const;
+   * In the Cartesian case, the tau parameter is not used.
+   */
+  double compute_drop_kernel_normalization(const double tau,
+                                           const HadronDroplet &drop_i) const;
 
   /**
-   * Function to add the hadrons as sources for hydrodynamics by creating 
+   * Function to add the hadrons as sources for hydrodynamics by creating
    * droplets and smear them with the selected smearing kernel.
-   * 
-   * In case the hydro runs in Cartesian coordinates, the position of the droplets
-   * is given in the Cartesian coordinates. In case the hydro runs in Milne
-   * coordinates, the position of the droplets is given in Milne coordinates.
-   * 
-   * Note: This function returns a vector of shared pointers to Hadron objects 
+   *
+   * In case the hydro runs in Cartesian coordinates, the position of the
+   * droplets is given in the Cartesian coordinates. In case the hydro runs in
+   * Milne coordinates, the position of the droplets is given in Milne
+   * coordinates.
+   *
+   * Note: This function returns a vector of shared pointers to Hadron objects
    * that were not added to the hydro sources.
-  */
-  std::vector<shared_ptr<Hadron>> add_hydro_sources_hadrons(std::vector<Hadron> &hIn);
+   */
+  std::vector<shared_ptr<Hadron>> add_hydro_sources_hadrons(
+      std::vector<Hadron> &hIn);
 
   /**
    * Function to add a droplet to the list of droplets. If the droplet
-  */
-  void add_a_hadronic_droplet(HadronDroplet droplet_in) { 
+   */
+  void add_a_hadronic_droplet(HadronDroplet droplet_in) {
     hadron_droplets_list.push_back(droplet_in);
   }
 
@@ -230,13 +226,13 @@ public:
 
   /**
    * Function to clear the list of droplets.
-  */
+   */
   void clear_hadron_droplet_list() { hadron_droplets_list.clear(); }
 
   /**
    * Function to get the total energy of the droplets in the list.
    * This is used to check the energy conservation in the hydro.
-  */
+   */
   Jetscape::real get_dropletlist_total_energy() const;
 
   /**
@@ -260,12 +256,12 @@ public:
   virtual void ClearTask();
 
   /**
-   * Function to check if the gamma factor of a hadron is too large and it 
+   * Function to check if the gamma factor of a hadron is too large and it
    * should not be added to the hydro sources.
    */
   bool gamma_factor_too_large_check(const Hadron &hadron) const;
 };
 
-}; // namespace Jetscape
+};  // namespace Jetscape
 
-#endif // HADRONICLIQUEFIER_H
+#endif  // HADRONICLIQUEFIER_H
