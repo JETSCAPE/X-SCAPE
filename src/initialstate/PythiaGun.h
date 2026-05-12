@@ -66,6 +66,8 @@ public:
   double GetSigmaErr() { return info.sigmaErr(); };
   double GetPtHat() { return info.pTHat(); };
   double GetEventWeight() { return info.weight(); };
+
+  void Test(int ipy);
 };
 
 #endif // PYTHIAGUN_H
