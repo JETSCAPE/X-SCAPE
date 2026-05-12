@@ -133,7 +133,65 @@ void PythiaTGun::InitTask() {
   sigma_printer.open(printer, std::ios::trunc);
 }
 
+void PythiaTGun::Test(int ipy){
+  const double xmin  = 1.0e-6;
+  const double xmax  = 1.0;
+  const double q2min = 1.69;
+  const double q2max = 1000000.0;
+  int nQ2 = 80;
+  int nX = 50;
+  auto logGridValue = [](double minVal, double maxVal, int i, int n) {
+    if (n <= 1) return minVal;
+    const double t = double(i) / double(n - 1);
+    return minVal * std::exp(t * std::log(maxVal / minVal));
+  };
+  const std::vector<int> partonIds = {
+      21,   // gluon
+      2, -2,
+      1, -1,
+      3, -3,
+      4, -4,
+      5, -5
+  };
+  std::string outFile = "xf_table_" + std::to_string(ipy) + ".txt";
+  std::ofstream fout(outFile.c_str(), std::ios::out);
+  fout << std::scientific << std::setprecision(10);
+  double xfA, xfB;
+  for (int id : partonIds) {
+    for (int iq = 0; iq < nQ2; ++iq) {
+      const double Q2 = logGridValue(q2min, q2max, iq, nQ2);
+
+      for (int ix = 0; ix < nX; ++ix) {
+        const double x = logGridValue(xmin, xmax, ix, nX);
+        Pythia8::Pythia& py = *pythia_vec[ipy];
+        auto pdfptrA = py.getInUsePDFPtr("A");
+        auto pdfptrB = py.getInUsePDFPtr("B");
+        //pdfptrA->xfUpdate(id, x, Q2);
+        //pdfptrB->xfUpdate(id, x, Q2);
+        xfA = pdfptrA->xf(id, x, Q2);
+        xfB = pdfptrB->xf(id, x, Q2);
+         fout << id << "  "
+             << x << "  "
+             << Q2 << "  "
+             << xfA << "  "
+             << xfB << "\n";
+      }
+
+      fout << "\n";
+    }
+
+    fout << "\n\n";
+  }
+  fout.close();
+
+  JSINFO << MAGENTA
+         << "Wrote average xf nuclear modification table to: "
+         << outFile;
+}
+
 void PythiaTGun::ExecuteTask() {
+  Test(1);
+  exit(1);
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
   double p[4], xLoc[4];
