@@ -120,6 +120,10 @@ endif()
 file(GLOB readersources reader/*.cc)
 set(SOURCES ${SOURCES} ${readersources})
 
+if(USE_ROOT)
+    set(SOURCES ${SOURCES} root/RootBulkWriter.cc)
+endif()
+
 if("${HEPMC_FOUND}")
   if(USE_ROOT)
     set(SOURCES ${SOURCES} root/JetScapeWriterRootHepMC.cc)
