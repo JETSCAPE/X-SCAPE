@@ -363,6 +363,7 @@ if(${HEPMC_FOUND})
   message(STATUS "HepMC Include dir : " ${HEPMC_INCLUDE_DIR})
 endif()
 
+set(USE_ROOT ON)
 option(USE_ROOT "Build using ROOT Libraries and Output" OFF)
 if(USE_ROOT)
   message("Looking for ROOT ...")
