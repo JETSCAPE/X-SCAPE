@@ -26,6 +26,7 @@
 #include "CausalLiquefier.h"
 #include "HadronicLiquefier.h"
 #include "HadronicEMT.h"
+#include "RootBulkWriter.h"
 
 #include "QueryHistory.h"
 
@@ -865,6 +866,16 @@ void JetScape::DetermineTaskListFromXML() {
                   "task list.";
       }
     }
+    else if (elementName == "RootBulkWriter") {
+        auto rbwriter = JetScapeModuleFactory::createInstance("RootBulkWriter");
+        auto _this = new RootBulkWriter();
+
+        if (rbwriter) {
+            Add(rbwriter);
+            JSINFO << " JetScape::DetermineTaskList() -- RootBulkWriter";
+        }
+    }
+
 
     else {
       VERBOSE(2) << "Nothing to do.";

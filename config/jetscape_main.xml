@@ -18,7 +18,7 @@
   <!-- Technical settings -->
   <debug> off </debug>
   <remark> off </remark>
-  <vlevel> 0 </vlevel>
+  <vlevel> 2 </vlevel>
   <nEvents_printout> 100 </nEvents_printout>
   <enableAutomaticTaskListDetermination> true </enableAutomaticTaskListDetermination>
 
@@ -634,6 +634,36 @@
     </FNOROOIN>
 
   </Hydro>
+
+  <!-- RootBulkWriter -->
+  <RootBulkWriter>
+      <name> RootBulkWriter </name>
+      <out_file_name> bulk.root </out_file_name>
+      <!-- if ntau != 0: events are set to fixed size arrays for each event,
+           with data either truncated before freezeout, or padded with zeros after
+           freezeout out to maxTau 
+           If ntau == 0: use vector to include all data out to freezeout in each event
+           (i.e. the output is a "ragged array" when read into numpy.
+      -->
+      <tau_min> 0.6 </tau_min>
+      <ntau> 0 </ntau>
+      <dtau> 0.2 </dtau>
+
+      <!-- Each the following values, if 0, will default to those from FluidEvolutionHistory
+      (and the variable names, i.e. x_min vs x_max, also follow those naming conventions.)-->
+      <x_min> -15 </x_min>
+      <dx> 0.3 </dx>
+      <y_min> -15 </y_min>
+      <dy> 0.3 </dy>
+      <eta_min> -1 </eta_min>
+      <deta> 0.5 </deta>
+      
+      <!-- set the next option to true whenever adding the root bulk writer -->
+      <ensure_MusicWrapper_output> 0 </ensure_MusicWrapper_output>
+
+
+      <!-- set the option to break up the events into multiple sub-event files -->
+  </RootBulkWriter>
 
   <!-- Jet Hadronization Module -->
    <JetHadronization>
