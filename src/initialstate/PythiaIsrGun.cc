@@ -203,7 +203,7 @@ void PythiaIsrGun::ExecuteTask() {
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
   // JSWARN << "Current Event #" << GetCurrentEvent() << "; PythiaIsrGun ExecuteTask called.";
   // JSWARN << "The pTHat vector size is " << ini->pTHat.size() << "before clearing. Now clearing";
-  // ini->pTHat.clear();
+  ini->pTHat.clear();
   // JSWARN << "Have cleared the pTHat vector. The size is now " << ini->pTHat.size();
   //Reading vir_factor from xml for MATTER
   double vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
