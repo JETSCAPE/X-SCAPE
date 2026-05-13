@@ -110,16 +110,16 @@ void PythiaTGun::InitTask() {
       auto protonA = py->getPDFPtr(2212, 1, "A", true);
       auto protonB = py->getPDFPtr(2212, 1, "B", true);
 
-      auto pdfA = std::make_shared<EPS09s>(BeamId, 1, 1, protonA);
-      auto pdfB = std::make_shared<EPS09s>(BeamId, 1, 1, protonB);
+      auto NpdfA = std::make_shared<EPS09s>(BeamId, 1, 1, protonA);
+      auto NpdfB = std::make_shared<EPS09s>(BeamId, 1, 1, protonB);
 
-      pdfA->setTpos(s1);
-      pdfB->setTpos(s2);
+      NpdfA->setTpos(s1);
+      NpdfB->setTpos(s2);
 
-      pdfA->setSideLabel("A");
-      pdfB->setSideLabel("B");
+      NpdfA->setSideLabel("A");
+      NpdfB->setSideLabel("B");
 
-      py->setPDFPtr(pdfA, pdfB);
+      py->setPDFPtr(protonA, protonB, NpdfA, NpdfB);
 
       if (!py->init()) {
         throw std::runtime_error("Pythia init() failed.");
@@ -132,7 +132,7 @@ void PythiaTGun::InitTask() {
   std::ofstream sigma_printer;
   sigma_printer.open(printer, std::ios::trunc);
 }
-
+/*
 void PythiaTGun::Test(int ipy){
   const double xmin  = 1.0e-6;
   const double xmax  = 1.0;
@@ -188,10 +188,8 @@ void PythiaTGun::Test(int ipy){
          << "Wrote average xf nuclear modification table to: "
          << outFile;
 }
-
+*/
 void PythiaTGun::ExecuteTask() {
-  Test(1);
-  exit(1);
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
   double p[4], xLoc[4];
