@@ -137,6 +137,11 @@ void RootBulkWriter::init_tree(const EvolutionHistory& bInfo) {
 
   f=new TFile(out_file_name.c_str(),"RECREATE");
   t=new TTree("t","Tree");
+  // Flush branch buffers to disk after every Fill() so each event is its own basket.
+  // Without this ROOT accumulates all events in one basket and uproot must load the
+  // entire basket (= all events) even when only a slice is requested. 
+  // Explore 1-10 for the auto flush parameter to find optimal performance for different use cases.
+  t->SetAutoFlush(1);
 
   // save MUSIC parameters to the ROOT output file
   int nX_MUSIC = bInfo.nx;
