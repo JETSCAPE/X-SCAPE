@@ -171,10 +171,10 @@ void PythiaIsrGun::InitTask() {
     readString(s);
   }
 
-  // And initialize
-  if (!init()) { // Pythia>8.1
-    throw std::runtime_error("Pythia init() failed.");
-  }
+  // // And initialize
+  // if (!init()) { // Pythia>8.1
+  //   throw std::runtime_error("Pythia init() failed.");
+  // }
   isFirstEvent = true;
   randState = rndm.getState(); //will need to move or delete probably to execute. Just here for test
 
@@ -228,6 +228,10 @@ void PythiaIsrGun::ExecuteTask() {
   ini->GetAllBinaryCollisionTargPos(all_targPos);
   std::vector<int> AcceptedCollisionPoints; //INDICES of accepted collision points
                                             //Used to ensure valid hard-scatt site
+  // std::vector<int> targCharges;
+  // ini->GetAllTargNucleonCharges(targCharges);
+  std::vector<int> projCharges;
+  ini->GetAllProjNucleonCharges(projCharges);
   int Ncoll = ini->GetNcoll();
 
   //Debug
@@ -314,7 +318,6 @@ void PythiaIsrGun::ExecuteTask() {
     p62.clear();
     bool flag62 = false; // reset for each scattering so interior loop runs
     bool doScatt = true;
-    double ratio = 1.0;
   
     /*---Pick a collision point---*/
     int icoll = -1;
@@ -350,11 +353,26 @@ void PythiaIsrGun::ExecuteTask() {
       x_p.Set(all_x[icoll], all_y[icoll], all_z[icoll], all_t[icoll]); //passed to framework later
     }
 
+    /*Set species for projectile beam*/
+    std::string projSpecies;
+    try{
+      if (projCharges[icoll] == 1){//Set proton beam
+        projSpecies = "Beams:idA = 2212";
+      }
+      else if (projCharges[icoll] == 0){//Set neutron beam
+        projSpecies = "Beams:idA = 2112";
+      }
+      else {
+        throw std::invalid_argument("Projectile species must have charge +1 or 0. Please check");
+      }
+    }
+    catch (const std::invalid_argument &e) {
+      std::cerr << "Caught exception: " << e.what() << std::endl;
+      JSWARN << "Projectile species not set, setting to proton";
+      projSpecies = "Beams:idA = 2212";
+    }
+
     /*---Decide on proceeding with sampling and initialize---*/
-    //Some logic for picking proj species
-    std::string projSpecies = "Beams:idA = 2212";
-
-
     if (iscatt == 0) {//First scatter always happens
       DefaultInitializePythia(randState, doScatt, projSpecies);
     }
@@ -493,14 +511,14 @@ void PythiaIsrGun::ExecuteTask() {
     }
 
     // only update sigma printer for an event on first scatter (iscatt==0)
-      if (!printer.empty() && iscatt==0){
-            std::ofstream sigma_printer;
-            sigma_printer.open(printer, std::ios::out | std::ios::app);
+    if (!printer.empty() && iscatt==0){
+      std::ofstream sigma_printer;
+      sigma_printer.open(printer, std::ios::out | std::ios::app);
 
-            sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
-            //sigma_printer.close();
-            //JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
-      };
+      sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
+      //sigma_printer.close();
+      //JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
+    };
 
     // Loop through particles
     // Accept them all

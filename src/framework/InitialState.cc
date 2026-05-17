@@ -117,6 +117,16 @@ void InitialState::GetAllBinaryCollisionTargPos(std::vector<std::vector<double>>
   pos.clear();
 }
 
+void InitialState::GetAllProjNucleonCharges(std::vector<int> &q){
+  // Default implementation: return empty vector
+  q.clear();
+}
+
+void InitialState::GetAllTargNucleonCharges(std::vector<int> &q){
+  // Default implementation: return empty vector
+  q.clear();
+}
+
 void InitialState::ClearHardPartonMomentum() {}
 
 void InitialState::GetHardPartonPosAndMomentumProj() {}
