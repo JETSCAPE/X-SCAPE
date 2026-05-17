@@ -28,6 +28,10 @@ using std::uniform_real_distribution;
 class PythiaIsrGun : public HardProcess, public Pythia8::Pythia {
 
 private:
+  Pythia8::RndmState randState;
+  bool isFirstEvent; //Tracks whether first JETSCAPE event generated.
+  std::stringstream pythiaLines;
+  std::string s;  
   double pTHatMin;
   double pTHatMax;
   double eCM;
@@ -71,6 +75,10 @@ public:
   double GetSigmaErr() { return first_sigmaErr; };
   double GetPtHat() { return first_ptHat; };
   double GetEventWeight() { return first_weight; };
+
+  //Helpers
+  void TableInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies);
+  void DefaultInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies);
 
 protected:
   uniform_real_distribution<double> ZeroOneDistribution;

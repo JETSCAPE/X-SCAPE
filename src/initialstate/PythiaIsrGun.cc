@@ -86,7 +86,7 @@ void PythiaIsrGun::InitTask() {
   numbf.precision(1);
   stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
 
-  std::string s = GetXMLElementText({"Hard", "PythiaGun", "name"});
+  s = GetXMLElementText({"Hard", "PythiaGun", "name"});
   SetId(s);
   // cout << s << endl;
 
@@ -162,10 +162,9 @@ void PythiaIsrGun::InitTask() {
     targ_A=1;
   }
 
-  std::stringstream lines;
-  lines << GetXMLElementText({"Hard", "PythiaGun", "LinesToRead"}, false);
+  pythiaLines << GetXMLElementText({"Hard", "PythiaGun", "LinesToRead"}, false);
   int i = 0;
-  while (std::getline(lines, s, '\n')) {
+  while (std::getline(pythiaLines, s, '\n')) {
     if (s.find_first_not_of(" \t\v\f\r") == s.npos)
       continue; // skip empty lines
     VERBOSE(7) << "Also reading in: " << s;
@@ -176,6 +175,8 @@ void PythiaIsrGun::InitTask() {
   if (!init()) { // Pythia>8.1
     throw std::runtime_error("Pythia init() failed.");
   }
+  isFirstEvent = true;
+  randState = rndm.getState(); //will need to move or delete probably to execute. Just here for test
 
     std::ofstream sigma_printer;
     sigma_printer.open(printer, std::ios::trunc);
@@ -225,7 +226,8 @@ void PythiaIsrGun::ExecuteTask() {
   ini->GetAllBinaryCollisionProjPos(all_projPos);
   std::vector<std::vector<double>> all_targPos;
   ini->GetAllBinaryCollisionTargPos(all_targPos);
-  std::vector<int> AcceptedCollisionPoints; //Indices of accepted collision points
+  std::vector<int> AcceptedCollisionPoints; //INDICES of accepted collision points
+                                            //Used to ensure valid hard-scatt site
   int Ncoll = ini->GetNcoll();
 
   //Debug
@@ -279,7 +281,6 @@ void PythiaIsrGun::ExecuteTask() {
         return false;
     }
   };
-
     FourVector p_p;
 
   //Variables for checking duplicate collision points
@@ -312,65 +313,58 @@ void PythiaIsrGun::ExecuteTask() {
     int NSamplings = 0;
     p62.clear();
     bool flag62 = false; // reset for each scattering so interior loop runs
-    bool accept_scatter = true;
+    bool doScatt = true;
     double ratio = 1.0;
-    //Debug
-    // JSINFO << MAGENTA << "Entering new scattering loop: iscatt = " << iscatt << ". Ratio from last call= " << ratio;
-
-    //Pick a collision point
+  
+    /*---Pick a collision point---*/
     int icoll = -1;
     if (AcceptedCollisionPoints.size() == 0){
       icoll = index_list[iscatt]; //Automatically select first point
-      //Debug
-      // JSINFO << MAGENTA << "Selected collision point index " << icoll << " for scattering number " << iscatt;
     }
     else {
       //Debug
       // JSWARN << "Entered else statement line 319";
       for (int accepted_idx : AcceptedCollisionPoints){
-        //Debug
-        // JSWARN << "At top of for loop over accepted indices";
-        // JSINFO << MAGENTA << "Accepted index: " << accepted_idx;
         for (int shuffled_idx : index_list){
           bool same_proj, same_targ = true;
-          //Debug
-          // JSWARN << "At top of for loop over shuffled indices";
-          // JSINFO<< MAGENTA << "Shuffled index: " << shuffled_idx;
           if (accepted_idx == shuffled_idx){
-            //Debug
-            // JSINFO << "Skipped already accepted index: " << accepted_idx;
             continue; //skip already accepted points
           }
           same_proj = same_location(all_projPos[accepted_idx], all_projPos[shuffled_idx]);
           same_targ = same_location(all_targPos[accepted_idx], all_targPos[shuffled_idx]);
-          if (!same_proj && !same_targ){
-            //Debug
-            // JSINFO << "Found binary collision with no participant overlap from previous ones. Setting icoll";
-            // icoll = shuffled_idx;
-            // JSINFO << "icoll set to " << icoll << " for scatter number " << iscatt;
+          if (!same_proj && !same_targ){//Break internal check loop at index acceptable index
             break;
           }
         }
-        //Debug
-        // JSWARN << "Out of for loop over shuffled indices";
-        if (icoll != -1){//break if already found collision
-          //Debug
-          // JSINFO << MAGENTA << "Already found a collision point, breaking loop";
+        if (icoll != -1){//break if already found collision to set icoll
           break;
         }
       }
-      //Debug
-      // JSWARN << "Out of for loop over shuffled indices";
     }
     //Check icoll and pushback the accepted point
-    if (icoll == -1){
-      // JSWARN << "All binary collision points have been used. Cannot add another scattering between nucleons";
+    if (icoll == -1){//all binary points collisions already used
       break; //exit the scattering loop
     }
     else { //Track accepted point and set binary collision position
       AcceptedCollisionPoints.push_back(icoll);
-      x_p.Set(all_x[icoll], all_y[icoll], all_z[icoll], all_t[icoll]);
+      x_p.Set(all_x[icoll], all_y[icoll], all_z[icoll], all_t[icoll]); //passed to framework later
     }
+
+    /*---Decide on proceeding with sampling and initialize---*/
+    //Some logic for picking proj species
+    std::string projSpecies = "Beams:idA = 2212";
+
+
+    if (iscatt == 0) {//First scatter always happens
+      DefaultInitializePythia(randState, doScatt, projSpecies);
+    }
+    else{
+      TableInitializePythia(randState, doScatt, projSpecies);
+    }
+    if (!doScatt) {//Do not proceed with generation
+      break;
+    }
+
     // Debug
     // debug_file << "Selected collision point index " << icoll << " for scattering number " << iscatt << "\n";
     // debug_file << "Length of AcceptedCollisionPoints: " << AcceptedCollisionPoints.size() << "\n";
@@ -469,6 +463,9 @@ void PythiaIsrGun::ExecuteTask() {
 
     } while (!flag62);
 
+    //Update the state of pythia random number generator
+    randState = rndm.getState();
+
     if (iscatt == 0){ // Set first scatter info for printer and getters
       first_sigmaGen = info.sigmaGen();
       first_sigmaErr = info.sigmaErr();
@@ -477,24 +474,8 @@ void PythiaIsrGun::ExecuteTask() {
       // JSINFO << "first_sigma_gen = " << first_sigmaGen << " first_weight = " << first_weight << " first_ptHat = " << first_ptHat;
       // JSINFO << "Values returned from GetSigmaGen, GetEventWeight, and GetPtHat: " << GetSigmaGen() << ", " << GetEventWeight() << ", " << GetPtHat();
     }
-    
-    //Decide whether to push the information to the framework by putting break here.
-    double r = ZeroOneDistribution(*GetMt19937Generator());
-    ratio = (info.weight() * info.sigmaGen()) / cross_section;
-    if ( !multi_scatter || r > ratio ) accept_scatter = false;
-    // accept_scatter = true;
 
-    //Debug
-    // JSINFO << MAGENTA << "At decision point of scattering loop for scatter # " << iscatt;
-    // JSINFO << MAGENTA << "weight = " << info.weight() << " sigmaGen = " << info.sigmaGen() << " cross_section = " << cross_section;
-    // JSINFO << MAGENTA << "ratio = " << ratio << " r = " << r << " scatter_again = " << accept_scatter;
-    // JSINFO << MAGENTA << "Total number of partons so far NPP = " << NPP << ". p62 size = " << p62.size();
-    // debug_file << "Accept scatter number " << iscatt << " (0=T, 1=F): " << accept_scatter << "\n";
-
-    if ((!accept_scatter) && (iscatt != 0)) {break;}
-    // debug_file << "Scatter progressed in scatter loop. Will now push information to framework. \n";
-
-    //If scatter is accepted give to framework below
+    //If scatter was generated give to framework below
 
     //Resize vectors for hard process info
     ResizeTotalMomentumVectors(iscatt+1);
@@ -648,4 +629,201 @@ void PythiaIsrGun::ExecuteTask() {
   // debug_file.close();
   VERBOSE(8) << GetNHardPartons();
   // debug_partons_file.close();
+}
+
+void PythiaIsrGun::DefaultInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies){//Default initialization
+  //For parsing text
+  stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
+  numbf.setf(ios::fixed, ios::floatfield);
+  numbf.setf(ios::showpoint);
+  numbf.precision(1);
+  stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
+
+  /*Do all the defaults*/
+  readString("Init:showProcesses = off");
+  readString("Init:showChangedSettings = off");
+  readString("Init:showMultipartonInteractions = on");
+  readString("Init:showChangedParticleData = off");
+  if (JetScapeLogger::Instance()->GetInfo()) {
+    readString("Init:showProcesses = on");
+    readString("Init:showChangedSettings = on");
+    readString("Init:showMultipartonInteractions = on");
+    readString("Init:showChangedParticleData = on");
+  }
+  readString("Next:numberShowInfo = 0");
+  readString("Next:numberShowProcess = 0");
+  readString("Next:numberShowEvent = 0");
+  readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
+  // readString("HardQCD:gg2gg = on");
+  // readString("HardQCD:gg2qqbar = on");
+  // readString("HardQCD:qg2qg = on");
+  // readString("HardQCD:qq2qq = on");
+  // readString("HardQCD:qqbar2gg = on");
+  // readString("HardQCD:qqbar2qqbarNew = on");
+  readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
+  readString("MultipartonInteractions:processLevel = 0"); 
+  readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
+  // readString("HardQCD:gg2ccbar = off");
+  // readString("HardQCD:qqbar2ccbar = off");
+  // readString("HardQCD:hardccbar = off");
+  // readString("HardQCD:gg2bbbar = off");
+  // readString("HardQCD:qqbar2bbbar = off");
+  //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
+  //readString("HardQCD:qqbar2ccbar = on");
+  readString("HadronLevel:Decay = off");
+  readString("HadronLevel:all = on");
+  readString("PartonLevel:ISR = off");
+  readString("PartonLevel:MPI = on");
+  //readString("PartonLevel:FSR = on");
+  readString("PromptPhoton:all=on");
+  readString("WeakSingleBoson:all=off");
+  readString("WeakDoubleBoson:all=off");
+
+  /*Read in any additional lines to read*/
+  while (std::getline(pythiaLines, s, '\n')) {
+    if (s.find_first_not_of(" \t\v\f\r") == s.npos)
+      continue; // skip empty lines
+    VERBOSE(7) << "Also reading in: " << s;
+    readString(s);
+  }
+
+  /*Set the random state*/
+  rndm.setState(randState);
+  //set doScatt=True always
+
+  /*Set the projectile species*/
+  readString(projSpecies); //should be full line for Pythia
+
+  // And initialize
+  if (!init()) { // Pythia>8.1
+    throw std::runtime_error("Pythia init() failed.");
+  }
+  doScatt=true;
+
+  //Debug
+  JSWARN << "At end of DefaultInitializePythia";
+}
+
+void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies){//Initialize via table
+  //Start by rolling random number
+  double r = ZeroOneDistribution(*GetMt19937Generator());
+
+  //Refer to HARDCODED table for now
+  struct tableRow {
+    std::vector<double> probBin;
+    std::vector<double> pTHatBin;
+    std::string processType;
+  };
+  std::vector<tableRow> table;
+  table.push_back(tableRow{{0,.5}, {5, 20}, "hardQCD:all=on"});
+  table.push_back(tableRow{{0.5,1}, {20, 50}, "hardQCD:all=off"});
+
+  //Find the probability bin from r and probBin boundaries
+  int ibin = -1;
+  for (int i = 0; i < table.size(); i++) {
+    if (r < table[i].probBin[1] && r >= table[i].probBin[0]) {
+      ibin = i;
+      break;
+    }
+  }
+  if (ibin == -1) {
+    throw std::runtime_error("Failed to identify bin for table initialization");
+  }
+  
+  /*----Do the initialization----*/
+  //Check if there should be no hard-scatter (first bin)
+  if (ibin == 0) {
+    doScatt = false;
+    return;
+  }
+  else {
+    //For parsing text
+    stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
+    numbf.setf(ios::fixed, ios::floatfield);
+    numbf.setf(ios::showpoint);
+    numbf.precision(1);
+    stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
+
+    /*Do all the defaults*/
+    readString("Init:showProcesses = off");
+    readString("Init:showChangedSettings = off");
+    readString("Init:showMultipartonInteractions = on");
+    readString("Init:showChangedParticleData = off");
+    if (JetScapeLogger::Instance()->GetInfo()) {
+      readString("Init:showProcesses = on");
+      readString("Init:showChangedSettings = on");
+      readString("Init:showMultipartonInteractions = on");
+      readString("Init:showChangedParticleData = on");
+    }
+    readString("Next:numberShowInfo = 0");
+    readString("Next:numberShowProcess = 0");
+    readString("Next:numberShowEvent = 0");
+    readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
+    // readString("HardQCD:gg2gg = on");
+    // readString("HardQCD:gg2qqbar = on");
+    // readString("HardQCD:qg2qg = on");
+    // readString("HardQCD:qq2qq = on");
+    // readString("HardQCD:qqbar2gg = on");
+    // readString("HardQCD:qqbar2qqbarNew = on");
+    readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
+    readString("MultipartonInteractions:processLevel = 0"); 
+    readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
+    // readString("HardQCD:gg2ccbar = off");
+    // readString("HardQCD:qqbar2ccbar = off");
+    // readString("HardQCD:hardccbar = off");
+    // readString("HardQCD:gg2bbbar = off");
+    // readString("HardQCD:qqbar2bbbar = off");
+    //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
+    //readString("HardQCD:qqbar2ccbar = on");
+    readString("HadronLevel:Decay = off");
+    readString("HadronLevel:all = on");
+    readString("PartonLevel:ISR = off");
+    readString("PartonLevel:MPI = on");
+    //readString("PartonLevel:FSR = on");
+    readString("PromptPhoton:all=on");
+    readString("WeakSingleBoson:all=off");
+    readString("WeakDoubleBoson:all=off");
+
+    /*Read in any additional lines to read*/
+    while (std::getline(pythiaLines, s, '\n')) {
+      if (s.find_first_not_of(" \t\v\f\r") == s.npos)
+        continue; // skip empty lines
+      VERBOSE(7) << "Also reading in: " << s;
+      readString(s);
+    }
+
+    /*Set the random state*/
+    rndm.setState(randState);
+
+    /*Set the projectile species*/
+    readString(projSpecies); //should be full line for Pythia
+
+    /*--Read in from the bin selected--*/
+    tableRow binInfo = table[ibin];
+    //pTHat bin
+    numbf.str("PhaseSpace:pTHatMin = ");
+    numbf << binInfo.pTHatBin[0];
+    readString(numbf.str());
+    numbf.str("PhaseSpace:pTHatMax = ");
+    numbf << binInfo.pTHatBin[1];
+    readString(numbf.str());
+    readString("");
+    //Process type
+    readString(binInfo.processType);
+    readString("");
+    
+    // And initialize
+    if (!init()) { // Pythia>8.1
+      throw std::runtime_error("Pythia init() failed.");
+    }
+    doScatt = true;
+  }
+
+
+  // for (int i=0; i<table.size(); i++){
+  //   JSWARN << "(" << table[i].probBin[0] << ", " << table[i].probBin[1] << ")   "  
+  //    << "(" << table[i].pTHatBin[0] << ", " << table[i].pTHatBin[1] << ")   " 
+  //    << table[i].processType;
+  // }
+
 }
