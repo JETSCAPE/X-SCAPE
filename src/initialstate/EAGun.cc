@@ -568,7 +568,7 @@ void EAGun::ExecuteTask() {
             std::cout << "Remnant Hadron " << remnant.id() << " " << remnant.status() << " E " << rmn->e() << " MOM " << rmn->px() << " " << rmn->py() << " " << rmn->pz() << endl;
         }
         else {
-            auto rmn = make_shared<Parton>(0, remnant.id(), 0, pRemnant, xLoc);
+            auto rmn = make_shared<Parton>(0, remnant.id(), 1, pRemnant, xLoc);
             rmn->set_color(remnant.col());
             rmn->set_anti_color(remnant.acol());
             rmn->set_max_color(1000 * (np + 1));
