@@ -821,6 +821,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
         el_p0[4] = pIn[i].t();
         HQ_mass = pIn[i].restmass();
 
+        bool hasExited = false;
         for (double el_time = initR0; el_time < time + rounding_error;
              el_time = el_time + el_dt) {
 
@@ -942,6 +943,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       // qhatLoc= GeneralQhatFunction(QhatParametrizationType, tempLoc, sdLoc, alphas, qhat0, enerLoc, muSquare);
 
       double nuclear_dens = ini->Get_target_nucleon_density_lab(el_time, el_rx, el_ry, el_rz);
+      if (!hasExited && nuclear_dens == 0.) { hasExited = true; cout << "EXITING, VIRT IS " << pIn[i].t() << endl; }
       if (pIn[i].pid()==21) {
         qhatLoc = interpolate_pdf_tables(initEner,21,2);
       }
