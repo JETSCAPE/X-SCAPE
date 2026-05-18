@@ -212,6 +212,8 @@ void MCGlauberWrapper::ClearTask() {
     QCDStringList_.clear();
     proj_nucleon_charges_.clear();
     targ_nucleon_charges_.clear();
+    proj_nucleon_ids_.clear();
+    targ_nucleon_ids_.clear();
 }
 
 
@@ -250,6 +252,8 @@ void MCGlauberWrapper::ExecuteTask() {
                  binary_collision_projPos_.push_back(proj_x);
                  auto q = nucleon->get_electric_charge();
                  proj_nucleon_charges_.push_back(q);
+                 auto id = nucleon->get_id();
+                 proj_nucleon_ids_.push_back(id);
 
                  nucleon = collisionEvents[iparticle].get_targ_nucleon_ptr().lock();
                  xvec = nucleon->get_x();
@@ -258,6 +262,8 @@ void MCGlauberWrapper::ExecuteTask() {
                  binary_collision_targPos_.push_back(targ_x);
                  q = nucleon->get_electric_charge();
                  targ_nucleon_charges_.push_back(q);
+                 id = nucleon->get_id();
+                 targ_nucleon_ids_.push_back(id);
                  iparticle++;
             }
             Jetscape::JSWARN << "MCGlauberWrapper generated " << binary_collision_projPos_.size() << " projectile nucleon positions";
@@ -351,6 +357,14 @@ void MCGlauberWrapper::GetAllTargNucleonCharges(std::vector<int> &q) {
 
 void MCGlauberWrapper::GetAllProjNucleonCharges(std::vector<int> &q) {
     q = proj_nucleon_charges_;
+}
+
+void MCGlauberWrapper::GetAllTargNucleonIDs(std::vector<int> &id){
+    id = targ_nucleon_ids_;
+}
+
+void MCGlauberWrapper::GetAllProjNucleonIDs(std::vector<int> &id){
+    id = proj_nucleon_ids_;
 }
 
 double MCGlauberWrapper::Get_total_nucleon_density_lab(

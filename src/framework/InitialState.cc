@@ -127,6 +127,16 @@ void InitialState::GetAllTargNucleonCharges(std::vector<int> &q){
   q.clear();
 }
 
+void InitialState::GetAllProjNucleonIDs(std::vector<int> &id){
+  // Default implementation: return empty vector
+  id.clear();
+}
+
+void InitialState::GetAllTargNucleonIDs(std::vector<int> &id){
+  // Default implementation: return empty vector
+  id.clear();
+}
+
 void InitialState::ClearHardPartonMomentum() {}
 
 void InitialState::GetHardPartonPosAndMomentumProj() {}

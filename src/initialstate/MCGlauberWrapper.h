@@ -70,6 +70,8 @@ public:
   void GetAllBinaryCollisionTargPos(std::vector<std::vector<double>> &pos);
   void GetAllTargNucleonCharges(std::vector<int> &q);
   void GetAllProjNucleonCharges(std::vector<int> &q);
+  void GetAllTargNucleonIDs(std::vector<int> &id);
+  void GetAllProjNucleonIDs(std::vector<int> &id);
   double Get_total_nucleon_density_lab(double t, double x,
                                        double y, double z);
   double Get_target_nucleon_density_lab(double t, double x,
@@ -124,6 +126,8 @@ private:
   std::vector<double> proj_parton_e_;
   std::vector<int> targ_nucleon_charges_;
   std::vector<int> proj_nucleon_charges_;
+  std::vector<int> targ_nucleon_ids_;
+  std::vector<int> proj_nucleon_ids_;
   std::shared_ptr<MCGlb::RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;

@@ -226,12 +226,16 @@ void PythiaIsrGun::ExecuteTask() {
   ini->GetAllBinaryCollisionProjPos(all_projPos);
   std::vector<std::vector<double>> all_targPos;
   ini->GetAllBinaryCollisionTargPos(all_targPos);
-  std::vector<int> AcceptedCollisionPoints; //INDICES of accepted collision points
-                                            //Used to ensure valid hard-scatt site
+  std::vector<int> allProjIDs;
+  ini->GetAllProjNucleonIDs(allProjIDs);
+  std::vector<int> allTargIDs;
+  ini->GetAllTargNucleonIDs(allTargIDs);
   // std::vector<int> targCharges;
   // ini->GetAllTargNucleonCharges(targCharges);
   std::vector<int> projCharges;
   ini->GetAllProjNucleonCharges(projCharges);
+  std::vector<int> AcceptedCollisionPoints; //INDICES of accepted collision points
+                                            //Used to ensure valid hard-scatt site
   int Ncoll = ini->GetNcoll();
 
   //Debug
@@ -325,17 +329,20 @@ void PythiaIsrGun::ExecuteTask() {
       icoll = index_list[iscatt]; //Automatically select first point
     }
     else {
-      //Debug
-      // JSWARN << "Entered else statement line 319";
       for (int accepted_idx : AcceptedCollisionPoints){
         for (int shuffled_idx : index_list){
-          bool same_proj, same_targ = true;
+          bool same_proj, same_targ;
           if (accepted_idx == shuffled_idx){
             continue; //skip already accepted points
           }
-          same_proj = same_location(all_projPos[accepted_idx], all_projPos[shuffled_idx]);
-          same_targ = same_location(all_targPos[accepted_idx], all_targPos[shuffled_idx]);
+          // same_proj = same_location(all_projPos[accepted_idx], all_projPos[shuffled_idx]);
+          // same_targ = same_location(all_targPos[accepted_idx], all_targPos[shuffled_idx]);
+          same_proj = (allProjIDs[accepted_idx] == allProjIDs[shuffled_idx]);
+          same_targ = (allTargIDs[accepted_idx] == allTargIDs[shuffled_idx]);
+          JSINFO << MAGENTA << "(same_proj, same_targ) = " << same_proj << ", " << same_targ;
+
           if (!same_proj && !same_targ){//Break internal check loop at index acceptable index
+            icoll = shuffled_idx;
             break;
           }
         }
@@ -377,6 +384,7 @@ void PythiaIsrGun::ExecuteTask() {
       DefaultInitializePythia(randState, doScatt, projSpecies);
     }
     else{
+      JSINFO << MAGENTA << "Will attempt to initialize for totem scattering";
       TableInitializePythia(randState, doScatt, projSpecies);
     }
     if (!doScatt) {//Do not proceed with generation
@@ -697,7 +705,16 @@ void PythiaIsrGun::DefaultInitializePythia(Pythia8::RndmState randState, bool &d
   readString("WeakSingleBoson:all=off");
   readString("WeakDoubleBoson:all=off");
 
+  numbf.str("PhaseSpace:pTHatMin = ");
+  numbf << pTHatMin;
+  readString(numbf.str());
+  numbf.str("PhaseSpace:pTHatMax = ");
+  numbf << pTHatMax;
+  readString(numbf.str());
+
   /*Read in any additional lines to read*/
+  pythiaLines.clear();
+  pythiaLines.seekg(0, std::ios::beg); //start from beginning of stream
   while (std::getline(pythiaLines, s, '\n')) {
     if (s.find_first_not_of(" \t\v\f\r") == s.npos)
       continue; // skip empty lines
@@ -730,11 +747,12 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
   struct tableRow {
     std::vector<double> probBin;
     std::vector<double> pTHatBin;
-    std::string processType;
+    std::string processOn;
+    std::string processOff;
   };
   std::vector<tableRow> table;
-  table.push_back(tableRow{{0,.5}, {5, 20}, "hardQCD:all=on"});
-  table.push_back(tableRow{{0.5,1}, {20, 50}, "hardQCD:all=off"});
+  table.push_back(tableRow{{0,.5}, {5, 20}, "HardQCD:all = on", "PromptPhoton:all = off"});
+  table.push_back(tableRow{{0.5,1}, {20, 50}, "PromptPhoton:all = on", "HardQCD:all = off"});
 
   //Find the probability bin from r and probBin boundaries
   int ibin = -1;
@@ -803,6 +821,8 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
     readString("WeakDoubleBoson:all=off");
 
     /*Read in any additional lines to read*/
+    pythiaLines.clear();
+    pythiaLines.seekg(0, std::ios::beg); //start from beginning of stream
     while (std::getline(pythiaLines, s, '\n')) {
       if (s.find_first_not_of(" \t\v\f\r") == s.npos)
         continue; // skip empty lines
@@ -827,7 +847,9 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
     readString(numbf.str());
     readString("");
     //Process type
-    readString(binInfo.processType);
+    readString(binInfo.processOn);
+    readString("");
+    readString(binInfo.processOff);
     readString("");
     
     // And initialize
@@ -835,6 +857,7 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
       throw std::runtime_error("Pythia init() failed.");
     }
     doScatt = true;
+    JSINFO << MAGENTA << "Successfully initialized Pythia for secondary scatter";
   }
 
 
