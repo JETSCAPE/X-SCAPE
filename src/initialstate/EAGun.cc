@@ -29,33 +29,148 @@ RegisterJetScapeModule<EAGun> EAGun::reg("EAGun");
 
 EAGun::~EAGun() { VERBOSE(8); }
 
+void mySettingsParm(Pythia8::Pythia& py, std::string s, double val) {
+    stringstream pys(stringstream::app | stringstream::in | stringstream::out);
+    pys << s << " = " << val;
+    cout << "+" << pys.str() << "+" << endl;
+    py.readString(pys.str());
+}
+void mySettingsParm(Pythia8::Pythia& py, std::string s, int val) {
+    stringstream pys(stringstream::app | stringstream::in | stringstream::out);
+    pys << s << " = " << val;
+    py.readString(pys.str());
+    cout << "-" << pys.str() << "-" << endl;
+}
+
+void EAGun::ConfigurePythia(Pythia8::Pythia& py, int idA, unsigned int seed) {
+    // Show initialization at INFO level
+    py.readString("Init:showProcesses = off");
+    py.readString("Init:showChangedSettings = off");
+    py.readString("Init:showMultipartonInteractions = off");
+    py.readString("Init:showChangedParticleData = off");
+
+    if (JetScapeLogger::Instance()->GetInfo()) {
+        py.readString("Init:showProcesses = on");
+        py.readString("Init:showChangedSettings = on");
+        py.readString("Init:showMultipartonInteractions = on");
+        py.readString("Init:showChangedParticleData = on");
+    }
+
+    // No event record printout.
+    py.readString("Print:quiet = on");
+    py.readString("Next:numberShowInfo = 0");
+    py.readString("Next:numberShowProcess = 0");
+    py.readString("Next:numberShowEvent = 0");
+    
+    // other Pythia settings
+    py.readString("HadronLevel:Decay = off");
+    py.readString("HadronLevel:all = off");
+    if (FSR_on) py.readString("PartonLevel:FSR = on");
+    else py.readString("PartonLevel:FSR = off");
+    py.readString("PartonLevel:ISR = off");
+
+    //rng
+    py.readString("Random:setSeed = on");
+    stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
+    numbi << "Random:seed = " << seed;
+    py.readString(numbi.str());
+
+    //intrinsic kt
+    double ktsigma = 0.865;
+    py.readString("BeamRemnants:primordialKT = on");
+    // py.settings.parm("BeamRemnants:primordialKTsoft", ktsigma);
+    // py.settings.parm("BeamRemnants:primordialKThard", ktsigma);
+    // py.settings.parm("BeamRemnants:halfMassForKT", 0);
+    // py.settings.parm("BeamRemnants:reducedKTatHighY", 0);
+    // py.settings.parm("BeamRemnants:primordialKTremnant", ktsigma);
+    mySettingsParm(py,"BeamRemnants:primordialKTsoft", ktsigma);
+    mySettingsParm(py,"BeamRemnants:primordialKThard", ktsigma);
+    mySettingsParm(py,"BeamRemnants:halfMassForKT", 0);
+    mySettingsParm(py,"BeamRemnants:reducedKTatHighY", 0);
+    mySettingsParm(py,"BeamRemnants:primordialKTremnant", ktsigma);
+
+    // beam setup
+    // readString("Beams:frameType = 2");
+    // settings.parm("Beams:eA", 0.);
+    // settings.parm("Beams:eB", eElectron);
+    py.readString("Beams:frameType = 3");
+
+    cout << "SETTING TARGET PID " << idA << endl;
+    mySettingsParm(py,"Beams:idA", idA);
+
+    mySettingsParm(py,"Beams:pzA", 0.);
+    mySettingsParm(py,"Beams:pzB", eElectron);
+    // readString("Beams:allowMomentumSpread = off");
+    // settings.parm("Beams:sigmaPxA", 0.);
+    // settings.parm("Beams:sigmaPyA", 0.);
+    // settings.parm("Beams:sigmaPzA", 0.);
+    // settings.parm("Beams:maxDevA", 0.);
+
+    // BeamB = electron
+    if (use_positron) {
+        py.readString("Beams:idB = -11");
+        JSINFO << "Running with positron beam.";
+    }
+    else { py.readString("Beams:idB = 11"); }
+
+    if (photoproduction) {
+        py.readString("PDF:lepton2gamma = on");
+        py.readString("PhotonParton:all = on");
+        py.readString("Photon:Q2max = 1.0");
+        py.readString("Photon:ProcessType = 0");
+        py.readString("SoftQCD:nonDiffractive = on");
+    }
+    else {
+        // Set up DIS process within some phase space.
+        // Neutral current (with gamma/Z interference).
+        py.readString("WeakBosonExchange:ff2ff(t:gmZ) = on");
+        // Uncomment to allow charged current.
+        // readString("WeakBosonExchange:ff2ff(t:W) = on");
+
+        // Phase-space cut: minimal Q2 of process.
+        mySettingsParm(py,"PhaseSpace:Q2Min", Q2min);
+        // mySettingsParm(py,"PhaseSpace:Q2Max", Q2max); //this setting does not exist
+
+        // Set dipole recoil on. Necessary for DIS + shower.
+        py.readString("SpaceShower:dipoleRecoil = on");
+
+        // Allow emissions up to the kinematical limit,
+        // since rate known to match well to matrix elements everywhere.
+        py.readString("SpaceShower:pTmaxMatch = 2");
+
+        // QED radiation off lepton not handled yet by the new procedure.
+        py.readString("TimeShower:QEDshowerByL = off");
+        //readString("PartonShowers:model = 1");
+        //readString("TimeShower:pTmaxMatch = 1");
+
+        //special PDF
+        py.readString("PDF:lepton = off");
+        py.readString("PDF:useHard = on");
+        //readString("PDF:pHardSet = LHAPDF6:PDF4LHC21_40"); //for special PDF setting
+    }
+
+    stringstream lines;
+    std::string s;
+    lines << GetXMLElementText({"Hard", "EAGun", "LinesToRead"}, false);
+    int i = 0;
+    while (std::getline(lines, s, '\n')) {
+        if (s.find_first_not_of(" \t\v\f\r") == s.npos) continue; // skip empty lines
+        VERBOSE(7) << "Also reading in: " << s;
+        py.readString(s);
+    }
+}
+
 void EAGun::InitTask() {
     JSDEBUG << "Initialize EAGun";
     VERBOSE(8);
 
-    // Show initialization at INFO level
-    readString("Init:showProcesses = off");
-    readString("Init:showChangedSettings = off");
-    readString("Init:showMultipartonInteractions = off");
-    readString("Init:showChangedParticleData = off");
-    if (JetScapeLogger::Instance()->GetInfo()) {
-        readString("Init:showProcesses = on");
-        readString("Init:showChangedSettings = on");
-        readString("Init:showMultipartonInteractions = on");
-        readString("Init:showChangedParticleData = on");
-    }
-
-    // No event record printout.
-    readString("Next:numberShowInfo = 0");
-    readString("Next:numberShowProcess = 0");
-    readString("Next:numberShowEvent = 0");
+    crossSection = 0.;
 
     // For parsing text
     stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
     numbf.setf(ios::fixed, ios::floatfield);
     numbf.setf(ios::showpoint);
     numbf.precision(1);
-    stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
 
     std::string s = GetXMLElementText({"Hard", "EAGun", "name"});
     SetId(s);
@@ -67,36 +182,40 @@ void EAGun::InitTask() {
     targZ = GetXMLElementDouble({"Hard", "EAGun", "targetZ"});
     targA = GetXMLElementDouble({"Hard", "EAGun", "targetA"});
 
-    //intrinsic kt
-    double ktsigma = 0.865;
-    readString("BeamRemnants:primordialKT = on");
-    settings.parm("BeamRemnants:primordialKTsoft", ktsigma);
-    settings.parm("BeamRemnants:primordialKThard", ktsigma);
-    settings.parm("BeamRemnants:halfMassForKT", 0);
-    settings.parm("BeamRemnants:reducedKTatHighY", 0);
-    settings.parm("BeamRemnants:primordialKTremnant", ktsigma);
-
     // initial kinematics
     eElectron = GetXMLElementDouble({"Hard", "EAGun", "electron_energy"});
     eProton = GetXMLElementDouble({"Hard", "EAGun", "proton_energy"});
     use_positron = GetXMLElementInt({"Hard", "EAGun", "use_positron"});
     photoproduction = GetXMLElementInt({"Hard", "EAGun", "photoproduction"});
-    breitVir = GetXMLElementInt({"Hard", "EAGun", "breit_vir"});
-    Q2pow = GetXMLElementDouble({"Hard", "EAGun", "Q2_pow"});
-    Q2factor = GetXMLElementDouble({"Hard", "EAGun", "Q2_factor"});
+    // breitVir = GetXMLElementInt({"Hard", "EAGun", "breit_vir"});
+    // Q2pow = GetXMLElementDouble({"Hard", "EAGun", "Q2_pow"});
+    // Q2factor = GetXMLElementDouble({"Hard", "EAGun", "Q2_factor"});
     initial_virtuality_pT = GetXMLElementInt({"Eloss", "Matter", "initial_virtuality_pT"});
 
     // DIS parameters
-    Q2 = GetXMLElementDouble({"Hard", "EAGun", "Q2"});
-    nu = GetXMLElementDouble({"Hard", "EAGun", "nu"});
-
     // kinematic cuts
-    // Q2min = GetXMLElementDouble({"Hard", "EAGun", "Q2min"});
-    // Q2max = GetXMLElementDouble({"Hard", "EAGun", "Q2max"});
-    Q2min = Q2-0.01;
-    Q2max = Q2+0.01;
-    numin = nu-0.1;
-    numax = nu+0.1;
+    usesetQ2 = GetXMLElementInt({"Hard", "EAGun", "usesetQ2"});
+    if (usesetQ2) {
+        Q2 = GetXMLElementDouble({"Hard", "EAGun", "Q2"});
+        Q2min = Q2-0.01;
+        Q2max = Q2+0.01;
+    }
+    else {
+        Q2min = GetXMLElementDouble({"Hard", "EAGun", "Q2min"});
+        Q2max = GetXMLElementDouble({"Hard", "EAGun", "Q2max"});
+    }
+
+    usesetnu = GetXMLElementInt({"Hard", "EAGun", "usesetnu"});
+    if (usesetnu) {
+        nu = GetXMLElementDouble({"Hard", "EAGun", "nu"});
+        numin = nu-0.1;
+        numax = nu+0.1;
+    }
+    else {
+        numin = GetXMLElementDouble({"Hard", "EAGun", "numin"});
+        numax = GetXMLElementDouble({"Hard", "EAGun", "numax"});
+    }
+
     W2min = GetXMLElementDouble({"Hard", "EAGun", "W2min"});
     W2max = GetXMLElementDouble({"Hard", "EAGun", "W2max"});
     xmin = GetXMLElementDouble({"Hard", "EAGun", "xmin"});
@@ -104,73 +223,8 @@ void EAGun::InitTask() {
     ymin = GetXMLElementDouble({"Hard", "EAGun", "ymin"});
     ymax = GetXMLElementDouble({"Hard", "EAGun", "ymax"});
 
-    // other Pythia settings
-    readString("HadronLevel:Decay = off");
-    readString("HadronLevel:all = off");
-    readString("Print:quiet = on");
-  
-    // beam setup
-    // readString("Beams:frameType = 2");
-    // settings.parm("Beams:eA", 0.);
-    // settings.parm("Beams:eB", eElectron);
-    readString("Beams:frameType = 3");
-    settings.parm("Beams:pzA", 0.);
-    settings.parm("Beams:pzB", eElectron);
-    // readString("Beams:allowMomentumSpread = off");
-    // settings.parm("Beams:sigmaPxA", 0.);
-    // settings.parm("Beams:sigmaPyA", 0.);
-    // settings.parm("Beams:sigmaPzA", 0.);
-    // settings.parm("Beams:maxDevA", 0.);
-
-    // BeamA = p/n chosen randomly later
-
-    // BeamB = electron
-    if (use_positron) {
-        readString("Beams:idB = -11");
-        JSINFO << "Running with positron beam.";
-    }
-    else { readString("Beams:idB = 11"); }
-
-    if (photoproduction) {
-        readString("PDF:lepton2gamma = on");
-        readString("PhotonParton:all = on");
-        readString("Photon:Q2max = 1.0");
-        readString("Photon:ProcessType = 0");
-        readString("SoftQCD:nonDiffractive = on");
-    }
-    else {
-        // Set up DIS process within some phase space.
-        // Neutral current (with gamma/Z interference).
-        readString("WeakBosonExchange:ff2ff(t:gmZ) = on");
-        // Uncomment to allow charged current.
-        // readString("WeakBosonExchange:ff2ff(t:W) = on");
-
-        // Phase-space cut: minimal Q2 of process.
-        settings.parm("PhaseSpace:Q2Min", Q2min);
-        settings.parm("PhaseSpace:Q2Max", Q2max);
-
-        // Set dipole recoil on. Necessary for DIS + shower.
-        readString("SpaceShower:dipoleRecoil = on");
-
-        // Allow emissions up to the kinematical limit,
-        // since rate known to match well to matrix elements everywhere.
-        readString("SpaceShower:pTmaxMatch = 2");
-
-        // QED radiation off lepton not handled yet by the new procedure.
-        readString("TimeShower:QEDshowerByL = off");
-        //readString("PartonShowers:model = 1");
-        //readString("TimeShower:pTmaxMatch = 1");
-
-        //special PDF
-        readString("PDF:lepton = off");
-        readString("PDF:useHard = on");
-        //readString("PDF:pHardSet = LHAPDF6:PDF4LHC21_40"); //for special PDF setting
-    }
-
     // SC: read flag for FSR
     FSR_on = GetXMLElementInt({"Hard", "EAGun", "FSR_on"});
-    if (FSR_on) readString("PartonLevel:FSR = on");
-    else readString("PartonLevel:FSR = off");
 
     JSINFO << MAGENTA << "EA Gun with FSR_on: " << FSR_on;
 
@@ -180,18 +234,14 @@ void EAGun::InitTask() {
     // random seed
     // xml limits us to unsigned int :-/ -- but so does 32 bits Mersenne Twist
     tinyxml2::XMLElement *RandomXmlDescription = GetXMLElement({"Random"});
-    readString("Random:setSeed = on");
-    numbi.str("Random:seed = ");
     unsigned int seed = 0;
     if (RandomXmlDescription) {
         tinyxml2::XMLElement *xmle = RandomXmlDescription->FirstChildElement("seed");
-        if (!xmle) throw std::runtime_error("Cannot parse xml");
+        if (!xmle) throw runtime_error("Cannot parse xml");
         xmle->QueryUnsignedText(&seed);
     } 
     else { JSWARN << "No <Random> element found in xml, seeding to 0"; }
     JSINFO << BOLDYELLOW << "Seeding pythia to " << seed;
-    numbi << seed;
-    readString(numbi.str());
 
     //Reading vir_factor from xml for MATTER
     vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
@@ -202,50 +252,64 @@ void EAGun::InitTask() {
         exit(1);
     }
 
-    std::stringstream lines;
-    lines << GetXMLElementText({"Hard", "EAGun", "LinesToRead"}, false);
-    int i = 0;
-    while (std::getline(lines, s, '\n')) {
-        if (s.find_first_not_of(" \t\v\f\r") == s.npos) continue; // skip empty lines
-        VERBOSE(7) << "Also reading in: " << s;
-        readString(s);
+    for (int ipy=0; ipy<2; ipy++) { //proton then neutron
+        auto py = std::make_unique<Pythia8::Pythia>("", false);
+        switch (ipy) {
+            case 0:
+                ConfigurePythia(*py, 2212, seed); break;
+            case 1:
+                ConfigurePythia(*py, 2112, seed); break;
+            default:
+                JSWARN << "unknown pythia idA";
+                exit(1);
+                break;
+        }
+
+        if (!py->init()) {
+            throw std::runtime_error("Pythia init() failed.");
+        }
+        pythia_vec.push_back(std::move(py));
     }
 
-    std::ofstream sigma_printer;
-    sigma_printer.open(printer, std::ios::trunc);
-
-    readString("PartonLevel:ISR = off");
-    readString("PartonLevel:FSR = off");
 
     // And initialize
     // if (!init()) { // Pythia>8.1
-    //     throw std::runtime_error("Pythia init() failed.");
+    //     throw runtime_error("Pythia init() failed.");
     // }
-    isFirstEvent = true;
+    // isFirstEvent = true;
+
+    std::ofstream sigma_printer;
+    sigma_printer.open(printer, std::ios::trunc);
 }
 
 void EAGun::ExecuteTask() {
     VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
     VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
-
+    int pythiaindex;
     if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
-        // cout << "PROTON!!!!" << endl;
-        readString("Beams:idA = 2212");
+        cout << "PROTON!!!!" << endl;
+        // readString("Beams:idA = 2212");
+        pythiaindex = 0;
     }
     else {
-        // cout << "NEUTRON!!!!" << endl;
-        readString("Beams:idA = 2112");
+        cout << "NEUTRON!!!!" << endl;
+        // readString("Beams:idA = 2112");
+        pythiaindex = 1;
     }
+    // cout << pythiaindex << endl;
+    Pythia8::Pythia& py = *pythia_vec[pythiaindex];
+
+    // py.settings.listAll();
 
     // settings.listChanged();
-    if (!init()) { // Pythia>8.1
-        throw std::runtime_error("Pythia init() failed.");
-    }
+    // if (!init()) { // Pythia>8.1
+    //     throw runtime_error("Pythia init() failed.");
+    // }
 
-    if (!isFirstEvent) { //load rng state
-        rndm.setState(randState); 
-    }
+    // if (!isFirstEvent) { //load rng state
+    //     rndm.setState(randState); 
+    // }
 
     bool flag62 = false;
     vector<Pythia8::Particle> p62;
@@ -262,39 +326,39 @@ void EAGun::ExecuteTask() {
     Pythia8::Vec4 pProton, peIn, peOut, pPhoton, pProtonNoz, pStruck;
     Pythia8::RotBstMatrix fixedtargBoost, polarRot;
     // Pythia8::Vec4 tmp1,tmp2,tmp3,tmp4;
-    double nu, Q2, W2, x, y;
+    double tmpnu, tmpQ2, W2, x, y;
 
     do {
-        bool check = next();
+        bool check = py.next();
         if (check==false) continue;
 
         // getting scattered electron index
         int elecID = 6;
         if (photoproduction) {
-            for (int iElec=0; iElec<event.size(); iElec++) {
-                if (abs(event[iElec].id()) == 11 and event[iElec].status() == 23) { elecID = iElec; }
+            for (int iElec=0; iElec<py.event.size(); iElec++) {
+                if (abs(py.event[iElec].id()) == 11 and py.event[iElec].status() == 23) { elecID = iElec; }
             }
         }
 
-        pProton = event[1].p();
-        peIn    = event[2].p();
-        peOut   = event[6].p();
+        pProton = py.event[1].p();
+        peIn    = py.event[2].p();
+        peOut   = py.event[6].p();
         pPhoton = peIn - peOut;
-        pStruck = event[3].p();
+        pStruck = py.event[3].p();
 
         // nu, Q2, W2, Bjorken x, y
-        nu = pPhoton.eInFrame(pProton);
-        Q2 = - pPhoton.m2Calc();
+        tmpnu = pPhoton.eInFrame(pProton);
+        tmpQ2 = - pPhoton.m2Calc();
         W2 = (pProton + pPhoton).m2Calc();
-        x  = Q2 / (2. * pProton * pPhoton);
+        x  = tmpQ2 / (2. * pProton * pPhoton);
         y  = (pProton * pPhoton) / (pProton * peIn);
 
         // kinematic cuts
         if(x < xmin or x > xmax) continue;
         if(y < ymin or y > ymax) continue;
-        if(Q2 < Q2min or Q2 > Q2max) continue;
+        if(tmpQ2 < Q2min or tmpQ2 > Q2max) continue;
         if(W2 < W2min or W2 > W2max) continue;
-        if(nu < numin or nu > numax) continue;
+        if(tmpnu < numin or tmpnu > numax) continue;
 
         // cout << endl;
         // cout << "BEFORE ROTATION" << endl;
@@ -308,7 +372,7 @@ void EAGun::ExecuteTask() {
 
         //boost to proton rest frame
         //...except pythia gives it small nonzero pz that we should keep
-        pProtonNoz = event[1].p();
+        pProtonNoz = py.event[1].p();
         pProtonNoz.pz(0.);
 
         fixedtargBoost = Pythia8::toCMframe(pProtonNoz, pPhoton, peIn);
@@ -350,22 +414,21 @@ void EAGun::ExecuteTask() {
         p63.clear();
 
         if (!printer.empty()) {
-            std::ofstream sigma_printer;
+            ofstream sigma_printer;
             sigma_printer.open(printer, std::ios::out | std::ios::app);
 
-            sigma_printer << "sigma = " << GetSigmaGen() << " Err =  " << GetSigmaErr() << endl ;
+            sigma_printer << "sigma = " << py.info.sigmaGen() << " Err =  " << py.info.sigmaErr() << endl ;
             //sigma_printer.close();
 
             // JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma err = " << GetSigmaErr() << " printer = " << printer << " is " << sigma_printer.is_open() ;
         }
-
         // pTarr[0]=0.0; pTarr[1]=0.0;
         // pindexarr[0]=0; pindexarr[1]=0;
 
         //get the struck parton
-        for (int parid = 0; parid < event.size(); parid++) {
+        for (int parid = 0; parid < py.event.size(); parid++) {
             if (parid < 3) continue; // 0, 1, 2: total event and beams
-            Pythia8::Particle &particle = event[parid];
+            Pythia8::Particle &particle = py.event[parid];
 
             // if (particle.status() == 62) { cout << "62 is " << particle.id() << endl; }
 
@@ -405,9 +468,9 @@ void EAGun::ExecuteTask() {
 
         //now that we have a good struck parton
         //take all of the associated remnants
-        for (int parid = 0; parid < event.size(); parid++) {
+        for (int parid = 0; parid < py.event.size(); parid++) {
             if (parid < 3) continue; // 0, 1, 2: total event and beams
-            Pythia8::Particle &particle = event[parid];
+            Pythia8::Particle &particle = py.event[parid];
 
             if (particle.status() != 63) continue;
 
@@ -416,7 +479,7 @@ void EAGun::ExecuteTask() {
 
 
         // Now have all candidates, sort them by pt
-        // std::sort(p62.begin(), p62.end(), greater_than_pt());
+        // sort(p62.begin(), p62.end(), greater_than_pt());
         // check...
         // for (auto& p : p62 ) cout << p.pT() << endl;
 
@@ -425,6 +488,7 @@ void EAGun::ExecuteTask() {
         // for (auto& p : p63 ) cout << "63 " << p.pz() << endl;
 
         flag62 = true;
+        cout << "DIS Q2;NU " << tmpQ2 << " " << tmpnu << endl;
 
         // int found61already = 0;
         // int numremn = 0;
@@ -436,19 +500,19 @@ void EAGun::ExecuteTask() {
         //         if (found61already == 1) { cout << "ALREADY DID A -61 HERE" << endl; exit(-2); }
         //         Pythia8::Vec4 pmed = particle.p();
 
-        //         std::ofstream foutx1;
+        //         ofstream foutx1;
         //         foutx1.open("fullrot-qmed1-v4-19.txt", std::ios_base::app);
         //         foutx1 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
 
         //         pmed.rotbst(fixedtargBoost);
 
-        //         std::ofstream foutx2;
+        //         ofstream foutx2;
         //         foutx2.open("fullrot-qmed2-v4-19.txt", std::ios_base::app);
         //         foutx2 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
 
         //         pmed.rotbst(polarRot);
 
-        //         std::ofstream foutx3;
+        //         ofstream foutx3;
         //         foutx3.open("fullrot-qmed3-v4-19.txt", std::ios_base::app);
         //         foutx3 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
 
@@ -460,33 +524,36 @@ void EAGun::ExecuteTask() {
         //     Pythia8::Particle &particle = event[remni];
         //     Pythia8::Vec4 pmed = particle.p();
 
-        //     std::ofstream foutx1;
+        //     ofstream foutx1;
         //     foutx1.open("fullrot-remn1-v4-19.txt", std::ios_base::app);
         //     foutx1 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
 
         //     pmed.rotbst(fixedtargBoost);
 
-        //     std::ofstream foutx2;
+        //     ofstream foutx2;
         //     foutx2.open("fullrot-remn2-v4-19.txt", std::ios_base::app);
         //     foutx2 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
 
         //     pmed.rotbst(polarRot);
 
-        //     std::ofstream foutx3;
+        //     ofstream foutx3;
         //     foutx3.open("fullrot-remn3-v4-19.txt", std::ios_base::app);
         //     foutx3 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
         // }
     } while (!flag62);
 
-    // std::ofstream fout1;
+    crossSection = py.info.sigmaGen();
+    weight = (double)(pythiaindex); //stupid hack to label p vs n
+
+    // ofstream fout1;
     // fout1.open("fullrot-qin1-v4-19.txt", std::ios_base::app);
     // fout1 << tmp1[1] << " " << tmp1[2] << " " << tmp1[3] << endl;
 
-    // std::ofstream fout2;
+    // ofstream fout2;
     // fout2.open("fullrot-qin2-v4-19.txt", std::ios_base::app);
     // fout2 << tmp2[1] << " " << tmp2[2] << " " << tmp2[3] << endl;
 
-    // std::ofstream fout3;
+    // ofstream fout3;
     // fout3.open("fullrot-qin3-v4-19.txt", std::ios_base::app);
     // fout3 << tmp3[1] << " " << tmp3[2] << " " << tmp3[3] << endl;
 
@@ -510,7 +577,7 @@ void EAGun::ExecuteTask() {
         cout << "SIZE IS " << p62.size() << endl;
         for (int np=0; np<p62.size(); np++) {
             Pythia8::Particle &particle = p62.at(np);
-            std::cout << np << " Particle " << particle.id() << " E " << particle.e() << " MOM " << particle.px() << " " << particle.py() << " " << particle.pz() << endl;
+            cout << np << " Particle " << particle.id() << " E " << particle.e() << " MOM " << particle.px() << " " << particle.py() << " " << particle.pz() << endl;
         }
         // exit(-2);
     }
@@ -525,7 +592,7 @@ void EAGun::ExecuteTask() {
         pPtn = particle.p();
         pPtn.rotbst(fixedtargBoost);
 
-        // std::ofstream fout4;
+        // ofstream fout4;
         // fout4.open("fullrot-qout1-v4-19.txt", std::ios_base::app);
         // fout4 << pPtn.px() << " " << pPtn.py() << " " << pPtn.pz() << endl;
 
@@ -539,10 +606,10 @@ void EAGun::ExecuteTask() {
 
         AddParton(ptn);
 
-        std::cout << "Struck " << particle.id() << " " << particle.status() << " E " << ptn->e() << " MOM " << ptn->px() << " " << ptn->py() << " " << ptn->pz() << endl;
+        cout << "Struck " << particle.id() << " " << particle.status() << " E " << ptn->e() << " MOM " << ptn->px() << " " << ptn->py() << " " << ptn->pz() << endl;
 
         //log the momentum
-        // std::ofstream ptout;
+        // ofstream ptout;
         // ptout.open("fullrot-qout2-v4-19.txt", std::ios_base::app);
         // ptout << pPtn.px() << " " << pPtn.py() << " " << pPtn.pz() << endl;
     }
@@ -554,7 +621,7 @@ void EAGun::ExecuteTask() {
         pRmn = remnant.p();
         pRmn.rotbst(fixedtargBoost);
 
-        // std::ofstream fout4;
+        // ofstream fout4;
         // fout4.open("fullrot-remnout1-v4-19.txt", std::ios_base::app);
         // fout4 << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
 
@@ -565,7 +632,7 @@ void EAGun::ExecuteTask() {
             auto rmn = make_shared<Hadron>(0, remnant.id(), 0, pRemnant, xLoc);
 
             AddHadron(rmn);
-            std::cout << "Remnant Hadron " << remnant.id() << " " << remnant.status() << " E " << rmn->e() << " MOM " << rmn->px() << " " << rmn->py() << " " << rmn->pz() << endl;
+            cout << "Remnant Hadron " << remnant.id() << " " << remnant.status() << " E " << rmn->e() << " MOM " << rmn->px() << " " << rmn->py() << " " << rmn->pz() << endl;
         }
         else {
             auto rmn = make_shared<Parton>(0, remnant.id(), 1, pRemnant, xLoc);
@@ -574,19 +641,19 @@ void EAGun::ExecuteTask() {
             rmn->set_max_color(1000 * (np + 1));
 
             AddParton(rmn);
-            std::cout << "Remnant Parton " << remnant.id() << " " << remnant.status() << " E " << rmn->e() << " MOM " << rmn->px() << " " << rmn->py() << " " << rmn->pz() << endl;
+            cout << "Remnant Parton " << remnant.id() << " " << remnant.status() << " E " << rmn->e() << " MOM " << rmn->px() << " " << rmn->py() << " " << rmn->pz() << endl;
         }
 
 
 
         //log the momentum
-        // std::ofstream ptout;
+        // ofstream ptout;
         // ptout.open("fullrot-remnout2-v4-19.txt", std::ios_base::app);
         // ptout << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
     }
 
-    randState = rndm.getState();
-    isFirstEvent = false;
+    // randState = rndm.getState();
+    // isFirstEvent = false;
 
     VERBOSE(8) << GetNHardPartons();
 }

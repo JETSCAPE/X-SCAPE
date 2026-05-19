@@ -21,16 +21,16 @@
 #include "HardProcess.h"
 #include "Matter.h"
 #include "JetScapeLogger.h"
-#include "Pythia8/Pythia.h"
-#include "Pythia8/Basics.h"
+// #include "Pythia8/Pythia.h"
+// #include "Pythia8/Basics.h"
 
 using namespace Jetscape;
 
-class EAGun : public HardProcess, public Pythia8::Pythia {
+class EAGun : public HardProcess {
 
 private:
-  Pythia8::RndmState randState;
-  bool isFirstEvent;
+  // Pythia8::RndmState randState;
+  // bool isFirstEvent;
 
   double eProton   = 920.;
   double eElectron = 27.5;
@@ -39,6 +39,8 @@ private:
   bool FSR_on = false;
   int use_positron = 0;
   int photoproduction = 0;
+  int usesetQ2 = 0;
+  int usesetnu = 0;
   int initial_virtuality_pT = 1;
   bool breitVir = false;
   double Q2pow = 1.0;
@@ -54,8 +56,8 @@ private:
   double ymin     = 0.;
   double ymax     = 1.;
 
-  double Q2 = 5.;
-  double nu = 10.;
+  double Q2 = 10.;
+  double nu = 12.;
 
   double numin = 10.-0.01;
   double numax = 10.+0.01;
@@ -63,6 +65,10 @@ private:
   int targZ;
   int targA;
   
+  void ConfigurePythia(Pythia8::Pythia& py, int idA, unsigned int seed);
+  double crossSection, weight;
+
+  std::vector<std::unique_ptr<Pythia8::Pythia>> pythia_vec;
   std::vector<std::array<double, 4>> nucleonPositions = {{0.,0.,0.,0.}};
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
@@ -77,7 +83,7 @@ public:
       @param printBanner: Suppress starting blurb. Should be set to true in production, credit where it's due
   */
   EAGun(string xmlDir = "DONTUSETHIS", bool printBanner = false)
-      : Pythia8::Pythia(xmlDir, printBanner), HardProcess() {
+      : HardProcess() {
     SetId("UninitializedEAGun");
   }
 
@@ -87,9 +93,12 @@ public:
   void ExecuteTask();
 
   // Cross-section information in mb and event weight.
-  double GetSigmaGen() { return info.sigmaGen(); };
-  double GetSigmaErr() { return info.sigmaErr(); };
-  double GetEventWeight() { return info.weight(); };
+  // double GetSigmaGen() { return info.sigmaGen(); };
+  // double GetSigmaErr() { return info.sigmaErr(); };
+  // double GetEventWeight() { return info.weight(); };
+  double GetSigmaGen() { return crossSection; };
+  double GetSigmaErr() { return 0; };
+  double GetEventWeight() { return weight; };
 
   std::shared_ptr<Hadron> PythiaToJSHadron(Pythia8::Particle &particle){
 

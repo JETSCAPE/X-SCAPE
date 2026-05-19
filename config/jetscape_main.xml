@@ -225,6 +225,8 @@
       <Q2_factor>500</Q2_factor>
       <Q2min>0</Q2min>
       <Q2max>1000000</Q2max>
+      <numin>0</numin>
+      <numax>27.5</numax>
       <W2min>0</W2min>
       <W2max>1000000</W2max>
       <xmin>0</xmin>
@@ -237,8 +239,10 @@
       <use_positron>0</use_positron>
       <photoproduction>0</photoproduction>
       <breit_vir>1</breit_vir>
-      <Q2>5</Q2>
-      <nu>10</nu>
+      <usesetQ2>0</usesetQ2>
+      <usesetnu>0</usesetnu>
+      <Q2>10</Q2>
+      <nu>12</nu>
       <targetZ>1</targetZ>
       <targetA>1</targetA>
     </EAGun>
