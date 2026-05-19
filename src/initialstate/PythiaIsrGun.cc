@@ -212,10 +212,6 @@ void PythiaIsrGun::ExecuteTask() {
   std::vector<double> all_y;
   std::vector<double> all_z;
   ini->GetAllBinaryCollisionPoints(all_t, all_x, all_y, all_z);
-  std::vector<std::vector<double>> all_projPos;
-  ini->GetAllBinaryCollisionProjPos(all_projPos);
-  std::vector<std::vector<double>> all_targPos;
-  ini->GetAllBinaryCollisionTargPos(all_targPos);
   std::vector<int> allProjIDs;
   ini->GetAllProjNucleonIDs(allProjIDs);
   std::vector<int> allTargIDs;
