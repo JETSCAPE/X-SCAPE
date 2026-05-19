@@ -187,9 +187,9 @@ void iColoredHadronization::DoHadronization(
       double Pz, Px, Py, En;
       //Debug
       // JSWARN << "MCGlauberGenStringWrapper projectile remnants first entry size = " << MCGsecond->Get_remnant_proj()[0].size();
-      for (unsigned int i = 0; i < MCGsecond->Get_remnant_proj().size(); i++) {
-        JSWARN << "MCGlauberGenStringWrapper projectile remnants entry " << i << " has size = " << MCGsecond->Get_remnant_proj()[i].size();
-      }
+      // for (unsigned int i = 0; i < MCGsecond->Get_remnant_proj().size(); i++) {
+      //   JSWARN << "MCGlauberGenStringWrapper projectile remnants entry " << i << " has size = " << MCGsecond->Get_remnant_proj()[i].size();
+      // }
       if (MCGsecond == nullptr) {
         throw std::runtime_error("MCGlauberGenStringWrapper pointer is null in iColoredHadronization");
       }

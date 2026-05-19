@@ -171,26 +171,16 @@ void PythiaIsrGun::InitTask() {
     readString(s);
   }
 
-  // // And initialize
-  // if (!init()) { // Pythia>8.1
-  //   throw std::runtime_error("Pythia init() failed.");
-  // }
   isFirstEvent = true;
   randState = rndm.getState(); //will need to move or delete probably to execute. Just here for test
 
-    std::ofstream sigma_printer;
-    sigma_printer.open(printer, std::ios::trunc);
+  std::ofstream sigma_printer;
+  sigma_printer.open(printer, std::ios::trunc);
 
-  // Check Pythia settings for multiple nucleon scatter compatibility
-  if ((multi_scatter == true) && (!settings.flag("PhaseSpace:Bias2Selection"))) {
-    JSWARN << "PhaseSpace:Bias2Selection is required for multiple nucleon scattering. Disabling multiple nucleon scattering.";
+  //Check for multi_scatter and Bias2Selection
+  if ((multi_scatter) && (settings.flag("PhaseSpace:Bias2Selection"))) {
+    JSWARN << "Multiple scatterings and Bias2Selection can lead to unintended behavior. Turning off multiple scatterings";
     multi_scatter = false;
-  }
-
-  //Check Pythia settings for if pTHat min is less than pTHat ref (can cause weird behaviors where almost everything will have multiple scatterings)
-  if ((multi_scatter) && (settings.flag("PhaseSpace:Bias2Selection")) && (pTHatMin < settings.parm("PhaseSpace:pTHatRef"))) {
-    JSWARN << "pTHatMin < pTHatRef can cause unexpected behavior with multiple nucleon scattering. Please check your settings.";
-    throw std::runtime_error("pTHatMin < pTHatRef can cause unexpected behavior with multiple nucleon scattering. Please check your settings.");
   }
 }
 
@@ -276,23 +266,9 @@ void PythiaIsrGun::ExecuteTask() {
     }
   };
 
-  // determine if two nucleons are at same location
-  struct same_location {
-    inline bool operator()(const std::vector<double> &p1,
-                           const std::vector<double> &p2) {
-      if (std::abs(p1[0]-p2[0]) < 1e-8
-          && std::abs(p1[1]-p2[1]) < 1e-8
-          && std::abs(p1[2]-p2[2]) < 1e-8 
-          && std::abs(p1[3]-p2[3]) < 1e-8)
-        return true;
-      else
-        return false;
-    }
-  };
     FourVector p_p;
 
   //Variables for checking duplicate collision points
-  same_location same_location;
   std::vector<int> index_list; //Shuffled index list to pick collision points and avoid duplicates
   for (int idx =0; idx < Ncoll; idx++){
     index_list.push_back(idx);
@@ -322,6 +298,7 @@ void PythiaIsrGun::ExecuteTask() {
     p62.clear();
     bool flag62 = false; // reset for each scattering so interior loop runs
     bool doScatt = true;
+    if (iscatt > 0 && !multi_scatter) break; //no multiple scatterings if off
   
     /*---Pick a collision point---*/
     int icoll = -1;
@@ -335,11 +312,8 @@ void PythiaIsrGun::ExecuteTask() {
           if (accepted_idx == shuffled_idx){
             continue; //skip already accepted points
           }
-          // same_proj = same_location(all_projPos[accepted_idx], all_projPos[shuffled_idx]);
-          // same_targ = same_location(all_targPos[accepted_idx], all_targPos[shuffled_idx]);
           same_proj = (allProjIDs[accepted_idx] == allProjIDs[shuffled_idx]);
           same_targ = (allTargIDs[accepted_idx] == allTargIDs[shuffled_idx]);
-          JSINFO << MAGENTA << "(same_proj, same_targ) = " << same_proj << ", " << same_targ;
 
           if (!same_proj && !same_targ){//Break internal check loop at index acceptable index
             icoll = shuffled_idx;
@@ -497,8 +471,6 @@ void PythiaIsrGun::ExecuteTask() {
       first_sigmaErr = info.sigmaErr();
       first_ptHat = info.pTHat();
       first_weight = info.weight();
-      // JSINFO << "first_sigma_gen = " << first_sigmaGen << " first_weight = " << first_weight << " first_ptHat = " << first_ptHat;
-      // JSINFO << "Values returned from GetSigmaGen, GetEventWeight, and GetPtHat: " << GetSigmaGen() << ", " << GetEventWeight() << ", " << GetPtHat();
     }
 
     //If scatter was generated give to framework below
@@ -734,9 +706,6 @@ void PythiaIsrGun::DefaultInitializePythia(Pythia8::RndmState randState, bool &d
     throw std::runtime_error("Pythia init() failed.");
   }
   doScatt=true;
-
-  //Debug
-  JSWARN << "At end of DefaultInitializePythia";
 }
 
 void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies){//Initialize via table
@@ -849,14 +818,6 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
     doScatt = true;
     JSINFO << MAGENTA << "Successfully initialized Pythia for secondary scatter";
   }
-
-
-  // for (int i=0; i<table.size(); i++){
-  //   JSWARN << "(" << table[i].probBin[0] << ", " << table[i].probBin[1] << ")   "  
-  //    << "(" << table[i].pTHatBin[0] << ", " << table[i].pTHatBin[1] << ")   " 
-  //    << table[i].processType;
-  // }
-
 }
 
 std::vector<PythiaIsrGun::tableRow> PythiaIsrGun::RetrieveTable() {
@@ -902,7 +863,7 @@ std::vector<PythiaIsrGun::tableRow> PythiaIsrGun::RetrieveTable() {
     { {x* 1.295414003013613e-02, 1.0}, {0, 0}, "", ""} 
   };
 
-  // //Debug & delete later
+  // //Debug
   //   std::vector<tableRow> table = { 
   //     {{0,.5}, {5,10}, "HardQCD:all = on", "PromptPhoton:all = off"},
   //     { {.5,1} , {20,30}, "HardQCD:all = off", "PromptPhoton:all = on"}

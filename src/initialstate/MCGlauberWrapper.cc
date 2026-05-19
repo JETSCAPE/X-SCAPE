@@ -266,7 +266,7 @@ void MCGlauberWrapper::ExecuteTask() {
                  targ_nucleon_ids_.push_back(id);
                  iparticle++;
             }
-            Jetscape::JSWARN << "MCGlauberWrapper generated " << binary_collision_projPos_.size() << " projectile nucleon positions";
+            // Jetscape::JSWARN << "MCGlauberWrapper generated " << binary_collision_projPos_.size() << " projectile nucleon positions";
             event_id_++;
         } catch (std::exception &err) {
             Jetscape::JSWARN << err.what();
