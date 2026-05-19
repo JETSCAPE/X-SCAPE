@@ -53,7 +53,7 @@ public:
   ~PythiaTGun();
   void InitTask();
   void ExecuteTask();
-
+  void GetCrossSec();
   // Getters
   double GetpTHatMin() const { return pTHatMin; }
   double GetpTHatMax() const { return pTHatMax; }

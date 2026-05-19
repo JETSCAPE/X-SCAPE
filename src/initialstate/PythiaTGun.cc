@@ -164,6 +164,11 @@ void PythiaTGun::Test(int ipy){
       for (int ix = 0; ix < nX; ++ix) {
         const double x = logGridValue(xmin, xmax, ix, nX);
         Pythia8::Pythia& py = *pythia_vec[ipy];
+        JSINFO<<MAGENTA << "Testing xf for parton id = " << id << ", x = " << x
+               << ", Q2 = " << Q2;
+        Pythia8::Pythia& py = *pythia_vec[0];
+        JSINFO<<MAGENTA << "Testing xf for parton id = " << id << ", x = " << x
+               << ", Q2 = " << Q2;
         auto pdfptrA = py.getInUsePDFPtr("A");
         auto pdfptrB = py.getInUsePDFPtr("B");
         //pdfptrA->xfUpdate(id, x, Q2);
@@ -189,7 +194,36 @@ void PythiaTGun::Test(int ipy){
          << outFile;
 }
 */
+void PythiaTGun::GetCrossSec(){
+  int i = 0;
+  int j = 0;
+  int ix = 0;
+  int iy = 0;
+  double x = 0.0;
+  double y = 0.0;
+  double dx = 2.0 * s_1x / double(n_1x);
+  double dy = s_1y / double(n_1y);
+  std::ofstream sigma_printer_;
+  sigma_printer_.open("sigma_AuAu0010.txt", std::ios::trunc);
+  for (auto& py : pythia_vec) {
+    ix = j/n_1x;
+    iy = j%n_1x;
+    x = -s_1x + dx / 2.0 + ix * dx;
+    y = 0.0 + dy / 2.0 + iy * dy;
+    do {
+      (*py).next();
+      i++;
+    } while (i<1e4);
+    CrossSection = (*py).info.sigmaGen();
+    sigma_printer_ << x << "  " << y << "  " << CrossSection << "\n";
+    i = 0;
+    j++;
+  }
+  sigma_printer_.close();
+}
 void PythiaTGun::ExecuteTask() {
+  GetCrossSec();
+  exit(1);
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
   double p[4], xLoc[4];
