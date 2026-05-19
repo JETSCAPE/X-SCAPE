@@ -743,20 +743,10 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
   //Start by rolling random number
   double r = ZeroOneDistribution(*GetMt19937Generator());
 
-  //Refer to HARDCODED table for now
-  struct tableRow {
-    std::vector<double> probBin;
-    std::vector<double> pTHatBin;
-    std::string processOn;
-    std::string processOff;
-  };
-  std::vector<tableRow> table;
-  table.push_back(tableRow{{0,.5}, {5, 20}, "HardQCD:all = on", "PromptPhoton:all = off"});
-  table.push_back(tableRow{{0.5,1}, {20, 50}, "PromptPhoton:all = on", "HardQCD:all = off"});
-
+  std::vector<tableRow> table = RetrieveTable();
   //Find the probability bin from r and probBin boundaries
   int ibin = -1;
-  for (int i = 0; i < table.size(); i++) {
+  for (int i = table.size() - 1; i >= 0; i--) {//Go backwards since most will be in last bin
     if (r < table[i].probBin[1] && r >= table[i].probBin[0]) {
       ibin = i;
       break;
@@ -768,7 +758,7 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
   
   /*----Do the initialization----*/
   //Check if there should be no hard-scatter (first bin)
-  if (ibin == 0) {
+  if (ibin == table.size() - 1) {
     doScatt = false;
     return;
   }
@@ -867,4 +857,55 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
   //    << table[i].processType;
   // }
 
+}
+
+std::vector<PythiaIsrGun::tableRow> PythiaIsrGun::RetrieveTable() {
+  //scale to more recent pp cross-section STAR 2020. Table made with 42.07
+  double x = 42.07/43.82;
+  std::vector<tableRow> table = {
+    { { 0.0000000000e+00, x* 1.0715277358e-02 }, { 5.0000000000e+00, 7.0000000000e+00 }, "HardQCD:all = on", "PromptPhoton:all = off" },
+    { { x* 1.0715277358e-02, x* 1.2418494729e-02 }, { 7.0000000000e+00, 9.0000000000e+00 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2418494729e-02, x* 1.2810934567e-02 }, { 9.0000000000e+00, 1.1000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2810934567e-02, x* 1.2925635374e-02 }, { 1.1000000000e+01, 1.3000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2925635374e-02, x* 1.2964438558e-02 }, { 1.3000000000e+01, 1.5000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2925635374e-02, x* 1.2940426531e-02 }, { 1.5000000000e+01, 1.7000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2940426531e-02, x* 1.2948141745e-02 }, { 1.7000000000e+01, 2.0000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2948141745e-02, x* 1.2951087570e-02 }, { 2.0000000000e+01, 2.5000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2951087570e-02, x* 1.2951590239e-02 }, { 2.5000000000e+01, 3.0000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2951590239e-02, x* 1.2951688998e-02 }, { 3.0000000000e+01, 3.5000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2951688998e-02, x* 1.2951710180e-02 }, { 3.5000000000e+01, 4.0000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2951710180e-02, x* 1.2951714884e-02 }, { 4.0000000000e+01, 4.5000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2951714884e-02, x* 1.2951715943e-02 }, { 4.5000000000e+01, 5.0000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2951715943e-02, x* 1.2951716179e-02 }, { 5.0000000000e+01, 5.5000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.2951716179e-02, x* 1.2951716230e-02 }, { 5.5000000000e+01, 6.0000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.295171623000000e-02, x* 1.295171624243097e-02 }, { 6.000000000000000e+01, 7.000000000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.295171624243097e-02, x* 1.295171624281274e-02 }, { 7.000000000000000e+01, 8.000000000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.295171624281274e-02, x* 1.295171624281810e-02 }, { 8.000000000000000e+01, 9.000000000000000e+01 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.295171624281810e-02, x* 1.295171624281811e-02 }, { 9.000000000000000e+01, 1.000000000000000e+02 }, "HardQCD:all = on", "PromptPhoton:all = off" }, 
+    { { x* 1.295171624281811e-02, x* 1.295356107133219e-02 }, { 5.000000000000000e+00, 7.000000000000000e+00 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295356107133219e-02, x* 1.295395966269295e-02 }, { 7.000000000000000e+00, 9.000000000000000e+00 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295395966269295e-02, x* 1.295407385491257e-02 }, { 9.000000000000000e+00, 1.100000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295407385491257e-02, x* 1.295411295149797e-02 }, { 1.100000000000000e+01, 1.300000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295411295149797e-02, x* 1.295412803167064e-02 }, { 1.300000000000000e+01, 1.500000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295412803167064e-02, x* 1.295413440185603e-02 }, { 1.500000000000000e+01, 1.700000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295413440185603e-02, x* 1.295413807381912e-02 }, { 1.700000000000000e+01, 2.000000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295413807381912e-02, x* 1.295413964598038e-02 }, { 2.000000000000000e+01, 2.500000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295413964598038e-02, x* 1.295413994786286e-02 }, { 2.500000000000000e+01, 3.000000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295413994786286e-02, x* 1.295414001193538e-02 }, { 3.000000000000000e+01, 3.500000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295414001193538e-02, x* 1.295414002615953e-02 }, { 3.500000000000000e+01, 4.000000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295414002615953e-02, x* 1.295414002929272e-02 }, { 4.000000000000000e+01, 4.500000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295414002929272e-02, x* 1.295414002996418e-02 }, { 4.500000000000000e+01, 5.000000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295414002996418e-02, x* 1.295414003010266e-02 }, { 5.000000000000000e+01, 5.500000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295414003010266e-02, x* 1.295414003012981e-02 }, { 5.500000000000000e+01, 6.000000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295414003012981e-02, x* 1.295414003013593e-02 }, { 6.000000000000000e+01, 7.000000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" }, 
+    { { x* 1.295414003013593e-02, x* 1.295414003013613e-02 }, { 7.000000000000000e+01, 8.000000000000000e+01 }, "PromptPhoton:all = on", "HardQCD:all = off" },
+    { {x* 1.295414003013613e-02, 1.0}, {0, 0}, "", ""} 
+  };
+
+  // //Debug & delete later
+  //   std::vector<tableRow> table = { 
+  //     {{0,.5}, {5,10}, "HardQCD:all = on", "PromptPhoton:all = off"},
+  //     { {.5,1} , {20,30}, "HardQCD:all = off", "PromptPhoton:all = on"}
+  //   };
+  return table; 
 }

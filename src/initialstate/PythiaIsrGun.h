@@ -45,6 +45,12 @@ private:
   double first_sigmaErr = -1.0;
   double first_ptHat = -1.0;
   double first_weight = -1.0;
+  struct tableRow {
+    std::vector<double> probBin;
+    std::vector<double> pTHatBin;
+    std::string processOn;
+    std::string processOff;
+  };
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<PythiaIsrGun> reg;
@@ -79,6 +85,7 @@ public:
   //Helpers
   void TableInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies);
   void DefaultInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies);
+  std::vector<tableRow> RetrieveTable();
 
 protected:
   uniform_real_distribution<double> ZeroOneDistribution;
