@@ -51,6 +51,7 @@ private:
     std::string processOn;
     std::string processOff;
   };
+  std::string outputFilename; //For additional files
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<PythiaIsrGun> reg;

@@ -171,6 +171,8 @@ void PythiaIsrGun::InitTask() {
     readString(s);
   }
 
+  outputFilename = GetXMLElementText({"outputFilename"});
+
   isFirstEvent = true;
   randState = rndm.getState(); //will need to move or delete probably to execute. Just here for test
 
@@ -607,7 +609,7 @@ void PythiaIsrGun::ExecuteTask() {
 
   // File for PIG summary of collision points and Ncoll
   std::ofstream PIG_summary;
-  PIG_summary.open("PIG_summary.dat", std::ios::out | std::ios::app);
+  PIG_summary.open(outputFilename + std::string("_PIG_summary.dat"), std::ios::out | std::ios::app);
   PIG_summary << "# Event " << GetCurrentEvent() << ", Ncoll " << Ncoll << ", Nscatt: " 
     << passed_hard_position_idx.size() << ", Location (t,x,y,z,bool:hard_scatter)" << std::endl;
   for (int i=0; i<all_t.size(); i++){
