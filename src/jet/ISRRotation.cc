@@ -95,9 +95,9 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
   FourVector PlusZaxis(0.0,0.0,1.0,1.0);
 
   //Debug
-  std::ofstream debug_file;
-  debug_file.open("ISRRot_debug.txt", std::ios::out | std::ios::app);
-  debug_file << "\n\n In event number" << GetCurrentEvent() << ": \n";  
+  // std::ofstream debug_file;
+  // debug_file.open("ISRRot_debug.txt", std::ios::out | std::ios::app);
+  // debug_file << "\n\n In event number" << GetCurrentEvent() << ": \n";  
 
   // if(  ) return;
 
@@ -192,11 +192,11 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
       if ((Out.plabel() == Current_Label || std::abs(Out.pid()) == cid || std::abs(Out.pid()) == bid) && Out.pstat() < 0) {
         
-        debug_file << " iMATTER Pushing particlelabel " << Out.plabel() << " status "
-               << Out.pstat() << " pid " << Out.pid()
-               << " e " << Out.e() << " px " << Out.px() << " py " << Out.py()<< " pz " << Out.pz()
-               << " to MCGlauber for subtraction \n"
-               << "at position" << Out.x_in().t() << Out.x_in().x() << Out.x_in().y() << Out.x_in().z();
+        // debug_file << " iMATTER Pushing particlelabel " << Out.plabel() << " status "
+        //        << Out.pstat() << " pid " << Out.pid()
+        //        << " e " << Out.e() << " px " << Out.px() << " py " << Out.py()<< " pz " << Out.pz()
+        //        << " to MCGlauber for subtraction \n"
+        //        << "at position" << Out.x_in().t() << Out.x_in().x() << Out.x_in().y() << Out.x_in().z();
         if (Out.e() < 0) {
           JSWARN << "Energy to subtract is negative !";
           exit(1);
@@ -270,7 +270,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
         Out.set_stat(0);
       }
 
-      debug_file.close();
+      // debug_file.close();
     }
 
     SkipRotation:

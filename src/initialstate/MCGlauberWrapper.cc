@@ -239,11 +239,11 @@ void MCGlauberWrapper::ExecuteTask() {
                  binary_collision_x_.push_back(xvec[1]);
                  binary_collision_y_.push_back(xvec[2]);
                  binary_collision_z_.push_back(xvec[3]);
-                 JSINFO << "Added Hard Binary Collision Point at t,x,y,z = "
-                        << xvec[0] << ", "
-                        << xvec[1] << ", "
-                        << xvec[2] << ", "
-                        << xvec[3];
+                //  JSINFO << "Added Hard Binary Collision Point at t,x,y,z = "
+                //         << xvec[0] << ", "
+                //         << xvec[1] << ", "
+                //         << xvec[2] << ", "
+                //         << xvec[3];
 
                  auto nucleon = collisionEvents[iparticle].get_proj_nucleon_ptr().lock();
                  xvec = nucleon->get_x();
@@ -317,11 +317,11 @@ void MCGlauberWrapper::ExecuteTask() {
             std::exit(-1);
         }
     }
-    //Print ncoll to file
-    std::ofstream ncoll_out;
-    ncoll_out.open("ncoll_list.txt", std::ios::app);
-    ncoll_out << ncoll_ << std::endl;
-    ncoll_out.close();
+    // // Print ncoll to file
+    // std::ofstream ncoll_out;
+    // ncoll_out.open("ncoll_list.txt", std::ios::app);
+    // ncoll_out << ncoll_ << std::endl;
+    // ncoll_out.close();
 }
 
 void MCGlauberWrapper::SampleABinaryCollisionPoint(
