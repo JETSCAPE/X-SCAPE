@@ -231,26 +231,21 @@ void PythiaIsrGun::ExecuteTask() {
                                             //Used to ensure valid hard-scatt site
   int Ncoll = ini->GetNcoll();
 
-  //Debug
+  // // Debug
   // std::ofstream debug_file;
   // debug_file.open("PIG_debug.txt", std::ios::out | std::ios::app);
-  // debug_file << "Event: " << GetCurrentEvent() << "\n";
+  // debug_file << "\nEvent: " << GetCurrentEvent() << "\n";
   // debug_file << "Ncoll: " << Ncoll << "\n";
-  // debug_file << "Index; \t Binary Collision PT; \t proj pos; \t targ pos \n"; 
+  // debug_file << "Index; \t Binary Collision pos \n";
   // for (int i = 0; i < Ncoll; i++){
   //   debug_file << i << "; \t (" << all_t[i] << ", " 
   //   << all_x[i] << ", "
   //   << all_y[i] << ", "
-  //   << all_z[i] << "); \t (";
-  //   for (const auto& val : all_projPos[i]){
-  //     debug_file << val << " ";
-  //   }
-  //   debug_file << "); \t (";
-  //   for (const auto& val : all_targPos[i]){
-  //     debug_file << val << " ";
-  //   }
-  //   debug_file << ")\n";
-  // } 
+  //   << all_z[i] << "):"
+  //   << "\t" << "Proj Nucleon: " << allProjIDs[i]
+  //   << "\t" << "Targ Nucleon: " << allTargIDs[i] << "\n"; 
+  // }
+  // debug_file.close();
 
   // std::ofstream debug_partons_file;
   // debug_partons_file.open("PIG_partons.txt", std::ios::out | std::ios::app);
@@ -374,11 +369,6 @@ void PythiaIsrGun::ExecuteTask() {
     // debug_file << "Collision Point Position (t,x,y,z): (" << x_p.t() << ", " << x_p.x() << ", " << x_p.y() << ", " << x_p.z() << ")\n";
 
     ReDoSampling:
-    ResizeTotalMomentumVectors(iscatt+1);
-    SetTotalMomentumFractionNegative(0.0, iscatt);
-    SetTotalMomentumFractionPositive(0.0, iscatt);
-    SetTotalMomentumPositive(0.0, iscatt);
-    SetTotalMomentumNegative(0.0, iscatt);
     do { // loop over samplings in each scattering
       NSamplings++;
       flag62=false;
