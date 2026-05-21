@@ -174,7 +174,6 @@ void PythiaIsrGun::InitTask() {
   outputFilename = GetXMLElementText({"outputFilename"});
 
   isFirstEvent = true;
-  randState = rndm.getState(); //will need to move or delete probably to execute. Just here for test
 
   std::ofstream sigma_printer;
   sigma_printer.open(printer, std::ios::trunc);
@@ -184,6 +183,12 @@ void PythiaIsrGun::InitTask() {
     JSWARN << "Multiple scatterings and Bias2Selection can lead to unintended behavior. Turning off multiple scatterings";
     multi_scatter = false;
   }
+
+  // And initialize
+  if (!init()) { // Pythia>8.1
+    throw std::runtime_error("Pythia init() failed.");
+  }
+  randState = rndm.getState();
 }
 
 void PythiaIsrGun::WriteTask(weak_ptr<JetScapeWriter> w) {
@@ -353,11 +358,11 @@ void PythiaIsrGun::ExecuteTask() {
 
     /*---Decide on proceeding with sampling and initialize---*/
     if (iscatt == 0) {//First scatter always happens
-      DefaultInitializePythia(randState, doScatt, projSpecies);
+      DefaultInitializePythia(doScatt, projSpecies);
     }
     else{
       JSINFO << MAGENTA << "Will attempt to initialize for totem scattering";
-      TableInitializePythia(randState, doScatt, projSpecies);
+      TableInitializePythia(doScatt, projSpecies);
     }
     if (!doScatt) {//Do not proceed with generation
       break;
@@ -369,12 +374,18 @@ void PythiaIsrGun::ExecuteTask() {
     // debug_file << "Collision Point Position (t,x,y,z): (" << x_p.t() << ", " << x_p.x() << ", " << x_p.y() << ", " << x_p.z() << ")\n";
 
     ReDoSampling:
+    ResizeTotalMomentumVectors(iscatt+1);
+    SetTotalMomentumFractionNegative(0.0, iscatt);
+    SetTotalMomentumFractionPositive(0.0, iscatt);
+    SetTotalMomentumPositive(0.0, iscatt);
+    SetTotalMomentumNegative(0.0, iscatt);
     do { // loop over samplings in each scattering
       NSamplings++;
       flag62=false;
       p62.clear();
       IndexToSkip.clear();
       next();
+      JSINFO << BOLDYELLOW << "pTHat generated: " << info.pTHat();
 
       //Select indices to skip
       for (int parid = 0; parid < event.size(); parid++) {
@@ -461,8 +472,6 @@ void PythiaIsrGun::ExecuteTask() {
 
     } while (!flag62);
 
-    //Update the state of pythia random number generator
-    randState = rndm.getState();
 
     if (iscatt == 0){ // Set first scatter info for printer and getters
       first_sigmaGen = info.sigmaGen();
@@ -519,12 +528,16 @@ void PythiaIsrGun::ExecuteTask() {
         {
             TotalEnergyOfInitialStatePartons += particle.e();
             if(particle.pz() >= 0.0) {
+              JSINFO << MAGENTA << "POSITIVE particle (e, pz): " << "(" << particle.e() << ", " << particle.pz() << ")";
               SetTotalMomentumPositive(GetTotalMomentumPositive(iscatt) + particle.e(), iscatt);
               SetTotalMomentumFractionPositive(GetTotalMomentumFractionPositive(iscatt) + (particle.e() + particle.pz() ) / ( 0.94 * eCM),iscatt);
+              JSINFO << MAGENTA << "POSITIVE total momentum fraction: " << GetTotalMomentumFractionPositive(iscatt);
               }
             else {
+              JSINFO << MAGENTA << "NEGATIVE particle (e, pz): " << "(" << particle.e() << ", " << particle.pz() << ")";
               SetTotalMomentumNegative(GetTotalMomentumNegative(iscatt) +particle.e(), iscatt);
               SetTotalMomentumFractionNegative(GetTotalMomentumFractionNegative(iscatt) + (particle.e() - particle.pz() ) / ( 0.94 * eCM), iscatt);
+              JSINFO << MAGENTA << "NEGATIVE total momentum fraction: " << GetTotalMomentumFractionNegative(iscatt);
               }
         }
     }
@@ -607,6 +620,10 @@ void PythiaIsrGun::ExecuteTask() {
   ini->CollisionPositiveRotatedMomentum = std::vector<FourVector>(NPP/2,Zeros);
   // ini->ClearHardPartonMomentum();
 
+  //Update the state of pythia random number generator
+  randState = rndm.getState();
+  rndm.dumpState("dumpedState.txt");
+
   // File for PIG summary of collision points and Ncoll
   std::ofstream PIG_summary;
   PIG_summary.open(outputFilename + std::string("_PIG_summary.dat"), std::ios::out | std::ios::app);
@@ -627,7 +644,7 @@ void PythiaIsrGun::ExecuteTask() {
   // debug_partons_file.close();
 }
 
-void PythiaIsrGun::DefaultInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies){//Default initialization
+void PythiaIsrGun::DefaultInitializePythia(bool &doScatt, std::string projSpecies){//Default initialization
   //For parsing text
   stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
   numbf.setf(ios::fixed, ios::floatfield);
@@ -692,8 +709,6 @@ void PythiaIsrGun::DefaultInitializePythia(Pythia8::RndmState randState, bool &d
     readString(s);
   }
 
-  /*Set the random state*/
-  rndm.setState(randState);
   //set doScatt=True always
 
   /*Set the projectile species*/
@@ -703,10 +718,14 @@ void PythiaIsrGun::DefaultInitializePythia(Pythia8::RndmState randState, bool &d
   if (!init()) { // Pythia>8.1
     throw std::runtime_error("Pythia init() failed.");
   }
+
+  /*Set the random state*/
+  rndm.setState(randState);
+
   doScatt=true;
 }
 
-void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies){//Initialize via table
+void PythiaIsrGun::TableInitializePythia(bool &doScatt, std::string projSpecies){//Initialize via table
   //Start by rolling random number
   double r = ZeroOneDistribution(*GetMt19937Generator());
 
@@ -724,7 +743,7 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
   }
   
   /*----Do the initialization----*/
-  //Check if there should be no hard-scatter (first bin)
+  //Check if there should be no hard-scatter (last bin)
   if (ibin == table.size() - 1) {
     doScatt = false;
     return;
@@ -787,8 +806,6 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
       readString(s);
     }
 
-    /*Set the random state*/
-    rndm.setState(randState);
 
     /*Set the projectile species*/
     readString(projSpecies); //should be full line for Pythia
@@ -813,6 +830,9 @@ void PythiaIsrGun::TableInitializePythia(Pythia8::RndmState randState, bool &doS
     if (!init()) { // Pythia>8.1
       throw std::runtime_error("Pythia init() failed.");
     }
+    /*Set the random state*/
+    rndm.setState(randState);
+
     doScatt = true;
     JSINFO << MAGENTA << "Successfully initialized Pythia for secondary scatter";
   }

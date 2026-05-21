@@ -21,6 +21,7 @@
 #include "HardProcess.h"
 #include "JetScapeLogger.h"
 #include "Pythia8/Pythia.h"
+#include "Pythia8/Basics.h"
 
 using namespace Jetscape;
 using std::uniform_real_distribution;
@@ -84,8 +85,8 @@ public:
   double GetEventWeight() { return first_weight; };
 
   //Helpers
-  void TableInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies);
-  void DefaultInitializePythia(Pythia8::RndmState randState, bool &doScatt, std::string projSpecies);
+  void TableInitializePythia(bool &doScatt, std::string projSpecies);
+  void DefaultInitializePythia(bool &doScatt, std::string projSpecies);
   std::vector<tableRow> RetrieveTable();
 
 protected:
