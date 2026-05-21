@@ -226,7 +226,9 @@ void PythiaIsrGun::ExecuteTask() {
   // std::vector<int> targCharges;
   // ini->GetAllTargNucleonCharges(targCharges);
   std::vector<int> projCharges;
+  std::vector<int> targCharges;
   ini->GetAllProjNucleonCharges(projCharges);
+  ini->GetAllTargNucleonCharges(targCharges);
   std::vector<int> AcceptedCollisionPoints; //INDICES of accepted collision points
                                             //Used to ensure valid hard-scatt site
   int Ncoll = ini->GetNcoll();
@@ -334,12 +336,23 @@ void PythiaIsrGun::ExecuteTask() {
 
     /*Set species for projectile beam*/
     std::string projSpecies;
+    std::string targSpecies;
     try{
       if (projCharges[icoll] == 1){//Set proton beam
         projSpecies = "Beams:idA = 2212";
       }
       else if (projCharges[icoll] == 0){//Set neutron beam
         projSpecies = "Beams:idA = 2112";
+      }
+      else {
+        throw std::invalid_argument("Projectile species must have charge +1 or 0. Please check");
+      }
+
+      if (targCharges[icoll] == 1){//Set proton beam
+        targSpecies = "Beams:idB = 2212";
+      }
+      else if (targCharges[icoll] == 0){//Set neutron beam
+        targSpecies = "Beams:idB = 2112";
       }
       else {
         throw std::invalid_argument("Projectile species must have charge +1 or 0. Please check");
@@ -353,11 +366,11 @@ void PythiaIsrGun::ExecuteTask() {
 
     /*---Decide on proceeding with sampling and initialize---*/
     if (iscatt == 0) {//First scatter always happens
-      DefaultInitializePythia(doScatt, projSpecies);
+      DefaultInitializePythia(doScatt, projSpecies, targSpecies);
     }
     else{
       JSINFO << MAGENTA << "Will attempt to initialize for totem scattering";
-      TableInitializePythia(doScatt, projSpecies);
+      TableInitializePythia(doScatt, projSpecies, targSpecies);
     }
     if (!doScatt) {//Do not proceed with generation
       break;
@@ -612,7 +625,6 @@ void PythiaIsrGun::ExecuteTask() {
 
   //Update the state of pythia random number generator
   randState = rndm.getState();
-  rndm.dumpState("dumpedState.txt");
 
   // File for PIG summary of collision points and Ncoll
   std::ofstream PIG_summary;
@@ -634,7 +646,7 @@ void PythiaIsrGun::ExecuteTask() {
   // debug_partons_file.close();
 }
 
-void PythiaIsrGun::DefaultInitializePythia(bool &doScatt, std::string projSpecies){//Default initialization
+void PythiaIsrGun::DefaultInitializePythia(bool &doScatt, std::string projSpecies, std::string targSpecies){//Default initialization
   //For parsing text
   stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
   numbf.setf(ios::fixed, ios::floatfield);
@@ -703,6 +715,7 @@ void PythiaIsrGun::DefaultInitializePythia(bool &doScatt, std::string projSpecie
 
   /*Set the projectile species*/
   readString(projSpecies); //should be full line for Pythia
+  readString(targSpecies); //should be full line for Pythia
 
   // And initialize
   if (!init()) { // Pythia>8.1
@@ -715,7 +728,7 @@ void PythiaIsrGun::DefaultInitializePythia(bool &doScatt, std::string projSpecie
   doScatt=true;
 }
 
-void PythiaIsrGun::TableInitializePythia(bool &doScatt, std::string projSpecies){//Initialize via table
+void PythiaIsrGun::TableInitializePythia(bool &doScatt, std::string projSpecies, std::string targSpecies){//Initialize via table
   //Start by rolling random number
   double r = ZeroOneDistribution(*GetMt19937Generator());
 
@@ -799,6 +812,7 @@ void PythiaIsrGun::TableInitializePythia(bool &doScatt, std::string projSpecies)
 
     /*Set the projectile species*/
     readString(projSpecies); //should be full line for Pythia
+    readString(targSpecies); //should be full line for Pythia
 
     /*--Read in from the bin selected--*/
     tableRow binInfo = table[ibin];

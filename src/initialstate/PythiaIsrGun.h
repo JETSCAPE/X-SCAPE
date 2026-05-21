@@ -85,8 +85,8 @@ public:
   double GetEventWeight() { return first_weight; };
 
   //Helpers
-  void TableInitializePythia(bool &doScatt, std::string projSpecies);
-  void DefaultInitializePythia(bool &doScatt, std::string projSpecies);
+  void TableInitializePythia(bool &doScatt, std::string projSpecies, std::string targSpecies);
+  void DefaultInitializePythia(bool &doScatt, std::string projSpecies, std::string targSpecies);
   std::vector<tableRow> RetrieveTable();
 
 protected:
