@@ -133,6 +133,21 @@ endif()
 # ##############################################################################
 
 add_library(JetScape SHARED ${SOURCES})
+
+# music4gpu's Advance/Evolve classes gain extra members under MUSIC_USE_GPU
+# (see external_packages/music4gpu/src/advance.h), which USE_METAL / USE_CUDA
+# enable.  MusicWrapper.cc includes those headers, so it MUST see the same macro
+# as the music library — otherwise the class layouts diverge across translation
+# units (ODR violation) and e.g. Evolve::surfaceCellVec_ is read at the wrong
+# offset, yielding a garbage surface-cell count that crashes
+# PassHydroSurfaceToFramework().
+if(USE_METAL)
+  target_compile_definitions(JetScape PRIVATE USE_METAL)
+endif()
+if(USE_CUDA)
+  target_compile_definitions(JetScape PRIVATE USE_CUDA)
+endif()
+
 target_link_libraries(
   JetScape
   JetScapeThird
