@@ -601,7 +601,7 @@ void MpiMusic::PassHydroSurfaceToFramework() {
   auto number_of_cells = music_hydro_ptr->get_number_of_surface_cells();
   JSINFO << "Total number of MUSIC surface cells: " << number_of_cells;
   SurfaceCell surfaceCell_i;
-  for (int i = 0; i < number_of_cells; i++) {
+  for (long i = 0; i < number_of_cells; i++) {
     SurfaceCellInfo surface_cell_info;
     music_hydro_ptr->get_surface_cell_with_index(i, surfaceCell_i);
     surface_cell_info.tau = surfaceCell_i.xmu[0];
