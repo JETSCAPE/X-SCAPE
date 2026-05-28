@@ -123,6 +123,12 @@
     <initial_Ncoll_list>../examples/test_hydro_files</initial_Ncoll_list>
 
     <MCGlauber>
+      <!--Path to the 3dMCGlauber input file. If omitted (recommended), it is
+          resolved as $XSCAPE_DATA_DIR/mcglauber.input, falling back to
+          ./mcglauber.input when XSCAPE_DATA_DIR is unset. Add an explicit
+          (absolute or relative) path here to override, e.g.
+          <mcglauber_input_file>/abs/path/mcglauber.input</mcglauber_input_file>.
+          Do NOT leave this element empty (an empty element is unsupported).-->
       <!--0: generates full event with binary collisions and strings-->
       <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
       <generateOnlyPositions>0</generateOnlyPositions>
@@ -325,6 +331,11 @@
 
     <Lbt>
       <name> Lbt </name>
+      <!--Directory holding the LBT data tables. If omitted (recommended), it is
+          resolved from the LBT_TABLES_PATH env var, else
+          $XSCAPE_DATA_DIR/LBT-tables, else ./LBT-tables. Add an explicit path
+          here to override, e.g. <LBT_table_path>/abs/path/LBT-tables</LBT_table_path>.
+          Do NOT leave this element empty (an empty element is unsupported).-->
       <Q0> 2.0 </Q0>
       <in_vac> 0 </in_vac>
       <only_leading> 0 </only_leading>

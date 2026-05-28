@@ -400,6 +400,8 @@ class LBT
   double ModificationCorr;
   double ModificationFactor;
 
+  std::string lbt_table_path_;  // directory holding the LBT data tables
+
   //  extern "C" {
   //      void read_ccnu_(char *dataFN_in, int len1);
   //      void hydroinfoccnu_(double *Ct, double *Cx, double *Cy, double *Cz,

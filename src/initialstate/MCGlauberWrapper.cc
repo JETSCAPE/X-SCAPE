@@ -23,6 +23,7 @@
 
 #include "JetScapeLogger.h"
 #include "JetScapeSignalManager.h"
+#include "JetScapeDataPath.h"
 #include "MCGlauberWrapper.h"
 
 // Register the module with the base class
@@ -42,8 +43,18 @@ void MCGlauberWrapper::InitTask() {
 
   int argc = 0;
   char *argv[1];
+  // Resolve the 3dMCGlauber input file: an explicit XML path wins; otherwise
+  // fall back to XSCAPE_DATA_DIR/mcglauber.input (i.e. ./mcglauber.input when
+  // the env var is unset), so a shared asset tree can be used from a separate
+  // per-run working directory.
+  std::string mcglauber_input_file =
+      GetXMLElementText({"IS", "MCGlauber", "mcglauber_input_file"}, false);
+  if (mcglauber_input_file.empty()) {
+    mcglauber_input_file = XSCAPEDataPath("mcglauber.input");
+  }
+  JSINFO << "3dMCGlauber input file: " << mcglauber_input_file;
   mc_gen_ = std::shared_ptr<MCGlb::EventGenerator>(
-      new MCGlb::EventGenerator("mcglauber.input", argc, argv, ran_seed));
+      new MCGlb::EventGenerator(mcglauber_input_file, argc, argv, ran_seed));
 
   // overwrite input options
   int para_temp_int;
