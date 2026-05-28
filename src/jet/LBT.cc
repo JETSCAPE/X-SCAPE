@@ -17,6 +17,8 @@
 #include "LBT.h"
 #include "JetScapeLogger.h"
 #include "JetScapeXML.h"
+#include "JetScapeDataPath.h"
+#include <cstdlib>
 
 #include "tinyxml2.h"
 #include <string>
@@ -92,8 +94,23 @@ void LBT::InitTask() {
   //...read parameters from LBT.input first, but can be changed in JETSCAPE xml
   // file if any conflict exists
 
-  setParameter(
-      "LBT-tables/LBT.input");  // re-set parameters from input parameter file
+  // Resolve the directory holding the LBT data tables. Priority:
+  //   1. XML element {Eloss, Lbt, LBT_table_path} if set
+  //   2. LBT_TABLES_PATH environment variable
+  //   3. XSCAPE_DATA_DIR/LBT-tables (./LBT-tables when XSCAPE_DATA_DIR is unset)
+  lbt_table_path_ = GetXMLElementText({"Eloss", "Lbt", "LBT_table_path"}, false);
+  if (lbt_table_path_.empty()) {
+    const char *env = std::getenv("LBT_TABLES_PATH");
+    if (env != nullptr && env[0] != '\0') {
+      lbt_table_path_ = env;
+    } else {
+      lbt_table_path_ = XSCAPEDataPath("LBT-tables");
+    }
+  }
+  JSINFO << "LBT tables path: " << lbt_table_path_;
+
+  setParameter(lbt_table_path_ +
+               "/LBT.input");  // re-set parameters from input parameter file
 
   //    if(checkParameter(argc)==0) { // check whether the input parameters are
   //    all correct
@@ -1551,7 +1568,7 @@ void LBT::read_tables() {  // intialize various tables for LBT
   //...read scattering rate
   int it, ie;
   int n = 450;
-  ifstream f1("LBT-tables/ratedata");
+  ifstream f1(lbt_table_path_ + "/ratedata");
   if (!f1.is_open()) {
     cout << "Erro openning date file1!\n";
   } else {
@@ -1566,7 +1583,7 @@ void LBT::read_tables() {  // intialize various tables for LBT
   f1.close();
 
   // duplicate for heavy quark
-  ifstream f11("LBT-tables/ratedata-HQ");
+  ifstream f11(lbt_table_path_ + "/ratedata-HQ");
   if (!f11.is_open()) {
     cout << "Erro openning HQ data file!\n";
   } else {
@@ -1579,11 +1596,11 @@ void LBT::read_tables() {  // intialize various tables for LBT
 
   // read radiation table for heavy quark
   if (KINT0 != 0) {
-    ifstream f12("LBT-tables/dNg_over_dt_cD6.dat");
-    ifstream f13("LBT-tables/dNg_over_dt_qD6.dat");
-    ifstream f14("LBT-tables/dNg_over_dt_gD6.dat");
-    ifstream f15("LBT-tables/dNg_over_dt_qD7.dat");
-    ifstream f16("LBT-tables/dNg_over_dt_gD7.dat");
+    ifstream f12(lbt_table_path_ + "/dNg_over_dt_cD6.dat");
+    ifstream f13(lbt_table_path_ + "/dNg_over_dt_qD6.dat");
+    ifstream f14(lbt_table_path_ + "/dNg_over_dt_gD6.dat");
+    ifstream f15(lbt_table_path_ + "/dNg_over_dt_qD7.dat");
+    ifstream f16(lbt_table_path_ + "/dNg_over_dt_gD7.dat");
     if (!f12.is_open() || !f13.is_open() || !f14.is_open() || !f15.is_open() ||
         !f16.is_open()) {
       cout << "Erro openning HQ radiation table file!\n";
@@ -1642,7 +1659,7 @@ void LBT::read_tables() {  // intialize various tables for LBT
   }
 
   // preparation for HQ 2->2
-  ifstream fileB("LBT-tables/distB.dat");
+  ifstream fileB(lbt_table_path_ + "/distB.dat");
   if (!fileB.is_open()) {
     cout << "Erro openning data file distB.dat!" << endl;
   } else {
@@ -1665,7 +1682,7 @@ void LBT::read_tables() {  // intialize various tables for LBT
   }
   fileB.close();
 
-  ifstream fileF("LBT-tables/distF.dat");
+  ifstream fileF(lbt_table_path_ + "/distF.dat");
   if (!fileF.is_open()) {
     cout << "Erro openning data file distF.dat!" << endl;
   } else {
