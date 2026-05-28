@@ -17,7 +17,8 @@ dAuxml*/*
 external_packages/LBT*
 external_packages/iSS*
 external_packages/3dMCGlauber*
-external_packages/music*
+external_packages/music
+external_packages/music4gpu
 external_packages/3dMCGlauber
 examples/test_hydro_files/
 external_packages/freestream-milne/

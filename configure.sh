@@ -110,14 +110,32 @@ if echo " $MAIN_CHOICES " | grep -qw "USE_JS_CONTRIB"; then
         USE_JS_PYJETSCAPE  "PyJetscape pybind11 Python bindings"                      off)
 fi
 
+# ── MUSIC backend sub-option (shown only when USE_MUSIC is selected) ────────
+# CPU uses external_packages/music; CUDA/Metal use external_packages/music4gpu.
+# Only one backend is ever built (either/or).
+MUSIC_BACKEND="cpu"
+MUSIC_DIR="music"
+MUSIC_SCRIPT="get_music.sh"
+if echo " $MAIN_CHOICES " | grep -qw "USE_MUSIC"; then
+    MUSIC_BACKEND=$(dlg --title "MUSIC backend" \
+        --menu "Select the MUSIC hydro backend (either/or):" 13 72 3 \
+        cpu   "Original CPU MUSIC  (external_packages/music)" \
+        cuda  "music4gpu + CUDA GPU  (NVIDIA)" \
+        metal "music4gpu + Metal GPU  (macOS / Apple Silicon)")
+    if [[ "$MUSIC_BACKEND" == "cuda" || "$MUSIC_BACKEND" == "metal" ]]; then
+        MUSIC_DIR="music4gpu"
+        MUSIC_SCRIPT="get_music4gpu.sh"
+    fi
+fi
+
 # ── Check source availability and offer to run get_*.sh ───────────────────
 EP="${SOURCE_DIR}/external_packages"
 
 # option  source-dir-to-check          get script (relative to external_packages/)
 declare -a PKG_OPTS PKG_DIRS PKG_SCRIPTS
 PKG_OPTS=(   USE_FREESTREAM  USE_3DGlauber  USE_CLVISC  USE_IPGLASMA  USE_MUSIC  USE_ISS  USE_SMASH  USE_JS_CONTRIB )
-PKG_DIRS=(   freestream-milne 3dMCGlauber  PyVisc      ipglasma      music      iSS      smash/smash_code  js-contrib )
-PKG_SCRIPTS=(get_freestream-milne.sh get_3dglauber.sh get_clvisc.sh get_ipglasma.sh get_music.sh get_iSS.sh get_smash.sh get_js_contrib.sh)
+PKG_DIRS=(   freestream-milne 3dMCGlauber  PyVisc      ipglasma      "${MUSIC_DIR}"     iSS      smash/smash_code  js-contrib )
+PKG_SCRIPTS=(get_freestream-milne.sh get_3dglauber.sh get_clvisc.sh get_ipglasma.sh "${MUSIC_SCRIPT}" get_iSS.sh get_smash.sh get_js_contrib.sh)
 
 MISSING_OPTS=()
 MISSING_LABELS=()
@@ -182,6 +200,13 @@ for opt in "${ALL_OPTIONS[@]}"; do
         CMAKE_FLAGS+=" -D${opt}=OFF"
     fi
 done
+
+# GPU MUSIC backend: USE_CUDA/USE_METAL pick the music4gpu package (see CMakeLists.txt).
+case "$MUSIC_BACKEND" in
+    cuda)  CMAKE_FLAGS+=" -DUSE_CUDA=ON -DUSE_METAL=OFF" ;;
+    metal) CMAKE_FLAGS+=" -DUSE_CUDA=OFF -DUSE_METAL=ON" ;;
+    *)     CMAKE_FLAGS+=" -DUSE_CUDA=OFF -DUSE_METAL=OFF" ;;
+esac
 
 FULL_CMD="cmake -S \"${SOURCE_DIR}\" -B \"${BUILD_DIR}\" ${CMAKE_FLAGS}"
 

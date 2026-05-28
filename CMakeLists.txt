@@ -81,10 +81,28 @@ if(USE_IPGLASMA)
 endif(USE_IPGLASMA)
 
 # MUSIC. Turn on with 'cmake -DUSE_MUSIC=ON'.
+#   CPU (default):   -DUSE_MUSIC=ON
+#   GPU (music4gpu):  add -DUSE_CUDA=ON (NVIDIA) or -DUSE_METAL=ON (Apple Silicon)
+# The GPU flags pick the music4gpu package; only one backend is ever built.
 option(USE_MUSIC "Build tests for MUSIC" OFF)
+option(USE_CUDA "Use music4gpu with CUDA GPU backend" OFF)
+option(USE_METAL "Use music4gpu with Metal GPU backend (macOS/Apple Silicon)" OFF)
+
+# Default to CPU music; any GPU flag switches to the music4gpu package.
+set(MUSIC_BACKEND_DIR external_packages/music)
+if(USE_CUDA OR USE_METAL)
+  set(MUSIC_BACKEND_DIR external_packages/music4gpu)
+endif()
+
 if(USE_MUSIC)
-  message("Includes for MUSIC ...")
-  include_directories(./external_packages/music ./external_packages/music/src)
+  if(USE_METAL AND USE_CUDA)
+    message(FATAL_ERROR "USE_METAL and USE_CUDA are mutually exclusive.")
+  endif()
+  if(USE_METAL AND NOT APPLE)
+    message(FATAL_ERROR "USE_METAL is only supported on macOS (Apple Silicon).")
+  endif()
+  message("Includes for MUSIC (${MUSIC_BACKEND_DIR}) ...")
+  include_directories(./${MUSIC_BACKEND_DIR} ./${MUSIC_BACKEND_DIR}/src)
 endif(USE_MUSIC)
 
 # Soft Particlization. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON'.
@@ -251,7 +269,7 @@ install(
     "${CMAKE_SOURCE_DIR}/external_packages/iSS/src/"
     "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/src/"
     "${CMAKE_SOURCE_DIR}/external_packages/hydro_from_external_file/src/"
-    "${CMAKE_SOURCE_DIR}/external_packages/music/src/"
+    "${CMAKE_SOURCE_DIR}/${MUSIC_BACKEND_DIR}/src/"
     "${CMAKE_SOURCE_DIR}/external_packages/trento/src/"
     "${CMAKE_SOURCE_DIR}/external_packages/clvisc_wrapper/"
     "${CMAKE_SOURCE_DIR}/external_packages/smash/smash_code/src/"
@@ -314,7 +332,7 @@ install(
             "${PROJECT_BINARY_DIR}/external_packages/ipglasma/src/"
             "${PROJECT_BINARY_DIR}/external_packages/iSS/src/"
             "${PROJECT_BINARY_DIR}/external_packages/3dMCGlauber/src/"
-            "${PROJECT_BINARY_DIR}/external_packages/music/src/"
+            "${PROJECT_BINARY_DIR}/${MUSIC_BACKEND_DIR}/src/"
             "${PROJECT_BINARY_DIR}/external_packages/trento/src/"
             "${PROJECT_BINARY_DIR}/external_packages/clvisc_wrapper/"
   DESTINATION "lib" # target directory
@@ -491,15 +509,15 @@ if(USE_IPGLASMA)
 endif()
 
 if(USE_MUSIC)
-  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/music")
+  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/${MUSIC_BACKEND_DIR}")
     message(
       FATAL_ERROR
-        "Error: MUSIC source has not been downloaded in external_packages by ./get_music.sh"
+        "Error: MUSIC source has not been downloaded in external_packages by ./get_music.sh (CPU) or ./get_music4gpu.sh (GPU)"
     )
   endif()
   if(${GSL_FOUND})
-    message("Building MUSIC ...")
-    add_subdirectory(./external_packages/music)
+    message("Building MUSIC (${MUSIC_BACKEND_DIR}) ...")
+    add_subdirectory(./${MUSIC_BACKEND_DIR})
   else()
     message(FATAL_ERROR "GSL are necessary for MUSIC")
   endif()
@@ -689,9 +707,9 @@ if(USE_3DGlauber)
 endif()
 
 if(USE_MUSIC)
-  if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/music/EOS/")
+  if(EXISTS "${CMAKE_SOURCE_DIR}/${MUSIC_BACKEND_DIR}/EOS/")
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/EOS)
-    file(COPY ${CMAKE_SOURCE_DIR}/external_packages/music/EOS/
+    file(COPY ${CMAKE_SOURCE_DIR}/${MUSIC_BACKEND_DIR}/EOS/
          DESTINATION ${CMAKE_BINARY_DIR}/EOS)
     file(COPY ${CMAKE_SOURCE_DIR}/examples/test_music_files/music_input
          DESTINATION ${CMAKE_BINARY_DIR})

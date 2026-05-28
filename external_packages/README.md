@@ -44,6 +44,25 @@ when generating the cmake configuration file,
     make
 ```
 
+### GPU MUSIC backend (music4gpu)
+
+A GPU-capable drop-in replacement, `music4gpu`, can be used instead of the CPU
+MUSIC package (one or the other, never both). Download it with
+
+```bash
+    ./get_music4gpu.sh
+```
+
+then select it at configure time via the GPU backend flag (the flag both picks the
+`music4gpu` package and enables that GPU backend):
+
+```bash
+    cmake -DUSE_MUSIC=ON -DUSE_CUDA=ON ..   # NVIDIA / CUDA
+    cmake -DUSE_MUSIC=ON -DUSE_METAL=ON ..  # macOS / Apple Silicon (Metal)
+```
+
+Plain `-DUSE_MUSIC=ON` (no GPU flag) keeps the original CPU `music` package.
+
 To run JETSCAPE with MUSIC, one needs to use MPI commands,
 
 ```bash
