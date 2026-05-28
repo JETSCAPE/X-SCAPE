@@ -116,6 +116,11 @@
             skew-type="1"
             jacobian="0.8">
     </LongiInputs>
+    <!-- Options for averaging over multiple initial state densities -->
+    <Averaging>
+      <enableAveraging>0</enableAveraging>
+      <nEvents>1000</nEvents>
+    </Averaging>
     </Trento>
 
     <!-- Options to read initial conditions from saved file -->
