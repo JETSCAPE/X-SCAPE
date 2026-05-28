@@ -581,6 +581,10 @@ target_link_libraries(FinalStatePartons JetScape)
 add_executable(PythiaBrickTest ./examples/custom_examples/PythiaBrickTest.cc)
 target_link_libraries(PythiaBrickTest JetScape)
 
+add_executable(JetScapePerEventTest
+               ./examples/custom_examples/JetScapePerEventTest.cc)
+target_link_libraries(JetScapePerEventTest JetScape)
+
 if(USE_MUSIC AND USE_ISS)
   add_executable(MUSICMainClockTest
                  ./examples/custom_examples/MUSICMainClockTest.cc)
