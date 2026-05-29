@@ -201,6 +201,19 @@ for opt in "${ALL_OPTIONS[@]}"; do
     fi
 done
 
+# FNO_HYDRO (js-contrib) links against libtorch; locate it via the active python env.
+if echo " $MAIN_CHOICES $JS_CHOICES " | grep -qw "USE_JS_FNO_HYDRO"; then
+    TORCH_CMAKE_PREFIX=$(python -c "import torch; print(torch.utils.cmake_prefix_path)" 2>/dev/null)
+    if [[ -z "$TORCH_CMAKE_PREFIX" ]]; then
+        clear
+        echo "ERROR: USE_JS_FNO_HYDRO requires PyTorch, but it could not be found." >&2
+        echo "       Install torch in a python environment (e.g. 'pip install torch')" >&2
+        echo "       and re-run configure.sh." >&2
+        exit 1
+    fi
+    CMAKE_FLAGS+=" -DCMAKE_PREFIX_PATH=${TORCH_CMAKE_PREFIX}"
+fi
+
 # GPU MUSIC backend: USE_CUDA/USE_METAL pick the music4gpu package (see CMakeLists.txt).
 case "$MUSIC_BACKEND" in
     cuda)  CMAKE_FLAGS+=" -DUSE_CUDA=ON -DUSE_METAL=OFF" ;;
