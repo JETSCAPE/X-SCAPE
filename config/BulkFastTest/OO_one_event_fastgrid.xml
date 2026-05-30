@@ -1,0 +1,171 @@
+<jetscape>
+
+  
+  <nEvents> 1 </nEvents>
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 1 </nReuseHydro>
+
+  
+  <debug> off </debug>
+  <remark> off </remark>
+  <vlevel> 0 </vlevel>
+  <nEvents_printout> 100 </nEvents_printout>
+  <enableAutomaticTaskListDetermination> true </enableAutomaticTaskListDetermination>
+
+  
+  <outputFilename>test_out</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterAsciiGZ> off </JetScapeWriterAsciiGZ>
+  <JetScapeWriterHepMC> off </JetScapeWriterHepMC>
+  <JetScapeWriterRootHepMC> off </JetScapeWriterRootHepMC>
+  <JetScapeWriterFinalStatePartonsAscii> off </JetScapeWriterFinalStatePartonsAscii>
+  <JetScapeWriterFinalStateHadronsAscii> off </JetScapeWriterFinalStateHadronsAscii>
+  <JetScapeWriterQnVectorAscii>off</JetScapeWriterQnVectorAscii>
+
+  
+  
+  
+  
+  
+  <Random>
+    <seed>42</seed>
+  </Random>
+
+  
+  <IS>
+    <MCGlauber>
+      
+      
+      <generateOnlyPositions>0</generateOnlyPositions>
+      
+      <projectile>O</projectile> 
+      <target>O</target> 
+      <sqrts>200</sqrts> 
+      <b_min>0.0</b_min> 
+      <b_max>20.0</b_max> 
+      <cenMin>0.0</cenMin> 
+      <cenMax>80</cenMax> 
+      <nucleon_configuration_from_file>1</nucleon_configuration_from_file> 
+      <useQuarks>1</useQuarks> 
+      <Q2>1.0</Q2> 
+      <shadowing_factor>0.0</shadowing_factor> 
+      <baryon_junctions>0</baryon_junctions> 
+      <N_sea_partons>1</N_sea_partons> 
+      <d_min>0.9</d_min> 
+      <lambdaB>0.2</lambdaB> 
+      <BG>3.960</BG> 
+      <Subtract_hard_momentum>0</Subtract_hard_momentum>
+      <lambdaBs>0.0</lambdaBs> 
+      <baryonInStringProb>0.0</baryonInStringProb> 
+      <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> 
+      <QCD_string_production_mode>1</QCD_string_production_mode> 
+      
+      <rapidity_loss_method>4</rapidity_loss_method>
+      <ylossParam4At2>1.610</ylossParam4At2>
+      <ylossParam4At4>1.685</ylossParam4At4>
+      <ylossParam4At6>1.685</ylossParam4At6>
+      <ylossParam4At10>2.95</ylossParam4At10>
+      <ylossParam4var>0.682</ylossParam4var>
+      <remnant_energy_loss_fraction>0.536</remnant_energy_loss_fraction> 
+      <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
+      <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
+      
+      
+      
+      
+      
+      <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
+      <tau_form_mean>0.5</tau_form_mean> 
+      <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> 
+    </MCGlauber>
+
+    <grid_max_x> 15 </grid_max_x>
+    <grid_max_y> 15 </grid_max_y>
+    <grid_max_z> 6  </grid_max_z>
+    <grid_step_x> 0.3 </grid_step_x>
+    <grid_step_y> 0.3 </grid_step_y>
+    <grid_step_z> 0.2 </grid_step_z>
+  </IS>
+
+  
+  <Preequilibrium>
+
+    
+    <tau0>0.0</tau0>
+    
+    <tauj>0.1</tauj>
+    
+    <taus>0.5</taus>
+    <evolutionInMemory>0</evolutionInMemory>
+
+    <NullPreDynamics> </NullPreDynamics>
+
+  </Preequilibrium>
+
+  
+  
+  <Hydro>
+
+    <AddLiquefier> false </AddLiquefier>
+    <CartesianHydro> false </CartesianHydro>
+
+    
+    <MUSIC>
+      <name>MUSIC</name>
+      <MUSIC_input_file>music_input</MUSIC_input_file>
+      
+      <EOS>91</EOS>
+      
+      <InitialProfile>131</InitialProfile>
+      
+      
+      
+      <beastMode>1</beastMode>
+      
+      <Initial_time_tau_0>0.424</Initial_time_tau_0>
+      
+      <output_evolution_to_file>0</output_evolution_to_file>
+      <output_evolution_to_memory>1</output_evolution_to_memory>
+      
+      <surface_in_memory>1</surface_in_memory>
+      
+      <shear_viscosity_eta_over_s>0.108</shear_viscosity_eta_over_s>
+      <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
+      
+      <shear_viscosity_3_T_kink_in_GeV>0.206</shear_viscosity_3_T_kink_in_GeV>
+      <shear_viscosity_3_at_kink>0.108</shear_viscosity_3_at_kink>
+      <shear_viscosity_3_low_T_slope_in_GeV>-1.999</shear_viscosity_3_low_T_slope_in_GeV>
+      <shear_viscosity_3_high_T_slope_in_GeV>1.999</shear_viscosity_3_high_T_slope_in_GeV>
+      
+      <muB_dependent_Shear_to_S_ratio>0</muB_dependent_Shear_to_S_ratio>
+      
+      <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
+      
+      <bulk_viscosity_3_max>0.092</bulk_viscosity_3_max>
+      <bulk_viscosity_3_T_peak_in_GeV>0.180</bulk_viscosity_3_T_peak_in_GeV>
+      <bulk_viscosity_3_width_in_GeV>0.067</bulk_viscosity_3_width_in_GeV>
+      <bulk_viscosity_3_lambda_asymm>-0.8</bulk_viscosity_3_lambda_asymm>
+      
+      <Include_second_order_terms>1</Include_second_order_terms>
+      
+      <Include_Rhob>0</Include_Rhob>
+      <Include_QS>0</Include_QS>
+      
+      <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
+      <eps_switch>0.12</eps_switch>
+      <Do_FreezeOut_lowtemp>1</Do_FreezeOut_lowtemp>
+      <average_surface_over_this_many_time_steps>5</average_surface_over_this_many_time_steps>
+      
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
+      
+      <string_source_sigma_x>0.207</string_source_sigma_x>
+      <string_source_sigma_eta>0.458</string_source_sigma_eta>
+      <stringPreEqFlowFactor>0.0</stringPreEqFlowFactor>
+
+      <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps> 
+    <dump_hydro_only>1</dump_hydro_only></MUSIC>
+
+  </Hydro>
+
+ 
+    <FastRootBulkWriter><name> FastRootBulkWriter </name><out_file_name>OO_test_fastgrid.root</out_file_name><grid_mode>grid</grid_mode><tau_stride>1</tau_stride><tau_min>0.524</tau_min><dtau>0.1</dtau><ntau>0</ntau><eta_min>-5</eta_min><deta>0.3125</deta><x_min>-10</x_min><dx>0.3125</dx><y_min>-10</y_min><dy>0.3125</dy></FastRootBulkWriter></jetscape>

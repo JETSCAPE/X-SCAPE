@@ -27,6 +27,7 @@
 #include "HadronicLiquefier.h"
 #include "HadronicEMT.h"
 #include "RootBulkWriter.h"
+#include "FastRootBulkWriter.h"
 
 #include "QueryHistory.h"
 
@@ -873,6 +874,13 @@ void JetScape::DetermineTaskListFromXML() {
         if (rbwriter) {
             Add(rbwriter);
             JSINFO << " JetScape::DetermineTaskList() -- RootBulkWriter";
+        }
+    }
+    else if (elementName == "FastRootBulkWriter") {
+        auto fbwriter = JetScapeModuleFactory::createInstance("FastRootBulkWriter");
+        if (fbwriter) {
+            Add(fbwriter);
+            JSINFO << " JetScape::DetermineTaskList() -- FastRootBulkWriter";
         }
     }
 

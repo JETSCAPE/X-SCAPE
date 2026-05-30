@@ -515,6 +515,7 @@
       <!--evolution output/storage parameters-->
       <output_evolution_to_file>0</output_evolution_to_file>
       <output_evolution_to_memory>1</output_evolution_to_memory>
+      <dump_hydro_only> 0 </dump_hydro_only>
       <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
       <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
       <surface_in_memory>1</surface_in_memory>
@@ -647,7 +648,24 @@
   </Hydro>
 
   <!-- RootBulkWriter -->
-  <RootBulkWriter>
+    <FastRootBulkWriter>
+        <name> FastRootBulkWriter </name>
+        <out_file_name> hydro_evo_fast.root </out_file_name>
+        <grid_mode> native </grid_mode>
+        <tau_stride> 1 </tau_stride>
+        <include_preequilibrium> 0 </include_preequilibrium>
+        <ntau> 0 </ntau>
+        <tau_min> 0 </tau_min>
+        <dtau> 0 </dtau>
+        <eta_min> 0 </eta_min>
+        <deta> 0 </deta>
+        <x_min> 0 </x_min>
+        <dx> 0 </dx>
+        <y_min> 0 </y_min>
+        <dy> 0 </dy>
+    </FastRootBulkWriter>
+
+    <RootBulkWriter>
       <name> RootBulkWriter </name>
       <out_file_name> bulk.root </out_file_name>
       <!-- if ntau != 0: events are set to fixed size arrays for each event,

@@ -122,6 +122,7 @@ set(SOURCES ${SOURCES} ${readersources})
 
 if(USE_ROOT)
     set(SOURCES ${SOURCES} root/RootBulkWriter.cc)
+    set(SOURCES ${SOURCES} root/FastRootBulkWriter.cc)
 endif()
 
 if("${HEPMC_FOUND}")
