@@ -71,6 +71,32 @@ dlg() {
 # ── Locate source root (directory containing this script) ──────────────────
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ── Welcome screen ─────────────────────────────────────────────────────────
+"$TUI" --stdout \
+    --title "Welcome to the X-SCAPE Configurator" \
+    --msgbox "\
+X-SCAPE / JETSCAPE  —  interactive CMake configurator\n\
+\n\
+This script guides you through selecting build options and\n\
+generates the cmake command to configure your build.\n\
+It will NOT build the code itself; use the printed command\n\
+to do that after this script finishes.\n\
+\n\
+Navigation:\n\
+  SPACE    toggle a checkbox option on/off\n\
+  ENTER    confirm the current screen and advance\n\
+  Esc / Cancel   exit the configurator at any screen\n\
+\n\
+You will be asked about:\n\
+  1. Build directory\n\
+  2. Build type  (Release / Debug / …)\n\
+  3. Install style  (build-dir or full prefix install)\n\
+  4. Physics modules and optional features\n\
+  5. Missing source downloads  (offered automatically)\n\
+\n\
+Press ENTER to continue." \
+    20 68 || { clear; echo "Configurator cancelled (Esc / Cancel)."; exit 0; }
+
 # ── Build directory ────────────────────────────────────────────────────────
 BUILD_DIR=$(dlg --title "X-SCAPE Configurator" \
     --inputbox "Build directory (relative paths resolved from source root):" \
