@@ -197,14 +197,47 @@ Observed results:
 
 ---
 
-## 7. Performance & caveats
+## 7. Performance
+
+Measured on the O+O 1-event config above, in `build_gpu`, with `/usr/bin/time -l`
+(sequential runs; peak RSS was identical across two passes, so these are stable):
+
+| run | wall time | peak RSS | output file |
+|---|---|---|---|
+| legacy `RootBulkWriter` | 13.3 s | **24.6 GB** | 16.1 MB |
+| fast — `grid` mode | 11.2 s | **15.5 GB** | 16.1 MB |
+| fast — `native` mode | 12.6 s | **11.0 GB** | 93.2 MB |
+
+**Memory is the real win.** All three runs are identical until MUSIC finishes the hydro
+solve at **~7.3 GB** (the native store: 80.4 M cells here). Then:
+
+- **legacy** → **25.2 GB**: `PassHydroEvolutionHistoryToFramework` builds the framework
+  AoS (`bulk_info.data`) *on top of* the still-live native store, so both coexist at peak.
+- **grid** → **15.9 GB**: builds a *transient* `EvolutionHistory` (no second framework
+  copy), freed after the event.
+- **native** → **7.5 GB**: no AoS at all — just the native store + the output float vector.
+
+So `native` mode cuts peak RSS **~55%** (24.6 → 11.0 GB) and `grid` mode **~37%**. The
+≈18 GB framework-AoS materialization is what's eliminated; this saving scales with grid
+size, so it grows on larger / 3+1D grids.
+
+**Runtime improvement is modest (~5–16%) and not the point.** The MUSIC hydro solve
+dominates total time and is identical in all three runs — the writer/copy is a small
+slice. `native` is slightly slower than `grid` here only because it writes 93 MB vs 16 MB.
+
+> Numbers are for one boost-invariant O+O event on one machine — representative, not
+> universal. The memory figures reproduced exactly across two passes; the wall-times are
+> noisier at n=1. Re-measure with `/usr/bin/time -l ./runJetscape …` for your case.
+
+## 8. Caveats
 
 - **native mode** removes the framework AoS build (`PassHydro…`), the per-event
   whole-history deep copy, and all interpolation. Biggest win on 3D grids, where the AoS
   dominates memory.
 - **native mode writes MUSIC's full resolution** — it can be large (≈93 MB for one O+O
-  event at 100×100×60×134; bigger on finer grids). Shrink it with `<tau_stride>`, with
-  MUSIC's `output_evolution_every_N_*`, or use `grid` mode for a fixed coarse grid.
+  event at 100×100×60×134; bigger on finer grids). That is *disk*, not RAM. Shrink it with
+  `<tau_stride>`, with MUSIC's `output_evolution_every_N_*`, or use `grid` mode for a
+  fixed coarse grid.
 - **grid mode** removes the persistent AoS + the deep copy, but still builds one
   transient working copy and interpolates when the grid differs from MUSIC's.
 - The fast dump starts at MUSIC's `hydroTau0` (pre-equilibrium steps are **not**
