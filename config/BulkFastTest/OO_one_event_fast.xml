@@ -22,11 +22,6 @@
   <JetScapeWriterFinalStateHadronsAscii> off </JetScapeWriterFinalStateHadronsAscii>
   <JetScapeWriterQnVectorAscii>off</JetScapeWriterQnVectorAscii>
 
-  
-  
-  
-  
-  
   <Random>
     <seed>42</seed>
   </Random>
@@ -34,8 +29,7 @@
   
   <IS>
     <MCGlauber>
-      
-      
+  
       <generateOnlyPositions>0</generateOnlyPositions>
       
       <projectile>O</projectile> 
@@ -69,11 +63,7 @@
       <remnant_energy_loss_fraction>0.536</remnant_energy_loss_fraction> 
       <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
       <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
-      
-      
-      
-      
-      
+
       <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
       <tau_form_mean>0.5</tau_form_mean> 
       <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> 
@@ -167,6 +157,12 @@
       <skip_surface>1</skip_surface></MUSIC>
 
   </Hydro>
-
  
-    <FastRootBulkWriter><name> FastRootBulkWriter </name><out_file_name>OO_test_fast.root</out_file_name><grid_mode>native</grid_mode><tau_stride>1</tau_stride></FastRootBulkWriter></jetscape>
+  <FastRootBulkWriter>
+    <name> FastRootBulkWriter </name>
+    <out_file_name>OO_test_fast.root</out_file_name>
+    <grid_mode>native</grid_mode>
+    <tau_stride>1</tau_stride>
+  </FastRootBulkWriter>
+  
+</jetscape>

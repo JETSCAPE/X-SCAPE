@@ -5,14 +5,12 @@
   <setReuseHydro> false </setReuseHydro>
   <nReuseHydro> 1 </nReuseHydro>
 
-  
   <debug> off </debug>
   <remark> off </remark>
   <vlevel> 0 </vlevel>
   <nEvents_printout> 100 </nEvents_printout>
   <enableAutomaticTaskListDetermination> true </enableAutomaticTaskListDetermination>
 
-  
   <outputFilename>test_out</outputFilename>
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
   <JetScapeWriterAsciiGZ> off </JetScapeWriterAsciiGZ>
@@ -22,11 +20,6 @@
   <JetScapeWriterFinalStateHadronsAscii> off </JetScapeWriterFinalStateHadronsAscii>
   <JetScapeWriterQnVectorAscii>off</JetScapeWriterQnVectorAscii>
 
-  
-  
-  
-  
-  
   <Random>
     <seed>42</seed>
   </Random>
@@ -34,8 +27,7 @@
   
   <IS>
     <MCGlauber>
-      
-      
+        
       <generateOnlyPositions>0</generateOnlyPositions>
       
       <projectile>O</projectile> 
@@ -69,11 +61,7 @@
       <remnant_energy_loss_fraction>0.536</remnant_energy_loss_fraction> 
       <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
       <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
-      
-      
-      
-      
-      
+ 
       <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
       <tau_form_mean>0.5</tau_form_mean> 
       <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> 
@@ -90,26 +78,20 @@
   
   <Preequilibrium>
 
-    
-    <tau0>0.0</tau0>
-    
-    <tauj>0.1</tauj>
-    
-    <taus>0.5</taus>
-    <evolutionInMemory>0</evolutionInMemory>
+  <tau0>0.0</tau0>
+  <tauj>0.1</tauj>
+  <taus>0.5</taus>
+  <evolutionInMemory>0</evolutionInMemory>
 
-    <NullPreDynamics> </NullPreDynamics>
+  <NullPreDynamics> </NullPreDynamics>
 
   </Preequilibrium>
 
-  
-  
   <Hydro>
 
     <AddLiquefier> false </AddLiquefier>
     <CartesianHydro> false </CartesianHydro>
 
-    
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
@@ -117,9 +99,7 @@
       <EOS>91</EOS>
       
       <InitialProfile>131</InitialProfile>
-      
-      
-      
+
       <beastMode>1</beastMode>
       
       <Initial_time_tau_0>0.424</Initial_time_tau_0>
@@ -162,11 +142,37 @@
       <string_source_sigma_eta>0.458</string_source_sigma_eta>
       <stringPreEqFlowFactor>0.0</stringPreEqFlowFactor>
 
-      <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps> 
-    <dump_hydro_only>1</dump_hydro_only>
+      <!-- ========================================================================= -->
+      <!-- Fast RootBulkWriter specific/N timestep also relevant for GPU parameters: -->
+
+      <output_evolution_every_N_timesteps>5</output_evolution_every_N_timesteps> 
+
+      <dump_hydro_only>1</dump_hydro_only>
       <skip_surface>1</skip_surface></MUSIC>
+
+      <!-- ========================================================================= -->
 
   </Hydro>
 
  
-    <FastRootBulkWriter><name> FastRootBulkWriter </name><out_file_name>OO_test_fastgrid.root</out_file_name><grid_mode>grid</grid_mode><tau_stride>1</tau_stride><tau_min>0.524</tau_min><dtau>0.1</dtau><ntau>0</ntau><eta_min>-5</eta_min><deta>0.3125</deta><x_min>-10</x_min><dx>0.3125</dx><y_min>-10</y_min><dy>0.3125</dy></FastRootBulkWriter></jetscape>
+  <FastRootBulkWriter>
+
+    <name> FastRootBulkWriter </name><out_file_name>OO_test_fastgrid.root</out_file_name>
+    <grid_mode>grid</grid_mode>
+    <tau_stride>1</tau_stride>
+
+    <tau_min>0.524</tau_min>
+    <dtau>0.1</dtau>
+    <ntau>0</ntau>
+
+    <eta_min>-5</eta_min>
+    <deta>0.3125</deta>
+    
+    <x_min>-10</x_min>
+    <dx>0.3125</dx>
+    <y_min>-10</y_min>
+    <dy>0.3125</dy>
+    
+  </FastRootBulkWriter>
+    
+</jetscape>
