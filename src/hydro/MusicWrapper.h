@@ -261,6 +261,52 @@ class MpiMusic : public FluidDynamics {
   void set_preserve_bulk_info(bool v) { preserve_bulk_info_ = v; }
   bool get_preserve_bulk_info() const { return preserve_bulk_info_; }
 
+  // ── Fast hydro-only ROOT dump support (used by FastRootBulkWriter) ──────────
+  // When dump_hydro_only is set, EvolveHydro keeps MUSIC's native in-memory
+  // evolution store and skips building the framework AoS (bulk_info.data).
+  bool get_dump_hydro_only() const { return dump_hydro_only_; }
+  void set_dump_hydro_only(bool v) { dump_hydro_only_ = v; }
+
+  // Skip exporting MUSIC's freeze-out surface to the framework (and the
+  // surface*.dat file collection). MUSIC still finds the surface internally —
+  // it is the hydro stop condition — but in a hydro-only dump nothing consumes
+  // the exported surface, so the hand-off is wasted work. See <skip_surface>.
+  bool get_skip_surface() const { return skip_surface_; }
+  void set_skip_surface(bool v) { skip_surface_ = v; }
+
+  // Thin pass-throughs to MUSIC's native in-memory store (music_hydro_ptr is
+  // private, so the writer reaches it through these).
+  int get_number_of_fluid_cells() {
+    return music_hydro_ptr->get_number_of_fluid_cells();
+  }
+  void clear_hydro_info_from_memory() {
+    music_hydro_ptr->clear_hydro_info_from_memory();
+  }
+
+  // Fill a caller-owned FluidCellInfo straight from MUSIC's native store at flat
+  // index idx (tau-major x,y,eta order, same as EvolutionHistory::CellIndex).
+  // Reuses MUSIC's u^mu->v conversion + hbarc scaling so values match the
+  // ordinary framework path exactly.
+  void get_native_fluid_cell(int idx, Jetscape::FluidCellInfo &out) {
+    fluidCell fc;
+    music_hydro_ptr->get_fluid_cell_with_index(idx, &fc);
+    out.energy_density = fc.ed;
+    out.entropy_density = fc.sd;
+    out.temperature = fc.temperature;
+    out.pressure = fc.pressure;
+    out.vx = fc.vx;
+    out.vy = fc.vy;
+    out.vz = fc.vz;
+    out.mu_B = 0.0;
+    out.mu_C = 0.0;
+    out.mu_S = 0.0;
+    out.qgp_fraction = 0.0;
+    for (int i = 0; i < 4; i++)
+      for (int j = 0; j < 4; j++)
+        out.pi[i][j] = fc.pi[i][j];
+    out.bulk_Pi = fc.bulkPi;
+  }
+
   //! Overrides FluidDynamics::Clear() to honour preserve_bulk_info_.
   void Clear();
 
@@ -279,6 +325,12 @@ class MpiMusic : public FluidDynamics {
 
  private:
   bool preserve_bulk_info_ = false;
+  // Fast hydro-only ROOT dump (see set_dump_hydro_only); read from
+  // <Hydro><MUSIC><dump_hydro_only> in MpiMusic::InitializeHydro.
+  bool dump_hydro_only_ = false;
+  // Skip the freeze-out surface hand-off / file collection (see
+  // set_skip_surface); read from <Hydro><MUSIC><skip_surface>.
+  bool skip_surface_ = false;
 };
 
 #endif  // MUSICWRAPPER_H

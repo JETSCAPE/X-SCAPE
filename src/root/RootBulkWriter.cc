@@ -252,7 +252,9 @@ void RootBulkWriter::Exec() {
     return;
   }
 
-  auto bInfo = hydro.lock()->get_bulk_info();
+  // Bind to const reference: get_bulk_info() returns `const EvolutionHistory&`,
+  // so `auto` (without &) would deep-copy the entire history (all cells) each event.
+  const auto &bInfo = hydro.lock()->get_bulk_info();
   if (!isinit) {
     init_tree(bInfo);
   }

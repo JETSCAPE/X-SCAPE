@@ -96,6 +96,22 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   flag_ensure_MusicWrapper_output = (bool) GetXMLElementInt(
           {"RootBulkWriter", "ensure_MusicWrapper_output"});
 
+  // Fast hydro-only ROOT dump (FastRootBulkWriter): keep MUSIC's native
+  // in-memory evolution store and skip the framework AoS copy. Requires
+  // output_evolution_to_memory = 1.
+  dump_hydro_only_ = (bool) GetXMLElementInt(
+      {"Hydro", "MUSIC", "dump_hydro_only"}, false);
+  if (dump_hydro_only_ && flag_output_evo_to_memory != 1) {
+    JSWARN << "MUSIC: dump_hydro_only=1 requires output_evolution_to_memory=1; "
+              "the native evolution store will otherwise be empty.";
+  }
+
+  // Skip exporting MUSIC's freeze-out surface (hand-off + surface*.dat). MUSIC
+  // still finds the surface internally (it is the hydro stop condition); this
+  // only drops the unused export in a hydro-only dump. See <skip_surface>.
+  skip_surface_ = (bool) GetXMLElementInt(
+      {"Hydro", "MUSIC", "skip_surface"}, false);
+
   int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
   music_hydro_ptr->set_parameter("EOS", EOS);
   // Try to reset the EOS in the music input file
@@ -464,6 +480,13 @@ void MpiMusic::EvolveHydro() {
     }
   }
 
+  if (dump_hydro_only_) {
+    // Drop any native evolution left over from a previous event so cells from
+    // multiple events cannot accumulate in MUSIC's in-memory store. The
+    // FastRootBulkWriter also clears it after consuming each event.
+    music_hydro_ptr->clear_hydro_info_from_memory();
+  }
+
   has_source_terms = false;
   if (hydro_source_terms_ptr->get_number_of_sources() > 0) {
     has_source_terms = true;
@@ -497,7 +520,15 @@ void MpiMusic::EvolveHydro() {
     hydro_status = FINISHED;
   }
 
-  if (flag_output_evo_to_memory == 1 && !has_source_terms) {
+  if (dump_hydro_only_) {
+    // Fast path: keep MUSIC's native in-memory store for the FastRootBulkWriter.
+    // Publish the grid metadata (cheap scalars) but do NOT build bulk_info.data
+    // (the per-cell framework AoS copy). Overrides ensure_MusicWrapper_output.
+    SetHydroGridInfo();
+    JSINFO << "MUSIC dump_hydro_only: retaining native store ("
+           << music_hydro_ptr->get_number_of_fluid_cells()
+           << " cells), skipping framework copy.";
+  } else if (flag_output_evo_to_memory == 1 && !has_source_terms) {
     if (!has_source_terms) {
       // only the first hydro without source term will be stored
       // in memory for jet energy loss calculations
@@ -522,7 +553,16 @@ void MpiMusic::EvolveHydro() {
     system(system_command.str().c_str());
   }
 
-  if (flag_surface_in_memory == 1) {
+  if (skip_surface_) {
+    // Hydro-only dump: MUSIC still finds the freeze-out surface internally
+    // (it is the hydro stop condition), but nothing downstream consumes the
+    // exported surface, so skip the hand-off / file collection entirely.
+    JSINFO << "MUSIC skip_surface: not exporting freeze-out surface "
+              "(found internally for hydro termination only).";
+    if (flag_surface_in_memory == 1) {
+      clearSurfaceCellVector();
+    }
+  } else if (flag_surface_in_memory == 1) {
     clearSurfaceCellVector();
     PassHydroSurfaceToFramework();
   } else {
