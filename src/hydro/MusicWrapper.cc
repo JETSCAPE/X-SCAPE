@@ -106,6 +106,12 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
               "the native evolution store will otherwise be empty.";
   }
 
+  // Skip exporting MUSIC's freeze-out surface (hand-off + surface*.dat). MUSIC
+  // still finds the surface internally (it is the hydro stop condition); this
+  // only drops the unused export in a hydro-only dump. See <skip_surface>.
+  skip_surface_ = (bool) GetXMLElementInt(
+      {"Hydro", "MUSIC", "skip_surface"}, false);
+
   int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
   music_hydro_ptr->set_parameter("EOS", EOS);
   // Try to reset the EOS in the music input file
@@ -547,7 +553,16 @@ void MpiMusic::EvolveHydro() {
     system(system_command.str().c_str());
   }
 
-  if (flag_surface_in_memory == 1) {
+  if (skip_surface_) {
+    // Hydro-only dump: MUSIC still finds the freeze-out surface internally
+    // (it is the hydro stop condition), but nothing downstream consumes the
+    // exported surface, so skip the hand-off / file collection entirely.
+    JSINFO << "MUSIC skip_surface: not exporting freeze-out surface "
+              "(found internally for hydro termination only).";
+    if (flag_surface_in_memory == 1) {
+      clearSurfaceCellVector();
+    }
+  } else if (flag_surface_in_memory == 1) {
     clearSurfaceCellVector();
     PassHydroSurfaceToFramework();
   } else {

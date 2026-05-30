@@ -516,6 +516,8 @@
       <output_evolution_to_file>0</output_evolution_to_file>
       <output_evolution_to_memory>1</output_evolution_to_memory>
       <dump_hydro_only> 0 </dump_hydro_only>
+      <!--skip exporting the freeze-out surface (hand-off + surface*.dat); MUSIC still finds it internally for hydro termination. Only use in hydro-only dumps.-->
+      <skip_surface> 0 </skip_surface>
       <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
       <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
       <surface_in_memory>1</surface_in_memory>

@@ -39,11 +39,18 @@ Inside `<Hydro><MUSIC>` (alongside the existing evolution flags):
 ```xml
 <output_evolution_to_memory>1</output_evolution_to_memory>  <!-- required -->
 <dump_hydro_only>1</dump_hydro_only>                         <!-- skip the framework copy -->
+<skip_surface>1</skip_surface>                               <!-- skip the freeze-out surface export -->
 <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
 ```
 
 `dump_hydro_only=1` makes `EvolveHydro` keep MUSIC's evolution in memory and **skip**
 building `bulk_info.data`. It requires `output_evolution_to_memory=1`.
+
+`skip_surface=1` (optional) additionally skips exporting MUSIC's freeze-out surface to
+the framework / `surface*.dat`. **MUSIC still finds the surface internally** — it is the
+hydro stop condition, so it cannot be turned off without breaking termination — this only
+drops the unused hand-off, which nothing consumes in a hydro-only dump. It is
+output-neutral (the evolution ROOT file is byte-identical with it on or off).
 
 ### 2b. Add the writer — `native` mode (fastest)
 
@@ -108,7 +115,8 @@ framework copy.`
 | `tau_min`,`dtau`,`ntau` | grid | MUSIC / `0` | τ origin, step, count (`ntau=0` ⇒ to end) |
 | `x_min`,`dx` / `y_min`,`dy` / `eta_min`,`deta` | grid | MUSIC | output spatial grid |
 
-Plus `<Hydro><MUSIC><dump_hydro_only>1` and `<output_evolution_to_memory>1`.
+Plus, under `<Hydro><MUSIC>`: `<dump_hydro_only>1`, `<output_evolution_to_memory>1`, and
+optionally `<skip_surface>1` (skip the unused freeze-out-surface export; output-neutral).
 
 ---
 
@@ -220,6 +228,12 @@ solve at **~7.3 GB** (the native store: 80.4 M cells here). Then:
 So `native` mode cuts peak RSS **~55%** (24.6 → 11.0 GB) and `grid` mode **~37%**. The
 ≈18 GB framework-AoS materialization is what's eliminated; this saving scales with grid
 size, so it grows on larger / 3+1D grids.
+
+**`skip_surface` is a small, output-neutral extra.** A/B on the native config (2 passes):
+peak RSS **unchanged** (10.96 GB both — the freeze-out surface is tiny next to the 80 M-cell
+evolution store), wall time ~12.8–13.5 s → ~11.1–11.3 s (≈1.5–2 s, noisy). Output is
+byte-identical (`np.array_equal`, same file size). So it trims a bit of wasted
+surface-export work but is not a memory lever; the framework-AoS bypass above is the win.
 
 **Runtime improvement is modest (~5–16%) and not the point.** The MUSIC hydro solve
 dominates total time and is identical in all three runs — the writer/copy is a small

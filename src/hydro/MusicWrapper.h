@@ -267,6 +267,13 @@ class MpiMusic : public FluidDynamics {
   bool get_dump_hydro_only() const { return dump_hydro_only_; }
   void set_dump_hydro_only(bool v) { dump_hydro_only_ = v; }
 
+  // Skip exporting MUSIC's freeze-out surface to the framework (and the
+  // surface*.dat file collection). MUSIC still finds the surface internally —
+  // it is the hydro stop condition — but in a hydro-only dump nothing consumes
+  // the exported surface, so the hand-off is wasted work. See <skip_surface>.
+  bool get_skip_surface() const { return skip_surface_; }
+  void set_skip_surface(bool v) { skip_surface_ = v; }
+
   // Thin pass-throughs to MUSIC's native in-memory store (music_hydro_ptr is
   // private, so the writer reaches it through these).
   int get_number_of_fluid_cells() {
@@ -321,6 +328,9 @@ class MpiMusic : public FluidDynamics {
   // Fast hydro-only ROOT dump (see set_dump_hydro_only); read from
   // <Hydro><MUSIC><dump_hydro_only> in MpiMusic::InitializeHydro.
   bool dump_hydro_only_ = false;
+  // Skip the freeze-out surface hand-off / file collection (see
+  // set_skip_surface); read from <Hydro><MUSIC><skip_surface>.
+  bool skip_surface_ = false;
 };
 
 #endif  // MUSICWRAPPER_H

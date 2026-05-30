@@ -163,7 +163,8 @@
       <stringPreEqFlowFactor>0.0</stringPreEqFlowFactor>
 
       <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps> 
-    <dump_hydro_only>1</dump_hydro_only></MUSIC>
+    <dump_hydro_only>1</dump_hydro_only>
+      <skip_surface>1</skip_surface></MUSIC>
 
   </Hydro>
 
