@@ -85,10 +85,18 @@ BUILD_TYPE=$(dlg --title "X-SCAPE Configurator" \
     RelWithDebInfo "Optimised + debug info" \
     MinSizeRel     "Optimise for binary size")
 
-# ── Install prefix (optional) ─────────────────────────────────────────────
-INSTALL_PREFIX=$(dlg --title "X-SCAPE Configurator" \
-    --inputbox "Install prefix (leave blank to skip install, or enter e.g. /opt/xscape):\n(Used by: cmake --install <build_dir>)" \
-    9 65 "")
+# ── Install style ─────────────────────────────────────────────────────────
+INSTALL_STYLE=$(dlg --title "X-SCAPE Configurator" \
+    --menu "Select install style:" 12 72 2 \
+    builddir "Build-dir only  (classic: cd build && ./runJetscape)" \
+    prefix   "Full install    (cmake --install → bin/ lib/ share/xscape/)")
+
+INSTALL_PREFIX=""
+if [[ "$INSTALL_STYLE" == "prefix" ]]; then
+    INSTALL_PREFIX=$(dlg --title "X-SCAPE Configurator" \
+        --inputbox "Install prefix (e.g. /opt/xscape or \$HOME/.local):" \
+        8 65 "/usr/local")
+fi
 
 # ── Main options ───────────────────────────────────────────────────────────
 MAIN_CHOICES=$(dlg --title "X-SCAPE Configurator" \
