@@ -61,9 +61,10 @@ else
 fi
 
 # Helper: run dialog and capture output from stdout (handles dialog's stderr default)
+# Pressing Escape or the Cancel button on any screen exits immediately.
 dlg() {
     local result
-    result=$("$TUI" --stdout "$@") || { clear; echo "Cancelled."; exit 0; }
+    result=$("$TUI" --stdout "$@") || { clear; echo "Configurator cancelled (Esc / Cancel)."; exit 0; }
     printf '%s' "$result"
 }
 
@@ -87,9 +88,14 @@ BUILD_TYPE=$(dlg --title "X-SCAPE Configurator" \
 
 # ── Install style ─────────────────────────────────────────────────────────
 INSTALL_STYLE=$(dlg --title "X-SCAPE Configurator" \
-    --menu "Select install style:" 12 72 2 \
+    --menu "Select install style:  (Esc or Cancel exits at any screen)" 13 72 3 \
     builddir "Build-dir only  (classic: cd build && ./runJetscape)" \
-    prefix   "Full install    (cmake --install → bin/ lib/ share/xscape/)")
+    prefix   "Full install    (cmake --install → bin/ lib/ share/xscape/)" \
+    exit     "Exit the configurator")
+
+if [[ "$INSTALL_STYLE" == "exit" ]]; then
+    clear; echo "Configurator exited."; exit 0
+fi
 
 INSTALL_PREFIX=""
 if [[ "$INSTALL_STYLE" == "prefix" ]]; then
