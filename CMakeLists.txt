@@ -5,6 +5,14 @@
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 project(JetScape CXX C)
 
+# Standard GNU install paths (bin, lib, include, share, …).
+include(GNUInstallDirs)
+# Helper for configure_package_config_file / write_basic_package_version_file
+include(CMakePackageConfigHelpers)
+# Data directory inside the install prefix: <prefix>/share/xscape
+set(XSCAPE_DATADIR "${CMAKE_INSTALL_DATADIR}/xscape")
+set(XSCAPE_INSTALL_FULL_DATADIR "${CMAKE_INSTALL_FULL_DATADIR}/xscape")
+
 # Fail if cmake is called in the source directory
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
   message("source directory:" ${CMAKE_SOURCE_DIR})
@@ -238,8 +246,9 @@ include_directories(
 # ##############################################################################
 # Installing Header and Library Files   ###
 # ##############################################################################
-# Run with, e.g., cmake -DCMAKE_INSTALL_PREFIX=~/tmp .. default directory is the
-# build directory Note that trento also automatically populates a bin directory
+# Run with, e.g., cmake -DCMAKE_INSTALL_PREFIX=~/tmp ..
+# Default directory is the build directory for developer convenience.
+# Note that trento also automatically populates a bin directory
 # and we cannot disable this behavior Also, iSS and mpihydro install binaries in
 # CMAKE_HOME_DIR. Sigh.
 #
@@ -251,6 +260,17 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
             FORCE)
 endif()
 message(STATUS "Now: install prefix is ${CMAKE_INSTALL_PREFIX}")
+
+# RPATH: make the installed runJetscape and shared libs find each other inside
+# the prefix without requiring LD_LIBRARY_PATH / DYLD_LIBRARY_PATH.
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH ON)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH OFF)
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH ON)
+  set(CMAKE_INSTALL_RPATH "@loader_path/../${CMAKE_INSTALL_LIBDIR}")
+else()
+  set(CMAKE_INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+endif()
 
 install(
   # source directory
@@ -339,6 +359,15 @@ install(
   FILES_MATCHING # install only matched files
   PATTERN "lib*.*" # selects .so, .a, .dylib, ...
   PATTERN "CMakeFiles" EXCLUDE)
+
+# Generate XscapeInstallPaths.h with the baked install-time data directory.
+# The generated header is placed in the build tree so it is on the include path.
+configure_file(
+  "${CMAKE_SOURCE_DIR}/cmake/XscapeInstallPaths.h.in"
+  "${CMAKE_BINARY_DIR}/XscapeInstallPaths.h"
+  @ONLY)
+# Make the generated header findable for all in-tree targets.
+include_directories("${CMAKE_BINARY_DIR}")
 
 # ##############################################################################
 # Required packages   ###
@@ -486,6 +515,14 @@ if(USE_3DGlauber)
   if(${GSL_FOUND})
     message("Building 3D-MCGlauber ...")
     add_subdirectory(./external_packages/3dMCGlauber)
+    # Override RPATH set by the vendored CMakeLists (which hard-codes the source
+    # tree LHAPDF_Lib path). Point at the install prefix lib dir instead so the
+    # installed binaries resolve LHAPDF via the installed LHAPDF_Lib.
+    set(_3dMCGlb_rpath
+      "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
+      "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/LHAPDF_Lib")
+    set_target_properties(3dMCGlb 3dMCGlb.e Metropolis.e
+      PROPERTIES INSTALL_RPATH "${_3dMCGlb_rpath}")
   else()
     message(FATAL_ERROR "GSL are necessary for 3dMCGlauber")
   endif()
@@ -518,6 +555,10 @@ if(USE_MUSIC)
   if(${GSL_FOUND})
     message("Building MUSIC (${MUSIC_BACKEND_DIR}) ...")
     add_subdirectory(./${MUSIC_BACKEND_DIR})
+    # Override the vendored install destination (CMAKE_HOME_DIRECTORY) so that
+    # the MUSIC library and executable land in the proper prefix lib/bin dirs.
+    set_target_properties(music PROPERTIES
+      INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
   else()
     message(FATAL_ERROR "GSL are necessary for MUSIC")
   endif()
@@ -527,6 +568,9 @@ endif()
 if(USE_ISS)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/iSS")
     add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/iSS)
+    # Override the vendored install destination (CMAKE_HOME_DIRECTORY).
+    set_target_properties(iSS PROPERTIES
+      INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
   else()
     message(
       FATAL_ERROR
@@ -773,3 +817,152 @@ endif()
 export(TARGETS ${_js_export_targets} FILE "${CMAKE_BINARY_DIR}/JetScapeTargets.cmake")
 configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
                "${CMAKE_BINARY_DIR}/JetScapeConfig.cmake" @ONLY)
+
+# ##############################################################################
+# Phase 2 install rules — bin / lib / share/xscape                          ###
+# ##############################################################################
+
+# ---- Executables (always) ----
+install(TARGETS runJetscape readerTest FinalStateHadrons FinalStatePartons
+                PythiaBrickTest JetScapePerEventTest
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+if(USE_MUSIC AND USE_ISS)
+  install(TARGETS MUSICMainClockTest MUSICTest
+          RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+  if(USE_3DGlauber)
+    install(TARGETS PythiaIsrTest PythiaIsrMUSIC
+            RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+  endif()
+endif()
+
+if(USE_SMASH)
+  install(TARGETS SMASHInitialCondition SMASHNucleusTest
+          RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+endif()
+
+install(PROGRAMS "${CMAKE_SOURCE_DIR}/examples/run_in_workdir.sh"
+        DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+# ---- Standalone reader library ----
+install(TARGETS JetScapeReader
+        EXPORT  XSCAPETargets
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}")
+
+# ---- Core framework libraries ----
+set(_install_targets JetScape JetScapeThird GTL libtrento Cornelius)
+if(${HDF5_FOUND})
+  list(APPEND _install_targets hydroFromFile)
+endif()
+if(USE_IPGLASMA)
+  list(APPEND _install_targets ipglasma_lib)
+endif()
+if(USE_3DGlauber)
+  list(APPEND _install_targets 3dMCGlb)
+endif()
+if(USE_MUSIC)
+  list(APPEND _install_targets music)
+endif()
+if(USE_ISS)
+  list(APPEND _install_targets iSS)
+endif()
+if(OPENCL_FOUND AND USE_CLVISC)
+  list(APPEND _install_targets clviscwrapper)
+endif()
+# Set the install-interface include directory on JetScape so that imported
+# targets advertise the right path to downstream find_package() consumers.
+target_include_directories(JetScape INTERFACE
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(JetScapeReader INTERFACE
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+install(TARGETS ${_install_targets}
+        EXPORT  XSCAPETargets
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+
+# ---- Data assets → share/xscape ----
+install(DIRECTORY "${CMAKE_SOURCE_DIR}/config/"
+        DESTINATION "${XSCAPE_DATADIR}/config")
+
+if(USE_MUSIC)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/${MUSIC_BACKEND_DIR}/EOS/")
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/${MUSIC_BACKEND_DIR}/EOS/"
+            DESTINATION "${XSCAPE_DATADIR}/EOS")
+  endif()
+  if(EXISTS "${CMAKE_SOURCE_DIR}/examples/test_music_files/music_input")
+    install(FILES "${CMAKE_SOURCE_DIR}/examples/test_music_files/music_input"
+            DESTINATION "${XSCAPE_DATADIR}")
+  endif()
+endif()
+
+if(USE_ISS)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_tables")
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_tables/"
+            DESTINATION "${XSCAPE_DATADIR}/iSS_tables")
+  endif()
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_parameters.dat")
+    install(FILES "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_parameters.dat"
+            DESTINATION "${XSCAPE_DATADIR}")
+  endif()
+endif()
+
+if(USE_3DGlauber)
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/tables/")
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/tables/"
+            DESTINATION "${XSCAPE_DATADIR}/tables")
+  endif()
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/eps09/")
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/eps09/"
+            DESTINATION "${XSCAPE_DATADIR}/eps09")
+  endif()
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/")
+    install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/"
+            DESTINATION "${XSCAPE_DATADIR}/LHAPDF_Lib")
+  endif()
+  if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input")
+    install(FILES "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input"
+            DESTINATION "${XSCAPE_DATADIR}"
+            RENAME "mcglauber.input")
+  endif()
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/trento/nucleusConfigs/")
+  install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/trento/nucleusConfigs/"
+          DESTINATION "${XSCAPE_DATADIR}/nucleusConfigs")
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/src/initialstate/data_table/")
+  install(DIRECTORY "${CMAKE_SOURCE_DIR}/src/initialstate/data_table/"
+          DESTINATION "${XSCAPE_DATADIR}/data_table")
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/LBT-tables/")
+  install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/LBT-tables/"
+          DESTINATION "${XSCAPE_DATADIR}/LBT-tables")
+endif()
+
+# ---- Generated header (XscapeInstallPaths.h) → include ----
+install(FILES "${CMAKE_BINARY_DIR}/XscapeInstallPaths.h"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+
+# ---- CMake package config (find_package(XSCAPE)) -------------------------
+# Generate the installed XSCAPEConfig.cmake from the .in template.
+# PATH_VARS causes @PACKAGE_<var>@ tokens to expand to prefix-relative absolute
+# paths at use-time (relocatable — survives prefix moves).
+configure_package_config_file(
+  "${CMAKE_SOURCE_DIR}/cmake/XSCAPEConfig.cmake.in"
+  "${CMAKE_BINARY_DIR}/XSCAPEConfig.cmake"
+  INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSCAPE"
+  PATH_VARS CMAKE_INSTALL_INCLUDEDIR XSCAPE_DATADIR)
+
+# Export the installed targets (generates XSCAPETargets.cmake in the prefix)
+install(EXPORT XSCAPETargets
+        NAMESPACE   XSCAPE::
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSCAPE")
+
+# Install the generated config file
+install(FILES "${CMAKE_BINARY_DIR}/XSCAPEConfig.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSCAPE")

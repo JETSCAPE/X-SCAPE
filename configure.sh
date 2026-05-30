@@ -85,6 +85,11 @@ BUILD_TYPE=$(dlg --title "X-SCAPE Configurator" \
     RelWithDebInfo "Optimised + debug info" \
     MinSizeRel     "Optimise for binary size")
 
+# ── Install prefix (optional) ─────────────────────────────────────────────
+INSTALL_PREFIX=$(dlg --title "X-SCAPE Configurator" \
+    --inputbox "Install prefix (leave blank to skip install, or enter e.g. /opt/xscape):\n(Used by: cmake --install <build_dir>)" \
+    9 65 "")
+
 # ── Main options ───────────────────────────────────────────────────────────
 MAIN_CHOICES=$(dlg --title "X-SCAPE Configurator" \
     --checklist "Toggle options with SPACE, confirm with ENTER:" \
@@ -193,6 +198,9 @@ ALL_OPTIONS=(
 )
 
 CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+if [[ -n "${INSTALL_PREFIX}" ]]; then
+    CMAKE_FLAGS+=" -DCMAKE_INSTALL_PREFIX=\"${INSTALL_PREFIX}\""
+fi
 for opt in "${ALL_OPTIONS[@]}"; do
     if echo " $MAIN_CHOICES $JS_CHOICES " | grep -qw "$opt"; then
         CMAKE_FLAGS+=" -D${opt}=ON"
@@ -236,6 +244,11 @@ if "$TUI" --stdout --title "Confirm" \
     echo ""
     echo "==> Done. To build:"
     echo "    cmake --build \"${BUILD_DIR}\" -j\$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)"
+    if [[ -n "${INSTALL_PREFIX}" ]]; then
+        echo ""
+        echo "==> Then install to ${INSTALL_PREFIX}:"
+        echo "    cmake --install \"${BUILD_DIR}\""
+    fi
 else
     clear
     echo "Command to run manually:"
@@ -245,4 +258,10 @@ else
     echo ""
     echo "Then build with:"
     echo "  cmake --build \"${BUILD_DIR}\" -j\$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)"
+    if [[ -n "${INSTALL_PREFIX}" ]]; then
+        echo ""
+        echo "Then install to ${INSTALL_PREFIX}:"
+        echo "  cmake --install \"${BUILD_DIR}\""
+    fi
+    echo ""
 fi
