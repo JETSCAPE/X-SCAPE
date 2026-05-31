@@ -61,14 +61,41 @@ else
 fi
 
 # Helper: run dialog and capture output from stdout (handles dialog's stderr default)
+# Pressing Escape or the Cancel button on any screen exits immediately.
 dlg() {
     local result
-    result=$("$TUI" --stdout "$@") || { clear; echo "Cancelled."; exit 0; }
+    result=$("$TUI" --stdout "$@") || { clear; echo "Configurator cancelled (Esc / Cancel)."; exit 0; }
     printf '%s' "$result"
 }
 
 # ── Locate source root (directory containing this script) ──────────────────
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── Welcome screen ─────────────────────────────────────────────────────────
+"$TUI" --stdout \
+    --title "Welcome to the X-SCAPE Configurator" \
+    --msgbox "\
+X-SCAPE / JETSCAPE  —  interactive CMake configurator\n\
+\n\
+This script guides you through selecting build options and\n\
+generates the cmake command to configure your build.\n\
+It will NOT build the code itself; use the printed command\n\
+to do that after this script finishes.\n\
+\n\
+Navigation:\n\
+  SPACE    toggle a checkbox option on/off\n\
+  ENTER    confirm the current screen and advance\n\
+  Esc / Cancel   exit the configurator at any screen\n\
+\n\
+You will be asked about:\n\
+  1. Build directory\n\
+  2. Build type  (Release / Debug / …)\n\
+  3. Install style  (build-dir or full prefix install)\n\
+  4. Physics modules and optional features\n\
+  5. Missing source downloads  (offered automatically)\n\
+\n\
+Press ENTER to continue." \
+    20 68 || { clear; echo "Configurator cancelled (Esc / Cancel)."; exit 0; }
 
 # ── Build directory ────────────────────────────────────────────────────────
 BUILD_DIR=$(dlg --title "X-SCAPE Configurator" \
@@ -84,6 +111,24 @@ BUILD_TYPE=$(dlg --title "X-SCAPE Configurator" \
     Debug          "No optimisation, full debug info" \
     RelWithDebInfo "Optimised + debug info" \
     MinSizeRel     "Optimise for binary size")
+
+# ── Install style ─────────────────────────────────────────────────────────
+INSTALL_STYLE=$(dlg --title "X-SCAPE Configurator" \
+    --menu "Select install style:  (Esc or Cancel exits at any screen)" 13 72 3 \
+    builddir "Build-dir only  (classic: cd build && ./runJetscape)" \
+    prefix   "Full install    (cmake --install → bin/ lib/ share/xscape/)" \
+    exit     "Exit the configurator")
+
+if [[ "$INSTALL_STYLE" == "exit" ]]; then
+    clear; echo "Configurator exited."; exit 0
+fi
+
+INSTALL_PREFIX=""
+if [[ "$INSTALL_STYLE" == "prefix" ]]; then
+    INSTALL_PREFIX=$(dlg --title "X-SCAPE Configurator" \
+        --inputbox "Install prefix (e.g. /opt/xscape or \$HOME/.local):" \
+        8 65 "/usr/local")
+fi
 
 # ── Main options ───────────────────────────────────────────────────────────
 MAIN_CHOICES=$(dlg --title "X-SCAPE Configurator" \
@@ -193,6 +238,9 @@ ALL_OPTIONS=(
 )
 
 CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
+if [[ -n "${INSTALL_PREFIX}" ]]; then
+    CMAKE_FLAGS+=" -DCMAKE_INSTALL_PREFIX=\"${INSTALL_PREFIX}\""
+fi
 for opt in "${ALL_OPTIONS[@]}"; do
     if echo " $MAIN_CHOICES $JS_CHOICES " | grep -qw "$opt"; then
         CMAKE_FLAGS+=" -D${opt}=ON"
@@ -236,6 +284,11 @@ if "$TUI" --stdout --title "Confirm" \
     echo ""
     echo "==> Done. To build:"
     echo "    cmake --build \"${BUILD_DIR}\" -j\$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)"
+    if [[ -n "${INSTALL_PREFIX}" ]]; then
+        echo ""
+        echo "==> Then install to ${INSTALL_PREFIX}:"
+        echo "    cmake --install \"${BUILD_DIR}\""
+    fi
 else
     clear
     echo "Command to run manually:"
@@ -245,4 +298,10 @@ else
     echo ""
     echo "Then build with:"
     echo "  cmake --build \"${BUILD_DIR}\" -j\$(nproc 2>/dev/null || sysctl -n hw.logicalcpu)"
+    if [[ -n "${INSTALL_PREFIX}" ]]; then
+        echo ""
+        echo "Then install to ${INSTALL_PREFIX}:"
+        echo "  cmake --install \"${BUILD_DIR}\""
+    fi
+    echo ""
 fi

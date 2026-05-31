@@ -18,11 +18,13 @@
 // -------------------------------------------------------------
 
 #include <iostream>
+#include <fstream>
 #include <time.h>
 
 // JetScape Framework includes ...
 #include "JetScape.h"
 #include "JetScapeWriterStream.h"
+#include "JetScapeDataPath.h"
 #include "Version.h"
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
@@ -55,8 +57,22 @@ int main(int argc, char** argv) {
   // line arguments. The user can supply 0, 1, 2 arguments, where the first
   // (second) corresponds to the user (main) XML path.
   auto jetscape = make_shared<JetScape>();
-  const char* mainXMLName = "../config/jetscape_main.xml";
-  const char* userXMLName = "../config/jetscape_user.xml";
+  // Default XML paths: honour a build-dir layout (../config/…) first, then
+  // fall back to the installed data directory so a plain `runJetscape` works
+  // from any CWD after `cmake --install`.
+  auto resolveXML = [](const char *rel_candidate, const char *filename) -> std::string {
+    // 1. build-dir relative path
+    if (std::ifstream(rel_candidate).good()) return rel_candidate;
+    // 2. installed data dir
+    std::string installed = Jetscape::XSCAPEDataPath(std::string("config/") + filename);
+    if (std::ifstream(installed).good()) return installed;
+    // 3. fall back to the relative path and let JetScape emit the error
+    return rel_candidate;
+  };
+  std::string mainXMLStr = resolveXML("../config/jetscape_main.xml", "jetscape_main.xml");
+  std::string userXMLStr = resolveXML("../config/jetscape_user.xml", "jetscape_user.xml");
+  const char* mainXMLName = mainXMLStr.c_str();
+  const char* userXMLName = userXMLStr.c_str();
   if (argc == 2) {
     if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
       std::cout << "Command line options:" << std::endl;
