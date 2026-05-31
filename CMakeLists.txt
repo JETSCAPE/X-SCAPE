@@ -966,3 +966,12 @@ install(EXPORT XSCAPETargets
 # Install the generated config file
 install(FILES "${CMAKE_BINARY_DIR}/XSCAPEConfig.cmake"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/XSCAPE")
+
+# ---- JetScape compat shim (find_package(JetScape) → XSCAPE::JetScape) ----
+# js-contrib and other consumers that call find_package(JetScape) against an
+# installed prefix will find this shim in lib/cmake/JetScape/.  It delegates
+# to the real XSCAPEConfig.cmake and exposes a plain "JetScape" target.
+# The file contains no @VAR@ substitutions so copy verbatim (COPYONLY).
+install(FILES "${CMAKE_SOURCE_DIR}/cmake/JetScapeCompatConfig.cmake.in"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/JetScape"
+        RENAME JetScapeConfig.cmake)
