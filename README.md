@@ -193,6 +193,24 @@ backend):
 
 Plain `-DUSE_MUSIC=ON` (no GPU flag) keeps the original CPU `music` package.
 
+**OpenMP defaults for GPU builds.** The `music4gpu` backends run much of the
+hydro on the GPU while the host does short OpenMP repack/output loops between
+GPU waits. To stop idle OpenMP threads from busy-spinning between those loops —
+which on a many-core host (e.g. a 20-core GB10 Grace) can pin every core and
+inflate CPU time ~10–20× with no wall-clock benefit — GPU builds set
+`OMP_WAIT_POLICY=passive` as a **default** at startup, so idle threads sleep
+instead of spin. This is process-wide (it also affects 3DGlauber, iSS, …) and
+only changes idle-thread behavior, so it is safe in practice. It is only a
+default — anything you export yourself wins — and is fully revertible:
+
+```bash
+export OMP_WAIT_POLICY=active   # restore the OpenMP default (spinning)
+export MUSIC_OMP_DEFAULTS=0     # disable the music4gpu OpenMP defaults entirely
+export OMP_NUM_THREADS=8        # also worth capping on many-core hosts
+```
+
+(See `external_packages/music4gpu/PORT_GPU.md` §9.10 for the full rationale.)
+
 To run JETSCAPE with MUSIC, one needs to use MPI commands,
 
 ```bash
