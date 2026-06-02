@@ -76,11 +76,14 @@ void FastRootBulkWriter::init_tree() {
   t->SetAutoFlush(1);
 
   t->Branch("user_res", &v_data);
+  t->Branch("tau_freezeout", &tau_freezeout, "tau_freezeout/F");
   t->Branch("ntau_freezeout", &ntau_written, "ntau_freezeout/I");
 
   // Self-describing metadata (mirrors RootBulkWriter param names so existing
   // uproot/FNO readers can reshape: [ntau_freezeout, nx, ny, neta, nFeatures]).
   f->cd();
+  TParameter<int> p_use_vec("use_vec", 1);  // FastRootBulkWriter always uses vector branch
+  p_use_vec.Write();
   for (auto p : vector<std::tuple<bool, string, float>>{
            {true, "nFeatures", nFeatures}, {true, "nx", nx},
            {false, "x_min", x_min},        {false, "dx", dx},
@@ -88,7 +91,13 @@ void FastRootBulkWriter::init_tree() {
            {false, "dy", dy},              {true, "neta", neta},
            {false, "eta_min", eta_min},    {false, "deta", deta},
            {true, "ntau", ntau},           {false, "tau_min", eff_tau_min},
-           {false, "dtau", eff_dtau},      {true, "tau_stride", tau_stride}}) {
+           {false, "dtau", eff_dtau},      {true, "tau_stride", tau_stride},
+           {true, "nX_MUSIC", (float)nX_MUSIC},    {false, "dX_MUSIC", dX_MUSIC},
+           {false, "X_min_MUSIC", X_min_MUSIC},    {true, "nY_MUSIC", (float)nY_MUSIC},
+           {false, "dY_MUSIC", dY_MUSIC},           {false, "Y_min_MUSIC", Y_min_MUSIC},
+           {true, "neta_MUSIC", (float)neta_MUSIC}, {false, "deta_MUSIC", deta_MUSIC},
+           {false, "eta_min_MUSIC", eta_min_MUSIC}, {false, "dtau_MUSIC", dtau_MUSIC},
+           {false, "tau_min_MUSIC", tau_min_MUSIC}}) {
     if (std::get<0>(p)) {
       TParameter<int> pi(std::get<1>(p).c_str(), (int)std::get<2>(p));
       pi.Write();
@@ -116,6 +125,12 @@ void FastRootBulkWriter::fill_native(::MpiMusic *music, const EvolutionHistory &
   neta = netan;
   eff_tau_min = g.tau_min;
   eff_dtau = g.dtau * tau_stride;
+
+  nX_MUSIC = g.nx; dX_MUSIC = g.dx; X_min_MUSIC = g.x_min;
+  nY_MUSIC = g.ny; dY_MUSIC = g.dy; Y_min_MUSIC = g.y_min;
+  neta_MUSIC = g.neta; deta_MUSIC = g.deta; eta_min_MUSIC = g.eta_min;
+  tau_min_MUSIC = g.tau_min; dtau_MUSIC = g.dtau;
+  tau_freezeout = g.tau_min + ntau_native * g.dtau;
 
   v_data.clear();
   v_data.reserve((size_t)((ntau_native + tau_stride - 1) / tau_stride) * n_per_step *
@@ -172,6 +187,12 @@ void FastRootBulkWriter::fill_grid(::MpiMusic *music, const EvolutionHistory &g)
   if (!y_min) y_min = g.y_min;
   if (!eta_min) eta_min = g.eta_min;
   if (!tau_min) tau_min = g.tau_min;
+
+  nX_MUSIC = g.nx; dX_MUSIC = g.dx; X_min_MUSIC = g.x_min;
+  nY_MUSIC = g.ny; dY_MUSIC = g.dy; Y_min_MUSIC = g.y_min;
+  neta_MUSIC = g.neta; deta_MUSIC = g.deta; eta_min_MUSIC = g.eta_min;
+  tau_min_MUSIC = g.tau_min; dtau_MUSIC = g.dtau;
+  tau_freezeout = g.tau_min + ntau_native * g.dtau;
 
   nx = 2 * int(fabs(x_min) / dx) + 1;
   ny = 2 * int(fabs(y_min) / dy) + 1;

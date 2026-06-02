@@ -84,8 +84,14 @@ private:
   bool isinit {false};
   int nx{0}, ny{0}, neta{0};
   int ntau_written {0};               // branch: number of tau steps in v_data
+  float tau_freezeout {0};            // branch: tau one step past last stored step
   float eff_tau_min {0}, eff_dtau {0};// branch/metadata: actual tau origin & step
   const int nFeatures {4};            // energy_density, vx, vy, vz
+
+  // MUSIC-native grid parameters (mirrors RootBulkWriter _MUSIC keys)
+  int nX_MUSIC{0}, nY_MUSIC{0}, neta_MUSIC{0};
+  float X_min_MUSIC{0}, dX_MUSIC{0}, Y_min_MUSIC{0}, dY_MUSIC{0};
+  float eta_min_MUSIC{0}, deta_MUSIC{0}, tau_min_MUSIC{0}, dtau_MUSIC{0};
 
   // transient working history for grid-mode interpolation (no framework copy)
   EvolutionHistory work_hist_;
