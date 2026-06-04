@@ -204,10 +204,10 @@ void PythiaTGun::GetCrossSec(){
   double dx = 2.0 * s_1x / double(n_1x);
   double dy = s_1y / double(n_1y);
   std::ofstream sigma_printer_;
-  sigma_printer_.open("sigma_AuAu0010.txt", std::ios::trunc);
+  sigma_printer_.open("/mnt/tmp/sigma_AuAu0010_"+std::to_string(pTHatMin)+"_"+std::to_string(pTHatMax)+".txt", std::ios::trunc);
   for (auto& py : pythia_vec) {
-    ix = j/n_1x;
-    iy = j%n_1x;
+    ix = j/n_1y;
+    iy = j%n_1y;
     x = -s_1x + dx / 2.0 + ix * dx;
     y = 0.0 + dy / 2.0 + iy * dy;
     do {
@@ -222,8 +222,8 @@ void PythiaTGun::GetCrossSec(){
   sigma_printer_.close();
 }
 void PythiaTGun::ExecuteTask() {
-  GetCrossSec();
-  exit(1);
+  //GetCrossSec();
+  //exit(1);
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
   double p[4], xLoc[4];

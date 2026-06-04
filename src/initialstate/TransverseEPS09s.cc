@@ -483,6 +483,7 @@ void EPS09s::init(int iOrderIn, int iSetIn) {
 
   //std::cout<<"s init "<<PDF::sNowA<<" "<<PDF::sNowB<<std::endl;
   double a = getA();
+  std::cout << "\033[34m" << "Shadowing for "<<a<<" is on."<< "\033[0m" << std::endl;
   //std::cout << "Initializing EPS09s for A = " << a << std::endl;
   if(a > 2){
   if(a < 16){
