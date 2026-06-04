@@ -90,21 +90,27 @@ endif(USE_IPGLASMA)
 
 # MUSIC. Turn on with 'cmake -DUSE_MUSIC=ON'.
 #   CPU (default):   -DUSE_MUSIC=ON
-#   GPU (music4gpu):  add -DUSE_CUDA=ON (NVIDIA) or -DUSE_METAL=ON (Apple Silicon)
+#   GPU (music4gpu):  add -DUSE_CUDA=ON (NVIDIA), -DUSE_METAL=ON (Apple Silicon),
+#                     or -DUSE_KOKKOS=ON (NVIDIA/AMD/Intel GPU + multicore CPU)
 # The GPU flags pick the music4gpu package; only one backend is ever built.
+# For USE_KOKKOS, fetch Kokkos first: bash external_packages/music4gpu/get_kokkos.sh
 option(USE_MUSIC "Build tests for MUSIC" OFF)
 option(USE_CUDA "Use music4gpu with CUDA GPU backend" OFF)
 option(USE_METAL "Use music4gpu with Metal GPU backend (macOS/Apple Silicon)" OFF)
+option(USE_KOKKOS "Use music4gpu with Kokkos backend (NVIDIA/AMD/Intel GPU + CPU)" OFF)
 
 # Default to CPU music; any GPU flag switches to the music4gpu package.
 set(MUSIC_BACKEND_DIR external_packages/music)
-if(USE_CUDA OR USE_METAL)
+if(USE_CUDA OR USE_METAL OR USE_KOKKOS)
   set(MUSIC_BACKEND_DIR external_packages/music4gpu)
 endif()
 
 if(USE_MUSIC)
   if(USE_METAL AND USE_CUDA)
     message(FATAL_ERROR "USE_METAL and USE_CUDA are mutually exclusive.")
+  endif()
+  if(USE_KOKKOS AND (USE_CUDA OR USE_METAL))
+    message(FATAL_ERROR "USE_KOKKOS is mutually exclusive with USE_CUDA / USE_METAL.")
   endif()
   if(USE_METAL AND NOT APPLE)
     message(FATAL_ERROR "USE_METAL is only supported on macOS (Apple Silicon).")
