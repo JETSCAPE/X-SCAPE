@@ -71,7 +71,7 @@ JetScape::~JetScape() {
   // not needed, use weak_ptr in JetScapeSignalManager class (=not owning)
 }
 
-void JetScape::Show() { ShowXscapeBanner(); }
+void JetScape::Show() { ShowXscapeBannerModern(); }
 
 //________________________________________________________________
 void JetScape::Init() {

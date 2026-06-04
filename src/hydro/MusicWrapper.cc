@@ -27,6 +27,7 @@
 #include "JetScapeLogger.h"
 #include "MusicWrapper.h"
 #include "surfaceCell.h"
+#include "music_logo.h"
 
 using namespace Jetscape;
 
@@ -50,6 +51,8 @@ MpiMusic::MpiMusic() {
 MpiMusic::~MpiMusic() {}
 
 void MpiMusic::InitializeHydro(Parameter parameter_list) {
+  int suppress_logo = GetXMLElementInt({"Hydro", "MUSIC", "suppress_logo"}, false);
+  if (!suppress_logo) MUSIC_LOGO::display_logo(0);
   JSINFO << "Initialize MUSIC ...";
   VERBOSE(8);
 

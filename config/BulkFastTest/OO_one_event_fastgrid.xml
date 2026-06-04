@@ -95,6 +95,8 @@
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>
+      <!-- set suppress_logo to 1 to hide the startup banner -->
+      <!-- <suppress_logo>1</suppress_logo> -->
       
       <EOS>91</EOS>
       
@@ -145,7 +147,7 @@
       <!-- ========================================================================= -->
       <!-- Fast RootBulkWriter specific/N timestep also relevant for GPU parameters: -->
 
-      <output_evolution_every_N_timesteps>5</output_evolution_every_N_timesteps> 
+      <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps> 
 
       <dump_hydro_only>1</dump_hydro_only>
       <skip_surface>1</skip_surface></MUSIC>
