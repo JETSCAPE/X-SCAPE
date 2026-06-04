@@ -31,3 +31,6 @@ sftp-config.json
 /external_packages/js-contrib
 notebooks*/
 X-SCAPE*.code-workspace
+
+# MkDocs local build output
+site/

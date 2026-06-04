@@ -1,0 +1,4 @@
+# Python dependencies for building the X-SCAPE documentation site.
+# Install with:  pip install -r docs/requirements.txt
+mkdocs-material>=9.5
+pymdown-extensions>=10.7

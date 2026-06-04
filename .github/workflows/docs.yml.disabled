@@ -1,0 +1,84 @@
+name: Documentation
+
+# =============================================================================
+# THIS WORKFLOW IS CURRENTLY DISABLED.
+#
+# It is kept in the repository (as `docs.yml.disabled`) but is NOT registered
+# by GitHub, because only files ending in `.yml`/`.yaml` in
+# `.github/workflows/` are run. The documentation is built LOCALLY for now,
+# until it has been decided how to integrate the docs site with JETSCAPE.
+#
+# To RE-ENABLE automatic build + deploy to GitHub Pages:
+#   1. Rename this file back to  .github/workflows/docs.yml
+#   2. In the repo, go to  Settings -> Pages  and set "Source" to
+#      "GitHub Actions".
+#   The site is then served at  https://<owner>.github.io/X-SCAPE/
+#
+# To build the docs locally in the meantime, see  docs/README.md.
+# =============================================================================
+
+# Build the MkDocs site together with the Doxygen API reference and publish
+# everything to GitHub Pages.
+
+on:
+  push:
+    branches:
+      - main
+      - DocGitHubPages
+    paths:
+      - "docs/**"
+      - "src/**"
+      - "mkdocs.yml"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+# Allow only one concurrent deployment, skipping runs queued between the run
+# in-progress and latest queued. Do not cancel in-progress runs.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install MkDocs Material
+        run: pip install -r docs/requirements.txt
+
+      - name: Install Doxygen and Graphviz
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Build MkDocs site
+        run: mkdocs build --strict --site-dir site
+
+      - name: Build Doxygen API reference into site/api/cpp
+        run: doxygen docs/Doxyfile
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

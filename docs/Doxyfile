@@ -1,0 +1,82 @@
+# Doxygen configuration for the X-SCAPE API reference.
+# Invoked from the repository root by the docs CI workflow:
+#     doxygen docs/Doxyfile
+# Output is generated into  site/api/cpp  so it sits next to the MkDocs site and
+# is reachable at  https://jetscape.github.io/X-SCAPE/api/cpp/
+# (The MkDocs landing page at /api/ links into it; keeping Doxygen one level
+#  deeper avoids overwriting that MkDocs-generated site/api/index.html.)
+
+DOXYFILE_ENCODING      = UTF-8
+PROJECT_NAME           = "X-SCAPE API Reference"
+PROJECT_NUMBER         = "2.1"
+PROJECT_BRIEF          = "X-ion collisions with a Statistically and Computationally Advanced Program Envelope"
+OUTPUT_DIRECTORY       = site/api
+HTML_OUTPUT            = cpp
+CREATE_SUBDIRS         = NO
+
+# --- What to parse -----------------------------------------------------------
+# Document the framework and all physics modules.  External packages are
+# intentionally excluded to keep the reference focused on X-SCAPE's own code.
+INPUT                  = src/framework \
+                         src/initialstate \
+                         src/preequilibrium \
+                         src/hydro \
+                         src/jet \
+                         src/hadronization \
+                         src/liquefier \
+                         src/hadronicEMT \
+                         src/afterburner \
+                         src/reader \
+                         src/root
+FILE_PATTERNS          = *.h *.hpp *.cc *.cpp
+RECURSIVE              = YES
+EXCLUDE_PATTERNS       = */build/* */build_gpu/* */build-docker/*
+
+# --- Extraction --------------------------------------------------------------
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+HIDE_UNDOC_MEMBERS     = NO
+INHERIT_DOCS           = YES
+INLINE_INHERITED_MEMB  = YES
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = YES
+BUILTIN_STL_SUPPORT    = YES
+TAB_SIZE               = 2
+
+# --- Diagrams (require Graphviz `dot`) --------------------------------------
+HAVE_DOT               = YES
+CLASS_DIAGRAMS         = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+GRAPHICAL_HIERARCHY    = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+DOT_GRAPH_MAX_NODES    = 60
+
+# --- HTML output -------------------------------------------------------------
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_COLORSTYLE        = LIGHT
+SEARCHENGINE           = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = NO
+REFERENCES_RELATION    = NO
+
+# --- Misc --------------------------------------------------------------------
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+GENERATE_TAGFILE       =
+ALLEXTERNALS           = NO
+MARKDOWN_SUPPORT       = YES
+AUTOLINK_SUPPORT       = YES
