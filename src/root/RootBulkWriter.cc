@@ -45,7 +45,7 @@
 #include "GubserHydro.h"
 #include "MusicWrapper.h"
 #include "PythiaGun.h"
-#include "iSpectraSamplerWrapper.h"
+//#include "iSpectraSamplerWrapper.h"
 #include "TrentoInitial.h"
 #include "NullPreDynamics.h"
 #include "PGun.h"
