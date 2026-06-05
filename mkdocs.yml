@@ -80,12 +80,24 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
+extra_css:
+  - assets/extra.css
+
 extra_javascript:
   - assets/mathjax.js
   - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+  - assets/diagram-zoom.js
 
 plugins:
   - search
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      effect: zoom
+      width: 100%
+      height: auto
+      zoomable: true
+      draggable: true
 
 # The Doxygen API reference lives under site/api and is generated *after*
 # `mkdocs build`, so the link to it cannot be resolved at build time.
