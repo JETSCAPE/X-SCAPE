@@ -85,7 +85,7 @@ jetscape->Finish();
 The same five steps drive *every* run; the XML path just builds the tree for
 you. See [Tasks, Modules & the Factory](../framework/tasks-modules.md) and
 [The Dynamical Clock](../framework/clock.md) for the API used here, and the
-[API Reference](../api.md) for the full class documentation.
+[API Reference](../api-overview.md) for the full class documentation.
 
 ## Unit tests
 

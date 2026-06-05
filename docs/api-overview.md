@@ -1,14 +1,28 @@
 # API Reference
 
 The complete C++ API is generated from the in-source documentation comments by
-**Doxygen** and published alongside this site.
+**Doxygen** and rendered as native pages in this site by the
+[mkdoxy](https://github.com/JakubAndrysek/MkDoxy) plugin. It is built
+automatically by `mkdocs build` / `mkdocs serve` — no separate step.
 
 <div class="grid cards" markdown>
 
-- :material-code-tags: **[Browse the Doxygen API Reference →](/X-SCAPE/api/cpp/index.html)**
+- :material-format-list-bulleted-type: **[Class List →](api/annotated.md)**
 
-    Every framework and physics-module class, with inheritance and
-    collaboration diagrams, member documentation, and source cross-references.
+    Every framework and physics-module class, with member documentation,
+    inheritance, and source cross-references.
+
+- :material-sitemap: **[Class Hierarchy →](api/hierarchy.md)**
+
+    The inheritance tree across all stages and modules.
+
+- :material-folder-multiple: **[Files →](api/files.md)**
+
+    Browse by source file under `src/`.
+
+- :material-tag-multiple: **[Namespaces →](api/namespaces.md)**
+
+    `Jetscape` and related namespaces.
 
 </div>
 
@@ -28,17 +42,15 @@ The API reference covers all of X-SCAPE's own code under `src/`:
 | **Configuration / logging** | `JetScapeXML`, `JetScapeLogger` |
 
 !!! note "How the reference is built"
-    The CI workflow runs `doxygen docs/Doxyfile` and places the HTML under
-    `site/api/cpp/`, so it is served at
-    [`/X-SCAPE/api/cpp/`](/X-SCAPE/api/cpp/index.html) (this MkDocs page itself
-    is served at `/X-SCAPE/api/`). To regenerate it locally:
+    The [mkdoxy](https://github.com/JakubAndrysek/MkDoxy) plugin runs Doxygen
+    over `src/` during the normal site build and converts the result into the
+    Material-themed pages linked above. Requirements:
 
     ```bash
-    pip install -r docs/requirements.txt   # for the MkDocs site
-    sudo apt-get install doxygen graphviz  # for the API reference
-    mkdocs build --site-dir site           # builds this site into ./site
-    doxygen docs/Doxyfile                  # adds the API under ./site/api/cpp
-    mkdocs serve                           # preview the site at localhost:8000
+    pip install -r docs/requirements.txt   # includes mkdoxy
+    # Doxygen must be on PATH (e.g. `brew install doxygen graphviz`
+    # or `sudo apt-get install doxygen graphviz`)
+    mkdocs serve                           # API is generated + served live
     ```
 
     The legacy whole-tree config `JetScapeDoxy.conf` in the repository root is

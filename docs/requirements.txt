@@ -3,3 +3,4 @@
 mkdocs-material>=9.5
 pymdown-extensions>=10.7
 mkdocs-glightbox>=0.4
+mkdoxy>=1.2          # C++ API reference: runs Doxygen, renders native Material pages

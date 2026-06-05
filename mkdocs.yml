@@ -98,10 +98,22 @@ plugins:
       height: auto
       zoomable: true
       draggable: true
+  # C++ API reference. mkdoxy runs Doxygen during `mkdocs build`/`serve` and
+  # renders the result as native, Material-themed Markdown pages under /api/.
+  # No separate Doxygen HTML site, and it works under the live-reload server.
+  - mkdoxy:
+      projects:
+        api:
+          src-dirs: src
+          full-doc: True
+          doxy-cfg:
+            FILE_PATTERNS: "*.h *.hpp *.cc *.cpp"
+            RECURSIVE: True
+            EXTRACT_ALL: True
+            EXTRACT_PRIVATE: False
+            EXTRACT_STATIC: True
+            HIDE_UNDOC_MEMBERS: False
 
-# The Doxygen API reference lives under site/api and is generated *after*
-# `mkdocs build`, so the link to it cannot be resolved at build time.
-# Tell the strict build to tolerate such links rather than fail.
 validation:
   links:
     absolute_links: ignore
@@ -144,5 +156,13 @@ nav:
       - Running X-SCAPE: guides/running.md
       - Published Tunes: guides/tunes.md
       - Examples: guides/examples.md
-  - API Reference: api.md
+  - API Reference:
+      - api-overview.md
+      - Class List: api/annotated.md
+      - Class Index: api/classes.md
+      - Class Hierarchy: api/hierarchy.md
+      - Namespaces: api/namespaces.md
+      - Files: api/files.md
+      - Functions: api/functions.md
+      - Macros: api/macros.md
   - References: references.md

@@ -52,9 +52,10 @@ time-stepped, concurrent mode.
     Installation, building with optional packages, running the executables,
     and a tour of the bundled examples.
 
-- :material-code-tags: **[API Reference](api.md)**
+- :material-code-tags: **[API Reference](api-overview.md)**
 
-    The Doxygen-generated C++ reference for every framework and module class.
+    The C++ reference for every framework and module class, generated from the
+    source by Doxygen and rendered natively in this site.
 
 </div>
 
