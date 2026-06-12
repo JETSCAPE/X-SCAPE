@@ -83,6 +83,8 @@ void ISRRotation::InitTask()
 
   GSL_RNG = std::shared_ptr<gsl_rng>(gsl_rng_alloc(gsl_rng_default), gsl_rng_free);
 
+  outputFilename = GetXMLElementText({"outputFilename"});
+
 }
 
 void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>& pIn, vector<Parton>& pOut)
@@ -94,6 +96,8 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
 
   FourVector PlusZaxis(0.0,0.0,1.0,1.0);
 
+  std::ofstream ISRRot_leading_partons;
+  ISRRot_leading_partons.open(outputFilename + std::string("ISRRot_leading_partons.dat"), std::ios::out | std::ios::app);
   //Debug
   // std::ofstream debug_file;
   // debug_file.open("ISRRot_debug.txt", std::ios::out | std::ios::app);
@@ -205,7 +209,9 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
           Out.e(), Out.px(), Out.py(),
                                       Out.pz(),
                                       (Out.pz() >= 0.0 ? 1 : -1), P_A);
-        
+        ISRRot_leading_partons << "# Event " << GetCurrentEvent() << std::endl;
+        ISRRot_leading_partons << "# E, px, py, pz format" << std::endl;
+        ISRRot_leading_partons << Out.e() << " " << Out.px() << " " << Out.py() << " " << Out.pz() << std::endl;
       }
 
 
@@ -280,6 +286,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2, vector<Par
       return;
   }
 
+  ISRRot_leading_partons.close();
   // JSINFO << BOLDCYAN << " Moving to next time step " ;
   
   // std::cin >> blurb ;

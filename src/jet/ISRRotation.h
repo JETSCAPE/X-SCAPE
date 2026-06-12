@@ -86,6 +86,7 @@ class ISRRotation : public JetEnergyLossModule<ISRRotation>
     void DefineRotationMatrix(double Dir);
     void RotateVector(FourVector &ToRotate);
 
+    std::string outputFilename; //For additional files
 
     
  protected:
