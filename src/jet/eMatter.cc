@@ -251,6 +251,23 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
     Dump_pIn_info(0, pIn);
   }
 
+
+
+  // std::ofstream foutstream;
+  // foutstream.open("pIntimestream.txt", std::ios_base::app);
+        //         ofstream foutx1;
+        //         foutx1.open("fullrot-qmed1-v4-19.txt", std::ios_base::app);
+        //         foutx1 << pmed[1] << " " << pmed[2] << " " << pmed[3] << endl;
+
+  //int intt = (int)time;
+  // cout << "TIME " << time << " " << (fabsf(roundf(time)-time)<1e-9) << " " << ((int)roundf(time))%10 << endl;
+  // if (fabsf(roundf(time)-time)<1e-9){// && ((int)roundf(time))%10==0) { //time is X0.0
+  //   int intt = (int)time;  
+  //   for (int tpi=0; tpi<pIn.size(); tpi++) {
+  //     double p2 = pIn[tpi].p(1)*pIn[tpi].p(1) + pIn[tpi].p(2)*pIn[tpi].p(2) + pIn[tpi].p(3)*pIn[tpi].p(3);
+  //     foutstream << time << " " << pIn[tpi].pstat() << " " << pIn[tpi].pid() << " " << pIn[tpi].e() << " " << pIn[tpi].p(1) << " " << pIn[tpi].p(2) << " " << pIn[tpi].p(3) << " " << pIn[tpi].e()*pIn[tpi].e()-p2 << " " << pIn[tpi].t() << endl;
+  //   }
+  // }
   // cout << "IN DOENERGYLOSS " << pIn.size() << endl;
   // Dump_pIn_info(0, pIn);
 
@@ -544,6 +561,9 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
         JSDEBUG << " parton is a quark ";
       }
 
+
+
+
       //find distance to end of nucleus
       double MINDENS = 0;
       double xLeft[4], xRight[4];
@@ -603,11 +623,44 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       }
 
       //now take either endpoint as the edge
+      double old_length = 0.;
+      for (int j=1; j<4; j++) { old_length += pow(xRight[j]-xStart[j],2); }
+      old_length = std::sqrt(old_length);
+
+      cout << "OLDLENGTH IS " << old_length << endl;
+
+
+
+
+
+      //version 2: go super far out and slowly reel it back in
+      double xEdge[4];
+      double tinf = 20.;
+      xEdge[0] = xStart[0]+tinf;
+      xEdge[1] = xStart[1]+tinf*initVx;
+      xEdge[2] = xStart[2]+tinf*initVy;
+      xEdge[3] = xStart[3]+tinf*initVz;
+
+      double edge_dt = 0.001;
+      double edge_dx = edge_dt*initVx;
+      double edge_dy = edge_dt*initVy;
+      double edge_dz = edge_dt*initVz;
+
+      // double MINDENS = 0;
+      while(ini->Get_target_nucleon_density_lab(xEdge[0], xEdge[1], xEdge[2], xEdge[3]) <= MINDENS) {
+        xEdge[0] -= edge_dt;
+        xEdge[1] -= edge_dx;
+        xEdge[2] -= edge_dy;
+        xEdge[3] -= edge_dz;
+      }
+
       length = 0.;
-      for (int j=1; j<4; j++) { length += pow(xRight[j]-xStart[j],2); }
+      for (int j=1; j<4; j++) { length += pow(xEdge[j]-xStart[j],2); }
       length = std::sqrt(length);
 
       cout << "LENGTH IS " << length << endl;
+
+
 
       //tQ2 = generate_vac_t(pIn[i].pid(), pIn[i].nu(), QS/2.0, pIn[i].e()*pIn[i].e() ,zeta , iSplit);
 
@@ -943,6 +996,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       // qhatLoc= GeneralQhatFunction(QhatParametrizationType, tempLoc, sdLoc, alphas, qhat0, enerLoc, muSquare);
 
       double nuclear_dens = ini->Get_target_nucleon_density_lab(el_time, el_rx, el_ry, el_rz);
+      if (el_time < 0.1) { nuclear_dens = 0.; } //no self interaction in the first moment
       if (!hasExited && nuclear_dens == 0.) { hasExited = true; cout << "EXITING, VIRT IS " << pIn[i].t() << endl; }
       if (pIn[i].pid()==21) {
         qhatLoc = interpolate_pdf_tables(initEner,21,2);
@@ -985,10 +1039,10 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
           el_rand = ZeroOneDistribution(*GetMt19937Generator());
 
           // cout << " qhat: " << qhatLoc << " dens " << nuclear_dens << " alphas: " << soln_alphas << " ener: " << enerLoc << " prob_el: " << prob_el << "  " << el_rand << endl;
-          // cout << "dens " << nuclear_dens << " rate " << rate_per_vol << " dt " << dt_lrf << " prob is " << prob_el << endl;
+          // cout << "dens " << nuclear_dens << " rate " << rate_per_vol << " dt " << dt_lrf << " prob is " << prob_el << " rand is " << el_rand << endl;
           if (el_rand > prob_el) { // elastic scattering happens
 
-            // cout << "elastic scattering happens" << endl;
+            cout << "elastic scattering happens" << endl;
             int CT = -1;
             int pid0 = -999;
             int pid2 = -999;

@@ -69,6 +69,7 @@ private:
   double crossSection, weight;
 
   std::vector<std::unique_ptr<Pythia8::Pythia>> pythia_vec;
+  // std::vector<Pythia8::RotBstMatrix> cmboost_vec;
   std::vector<std::array<double, 4>> nucleonPositions = {{0.,0.,0.,0.}};
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.

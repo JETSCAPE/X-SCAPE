@@ -93,13 +93,45 @@ void EAGun::ConfigurePythia(Pythia8::Pythia& py, int idA, unsigned int seed) {
     // readString("Beams:frameType = 2");
     // settings.parm("Beams:eA", 0.);
     // settings.parm("Beams:eB", eElectron);
-    py.readString("Beams:frameType = 3");
 
+    //find the boost to use
+    double targetMass;
+    if (idA==0) { targetMass=0.938; }
+    else { targetMass=0.940; }
+
+    Pythia8::Vec4 eIn = Pythia8::Vec4(0., 0., eElectron, eElectron);
+    Pythia8::Vec4 PIn = Pythia8::Vec4(0., 0., 0., targetMass);
+    Pythia8::RotBstMatrix cmBoost = Pythia8::toCMframe(eIn, PIn);
+    // cmboost_vec.push_back(cmBoost);
+
+    //now get the pmus
+    eIn.rotbst(cmBoost);
+    PIn.rotbst(cmBoost);
+
+    //we can use frameType=1 probably but this is more robust
+
+    py.readString("Beams:frameType = 3");
     cout << "SETTING TARGET PID " << idA << endl;
     mySettingsParm(py,"Beams:idA", idA);
 
-    mySettingsParm(py,"Beams:pzA", 0.);
-    mySettingsParm(py,"Beams:pzB", eElectron);
+    mySettingsParm(py,"Beams:eA", PIn.e());
+    mySettingsParm(py,"Beams:pxA", PIn.px());
+    mySettingsParm(py,"Beams:pyA", PIn.py());
+    mySettingsParm(py,"Beams:pzA", PIn.pz());
+
+    mySettingsParm(py,"Beams:eB", eIn.e());
+    mySettingsParm(py,"Beams:pxB", eIn.px());
+    mySettingsParm(py,"Beams:pyB", eIn.py());
+    mySettingsParm(py,"Beams:pzB", eIn.pz());
+
+
+    // py.readString("Beams:frameType = 3");
+    // cout << "SETTING TARGET PID " << idA << endl;
+    // mySettingsParm(py,"Beams:idA", idA);
+    // mySettingsParm(py,"Beams:pzA", 0.);
+    // mySettingsParm(py,"Beams:pzB", eElectron);
+
+
     // readString("Beams:allowMomentumSpread = off");
     // settings.parm("Beams:sigmaPxA", 0.);
     // settings.parm("Beams:sigmaPyA", 0.);
@@ -299,6 +331,7 @@ void EAGun::ExecuteTask() {
     }
     // cout << pythiaindex << endl;
     Pythia8::Pythia& py = *pythia_vec[pythiaindex];
+    // Pythia8::RotBstMatrix cmBoost = cmboost_vec[pythiaindex];
 
     // py.settings.listAll();
 
@@ -329,6 +362,13 @@ void EAGun::ExecuteTask() {
     double tmpnu, tmpQ2, W2, x, y;
 
     do {
+        //go cm frame
+        // cout<<"ALLPART"<<endl;
+        // for (int ii=0; ii<py.event.size(); ii++) {
+        //     cout << py.event[ii].e() << endl;
+        // }
+        // cout<<"DONE"<<endl;
+
         bool check = py.next();
         if (check==false) continue;
 
@@ -342,6 +382,8 @@ void EAGun::ExecuteTask() {
 
         pProton = py.event[1].p();
         peIn    = py.event[2].p();
+        // cout << "PROTON " << pProton.e() << " " << pProton.px() << " " << pProton.py() << " " << pProton.pz() << endl;
+        // cout << "ELECTRON " << peIn.e() << " " << peIn.px() << " " << peIn.py() << " " << peIn.pz() << endl;
         peOut   = py.event[6].p();
         pPhoton = peIn - peOut;
         pStruck = py.event[3].p();
@@ -375,7 +417,8 @@ void EAGun::ExecuteTask() {
         pProtonNoz = py.event[1].p();
         pProtonNoz.pz(0.);
 
-        fixedtargBoost = Pythia8::toCMframe(pProtonNoz, pPhoton, peIn);
+        // fixedtargBoost = Pythia8::toCMframe(pProtonNoz, pPhoton, peIn);
+        fixedtargBoost = Pythia8::toCMframe(pProton, pPhoton, peIn);
         pProton.rotbst(fixedtargBoost);
         peIn.rotbst(fixedtargBoost);
         peOut.rotbst(fixedtargBoost);
@@ -572,6 +615,27 @@ void EAGun::ExecuteTask() {
     }
     // cout << "INITIAL COLLISION IS AT: " << xLoc[0] << " " << xLoc[1] << " " << xLoc[2] << " " << xLoc[3] << endl;
 
+    // std::ofstream fdensity;
+    // fdensity.open("nucdens_Xe.csv", std::ofstream::out | std::ios::trunc);
+    // double NUCMINX = -5.0;
+    // double NUCMAXX = 5.0;
+    // double nucdx = 0.1;
+    
+    // double nucx = NUCMINX;
+    // double nucy, nucz;
+    // while (nucx<NUCMAXX) {
+    //     nucy = NUCMINX;
+    //     while (nucy<NUCMAXX) {
+    //         nucz = NUCMINX;
+    //         while (nucz<NUCMAXX) {
+    //             fdensity << nucx << "," << nucy << "," << nucz << "," << ini->Get_target_nucleon_density_lab(0,nucx,nucy,nucz) << endl;
+    //             nucz += nucdx;
+    //         }
+    //         nucy += nucdx;
+    //     }
+    //     nucx += nucdx;
+    // }
+
     //debug: should only get one parton out
     if (p62.size()>1) { 
         cout << "SIZE IS " << p62.size() << endl;
@@ -606,7 +670,8 @@ void EAGun::ExecuteTask() {
 
         AddParton(ptn);
 
-        cout << "Struck " << particle.id() << " " << particle.status() << " E " << ptn->e() << " MOM " << ptn->px() << " " << ptn->py() << " " << ptn->pz() << endl;
+        double ppt = ptn->e()*ptn->e() - ptn->px()*ptn->px() - ptn->py()*ptn->py() - ptn->pz()*ptn->pz();
+        cout << "Struck " << particle.id() << " " << particle.status() << " E " << ptn->e() << " MOM " << ptn->px() << " " << ptn->py() << " " << ptn->pz() << " virt " << ppt << " " << ptn->t() << endl;
 
         //log the momentum
         // ofstream ptout;
@@ -614,12 +679,15 @@ void EAGun::ExecuteTask() {
         // ptout << pPtn.px() << " " << pPtn.py() << " " << pPtn.pz() << endl;
     }
 
-
     for (int np=0; np<p63.size(); np++) {
         remnant = p63.at(np);
 
         pRmn = remnant.p();
+        cout << "PREBOOSTREMN E " << pRmn.e() << " MOM " << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
+        
         pRmn.rotbst(fixedtargBoost);
+
+        cout << "POSTBOOSTREMN E " << pRmn.e() << " MOM " << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
 
         // ofstream fout4;
         // fout4.open("fullrot-remnout1-v4-19.txt", std::ios_base::app);
@@ -655,5 +723,9 @@ void EAGun::ExecuteTask() {
     // randState = rndm.getState();
     // isFirstEvent = false;
 
+    // std::ofstream foutstream;
+    // foutstream.open("pIntimestream.txt", std::ios_base::app);
+    // foutstream << "--" << endl;
+    
     VERBOSE(8) << GetNHardPartons();
 }
