@@ -51,18 +51,21 @@ jobs:
       run: ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/runTest.sh -j ${GITHUB_WORKSPACE}/${REPO_NAME} -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/config/jetscapeTestConfig.yaml -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/output/new -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/output/latest
 
     # repeat the pp tests with the graphtest config and with the cscape-graphtest git branch checked out
-    - name: Checkout TEST-EXAMPLES graphtest
+    - name: Remove previous TEST-EXAMPLES checkout
+      run: rm -rf ${GITHUB_WORKSPACE}/TEST-EXAMPLES
+
+    - name: Checkout TEST-EXAMPLES graphtest branch
       uses: actions/checkout@v4
       with:
         repository: JETSCAPE/TEST-EXAMPLES
         ref: cscape-graphtest
-        path: TEST-EXAMPLES-GRAPHTEST
+        path: TEST-EXAMPLES
 
     - name: Run pp tests with graphtest config
       run: |
-        ${GITHUB_WORKSPACE}/TEST-EXAMPLES-GRAPHTEST/test/runTest.sh \
+        ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/runTest.sh \
           -j ${GITHUB_WORKSPACE}/${REPO_NAME} \
-          -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES-GRAPHTEST \
-          -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES-GRAPHTEST/test/pp/config/jetscapeTestConfig_graphtest.yaml \
-          -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES-GRAPHTEST/test/pp/output/new \
-          -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES-GRAPHTEST/test/pp/output/latest
+          -a ${GITHUB_WORKSPACE}/TEST-EXAMPLES \
+          -c ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/config/jetscapeTestConfig_graphtest.yaml \
+          -o ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/output/new \
+          -r ${GITHUB_WORKSPACE}/TEST-EXAMPLES/test/pp/output/latest
