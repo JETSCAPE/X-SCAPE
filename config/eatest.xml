@@ -2,22 +2,22 @@
 
 <jetscape>
   <Random>
-    <seed>0</seed>
+    <seed>1</seed>
   </Random>
 
-  <nEvents>1000</nEvents>
+  <outputFilename>eaout</outputFilename>
+  <nEvents>10000</nEvents>
   
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
 
   <!-- Inital State Module  -->
   <IS>
-    <!-- <Trento> </Trento> -->
     <MCGlauber>
       <!--0: generates full event with binary collisions and strings-->
       <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
       <generateOnlyPositions>1</generateOnlyPositions>
       <projectile>e</projectile> <!--activates eA mode in MCGlauber-->
-      <target>Pb</target> <!--Target name-->
+      <target>d</target> <!--Target name-->
       <sqrts>27.6</sqrts> <!--Center of mass energy in GeV-->
       <ylossParam4At2> 1.666 </ylossParam4At2>
       <ylossParam4At4> 2.10 </ylossParam4At4>
@@ -33,12 +33,20 @@
       <softMomentumCutoff>2.0</softMomentumCutoff>
       <electron_energy>27.6</electron_energy>
       <proton_energy>0.938</proton_energy>
-      <Q2_pow>2</Q2_pow>
-      <Q2_factor>500</Q2_factor>
-      <!-- <Q2min>25</Q2min> -->
-      <!-- <Q2max>36</Q2max> -->
+      <!-- hermes paper cuts -->
+      <usesetQ2>0</usesetQ2>
+      <usesetnu>0</usesetnu>
+      <Q2min>10</Q2min>
+      <Q2min>11</Q2min>
+      <!-- <W2min>4</W2min> -->
+      <numin>10</numin>
+      <numax>23.5</numax>
+      <!-- end hermes paper -->
       <Q2>10</Q2>
       <nu>12</nu>
+      <!-- ^ these are used if usesetQ2 or usesetnu are 1 -->
+      <targetZ>1</targetZ>
+      <targetA>2</targetA>
     </EAGun>
   </Hard>
   
@@ -49,10 +57,12 @@
   
   <!--Eloss Modules -->
   <Eloss>
+    <maxT>80</maxT>
     <eMatter>
       <initial_virtuality_pT>0</initial_virtuality_pT>
       <in_vac>0</in_vac>
-      <QS>0.4</QS>
+      <QS>0.9</QS>
+      <Q0>1</Q0>
       <broadening_on>0</broadening_on>
     </eMatter>
   </Eloss>
