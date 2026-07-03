@@ -1,4 +1,5 @@
 /*******************************************************************************
+    mc_glauber_ptr_->Set_hard_collisions_Pos(HardPartonPos);
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
  * Modular, task-based framework for simulating all aspects of heavy-ion
@@ -61,8 +62,11 @@ void MCGlauberWrapper::InitTask() {
   para_temp_string = (GetXMLElementText({"IS", "MCGlauber", "projectile"}));
   mc_gen_->set_parameter("Projectile", para_temp_string);
 
-  para_temp_string = (GetXMLElementText({"IS", "MCGlauber", "target"}));
-  mc_gen_->set_parameter("Target", para_temp_string);
+    if (para_temp_string == "e") eAmode_ = true;
+
+    para_temp_string = (
+        GetXMLElementText({"IS", "MCGlauber", "target"}));
+    mc_gen_->set_parameter("Target", para_temp_string);
 
   para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", "sqrts"}));
   mc_gen_->set_parameter("roots", para_temp_double);
@@ -196,71 +200,86 @@ void MCGlauberWrapper::ClearTask() {
 }
 
 void MCGlauberWrapper::ExecuteTask() {
-  ClearTask();
-  VERBOSE(1) << "Run 3DMCGlauber to generate initial hard positions "
-             << "...";
+    ClearTask();
+    VERBOSE(1) << "Run 3DMCGlauber to generate initial hard positions "
+                     << "...";
 
-  if (generateOnlyPositions_) {
-    // Run 3DGlauber for positions only (ISR Configuration)
-    try {
-      int iparticle = 0;
-      mc_gen_->generate_pre_events();  // generate one 3DGlauber event
-      std::vector<MCGlb::CollisionEvent> collisionEvents =
-          (mc_gen_->get_CollisionEventvector());
-      ncoll_ = collisionEvents.size();
-      rand_int_ptr_ =
-          (std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_ - 1));
-      while (iparticle < ncoll_) {
-        auto xvec = (collisionEvents[iparticle].get_collision_position());
-        binary_collision_t_.push_back(xvec[0]);
-        binary_collision_x_.push_back(xvec[1]);
-        binary_collision_y_.push_back(xvec[2]);
-        binary_collision_z_.push_back(xvec[3]);
-        iparticle++;
-      }
-      event_id_++;
-    } catch (std::exception &err) {
-      Jetscape::JSWARN << err.what();
-      std::exit(-1);
+    if (generateOnlyPositions_) {
+        //Run 3DGlauber for positions only (ISR Configuration)
+        try {
+            if (eAmode_) {
+                mc_gen_->generate_pre_eAcollision();  // generate one 3DGlauber event
+            } else {
+                int iparticle=0;
+                mc_gen_->generate_pre_events(); // generate one 3DGlauber event
+                std::vector<MCGlb::CollisionEvent> collisionEvents = (
+                    mc_gen_->get_CollisionEventvector());
+                ncoll_ = collisionEvents.size();
+                rand_int_ptr_ = (
+                    std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
+                while (iparticle < ncoll_) {
+                     auto xvec = (
+                        collisionEvents[iparticle].get_collision_position());
+                     binary_collision_t_.push_back(xvec[0]);
+                     binary_collision_x_.push_back(xvec[1]);
+                     binary_collision_y_.push_back(xvec[2]);
+                     binary_collision_z_.push_back(xvec[3]);
+                     iparticle++;
+                }
+            }
+            event_id_++;
+        } catch (std::exception &err) {
+            Jetscape::JSWARN << err.what();
+            std::exit(-1);
+        }
+    } else {
+        //Run 3DMCGlauber to generate initial hard positions and strings
+        try {
+            if (!eAmode_) {
+                int iparticle=0;
+                mc_gen_->generate_pre_events(); // TODO: change this function to generate_full_events
+                std::vector<MCGlb::CollisionEvent> collisionEvents = (
+                    mc_gen_->get_CollisionEventvector());
+                ncoll_ = collisionEvents.size();
+                rand_int_ptr_ = (
+                    std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_-1));
+                while (iparticle < ncoll_) {
+                     auto xvec = (
+                        collisionEvents[iparticle].get_collision_position());
+                     binary_collision_t_.push_back(xvec[0]);
+                     binary_collision_x_.push_back(xvec[1]);
+                     binary_collision_y_.push_back(xvec[2]);
+                     binary_collision_z_.push_back(xvec[3]);
+                     iparticle++;
+                }
+                event_id_++;
+                //Do not wound nucleons in Glauber code for case there is no
+                //energy subtraction in JETSCAPE mode (wound_nucleons=false)
+                bool hardCollisionFlag = false;
+                ini->GenerateStrings(hardCollisionFlag, event_id_ - 1);
+            }
+        } catch (std::exception &err) {
+            Jetscape::JSWARN << err.what();
+            std::exit(-1);
+        }
     }
-  } else {
-    // Run 3DMCGlauber to generate initial hard positions and strings
-    try {
-      int iparticle = 0;
-      mc_gen_->generate_pre_events();  // TODO: change this function to
-                                       // generate_full_events
-      std::vector<MCGlb::CollisionEvent> collisionEvents =
-          (mc_gen_->get_CollisionEventvector());
-      ncoll_ = collisionEvents.size();
-      rand_int_ptr_ =
-          (std::make_shared<std::uniform_int_distribution<int>>(0, ncoll_ - 1));
-      while (iparticle < ncoll_) {
-        auto xvec = (collisionEvents[iparticle].get_collision_position());
-        binary_collision_t_.push_back(xvec[0]);
-        binary_collision_x_.push_back(xvec[1]);
-        binary_collision_y_.push_back(xvec[2]);
-        binary_collision_z_.push_back(xvec[3]);
-        iparticle++;
-      }
-      event_id_++;
-      // Do not wound nucleons in Glauber code for case there is no
-      // energy subtraction in JETSCAPE mode (wound_nucleons=false)
-      bool hardCollisionFlag = false;
-      ini->GenerateStrings(hardCollisionFlag, event_id_ - 1);
-    } catch (std::exception &err) {
-      Jetscape::JSWARN << err.what();
-      std::exit(-1);
-    }
-  }
 }
 
-void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x,
-                                                   double &y, double &z) {
-  const int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
-  t = binary_collision_t_[rand_idx];
-  x = binary_collision_x_[rand_idx];
-  y = binary_collision_y_[rand_idx];
-  z = binary_collision_z_[rand_idx];
+std::vector<std::array<double, 4>> MCGlauberWrapper::GetProjectileNucleonPositions() {
+    return(mc_gen_->MCGlb_projectile_nucleon_xyz());
+}
+
+std::vector<std::array<double, 4>> MCGlauberWrapper::GetTargetNucleonPositions() {
+    return(mc_gen_->MCGlb_target_nucleon_xyz());
+}
+
+void MCGlauberWrapper::SampleABinaryCollisionPoint(
+        double &t, double &x, double &y, double &z) {
+    const int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
+    t = binary_collision_t_[rand_idx];
+    x = binary_collision_x_[rand_idx];
+    y = binary_collision_y_[rand_idx];
+    z = binary_collision_z_[rand_idx];
 }
 
 double MCGlauberWrapper::Get_total_nucleon_density_lab(double t, double x,
@@ -295,103 +314,169 @@ std::vector<double> MCGlauberWrapper::Get_target_nucleon_z_lab() {
   return (mc_gen_->MCGlb_target_nucleon_z());
 }
 
-void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x, double y,
-                                                   double z) {
-  hard_parton_t_ = t;
-  hard_parton_x_ = x;
-  hard_parton_y_ = y;
-  hard_parton_z_ = z;
+
+void MCGlauberWrapper::OutputHardCollisionPosition(double t, double x,
+                                                   double y, double z) {
+    hard_parton_t_.push_back(t);
+    hard_parton_x_.push_back(x);
+    hard_parton_y_.push_back(y);
+    hard_parton_z_.push_back(z);
 }
+
 
 void MCGlauberWrapper::ClearHardPartonMomentum() {
-  proj_parton_e_ = 0.0;
-  proj_parton_px_ = 0.0;
-  proj_parton_py_ = 0.0;
-  proj_parton_pz_ = 0.0;
-  targ_parton_e_ = 0.0;
-  targ_parton_px_ = 0.0;
-  targ_parton_py_ = 0.0;
-  targ_parton_pz_ = 0.0;
+    hard_parton_t_.clear();
+    hard_parton_x_.clear();
+    hard_parton_y_.clear();
+    hard_parton_z_.clear();
+
+    proj_parton_e_.clear();
+    proj_parton_px_.clear();
+    proj_parton_py_.clear();
+    proj_parton_pz_.clear();
+
+    targ_parton_e_.clear();
+    targ_parton_px_.clear();
+    targ_parton_py_.clear();
+    targ_parton_pz_.clear();
 }
 
-void MCGlauberWrapper::OutputHardPartonMomentum(double E, double px, double py,
-                                                double pz, int direction,
-                                                double P_A) {
-  // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
-  if (direction == 1) {
-    proj_parton_e_ += E;
-    proj_parton_px_ += px;
-    proj_parton_py_ += py;
-    proj_parton_pz_ += pz;
-    // JSINFO <<  MAGENTA << " proj_parton_e_ " << proj_parton_e_;
-    // JSINFO <<  MAGENTA << " proj_parton_px_ " << proj_parton_px_;
-    // JSINFO <<  MAGENTA << " proj_parton_py_ " << proj_parton_py_;
-    // JSINFO <<  MAGENTA << " proj_parton_pz_ " << proj_parton_pz_;
-  } else {
-    targ_parton_e_ += E;
-    targ_parton_px_ += px;
-    targ_parton_py_ += py;
-    targ_parton_pz_ += pz;
-    // JSINFO <<  MAGENTA << " targ_parton_e_ " << targ_parton_e_;
-    // JSINFO <<  MAGENTA << " targ_parton_px_ " << targ_parton_px_;
-    // JSINFO <<  MAGENTA << " targ_parton_py_ " << targ_parton_py_;
-    // JSINFO <<  MAGENTA << " targ_parton_pz_ " << targ_parton_pz_;
-  }
 
-  VERBOSE(2) << BOLDYELLOW << " proj_parton_e_ " << proj_parton_e_
-             << " proj_parton_pz_ " << proj_parton_pz_ << " targ_parton_e_ "
-             << targ_parton_e_ << " targ_parton_pz_ " << targ_parton_pz_;
+void MCGlauberWrapper::OutputHardPartonMomentum(
+        double t, double x, double y, double z,
+        double E, double px, double py, double pz, int direction, double P_A) {
+    // JSWARN <<  MAGENTA << " Pushing hard momentum to MCGlauber ";
+    bool newCollFlag = true;
+    int hardCollIdx = 0;
+    for (int idx = hard_parton_t_.size() - 1; idx >= 0; idx++) {
+        // start searching from the last index so that the vectors support
+        // repeated entries, the last one will be picked.
+        if (std::abs(x - hard_parton_x_[idx]) < 1e-5
+                && std::abs(y - hard_parton_y_[idx]) < 1e-5) {
+            hardCollIdx = idx;
+            newCollFlag = false;
+            break;
+        }
+    }
 
-  if (targ_parton_e_ >= 0.95 * P_A || proj_parton_e_ >= 0.95 * P_A) {
-    throw std::runtime_error(
-        "Energy to subtract from 3DMCGlauber >= 0.95 * P_A " +
-        std::to_string(0.95 * P_A) + ". Turn on Verbose for more info.");
-  }
+    if (newCollFlag) {
+        JSWARN << "The requested binary collision point is not registered! "
+               << "please check: t = " << t << ", x = " << x << ", y = " << y
+               << ", z = " << z;
+        JSWARN << "registered binary collision points:";
+        for (int idx = 0; idx < hard_parton_t_.size(); idx++) {
+            JSWARN << "t = " << hard_parton_t_[idx]
+                   << ", x = " << hard_parton_x_[idx]
+                   << ", y = " << hard_parton_y_[idx]
+                   << ", z = " << hard_parton_z_[idx];
+        }
+        exit(0);
+    }
+
+    if (direction == 1) {
+        if (hardCollIdx < proj_parton_e_.size()) {
+            proj_parton_e_[hardCollIdx] += E;
+            proj_parton_px_[hardCollIdx] += px;
+            proj_parton_py_[hardCollIdx] += py;
+            proj_parton_pz_[hardCollIdx] += pz;
+        } else {
+            proj_parton_e_.push_back(E);
+            proj_parton_px_.push_back(px);
+            proj_parton_py_.push_back(py);
+            proj_parton_pz_.push_back(pz);
+        }
+    } else {
+        if (hardCollIdx < targ_parton_e_.size()) {
+            targ_parton_e_[hardCollIdx] += E;
+            targ_parton_px_[hardCollIdx] += px;
+            targ_parton_py_[hardCollIdx] += py;
+            targ_parton_pz_[hardCollIdx] += pz;
+        } else {
+            targ_parton_e_.push_back(E);
+            targ_parton_px_.push_back(px);
+            targ_parton_py_.push_back(py);
+            targ_parton_pz_.push_back(pz);
+        }
+    }
+
+    VERBOSE(2) << BOLDYELLOW << " parton_e_ " << E
+                             << " parton_pz_ " << pz;
+
+    double threshold = 0.99 * P_A;
+    bool thresholdFlag = false;
+    if (direction == 1) {
+        if (proj_parton_e_[hardCollIdx] >= threshold) {
+            thresholdFlag = true;
+        }
+    } else {
+        if (targ_parton_e_[hardCollIdx] >= threshold) {
+            thresholdFlag = true;
+        }
+    }
+    if (thresholdFlag) {
+        JSWARN << "Energy to subtract from 3DMCGlauber >= 0.99 * P_A "
+               << threshold << ". Turn on Verbose for more info.";
+    }
 }
 
-std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab() {
-  // get the x, y, z of the three valence quarks of colliding projectile
-  // The fourth parton is the soft ball
-  // 3DGlauber attributes the remaining energy and momentum carried by the
-  // sea quarks and gluons to a soft gluon cloud
-  // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
-  mc_gen_->GetHardPos(hard_parton_t_, hard_parton_x_, hard_parton_y_,
-                      hard_parton_z_);
-  return (mc_gen_->GetQuarkPosProj());
+
+std::vector<double> MCGlauberWrapper::Get_quarks_pos_proj_lab(
+        double t, double x, double y, double z) {
+    // get the x, y, z of the three valence quarks of colliding projectile
+    // The fourth parton is the soft ball
+    // 3DGlauber attributes the remaining energy and momentum carried by the
+    // sea quarks and gluons to a soft gluon cloud
+    // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
+    return(mc_gen_->GetQuarkPosProj(t, x, y, z));
 }
 
-std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab() {
-  // get the x, y, z of the three valence quarks of colliding target
-  // The fourth parton is the soft ball
-  // 3DGlauber attributes the remaining energy and momentum carried by the
-  // sea quarks and gluons to a soft gluon cloud
-  // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
-  mc_gen_->GetHardPos(hard_parton_t_, hard_parton_x_, hard_parton_y_,
-                      hard_parton_z_);
-  return (mc_gen_->GetQuarkPosTarg());
+
+std::vector<double> MCGlauberWrapper::Get_quarks_pos_targ_lab(
+        double t, double x, double y, double z) {
+    // get the x, y, z of the three valence quarks of colliding target
+    // The fourth parton is the soft ball
+    // 3DGlauber attributes the remaining energy and momentum carried by the
+    // sea quarks and gluons to a soft gluon cloud
+    // Output formulation is (x,y,z, x,y,z, x,y,z, x,y,z)
+    return(mc_gen_->GetQuarkPosTarg(t, x, y, z));
 }
 
-std::vector<double> MCGlauberWrapper::Get_remnant_proj() {
-  // get the fout-momentum (E, px, py, pz) of the remnant in projectile
-  return (mc_gen_->GetRemMom_Proj());
+
+std::vector<std::vector<double>> MCGlauberWrapper::Get_remnant_proj() {
+    // get the fout-momentum (E, px, py, pz) of the remnant in projectile
+    return(mc_gen_->GetRemMom_Proj());
 }
 
-std::vector<double> MCGlauberWrapper::Get_remnant_targ() {
-  // get the fout-momentum (E, px, py, pz) of the remnant in target
-  return (mc_gen_->GetRemMom_Targ());
+
+std::vector<std::vector<double>> MCGlauberWrapper::Get_remnant_targ() {
+    // get the fout-momentum (E, px, py, pz) of the remnant in target
+    return(mc_gen_->GetRemMom_Targ());
 }
 
 void MCGlauberWrapper::GetHardPartonPosAndMomentumProj() {
-  mc_gen_->GetMomandPos_Proj(hard_parton_t_, hard_parton_x_, hard_parton_y_,
-                             hard_parton_z_, proj_parton_e_, proj_parton_px_,
-                             proj_parton_py_, proj_parton_pz_);
+    if (hard_parton_t_.size() != proj_parton_e_.size()) {
+        JSWARN << "Unequal vector sizes for hard parton position list: "
+               << hard_parton_t_.size() << " and their momentum list: "
+               << proj_parton_e_.size();
+        exit(1);
+    }
+    mc_gen_->GetMomandPos_Proj(hard_parton_t_, hard_parton_x_, hard_parton_y_,
+                               hard_parton_z_, proj_parton_e_, proj_parton_px_,
+                               proj_parton_py_, proj_parton_pz_);
 }
 
 void MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
-  mc_gen_->GetMomandPos_Targ(hard_parton_t_, hard_parton_x_, hard_parton_y_,
-                             hard_parton_z_, targ_parton_e_, targ_parton_px_,
-                             targ_parton_py_, targ_parton_pz_);
+    if (hard_parton_t_.size() != targ_parton_e_.size()) {
+        JSWARN << "Unequal vector sizes for hard parton position list: "
+               << hard_parton_t_.size() << " and their momentum list: "
+               << targ_parton_e_.size();
+        exit(1);
+    }
+    mc_gen_->GetMomandPos_Targ(hard_parton_t_, hard_parton_x_, hard_parton_y_,
+                               hard_parton_z_, targ_parton_e_, targ_parton_px_,
+                               targ_parton_py_, targ_parton_pz_);
 }
+
 
 void MCGlauberWrapper::GenerateStrings(bool wound_nucleons, int event_id) {
   // generate strings from 3D Glauber for MUSIC

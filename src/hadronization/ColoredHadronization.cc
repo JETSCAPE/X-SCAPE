@@ -163,6 +163,7 @@ void ColoredHadronization::DoHadronization(
     }
   }
 
+  int pythiastat;
   JSDEBUG << "&&&&&&&&&&&&&&&&&&& the number of showers are: " << shower.size();
   for (unsigned int ishower = 0; ishower < shower.size(); ++ishower) {
     JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
@@ -180,7 +181,11 @@ void ColoredHadronization::DoHadronization(
                    << "px = " << shower.at(ishower).at(ipart)->px();
         // cin >> blurb;
       }
-      event.append(shower.at(ishower).at(ipart)->pid(), 23,
+
+      if (shower.at(ishower).at(ipart)->plabel() < 0) { pythiastat = 63; } //beam remnant
+      else { pythiastat = 23; } //outgoing particle
+
+      event.append(shower.at(ishower).at(ipart)->pid(), pythiastat,
                    shower.at(ishower).at(ipart)->color(),
                    shower.at(ishower).at(ipart)->anti_color(),
                    shower.at(ishower).at(ipart)->px(),
@@ -221,28 +226,28 @@ void ColoredHadronization::DoHadronization(
       }
     }
 
-    int pid = 0;
-    int color = 0;
-    int anti_color = 0;
-    if ((cols.size() > 0) && (acols.size() > 0)) {
-      pid = 21;
-      color = cols[0];
-      anti_color = acols[0];
-    } else if ((cols.size() > 0) && (acols.size() == 0)) {
-      pid = -1;
-      color = cols[0];
-      anti_color = 0;
-    } else if ((cols.size() == 0) && (acols.size() > 0)) {
-      pid = 1;
-      color = 0;
-      anti_color = acols[0];
-    }
+    // int pid = 0;
+    // int color = 0;
+    // int anti_color = 0;
+    // if ((cols.size() > 0) && (acols.size() > 0)) {
+    //   pid = 21;
+    //   color = cols[0];
+    //   anti_color = acols[0];
+    // } else if ((cols.size() > 0) && (acols.size() == 0)) {
+    //   pid = -1;
+    //   color = cols[0];
+    //   anti_color = 0;
+    // } else if ((cols.size() == 0) && (acols.size() > 0)) {
+    //   pid = 1;
+    //   color = 0;
+    //   anti_color = acols[0];
+    // }
 
-    if (pid != 0) {
-      pz = -1 * pz;
-      event.append(pid, 23, anti_color, color, 0.2, 0.2, pz,
-                   sqrt(pz * pz + 0.08));
-    }
+    // if (pid != 0) {
+    //   pz = -1 * pz;
+    //   event.append(pid, 23, anti_color, color, 0.2, 0.2, pz,
+    //                sqrt(pz * pz + 0.08));
+    // }
 
     VERBOSE(2) << "There are " << hOut.size() << " Hadrons and " << pOut.size()
                << " partons after Hadronization";

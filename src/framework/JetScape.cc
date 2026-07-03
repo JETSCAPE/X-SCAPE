@@ -390,7 +390,17 @@ void JetScape::DetermineTaskListFromXML() {
             JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
                       "EPGun to task list.";
           }
-        } else if (((int)childElementName.find("CustomModule") >= 0)) {
+        }
+        else if (childElementName == "EAGun") {
+          auto EAGun =
+              JetScapeModuleFactory::createInstance(childElementName);
+          if (EAGun) {
+            Add(EAGun);
+            JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
+                      "EAGun to task list.";
+          }
+        }
+        else if (((int)childElementName.find("CustomModule") >= 0)) {
           auto customModule =
               JetScapeModuleFactory::createInstance(childElementName);
           if (customModule) {
@@ -674,6 +684,16 @@ void JetScape::DetermineTaskListFromXML() {
             jloss->Add(matter);  // Note: if you use Matter, it MUST come first
                                  // (to set virtuality)
             JSINFO << "JetScape::DetermineTaskList() -- Eloss: Added Matter to "
+                      "Eloss list.";
+          }
+        }
+        //   - eMatter
+        else if (childElementName == "eMatter") {
+          auto eMatter = JetScapeModuleFactory::createInstance(childElementName);
+          if (eMatter) {
+            jloss->Add(
+                eMatter); // go to 3rd party and ./get_lbtTab before adding this module
+            JSINFO << "JetScape::DetermineTaskList() -- Eloss: Added eMatter to "
                       "Eloss list.";
           }
         }

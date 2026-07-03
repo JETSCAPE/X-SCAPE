@@ -39,8 +39,8 @@ class MCGlauberGenStringWrapper : public Jetscape::InitialState {
    */
   void ExecuteTask();
   void InitTask();
-  std::vector<double> Get_Proj_Remnant();
-  std::vector<double> Get_Targ_Remnant();
+  std::vector<std::vector<double>> Get_remnant_proj();
+  std::vector<std::vector<double>> Get_remnant_targ();
 
  private:
   // Allows the registration of the module so that it is available to be

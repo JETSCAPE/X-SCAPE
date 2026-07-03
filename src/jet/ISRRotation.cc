@@ -96,21 +96,25 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2,
   {
     // JSWARN << "Starting Rotation";
 
+    auto Out = pIn[in];
     // Getting The posiiton of the 3DGlauber Hotspots
     if (pIn[in].pz() >= 0) {
-      Hotspots = ini->Get_quarks_pos_proj_lab();
+      Hotspots = ini->Get_quarks_pos_proj_lab(
+              Out.x_in().t(), Out.x_in().x(), Out.x_in().y(), Out.x_in().z());
 
     } else {
-      Hotspots = ini->Get_quarks_pos_targ_lab();
+      Hotspots = ini->Get_quarks_pos_targ_lab(
+              Out.x_in().t(), Out.x_in().x(), Out.x_in().y(), Out.x_in().z());
     }
     // NumHotspots = Hotspots.size() / 3;
     NumHotspots = 3;
-    auto Out = pIn[in];
+
 
     if (true) {
-      //  if it's an initial parton we will generate pT
-      if (Out.pstat() < 1000) {
-#if (INTRODUCE_PT == 1)
+      //  if it's an initial parton we will generate pT 
+      if(Out.pstat() < 1000 ){
+
+      #if(INTRODUCE_PT == 1)
         // Generating final pT if not already done
         if (!AlreadyGeneratedPTForThisShower) {
           int Num = 0;
@@ -143,7 +147,7 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2,
           File6 << pT[0] << " " << pT[1] << std::endl;
           File6.close();
         }
-#endif
+      #endif
 
         // New momentum after rotating to get the pT
         FourVector p_Out(Out.px(), Out.py(), Out.pz(), Out.e());
@@ -199,7 +203,9 @@ void ISRRotation::DoEnergyLoss(double deltaT, double time, double Q2,
           JSWARN << "Energy to subtract is negative !";
           exit(1);
         }
-        ini->OutputHardPartonMomentum(Out.e(), Out.px(), Out.py(), Out.pz(),
+        ini->OutputHardPartonMomentum(Out.x_in().t(),Out.x_in().x(), Out.x_in().y(), Out.x_in().z(),
+          Out.e(), Out.px(), Out.py(),
+                                      Out.pz(),
                                       (Out.pz() >= 0.0 ? 1 : -1), P_A);
       }
 

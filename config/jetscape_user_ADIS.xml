@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+
+<jetscape>
+  
+  <nEvents> 1 </nEvents>
+  
+  <Random>
+    <seed>0</seed>
+  </Random>
+  
+  <outputFilename>test_out</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+
+  <!-- Initial condition  Module  -->
+  <IS>
+    <MCGlauber>
+      <!--0: generates full event with binary collisions and strings-->
+      <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
+      <generateOnlyPositions>1</generateOnlyPositions>
+      <projectile>p</projectile> <!--Projectile name-->
+      <target>p</target> <!--Target name-->
+      <sqrts>5020</sqrts> <!--Center of mass energy in GeV-->
+      <ylossParam4At2> 1.666 </ylossParam4At2>
+      <ylossParam4At4> 2.10 </ylossParam4At4>
+      <ylossParam4At6> 2.20 </ylossParam4At6>
+      <ylossParam4At10> 2.30 </ylossParam4At10>
+      <ylossParam4var> 0.555 </ylossParam4var>
+    </MCGlauber>
+  </IS>
+
+  <!-- Hard Process -->
+  <Hard>
+    <EAGun>
+      <Q2min>20</Q2min>
+      <Q2max>25</Q2max>
+      <electron_energy>20</electron_energy>
+      <proton_energy>200</proton_energy>
+      <LinesToRead>
+        Next:numberShowEvent = 1
+      </LinesToRead>
+      <breit_vir>1</breit_vir>
+    </EAGun>
+  </Hard>
+  
+  <!--Eloss Modules -->
+  <Eloss>
+    <eMatter> 
+      <Q0> 1.0 </Q0>
+      <in_vac> 1 </in_vac>
+      <vir_factor> 0.25 </vir_factor>
+      <recoil_on> 0 </recoil_on>
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>
+    </eMatter>
+  </Eloss>
+  
+  <!-- Jet Hadronization Module -->
+  <!--JetHadronization>
+    <name>hybrid</name>
+  </JetHadronization-->
+  
+</jetscape>

@@ -70,17 +70,23 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   double Get_projectile_nucleon_density_lab(double t, double x, double y,
                                             double z);
   void OutputHardCollisionPosition(double t, double x, double y, double z);
-  void OutputHardPartonMomentum(double E, double px, double py, double pz,
-                                int direction, double P_A);
+  void OutputHardPartonMomentum(
+        double t, double x, double y, double z,
+        double E, double px, double py, double pz,
+        int direction, double P_A);
   void ClearHardPartonMomentum();
   void GetHardPartonPosAndMomentumProj();
   void GetHardPartonPosAndMomentumTarg();
   std::vector<double> Get_projectile_nucleon_z_lab();
   std::vector<double> Get_target_nucleon_z_lab();
-  std::vector<double> Get_quarks_pos_proj_lab();
-  std::vector<double> Get_quarks_pos_targ_lab();
-  std::vector<double> Get_remnant_proj();
-  std::vector<double> Get_remnant_targ();
+  std::vector<std::array<double, 4>> GetProjectileNucleonPositions();
+  std::vector<std::array<double, 4>> GetTargetNucleonPositions();
+  std::vector<double> Get_quarks_pos_proj_lab(double t, double x,
+                                              double y, double z);
+  std::vector<double> Get_quarks_pos_targ_lab(double t, double x,
+                                              double y, double z);
+  std::vector<std::vector<double>> Get_remnant_proj();
+  std::vector<std::vector<double>> Get_remnant_targ();
   void GenerateStrings(bool wound_nucleons, int event_id);
   std::vector<std::vector<double>> GetQCDStringList() {
     return (QCDStringList_);
@@ -95,15 +101,23 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   std::vector<double> binary_collision_y_;
   std::vector<double> binary_collision_z_;
   std::vector<std::vector<double>> QCDStringList_;
-  double hard_parton_x_, hard_parton_y_, hard_parton_z_, hard_parton_t_;
-  double targ_parton_px_ = 0.0, targ_parton_py_ = 0.0;
-  double targ_parton_pz_ = 0.0, targ_parton_e_ = 0.0;
-  double proj_parton_px_ = 0.0, proj_parton_py_ = 0.0;
-  double proj_parton_pz_ = 0.0, proj_parton_e_ = 0.0;
+  std::vector<double> hard_parton_x_;
+  std::vector<double> hard_parton_y_;
+  std::vector<double> hard_parton_z_;
+  std::vector<double> hard_parton_t_;
+  std::vector<double> targ_parton_px_;
+  std::vector<double> targ_parton_py_;
+  std::vector<double> targ_parton_pz_;
+  std::vector<double> targ_parton_e_;
+  std::vector<double> proj_parton_px_;
+  std::vector<double> proj_parton_py_;
+  std::vector<double> proj_parton_pz_;
+  std::vector<double> proj_parton_e_;
   std::shared_ptr<MCGlb::RandomUtil::Random> ran_gen_ptr_;
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
   bool generateOnlyPositions_ = false;
+  bool eAmode_ = false;
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberWrapper> reg;

@@ -311,13 +311,16 @@ ReDoSampling:
   // std::random_device device;
   // std::mt19937 engine(device()); // Seed the random number engine
 
-  FourVector x_p;
-
-  if (!ini) {
-    JSINFO << BOLDYELLOW
-           << "No initial state module, setting the starting location to "
-              "0. Make sure to add e.g. trento before PythiaIsrGun.";
-  } else {
+    FourVector x_p;
+    
+  if (!ini)
+  {
+    JSINFO << BOLDYELLOW << "No initial state module, setting the starting location to "
+                  "0. Make sure to add e.g. trento before PythiaIsrGun.";
+  }
+  else
+  {
+    ini->ClearHardPartonMomentum();
     double t, x, y, z;
     bool pass = false;
     //  while (!pass)
