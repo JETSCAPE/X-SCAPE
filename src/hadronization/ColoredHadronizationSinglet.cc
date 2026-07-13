@@ -181,6 +181,11 @@ void ColoredHadronizationSinglet::DoHadronization(
                    shower.at(ishower).at(ipart)->px(),
                    shower.at(ishower).at(ipart)->py(),
                    shower.at(ishower).at(ipart)->pz(), onshellE);
+      event[event.size() - 1].vProd(shower.at(ishower).at(ipart)->x_in().comp(1)*Pythia8::FM2MM,
+                                    shower.at(ishower).at(ipart)->x_in().comp(2)*Pythia8::FM2MM,
+                                    shower.at(ishower).at(ipart)->x_in().comp(3)*Pythia8::FM2MM,
+                                    shower.at(ishower).at(ipart)->x_in().comp(0)*Pythia8::FM2MM);
+      //JSINFO << "parton " << shower.at(ishower).at(ipart)->pid() << " location from jetscape: " << event[event.size() - 1].vProd()*Pythia8::MM2FM;
     }
   }
 
@@ -195,8 +200,8 @@ void ColoredHadronizationSinglet::DoHadronization(
     if (fabs(event[i].eta()) > 20)
       continue; //To prevent "nan" from propagating, very rare though
 
-    double x[4] = {0, 0, 0, 0};
-    JSINFO << "hadron " << event[i].id() << " location from pythia: " << event[i].vProd()*Pythia8::MM2FM;
+    double x[4] = {event[i].vProd().e()*Pythia8::MM2FM, event[i].vProd().px()*Pythia8::MM2FM, event[i].vProd().py()*Pythia8::MM2FM, event[i].vProd().pz()*Pythia8::MM2FM};
+    //JSINFO << "hadron " << event[i].id() << " location from pythia: " << event[i].vProd()*Pythia8::MM2FM;
     hOut.push_back(make_shared<Hadron>(ip, event[i].id(), event[i].status(),
                                        event[i].pT(), event[i].eta(),
                                        event[i].phi(), event[i].e(), x));
