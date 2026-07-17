@@ -117,6 +117,9 @@ void ColoredHadronizationSinglet::InitTask() {
   }
 
   pythia.init();
+
+  //initial state pointer setting
+  ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
 }
 
 void ColoredHadronizationSinglet::WriteTask(weak_ptr<JetScapeWriter> w) {

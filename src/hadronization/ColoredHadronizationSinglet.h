@@ -18,6 +18,7 @@
 
 #include "HadronizationModule.h"
 #include "Pythia8/Pythia.h"
+#include "JetScapeSignalManager.h"
 
 using namespace Jetscape;
 
@@ -31,6 +32,9 @@ public:
                        vector<shared_ptr<Hadron>> &hOut,
                        vector<shared_ptr<Parton>> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
+
+  /** @brief Pointer to the InitialState module. */
+  std::shared_ptr<InitialState> ini;
 
 private:
   double p_fake;
