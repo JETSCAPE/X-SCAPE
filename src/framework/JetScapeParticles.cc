@@ -321,8 +321,8 @@ void Parton::CheckAcceptability(int id) {
     case 22:  // photon
       break;
     default:
-      JSWARN << " error in id = " << id;
-      throw std::runtime_error("pid not accepted for Parton");
+      //JSWARN << " error in id = " << id;
+      //throw std::runtime_error("pid not accepted for Parton");
       break;
   }
 }
