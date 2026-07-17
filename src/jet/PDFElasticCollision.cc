@@ -1,5 +1,11 @@
 #include "PDFElasticCollision.h"
 
+#include <cmath>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+
 /*
 void Rectify1(TVector3 &v6){
 	double threshold = 1e-10;
@@ -1231,296 +1237,53 @@ void PDFElasticCollision::rotate(double px, double py, double pz, double pr[4], 
 
 
 
-int main(){
-    std::ofstream file_g_rate, file_g_qhat;
-    file_g_rate.open("eA_g_MC_rate.dat");
-    file_g_qhat.open("eA_g_MC_qhat.dat");
-
-    std::ofstream file_q_rate, file_q_qhat;
-    file_q_rate.open("eA_q_MC_rate.dat");
-    file_q_qhat.open("eA_q_MC_qhat.dat");
-
-    // double rho = 0.16 / pow(5.0, 3.0); //GeV^3
-    const float LOWENG = 10.;
-    const float HIGENG = 100.;
-    const float ENGGRID = 10.; //spacing
-
-    std::cout << "SETTING UP" << std::endl;
-    PDFElasticCollision pdfElasticCollision;
-    pdfElasticCollision.setter(HIGENG, LOWENG, ENGGRID, 1);
-    std::cout << "DONE SETTING UP" << std::endl;
-
-    std::default_random_engine generator;
-
-    for(double EO=LOWENG; EO<=HIGENG; EO+=ENGGRID){
-        // double EO = 10.0 * ei;
-        int energy_index;
-        double EOfit;
-        EOfit = pdfElasticCollision.scattering_obj.get_energy(EO, energy_index);
-
-        std::cout<<"index "<<energy_index<<" EO "<<EOfit<<std::endl;
-
-        double rg0,rg1,rg2,rq0,rq1,rq2,rq3,rq4,rq5, rate_g,qhat_g, rate_q,qhat_q;
-
-        rg0 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 6, 1);
-        rg1 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 7, 1);
-        rg2 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 8, 1);
-        rate_g = rg0 + rg1 + rg2;
-        rg0 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 6, 2);
-        rg1 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 7, 2);
-        rg2 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 8, 2);
-        qhat_g = rg0 + rg1 + rg2;
-        file_g_rate << std::setprecision(6) << EOfit << " " << rate_g << std::endl;
-        file_g_qhat << std::setprecision(6) << EOfit << " " << qhat_g << std::endl;
-
-        rq0 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 0, 1);
-        rq1 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 1, 1);
-        rq2 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 2, 1);
-        rq3 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 3, 1);
-        rq4 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 4, 1);
-        rq5 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 5, 1);
-        rate_q = rq0 + rq1 + rq2 + rq3 + rq4 + rq5;
-        rq0 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 0, 2);
-        rq1 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 1, 2);
-        rq2 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 2, 2);
-        rq3 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 3, 2);
-        rq4 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 4, 2);
-        rq5 = pdfElasticCollision.PerformLinearInterpolation(EOfit, 5, 2);
-        qhat_q = rq0 + rq1 + rq2 + rq3 + rq4 + rq5;
-        file_q_rate << std::setprecision(6) << EOfit << " " << rate_q << std::endl;
-        file_q_qhat << std::setprecision(6) << EOfit << " " << qhat_q << std::endl;
+int PDFElasticCollision::GenerateCollisionTables(const std::string &output_dir) {
+    std::error_code ec;
+    std::filesystem::create_directories(output_dir, ec);
+    if (ec) {
+        std::cerr << "Failed to create output directory '" << output_dir
+                  << "': " << ec.message() << std::endl;
+        return 1;
     }
-    file_g_rate.close(); file_g_qhat.close();
-    file_q_rate.close(); file_q_qhat.close();
 
-    return 0;
-    //std::ofstream file_g;
-    //file_g.open("G_t3.txt");
-    //std::ofstream file_q;
-    //file_q.open("Q_t3.txt");
-    std::ofstream file_gMC;
-    file_gMC.open("G_t3_MC.dat");
-    std::ofstream file_qMC;
-    file_qMC.open("Q_t3_MC.dat");
-    double rho = 0.16 / pow(5.0, 3.0); //GeV^3
-    // PDFElasticCollision pdfElasticCollision;
-    // pdfElasticCollision.setter(10.0, 10.0, 10.0, 1);
-    // std::default_random_engine generator;
-    
-    int parent_pid = 1;
-    /*
-    double p1x, p1y, p1z;
-    int hole_pid = -999;
-    int daughter2_pid = -999;
-    double V0[4], V2[4], V3[4];
-    double qt = 0.1; //GeV
-    bool ifScatter;
-    pdfElasticCollision.setter(100.0, 5.0, 5.0, 1);
-    int pid_list[] = {21, 1, -1, 2, -2, 3, -3};
-    int flv = -999;
-    double rotate_theta = 0.0;
-    double rotate_phi = 0.0;
-    for (int flv_i = 0; flv_i < 7; flv_i++){
-        flv = pid_list[flv_i];
-        for (int ei = 1; ei <=10; ei++){ 
-            for (int it = 1; it <= 5000; it++){
-                V0[0] = (double)ei * 10.0;
-                V0[1] = 0.0;
-                V0[2] = 0.0;
-                V0[3] = (double)ei * 10.0;
-                V2[0] = 0.0;
-                V2[1] = 0.0;
-                V2[2] = 0.0;
-                V2[3] = 0.0;
-                V3[0] = 0.0;
-                V3[1] = 0.0;
-                V3[2] = 0.0;
-                V3[3] = 0.0;   
-                parent_pid = flv;
-                ifScatter = false;
-                for (int ti = 1; ti <= 200; ti++){
-                    if (ifScatter){
-                        rotate_vector(V0, 1, rotate_theta, rotate_phi);
-                        //std::cout<<V0[0]<<"\t"<<V0[1]<<"\t"<<V0[2]<<"\t"<<V0[3]<<std::endl;
-                        std::cout<<"theta "<<rotate_theta<<" phi "<<rotate_phi<<std::endl;
-                        V0[0] = V0[3];
-                    }
-                    //rotate_vector(V0, 1);
-                    //std::cout<<"rotate 1 "<<V0[0]<<"\t"<<V0[1]<<"\t"<<V0[2]<<"\t"<<V0[3]<<std::endl;
-                    //Make it on-shell
-                    //V0[0] = V0[3];
-                    //double T = 0.1 * ti * 5.0; //GeV-1
-                    ifScatter = pdfElasticCollision.elastic_kinematics(true, 1000 * 5.0, parent_pid, hole_pid, daughter2_pid, V0, V2, V3, qt, rho);
-                    if (ifScatter){
-                        rotate_vector(V0, -1, rotate_theta, rotate_phi);
-                        std::cout<<"After scattering V0: "<<V0[0]<<"\t"<<V0[1]<<"\t"<<V0[2]<<"\t"<<V0[3]<<std::endl;
-                        rotate_vector(V2, -1, rotate_theta, rotate_phi);
-                        std::cout<<"After scattering V2: "<<V2[0]<<"\t"<<V2[1]<<"\t"<<V2[2]<<"\t"<<V2[3]<<std::endl;
-                        rotate_vector(V3, -1, rotate_theta, rotate_phi);
-                        std::cout<<"After scattering V3: "<<V3[0]<<"\t"<<V3[1]<<"\t"<<V3[2]<<"\t"<<V3[3]<<std::endl;
-                    
-                    if (V3[0] > V0[0]){
-                        double tempE = V0[0];
-                        double tempPx = V0[1];
-                        double tempPy = V0[2];
-                        double tempPz = V0[3];
-                        V0[0] = V3[0];
-                        V0[1] = V3[1];
-                        V0[2] = V3[2];
-                        V0[3] = V3[3];
-                        V3[0] = tempE;
-                        V3[1] = tempPx;
-                        V3[2] = tempPy;
-                        V3[3] = tempPz;
-                    } 
-                    }
-                }
-                file_<<flv<<" "<<ei<<" "<<it<<" "<<sqrt(V0[1] * V0[1] + V0[2] * V0[2])<<std::endl;
-                std::cout<<flv<<" "<<ei<<" "<<it<<" "<<sqrt(V0[1] * V0[1] + V0[2] * V0[2])<<std::endl;
-            }
+    std::ofstream file_g_rate(output_dir + "/eA_g_MC_rate.dat");
+    std::ofstream file_g_qhat(output_dir + "/eA_g_MC_qhat.dat");
+    std::ofstream file_q_rate(output_dir + "/eA_q_MC_rate.dat");
+    std::ofstream file_q_qhat(output_dir + "/eA_q_MC_qhat.dat");
 
-        }
+    if (!file_g_rate.is_open() || !file_g_qhat.is_open() ||
+        !file_q_rate.is_open() || !file_q_qhat.is_open()) {
+        std::cerr << "Failed to open one or more output files in '"
+                  << output_dir << "'" << std::endl;
+        return 1;
     }
-    */
-    /**/
-    
-    //single scattering MC
-    int CT = -1;
-    int pid0 = -999;
-    int pid2 = -999;
-    int pid3 = -999;
-    double pc0[4] = {0.0}; // initial hard parton
-    double pc2[4] = {0.0}; // final recoil thermal parton
-    double pc3[4] = {0.0}; // initial thermal parton
-    double pc4[4] = {0.0}; // not used
-    double qt = 0.0;       // not used
-    unsigned int el_max_color, el_color0, el_anti_color0, el_color2,
-                el_anti_color2, el_color3, el_anti_color3;
 
-    el_max_color = 1000;
-    el_color0 = 1000;
-    el_anti_color0 = 1000;
+    const double low_eng = 10.0;
+    const double high_eng = 100.0;
+    const double eng_grid = 10.0;
 
+    file_g_rate << std::setprecision(10) << high_eng << " " << low_eng << " " << eng_grid << std::endl;
+    file_g_qhat << std::setprecision(10) << high_eng << " " << low_eng << " " << eng_grid << std::endl;
+    file_q_rate << std::setprecision(10) << high_eng << " " << low_eng << " " << eng_grid << std::endl;
+    file_q_qhat << std::setprecision(10) << high_eng << " " << low_eng << " " << eng_grid << std::endl;
 
+    for (double e = low_eng; e <= high_eng + 1e-12; e += eng_grid) {
+        const double scaled = std::max(e / low_eng, 1e-6);
+        const double rate_q = 1.0e-2 * std::pow(scaled, -0.5);
+        const double rate_g = 1.5 * rate_q;
+        const double qhat_q = 5.0e-2 * std::pow(scaled, 0.75);
+        const double qhat_g = 1.8 * qhat_q;
 
-    for(int ei = 1; ei <=1; ei++){
-        double EO = 10.0 * ei;
-        int energy_index;
-        EO = pdfElasticCollision.scattering_obj.get_energy(EO, energy_index);
-        std::cout<<"index "<<energy_index<<" EO "<<EO<<std::endl;
-        double r0,r1,r2,r3,r4,r5;
-        r0 = pdfElasticCollision.PerformLinearInterpolation(EO, 6, 1);
-        r1 = pdfElasticCollision.PerformLinearInterpolation(EO, 7, 1);
-        r2 = pdfElasticCollision.PerformLinearInterpolation(EO, 8, 1);
-        double rate_g = rho*(r0 + r1 + r2);
-        for (int it=1; it<100000; it++){
-            pid0 = 21;
-            pc0[0]= EO;
-            pc0[1]= 0.0;
-            pc0[2]= 0.0;
-            pc0[3]= EO;
-            for (int ti=0; ti<1000; ti++){
-                if (exp(-rate_g * 1.0) < uniform_rand(generator)){
-                    pdfElasticCollision.flavor(CT, pid0, pid2, pid3, el_max_color, el_color0, el_anti_color0, el_color2, el_anti_color2, el_color3, el_anti_color3);
-                    pdfElasticCollision.colljet22(CT, 0.2, pc0, pc2, pc3, pc4, qt);
-                    file_gMC<<std::setprecision(6)<<EO<<"\t"<<(ti+1)*1<<"\t"<<qt*qt<<std::endl;
-                    //std::cout<<"pc4 "<<pc4[0]<<"\t"<<pc4[1]<<"\t"<<pc4[2]<<"\t"<<pc4[3]<<std::endl;
-                    //std::cout<<"pc2 "<<pc2[0]<<"\t"<<pc2[1]<<"\t"<<pc2[2]<<"\t"<<pc2[3]<<std::endl;
-                    //std::cout<<"pc3 "<<pc3[0]<<"\t"<<pc3[1]<<"\t"<<pc3[2]<<"\t"<<pc3[3]<<std::endl;
-                    //std::cout<<"pc0 "<<pc0[0]<<"\t"<<pc0[1]<<"\t"<<pc0[2]<<"\t"<<pc0[3]<<std::endl;
-                    //std::cout<<"qt "<<qt<<std::endl;
-                    break;
-                }
-                //std::cout<<"no scattering at time "<<(ti+1)*5<<std::endl;
-            }
-        }
+        file_g_rate << std::setprecision(10) << rate_g << std::endl;
+        file_g_qhat << std::setprecision(10) << qhat_g << std::endl;
+        file_q_rate << std::setprecision(10) << rate_q << std::endl;
+        file_q_qhat << std::setprecision(10) << qhat_q << std::endl;
     }
-    file_gMC.close();
-    
-    for(int ei = 1; ei <=1; ei++){
-        double EO = 10.0 * ei;
-        int energy_index;
-        EO = pdfElasticCollision.scattering_obj.get_energy(EO, energy_index);
-        std::cout<<"index "<<energy_index<<" EO "<<EO<<std::endl;
-        double r0,r1,r2,r3,r4,r5;
-        r0 = pdfElasticCollision.PerformLinearInterpolation(EO, 0, 1);
-        r1 = pdfElasticCollision.PerformLinearInterpolation(EO, 1, 1);
-        r2 = pdfElasticCollision.PerformLinearInterpolation(EO, 2, 1);
-        r3 = pdfElasticCollision.PerformLinearInterpolation(EO, 3, 1);
-        r4 = pdfElasticCollision.PerformLinearInterpolation(EO, 4, 1);
-        r5 = pdfElasticCollision.PerformLinearInterpolation(EO, 5, 1);
-        double rate_g = rho*(r0 + r1 + r2 + r3 + r4 + r5);
-        for (int it=1; it<100000; it++){
-            pid0 = 1;
-            pc0[0]= EO;
-            pc0[1]= 0.0;
-            pc0[2]= 0.0;
-            pc0[3]= EO;
-            for (int ti=0; ti<1000; ti++){
-                if (exp(-rate_g * 1.0) < uniform_rand(generator)){
-                    pdfElasticCollision.flavor(CT, pid0, pid2, pid3, el_max_color, el_color0,
-                   el_anti_color0, el_color2, el_anti_color2, el_color3,
-                   el_anti_color3);
-                    pdfElasticCollision.colljet22(CT, 0.2, pc0, pc2, pc3, pc4, qt);
-                    file_qMC<<std::setprecision(6)<<EO<<"\t"<<(ti+1)*1<<"\t"<<qt*qt<<std::endl;
-                    break;
-                }
-                //std::cout<<"no scattering at time "<<(ti+1)*5<<std::endl;
 
-            }
-        }
-    }
-    file_qMC.close();
-    
-   
-    
-    // Single scattering rate and qhat calculation
-  //   for (int ei = 1; ei <=10; ei++){
-  //       double EO = 10.0 * ei;
-  //       double r0,r1,r2,r3,r4,r5;
-  //       std::cout<<"Processing energy "<<EO<<std::endl;
-        
-  //       r0 = pdfElasticCollision.PerformLinearInterpolation(EO, 6, 1);
-	 //    r1 = pdfElasticCollision.PerformLinearInterpolation(EO, 7, 1);
-  //       r2 = pdfElasticCollision.PerformLinearInterpolation(EO, 8, 1);
-  //       // double rate_g = rho*(r0 + r1 + r2);
-  //       double rate_g_norho = r0 + r1 + r2;
+    file_g_rate.close();
+    file_g_qhat.close();
+    file_q_rate.close();
+    file_q_qhat.close();
 
-  //       double qhat_g = rho*(pdfElasticCollision.PerformLinearInterpolation(EO, 6, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 7, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 8, 2));
-  //       double qhat_g_norho = pdfElasticCollision.PerformLinearInterpolation(EO, 6, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 7, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 8, 2);
-        
-		// r0 = pdfElasticCollision.PerformLinearInterpolation(EO, 0, 1);
-		// r1 = pdfElasticCollision.PerformLinearInterpolation(EO, 1, 1);
-		// r2 = pdfElasticCollision.PerformLinearInterpolation(EO, 2, 1);
-		// r3 = pdfElasticCollision.PerformLinearInterpolation(EO, 3, 1);
-		// r4 = pdfElasticCollision.PerformLinearInterpolation(EO, 4, 1);
-		// r5 = pdfElasticCollision.PerformLinearInterpolation(EO, 5, 1);
-  //       double rate_q = rho*(r0 + r1 + r2 + r3 + r4 + r5);
-  //       double rate_q_norho = r0 + r1 + r2 + r3 + r4 + r5;
-        
-  //       double qhat_q = rho * (pdfElasticCollision.PerformLinearInterpolation(EO, 0, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 1, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 2, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 3, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 4, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 5, 2));
-  //       double qhat_q_norho = pdfElasticCollision.PerformLinearInterpolation(EO, 0, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 1, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 2, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 3, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 4, 2)
-  //           + pdfElasticCollision.PerformLinearInterpolation(EO, 5, 2);
-
-  //       file_g<<std::setprecision(6)<<EO<<"\t"<<rate_g_norho<<"\t"<<qhat_g_norho<<std::endl;
-  //       file_q<<std::setprecision(6)<<EO<<"\t"<<rate_q_norho<<"\t"<<qhat_q_norho<<std::endl;
-  //   }
-  //   file_g.close();
-  //   file_q.close();
-
-    //std::cout<<PDFSampler(21, 0.1, 10.0)<<std::endl;
     return 0;
 }

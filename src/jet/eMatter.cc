@@ -17,8 +17,11 @@
 #include "JetScapeLogger.h"
 #include "JetScapeParticles.h"
 #include "JetScapeSignalManager.h"
+#include "PDFElasticCollision.h"
 #include "Pythia8/Pythia.h"
 
+#include <array>
+#include <filesystem>
 #include <string>
 
 #include <iostream>
@@ -5949,6 +5952,33 @@ double eMatter::fnc0_derivative_alphas(double var_alphas, double var_qhat,
 void eMatter::read_pdf_collision_tables() {
   double tmp_fread, e;
   double tmp_emax, tmp_emin, tmp_de; //to make sure all tables have the same shape
+
+  JSINFO << "Checking for e-A tables...";
+
+  const std::string table_dir = "eA-tables";
+  const std::array<std::string, 4> required_tables = {
+      "eA_q_MC_rate.dat", "eA_q_MC_qhat.dat",
+      "eA_g_MC_rate.dat", "eA_g_MC_qhat.dat"};
+  bool need_generate_tables = false;
+
+  for (const auto &table_name : required_tables) {
+    const std::string table_path = table_dir + "/" + table_name;
+    if (!std::filesystem::exists(table_path)) {
+      need_generate_tables = true;
+      break;
+    }
+  }
+
+  if (need_generate_tables) {
+    JSINFO << "PDF collision tables not found; generating them...";
+    PDFElasticCollision pdf_generator;
+    if (pdf_generator.GenerateCollisionTables(table_dir) != 0) {
+      JSWARN << "Failed to generate PDF collision tables";
+      exit(EXIT_FAILURE);
+    }
+  } else {
+    JSINFO << "PDF collision tables found.";
+  }
 
   ifstream fqrate("eA-tables/eA_q_MC_rate.dat");
   if (!fqrate.is_open()) {

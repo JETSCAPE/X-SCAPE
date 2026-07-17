@@ -4,7 +4,8 @@
 #include "PDFscat.h"
 // #include "TVector3.h"
 // #include <TRotation.h>
- #include <random>
+#include <random>
+#include <string>
 // #include "FourVector.h"
 
 class PDFElasticCollision{
@@ -23,6 +24,7 @@ class PDFElasticCollision{
         void trans(double v[4], double p[4]);
         void transback(double v[4], double p[4]);
         void rotate(double px, double py, double pz, double pr[4], int icc);
+        int GenerateCollisionTables(const std::string &output_dir = "eA-tables");
         double V[4];
     	//TVector3 iZ_Vector;
         PDFScat scattering_obj; 
