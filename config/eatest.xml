@@ -4,6 +4,8 @@
   <Random>
     <seed>1</seed>
   </Random>
+  
+  <vlevel> 4 </vlevel>
 
   <outputFilename>eaout</outputFilename>
   <nEvents>10000</nEvents>
@@ -68,7 +70,7 @@
   </Eloss>
   
   <JetHadronization>
-    <name>colored</name>
+    <name>coloredsinglet</name>
   </JetHadronization>
 
   <PartonPrinter>
