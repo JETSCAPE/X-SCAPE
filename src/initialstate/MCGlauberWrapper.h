@@ -81,6 +81,10 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   std::vector<double> Get_target_nucleon_z_lab();
   std::vector<std::array<double, 4>> GetProjectileNucleonPositions();
   std::vector<std::array<double, 4>> GetTargetNucleonPositions();
+  void GetProjectileNucleonPositionsAtt(
+    const double t, const int idx, double &x, double &y, double &z);
+  void GetTargetNucleonPositionsAtt(
+    const double t, const int idx, double &x, double &y, double &z);
   std::vector<double> Get_quarks_pos_proj_lab(double t, double x,
                                               double y, double z);
   std::vector<double> Get_quarks_pos_targ_lab(double t, double x,
