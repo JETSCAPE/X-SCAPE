@@ -19,6 +19,9 @@
 #include <iostream>
 #include <time.h>
 
+// Smash here to avoid conflicts
+#include "SmashWrapper.h"
+
 // JetScape Framework includes ...
 #include "JetScape.h"
 #include "JetEnergyLoss.h"
@@ -166,6 +169,10 @@ int main(int argc, char** argv)
   hadro->Add(hadroModule);
   hadroMgr->Add(hadro);
   jetscape->Add(hadroMgr);
+
+  // Hadronic afterburner (SMASH)
+  auto smash = make_shared<SmashWrapper>();
+  jetscape->Add(smash);
 
   // Output writer and filename setup from XML ...
   std::string outputFilename = jetscape->GetXMLElementText({"outputFilename"});
