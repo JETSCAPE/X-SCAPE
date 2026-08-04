@@ -33,113 +33,7 @@ void PythiaIsrGun::InitTask() {
   JSDEBUG << "Initialize PythiaIsrGun";
   VERBOSE(8);
 
-  // Show initialization at INFO level
-  readString("Init:showProcesses = off");
-  readString("Init:showChangedSettings = off");
-  readString("Init:showMultipartonInteractions = on");
-  readString("Init:showChangedParticleData = off");
-  if (JetScapeLogger::Instance()->GetInfo()) {
-    readString("Init:showProcesses = on");
-    readString("Init:showChangedSettings = on");
-    readString("Init:showMultipartonInteractions = on");
-    readString("Init:showChangedParticleData = on");
-  }
-
-  // No event record printout.
-  readString("Next:numberShowInfo = 0");
-  readString("Next:numberShowProcess = 0");
-  readString("Next:numberShowEvent = 0");
-
-  // Standard settings 
-  readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
-  // readString("HardQCD:gg2gg = on");
-  // readString("HardQCD:gg2qqbar = on");
-  // readString("HardQCD:qg2qg = on");
-  // readString("HardQCD:qq2qq = on");
-  // readString("HardQCD:qqbar2gg = on");
-  // readString("HardQCD:qqbar2qqbarNew = on");
-  readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
-  readString("MultipartonInteractions:processLevel = 0"); 
-  readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
- 
-  // readString("HardQCD:gg2ccbar = off");
-  // readString("HardQCD:qqbar2ccbar = off");
-  // readString("HardQCD:hardccbar = off");
-  // readString("HardQCD:gg2bbbar = off");
-  // readString("HardQCD:qqbar2bbbar = off");
-
-  //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
-  //readString("HardQCD:qqbar2ccbar = on");
-  readString("HadronLevel:Decay = off");
-  readString("HadronLevel:all = on");
-  readString("PartonLevel:ISR = off");
-  readString("PartonLevel:MPI = on");
-  //readString("PartonLevel:FSR = on");
-  readString("PromptPhoton:all=on");
-  readString("WeakSingleBoson:all=off");
-  readString("WeakDoubleBoson:all=off");
-
-  // For parsing text
-  stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
-  numbf.setf(ios::fixed, ios::floatfield);
-  numbf.setf(ios::showpoint);
-  numbf.precision(1);
-  stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
-
-  s = GetXMLElementText({"Hard", "PythiaGun", "name"});
-  SetId(s);
-  // cout << s << endl;
-
-  // SC: read flag for FSR
-  FSR_on = GetXMLElementInt({"Hard", "PythiaGun", "FSR_on"});
-  if (FSR_on)
-    readString("PartonLevel:FSR = on");
-  else
-    readString("PartonLevel:FSR = off");
-
-  pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
-  pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
-
-
-  JSINFO << MAGENTA << "Pythia Gun with FSR_on: " << FSR_on;
-  JSINFO << MAGENTA << "Pythia Gun with " << pTHatMin << " < pTHat < "
-         << pTHatMax;
-
-  numbf.str("PhaseSpace:pTHatMin = ");
-  numbf << pTHatMin;
-  readString(numbf.str());
-  numbf.str("PhaseSpace:pTHatMax = ");
-  numbf << pTHatMax;
-  readString(numbf.str());
-
-  // random seed
-  // xml limits us to unsigned int :-/ -- but so does 32 bits Mersenne Twist
-  tinyxml2::XMLElement *RandomXmlDescription = GetXMLElement({"Random"});
-  readString("Random:setSeed = on");
-  numbi.str("Random:seed = ");
-  unsigned int seed = 0;
-  if (RandomXmlDescription) {
-    tinyxml2::XMLElement *xmle =
-        RandomXmlDescription->FirstChildElement("seed");
-    if (!xmle)
-      throw std::runtime_error("Cannot parse xml");
-    xmle->QueryUnsignedText(&seed);
-  } else {
-    JSWARN << "No <Random> element found in xml, seeding to 0";
-  }
-  VERBOSE(7) << "Seeding pythia to " << seed;
-  numbi << seed;
-  readString(numbi.str());
-
-  // Species
-  readString("Beams:idA = 2212");
-  readString("Beams:idB = 2212");
-
-  // Energy
-  eCM = GetXMLElementDouble({"Hard", "PythiaGun", "eCM"});
-  numbf.str("Beams:eCM = ");
-  numbf << eCM;
-  readString(numbf.str());
+  ReadDefaultPythiaSettings(); //Load the default settings
 
   // Multiple nuceleon scattering and cross-section
   if (GetXMLElementInt({"Hard", "PythiaGun", "multi_scatter"}) == 1){
@@ -168,7 +62,7 @@ void PythiaIsrGun::InitTask() {
     if (s.find_first_not_of(" \t\v\f\r") == s.npos)
       continue; // skip empty lines
     VERBOSE(7) << "Also reading in: " << s;
-    readString(s);
+    pythia_->readString(s);
   }
 
   outputFilename = GetXMLElementText({"outputFilename"});
@@ -179,16 +73,18 @@ void PythiaIsrGun::InitTask() {
   sigma_printer.open(printer, std::ios::trunc);
 
   //Check for multi_scatter and Bias2Selection
-  if ((multi_scatter) && (settings.flag("PhaseSpace:Bias2Selection"))) {
+  if ((multi_scatter) && (pythia_->settings.flag("PhaseSpace:Bias2Selection"))) {
     JSWARN << "Multiple scatterings and Bias2Selection can lead to unintended behavior. Turning off multiple scatterings";
     multi_scatter = false;
   }
 
-  // And initialize
-  if (!init()) { // Pythia>8.1
+  // And initialize (necessary to start random state progression)
+  if (!pythia_->init()) { // Pythia>8.1
     throw std::runtime_error("Pythia init() failed.");
   }
-  randState = rndm.getState();
+  randState = pythia_->rndm.getState();
+
+  reinitialize_pythia_ = false; //do not need to reset pythia for first event
 }
 
 void PythiaIsrGun::WriteTask(weak_ptr<JetScapeWriter> w) {
@@ -277,7 +173,6 @@ void PythiaIsrGun::ExecuteTask() {
 
   // For outputting positions
   std::vector<int> passed_hard_position_idx;
-
 
   //Debug file to verify index matching
   // std::ofstream index_match_file;
@@ -372,7 +267,7 @@ void PythiaIsrGun::ExecuteTask() {
       JSINFO << MAGENTA << "Will attempt to initialize for totem scattering";
       TableInitializePythia(doScatt, projSpecies, targSpecies);
     }
-    if (!doScatt) {//Do not proceed with generation
+    if (!doScatt) {//Do not proceed with generation. Set in Initialize functions
       break;
     }
 
@@ -387,27 +282,27 @@ void PythiaIsrGun::ExecuteTask() {
       flag62=false;
       p62.clear();
       IndexToSkip.clear();
-      next();
-      JSINFO << BOLDYELLOW << "pTHat generated: " << info.pTHat();
+      pythia_->next();
+      JSINFO << BOLDYELLOW << "pTHat generated: " << pythia_->info.pTHat();
 
       //Select indices to skip
-      for (int parid = 0; parid < event.size(); parid++) {
+      for (int parid = 0; parid < pythia_->event.size(); parid++) {
         if (parid < 3)
           continue; // 0, 1, 2: total event and beams
-        Pythia8::Particle &particle = event[parid];
+        Pythia8::Particle &particle = pythia_->event[parid];
 
         if (!(particle.isGluon() ||
               particle.isQuark())) { // Getting rid of diquark
           if (particle.status() == -31) {
             IndexToSkip.push_back(particle.daughter1());
             IndexToSkip.push_back(particle.daughter2());
-            IndexToSkip.push_back(event[particle.daughter1()].mother1());
-            IndexToSkip.push_back(event[particle.daughter1()].mother2());
+            IndexToSkip.push_back(pythia_->event[particle.daughter1()].mother1());
+            IndexToSkip.push_back(pythia_->event[particle.daughter1()].mother2());
           } else if (particle.status() == -33) {
             IndexToSkip.push_back(particle.mother1());
             IndexToSkip.push_back(particle.mother2());
-            IndexToSkip.push_back(event[particle.mother1()].daughter1());
-            IndexToSkip.push_back(event[particle.mother1()].daughter2());
+            IndexToSkip.push_back(pythia_->event[particle.mother1()].daughter1());
+            IndexToSkip.push_back(pythia_->event[particle.mother1()].daughter2());
           }
         }
       }
@@ -418,11 +313,11 @@ void PythiaIsrGun::ExecuteTask() {
       }
   
       //Accept particles based on status and type
-      for (int parid = 0; parid < event.size(); parid++) {
+      for (int parid = 0; parid < pythia_->event.size(); parid++) {
         if (parid < 3)
           continue; // 0, 1, 2: total event and beams
           
-        Pythia8::Particle &particle = event[parid];
+        Pythia8::Particle &particle = pythia_->event[parid];
         if (!FSR_on) {
             
             if ( !( (particle.status() == -21) || (particle.status() == -23) || (particle.status() == -31) || (particle.status() == -33) )) continue ;
@@ -477,10 +372,10 @@ void PythiaIsrGun::ExecuteTask() {
 
 
     if (iscatt == 0){ // Set first scatter info for printer and getters
-      first_sigmaGen = info.sigmaGen();
-      first_sigmaErr = info.sigmaErr();
-      first_ptHat = info.pTHat();
-      first_weight = info.weight();
+      first_sigmaGen = pythia_->info.sigmaGen();
+      first_sigmaErr = pythia_->info.sigmaErr();
+      first_ptHat = pythia_->info.pTHat();
+      first_weight = pythia_->info.weight();
     }
 
     //If scatter was generated give to framework below
@@ -624,7 +519,7 @@ void PythiaIsrGun::ExecuteTask() {
   // ini->ClearHardPartonMomentum();
 
   //Update the state of pythia random number generator
-  randState = rndm.getState();
+  randState = pythia_->rndm.getState();
 
   // File for PIG summary of collision points and Ncoll
   std::ofstream PIG_summary;
@@ -647,59 +542,16 @@ void PythiaIsrGun::ExecuteTask() {
 }
 
 void PythiaIsrGun::DefaultInitializePythia(bool &doScatt, std::string projSpecies, std::string targSpecies){//Default initialization
-  //For parsing text
-  stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
-  numbf.setf(ios::fixed, ios::floatfield);
-  numbf.setf(ios::showpoint);
-  numbf.precision(1);
-  stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
-
-  /*Do all the defaults*/
-  readString("Init:showProcesses = off");
-  readString("Init:showChangedSettings = off");
-  readString("Init:showMultipartonInteractions = on");
-  readString("Init:showChangedParticleData = off");
-  if (JetScapeLogger::Instance()->GetInfo()) {
-    readString("Init:showProcesses = on");
-    readString("Init:showChangedSettings = on");
-    readString("Init:showMultipartonInteractions = on");
-    readString("Init:showChangedParticleData = on");
+  //Do nothing if initialization not needed (first event, first scatter)
+  if (!reinitialize_pythia_) {
+    reinitialize_pythia_ = true;
+    return;
   }
-  readString("Next:numberShowInfo = 0");
-  readString("Next:numberShowProcess = 0");
-  readString("Next:numberShowEvent = 0");
-  readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
-  // readString("HardQCD:gg2gg = on");
-  // readString("HardQCD:gg2qqbar = on");
-  // readString("HardQCD:qg2qg = on");
-  // readString("HardQCD:qq2qq = on");
-  // readString("HardQCD:qqbar2gg = on");
-  // readString("HardQCD:qqbar2qqbarNew = on");
-  readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
-  readString("MultipartonInteractions:processLevel = 0"); 
-  readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
-  // readString("HardQCD:gg2ccbar = off");
-  // readString("HardQCD:qqbar2ccbar = off");
-  // readString("HardQCD:hardccbar = off");
-  // readString("HardQCD:gg2bbbar = off");
-  // readString("HardQCD:qqbar2bbbar = off");
-  //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
-  //readString("HardQCD:qqbar2ccbar = on");
-  readString("HadronLevel:Decay = off");
-  readString("HadronLevel:all = on");
-  readString("PartonLevel:ISR = off");
-  readString("PartonLevel:MPI = on");
-  //readString("PartonLevel:FSR = on");
-  readString("PromptPhoton:all=on");
-  readString("WeakSingleBoson:all=off");
-  readString("WeakDoubleBoson:all=off");
+  else {
+    ResetPythia(); //Reinstatiate Pythia to clear between reinitializations
+  }
 
-  numbf.str("PhaseSpace:pTHatMin = ");
-  numbf << pTHatMin;
-  readString(numbf.str());
-  numbf.str("PhaseSpace:pTHatMax = ");
-  numbf << pTHatMax;
-  readString(numbf.str());
+  ReadDefaultPythiaSettings(); //Read in default settings
 
   /*Read in any additional lines to read*/
   pythiaLines.clear();
@@ -708,27 +560,33 @@ void PythiaIsrGun::DefaultInitializePythia(bool &doScatt, std::string projSpecie
     if (s.find_first_not_of(" \t\v\f\r") == s.npos)
       continue; // skip empty lines
     VERBOSE(7) << "Also reading in: " << s;
-    readString(s);
+    pythia_->readString(s);
   }
 
   //set doScatt=True always
 
   /*Set the projectile species*/
-  readString(projSpecies); //should be full line for Pythia
-  readString(targSpecies); //should be full line for Pythia
+  pythia_->readString(projSpecies); //should be full line for Pythia
+  pythia_->readString(targSpecies); //should be full line for Pythia
 
   // And initialize
-  if (!init()) { // Pythia>8.1
+  if (!pythia_->init()) { // Pythia>8.1
     throw std::runtime_error("Pythia init() failed.");
   }
 
   /*Set the random state*/
-  rndm.setState(randState);
+  pythia_->rndm.setState(randState);
 
   doScatt=true;
+
+  reinitialize_pythia_ = true; //Will need to reinitialize next time
 }
 
 void PythiaIsrGun::TableInitializePythia(bool &doScatt, std::string projSpecies, std::string targSpecies){//Initialize via table
+  if (!reinitialize_pythia_) {//Safety check
+    throw std::logic_error("Table Initialization should require pythia to be reinitialized. Check flag values.");
+  }
+  
   //Start by rolling random number
   double r = ZeroOneDistribution(*GetMt19937Generator());
 
@@ -751,53 +609,10 @@ void PythiaIsrGun::TableInitializePythia(bool &doScatt, std::string projSpecies,
     doScatt = false;
     return;
   }
-  else {
-    //For parsing text
-    stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
-    numbf.setf(ios::fixed, ios::floatfield);
-    numbf.setf(ios::showpoint);
-    numbf.precision(1);
-    stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
+  else {//Need to do another scatter
+    ResetPythia(); //Reinstatiate Pythia to clear between reinitializations
 
-    /*Do all the defaults*/
-    readString("Init:showProcesses = off");
-    readString("Init:showChangedSettings = off");
-    readString("Init:showMultipartonInteractions = on");
-    readString("Init:showChangedParticleData = off");
-    if (JetScapeLogger::Instance()->GetInfo()) {
-      readString("Init:showProcesses = on");
-      readString("Init:showChangedSettings = on");
-      readString("Init:showMultipartonInteractions = on");
-      readString("Init:showChangedParticleData = on");
-    }
-    readString("Next:numberShowInfo = 0");
-    readString("Next:numberShowProcess = 0");
-    readString("Next:numberShowEvent = 0");
-    readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
-    // readString("HardQCD:gg2gg = on");
-    // readString("HardQCD:gg2qqbar = on");
-    // readString("HardQCD:qg2qg = on");
-    // readString("HardQCD:qq2qq = on");
-    // readString("HardQCD:qqbar2gg = on");
-    // readString("HardQCD:qqbar2qqbarNew = on");
-    readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
-    readString("MultipartonInteractions:processLevel = 0"); 
-    readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
-    // readString("HardQCD:gg2ccbar = off");
-    // readString("HardQCD:qqbar2ccbar = off");
-    // readString("HardQCD:hardccbar = off");
-    // readString("HardQCD:gg2bbbar = off");
-    // readString("HardQCD:qqbar2bbbar = off");
-    //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
-    //readString("HardQCD:qqbar2ccbar = on");
-    readString("HadronLevel:Decay = off");
-    readString("HadronLevel:all = on");
-    readString("PartonLevel:ISR = off");
-    readString("PartonLevel:MPI = on");
-    //readString("PartonLevel:FSR = on");
-    readString("PromptPhoton:all=on");
-    readString("WeakSingleBoson:all=off");
-    readString("WeakDoubleBoson:all=off");
+    ReadDefaultPythiaSettings(); //Read in default settings
 
     /*Read in any additional lines to read*/
     pythiaLines.clear();
@@ -806,39 +621,47 @@ void PythiaIsrGun::TableInitializePythia(bool &doScatt, std::string projSpecies,
       if (s.find_first_not_of(" \t\v\f\r") == s.npos)
         continue; // skip empty lines
       VERBOSE(7) << "Also reading in: " << s;
-      readString(s);
+      pythia_->readString(s);
     }
 
 
     /*Set the projectile species*/
-    readString(projSpecies); //should be full line for Pythia
-    readString(targSpecies); //should be full line for Pythia
+    pythia_->readString(projSpecies); //should be full line for Pythia
+    pythia_->readString(targSpecies); //should be full line for Pythia
 
     /*--Read in from the bin selected--*/
     tableRow binInfo = table[ibin];
-    //pTHat bin
+    //Read numbers
+    stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
+    numbf.setf(ios::fixed, ios::floatfield);
+    numbf.setf(ios::showpoint);
+    numbf.precision(1);
+    //Read pTHat Bin
     numbf.str("PhaseSpace:pTHatMin = ");
     numbf << binInfo.pTHatBin[0];
-    readString(numbf.str());
+    pythia_->readString(numbf.str());
     numbf.str("PhaseSpace:pTHatMax = ");
     numbf << binInfo.pTHatBin[1];
-    readString(numbf.str());
-    readString("");
+    pythia_->readString(numbf.str());
+    pythia_->readString("");
     //Process type
-    readString(binInfo.processOn);
-    readString("");
-    readString(binInfo.processOff);
-    readString("");
+    pythia_->readString(binInfo.processOn);
+    pythia_->readString("");
+    pythia_->readString(binInfo.processOff);
+    pythia_->readString("");
     
     // And initialize
-    if (!init()) { // Pythia>8.1
+    if (!pythia_->init()) { // Pythia>8.1
       throw std::runtime_error("Pythia init() failed.");
     }
+    
     /*Set the random state*/
-    rndm.setState(randState);
+    pythia_->rndm.setState(randState);
 
     doScatt = true;
     JSINFO << MAGENTA << "Successfully initialized Pythia for secondary scatter";
+
+    reinitialize_pythia_ = true; //will need to reset next time
   }
 }
 
@@ -891,4 +714,114 @@ std::vector<PythiaIsrGun::tableRow> PythiaIsrGun::RetrieveTable() {
   //     { {.5,1} , {20,30}, "HardQCD:all = off", "PromptPhoton:all = on"}
   //   };
   return table; 
+}
+
+void PythiaIsrGun::ReadDefaultPythiaSettings() {
+  // Show initialization at INFO level
+  pythia_->readString("Init:showProcesses = off");
+  pythia_->readString("Init:showChangedSettings = off");
+  pythia_->readString("Init:showMultipartonInteractions = on");
+  pythia_->readString("Init:showChangedParticleData = off");
+  if (JetScapeLogger::Instance()->GetInfo()) {
+    pythia_->readString("Init:showProcesses = on");
+    pythia_->readString("Init:showChangedSettings = on");
+    pythia_->readString("Init:showMultipartonInteractions = on");
+    pythia_->readString("Init:showChangedParticleData = on");
+  }
+
+  // No event record printout.
+  pythia_->readString("Next:numberShowInfo = 0");
+  pythia_->readString("Next:numberShowProcess = 0");
+  pythia_->readString("Next:numberShowEvent = 0");
+
+  // Standard settings 
+  pythia_->readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
+  // pythia_->readString("HardQCD:gg2gg = on");
+  // pythia_->readString("HardQCD:gg2qqbar = on");
+  // pythia_->readString("HardQCD:qg2qg = on");
+  // pythia_->readString("HardQCD:qq2qq = on");
+  // pythia_->readString("HardQCD:qqbar2gg = on");
+  // pythia_->readString("HardQCD:qqbar2qqbarNew = on");
+  pythia_->readString("HardQCD:nQuarkNew = 3"); // Number Of Quark flavours
+  pythia_->readString("MultipartonInteractions:processLevel = 0"); 
+  pythia_->readString("MultipartonInteractions:nQuarkIn = 3"); // Number Of Quark flavours
+ 
+  // pythia_->readString("HardQCD:gg2ccbar = off");
+  // pythia_->readString("HardQCD:qqbar2ccbar = off");
+  // pythia_->readString("HardQCD:hardccbar = off");
+  // pythia_->readString("HardQCD:gg2bbbar = off");
+  // pythia_->readString("HardQCD:qqbar2bbbar = off");
+
+  //  pythia_->readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
+  //pythia_->readString("HardQCD:qqbar2ccbar = on");
+  pythia_->readString("HadronLevel:Decay = off");
+  pythia_->readString("HadronLevel:all = on");
+  pythia_->readString("PartonLevel:ISR = off");
+  pythia_->readString("PartonLevel:MPI = on");
+  //pythia_->readString("PartonLevel:FSR = on");
+  pythia_->readString("PromptPhoton:all=on");
+  pythia_->readString("WeakSingleBoson:all=off");
+  pythia_->readString("WeakDoubleBoson:all=off");
+
+  // For parsing text
+  stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
+  numbf.setf(ios::fixed, ios::floatfield);
+  numbf.setf(ios::showpoint);
+  numbf.precision(1);
+  stringstream numbi(stringstream::app | stringstream::in | stringstream::out);
+
+  s = GetXMLElementText({"Hard", "PythiaGun", "name"});
+  SetId(s);
+  // cout << s << endl;
+
+  // SC: read flag for FSR
+  FSR_on = GetXMLElementInt({"Hard", "PythiaGun", "FSR_on"});
+  if (FSR_on)
+    pythia_->readString("PartonLevel:FSR = on");
+  else
+    pythia_->readString("PartonLevel:FSR = off");
+
+  pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
+  pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
+
+
+  JSINFO << MAGENTA << "Pythia Gun with FSR_on: " << FSR_on;
+  JSINFO << MAGENTA << "Pythia Gun with " << pTHatMin << " < pTHat < "
+         << pTHatMax;
+
+  numbf.str("PhaseSpace:pTHatMin = ");
+  numbf << pTHatMin;
+  pythia_->readString(numbf.str());
+  numbf.str("PhaseSpace:pTHatMax = ");
+  numbf << pTHatMax;
+  pythia_->readString(numbf.str());
+
+  // random seed
+  // xml limits us to unsigned int :-/ -- but so does 32 bits Mersenne Twist
+  tinyxml2::XMLElement *RandomXmlDescription = GetXMLElement({"Random"});
+  pythia_->readString("Random:setSeed = on");
+  numbi.str("Random:seed = ");
+  unsigned int seed = 0;
+  if (RandomXmlDescription) {
+    tinyxml2::XMLElement *xmle =
+        RandomXmlDescription->FirstChildElement("seed");
+    if (!xmle)
+      throw std::runtime_error("Cannot parse xml");
+    xmle->QueryUnsignedText(&seed);
+  } else {
+    JSWARN << "No <Random> element found in xml, seeding to 0";
+  }
+  VERBOSE(7) << "Seeding pythia to " << seed;
+  numbi << seed;
+  pythia_->readString(numbi.str());
+
+  // Species
+  pythia_->readString("Beams:idA = 2212");
+  pythia_->readString("Beams:idB = 2212");
+
+  // Energy
+  eCM = GetXMLElementDouble({"Hard", "PythiaGun", "eCM"});
+  numbf.str("Beams:eCM = ");
+  numbf << eCM;
+  pythia_->readString(numbf.str());
 }

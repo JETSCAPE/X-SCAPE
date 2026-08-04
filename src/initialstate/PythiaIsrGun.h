@@ -26,9 +26,11 @@
 using namespace Jetscape;
 using std::uniform_real_distribution;
 
-class PythiaIsrGun : public HardProcess, public Pythia8::Pythia {
+class PythiaIsrGun : public HardProcess {
 
 private:
+  std::unique_ptr<Pythia8::Pythia> pythia_;
+  bool reinitialize_pythia_; //True if Pythia needs to be reset for next call
   Pythia8::RndmState randState;
   bool isFirstEvent; //Tracks whether first JETSCAPE event generated.
   std::stringstream pythiaLines;
@@ -64,7 +66,8 @@ public:
       @param printBanner: Suppress starting blurb. Should be set to true in production, credit where it's due
   */
   PythiaIsrGun(string xmlDir = "DONTUSETHIS", bool printBanner = false)
-      : Pythia8::Pythia(xmlDir, printBanner), HardProcess() {
+      : pythia_(std::make_unique<Pythia8::Pythia>(xmlDir, printBanner)),
+        HardProcess() {
     SetId("UninitializedPythiaIsrGun");
   }
 
@@ -88,6 +91,12 @@ public:
   void TableInitializePythia(bool &doScatt, std::string projSpecies, std::string targSpecies);
   void DefaultInitializePythia(bool &doScatt, std::string projSpecies, std::string targSpecies);
   std::vector<tableRow> RetrieveTable();
+  void ReadDefaultPythiaSettings();
+
+  //Reset the owned Pythia instance
+  void ResetPythia(string xmlDir = "DONTUSETHIS", bool printBanner = false) {
+    pythia_ = std::make_unique<Pythia8::Pythia>(xmlDir, printBanner);
+  }
 
 protected:
   uniform_real_distribution<double> ZeroOneDistribution;
