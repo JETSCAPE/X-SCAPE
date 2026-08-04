@@ -507,7 +507,12 @@ void TrentoInitial::ExecuteTask() {
   // Complex eccentricity accumulator: eps_n * exp(i*n*Psi_n)
   std::map<int, std::complex<double>> acc_ecc_complex;
 
+  const int report_interval = std::max(1, n_events_to_average_ / 10);
   for (int i = 0; i < n_events_to_average_; ++i) {
+    if (i % report_interval == 0) {
+      JSINFO << "Averaging progress: " 
+            << (100.0 * i / n_events_to_average_) << "%";
+    }
     TrentoGen_->run_events();
     const auto &tmp_event = TrentoGen_->expose_event();
 
@@ -535,8 +540,9 @@ void TrentoInitial::ExecuteTask() {
     int idx_d = 0, idx_nc = 0;
     for (int ix = 0; ix < nx; ix++) {
       for (int iy = 0; iy < ny; iy++) {
-        for (int ieta = 0; ieta < nz; ieta++)
+        for (int ieta = 0; ieta < nz; ieta++) {
           acc_density[idx_d++] += density_field[iy][ix][ieta];
+        }
         acc_ncoll[idx_nc++] += ncoll_field[iy][ix];
       }
     }
@@ -580,10 +586,12 @@ void TrentoInitial::ExecuteTask() {
   JSINFO << acc_ncoll.size() << " ncoll elements";
 
   // Store averaged grids in the JETSCAPE base-class vectors
-  for (const double val : acc_density)
+  for (const double val : acc_density) {
     entropy_density_distribution_.push_back(val * inv_n);
-  for (const double val : acc_ncoll)
+  }
+  for (const double val : acc_ncoll) {
     num_of_binary_collisions_.push_back(val * inv_n);
+  }
 }
 
 void TrentoInitial::ClearTask() {
