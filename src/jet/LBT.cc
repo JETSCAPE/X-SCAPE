@@ -686,6 +686,7 @@ void LBT::LBT0(int &n, double &ti) {
           if (ModificationFactor > 0.0){
             ModificationCorr = 1.0 + pow( ModificationFactor / temp00, ModificationPower);
             qhat00 /= pow(ModificationCorr, 2.0);
+            qhat00 = std::max(qhat00, 0.3*0.3);
           }
           fraction0 = 1.0;
 
@@ -802,6 +803,7 @@ void LBT::LBT0(int &n, double &ti) {
             if (ModificationFactor > 0.0){
               ModificationCorr = 1.0 +  pow(ModificationFactor / temp0, ModificationPower);
               qhat0 /= pow(ModificationCorr, 2.0);
+              qhat0 = std::max(qhat0, 0.3*0.3);
             }
 
             fraction = 1.0;
@@ -882,10 +884,12 @@ void LBT::LBT0(int &n, double &ti) {
             }
             runKT = runAlphas/0.3;
             
-            if (ModificationFactor > 0.0){
-              ModificationCorr = 1.0 +  pow(ModificationFactor / T, ModificationPower);
-              runLog = log(scaleMu2 * pow(ModificationCorr, 2.0) /6.0/pi/T/T/alphas)/fixedLog;
-            }
+          if (ModificationFactor > 0.0) {
+            ModificationCorr = 1.0 +  pow(ModificationFactor / T, ModificationPower);
+            double debye_masssq = max(6.0 * pi * alphas * T * T/ pow(ModificationCorr, 2.0), 0.3*0.3); 
+            runLog = log(scaleMu2 / debye_masssq) /
+                     fixedLog;
+          } 
             else{
               runLog = log(scaleMu2/6.0/pi/T/T/alphas)/fixedLog;
             }
@@ -1053,7 +1057,7 @@ void LBT::LBT0(int &n, double &ti) {
         lim_low = sqrt(6.0 * pi * alphas) * temp0 / E;
         if (ModificationFactor > 0.0){
           ModificationCorr = 1.0 +  pow(ModificationFactor / temp0, ModificationPower);
-          lim_low /= pow(ModificationCorr, 1.0);
+          lim_low = max(sqrt(6.0 * pi * alphas) * temp0 / pow(ModificationCorr, 1.0), 0.3) / E;
         }
 
         if (abs(KATT1[i]) == 4 || abs(KATT1[i]) == 5)
@@ -1832,8 +1836,9 @@ void LBT::lam(int KATT0, double &RTE, double E, double T, double &T1,
     //          cout<<"RTE2,RTE1,E,E1,E2,RTE: "<<RTE2<<"  "<<RTE1<<"  "<<E<<"  "<<E1<<"  "<<E2<<"  "<<RTE<<endl;
   }
   if (ModificationFactor > 0.0){
-       ModificationCorr = 1.0 +  pow(ModificationFactor / T, ModificationPower);
-       RTE /= ModificationCorr;
+      ModificationCorr = 1.0 +  pow(ModificationFactor / T, ModificationPower);
+      double debye_masssqR = 6.0 * pi * 0.3 * pow(T, 2) / max(6.0 * pi * 0.3 * pow(T,2.0)/pow(ModificationCorr,2.0),0.3*0.3); // assuming alpha_s = 0.3 for the Debye mass calculation
+      RTE = RTE / pow(ModificationCorr, 3.0) * debye_masssqR;
   }
 }
 
@@ -2097,6 +2102,7 @@ void LBT::linear(int KATT, double E, double T, double &T1, double &T2,
     //	  RTE2=(qhatLQ[iT2][iE2]-qhatLQ[iT1][iE2])*(T-T1)/(T2-T1)+qhatLQ[iT1][iE2];
     //	  qhatTP=(RTE2-RTE1)*(E-E1)/(E2-E1)+RTE1;
   }
+  /*
   if (ModificationFactor > 0.0){
        ModificationCorr = 1.0 +  pow(ModificationFactor / T, ModificationPower);
        RTEg1 /= ModificationCorr;
@@ -2111,6 +2117,7 @@ void LBT::linear(int KATT, double E, double T, double &T1, double &T2,
        RTEHQ11 /= ModificationCorr;
        RTEHQ12 /= ModificationCorr;
   }
+      */ 
 }
 
 //.........................................................................

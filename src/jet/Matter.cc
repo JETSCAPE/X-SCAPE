@@ -820,6 +820,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
           if (ModificationFactor > 0.0){
             ModificationCorr = 1.0 + pow(ModificationFactor / tempLoc, ModificationPower);
             muD2 = muD2 / pow(ModificationCorr, 2.0);
+            muD2 = max(muD2, pow(0.3, 2.0));
           }
 
           prob_el = 42.0 * zeta3 * el_CR  * tempLoc / 6.0 / pi /
@@ -828,7 +829,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 	        prob_el=prob_el*ModifiedProbability(QhatParametrizationType, tempLoc, sdLoc, enerLoc, pIn[i].t());
           if (ModificationFactor > 0.0){
             ModificationCorr = 1.0 + pow(ModificationFactor / tempLoc, ModificationPower);
-            prob_el /= ModificationCorr;
+            prob_el = prob_el / pow(ModificationCorr, 3.0) * (6.0 * pi * soln_alphas * tempLoc * tempLoc) / muD2 ;
           }
           el_rand = ZeroOneDistribution(*GetMt19937Generator());
 
@@ -3910,10 +3911,11 @@ double Matter::GeneralQhatFunction(int QhatParametrization, double Temperature, 
 {
   int ActiveFlavor=3; qhat=0.0;
   double DebyeMassSquare = FixAlphas*4*pi*pow(Temperature,2.0)*(6.0 + ActiveFlavor)/6.0;
-  if (ModificationFactor > 0.0)
+   if (ModificationFactor > 0.0)
   {
       ModificationCorr = 1.0 + pow(ModificationFactor / Temperature, ModificationPower);
       DebyeMassSquare = DebyeMassSquare / pow(ModificationCorr,2.0);
+      DebyeMassSquare = max(DebyeMassSquare, 0.3*0.3); // avoid too small Debye mass
   }
   double ScaleNet=2*E*Temperature;
   if(ScaleNet < 1.0){ ScaleNet=1.0; }
