@@ -119,17 +119,22 @@ jobs:
 
     - name: Download Pythia 8315
       run: |
-        cd ${GITHUB_WORKSPACE}
-        curl -SLOk http://pythia.org/download/pythia83/pythia8315.tgz
-        ls -l
+        cd "${GITHUB_WORKSPACE}"
+        git clone \
+          --branch pythia8315 \
+          --single-branch \
+          --depth 1 \
+          https://gitlab.com/Pythia8/releases.git \
+          pythia8315
 
     - name: Build and Install Pythia 8315
       run: |
-        tar -xzf pythia8315.tgz
-        ls -l
-        cd pythia8315
-        ./configure --enable-shared --prefix=${GITHUB_WORKSPACE}/pythia8315 --with-hepmc3=${GITHUB_WORKSPACE}/hepmc3-install
-        make
+        cd "${GITHUB_WORKSPACE}/pythia8315"
+        ./configure \
+          --enable-shared \
+          --prefix="${GITHUB_WORKSPACE}/pythia8315-install" \
+          --with-hepmc3="${GITHUB_WORKSPACE}/hepmc3-install"
+        make -j2
         make install
 
     - name: set more variables
