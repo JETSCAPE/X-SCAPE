@@ -143,7 +143,7 @@ jobs:
         echo "PYTHIA8DIR=${GITHUB_WORKSPACE}/pythia8315" >> $GITHUB_ENV
 
     - name: Checkout JETSCAPE Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         path: ${{ github.event.repository.name }}
 
@@ -204,7 +204,7 @@ jobs:
         make -j2
 
     - name: Checkout Default-tunes
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: JETSCAPE/Default-tunes
         ref: main
