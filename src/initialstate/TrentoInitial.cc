@@ -15,6 +15,7 @@
  ******************************************************************************/
 
 #include <cstdlib>
+#include <complex>
 #include <sstream>
 #include <fstream>
 #include <boost/bind.hpp>
@@ -315,6 +316,12 @@ void TrentoInitial::InitTask() {
   TrentoGen_ = std::make_shared<trento::Collider>(var_map);
   SetRanges(xymax, xymax, etamax);
   SetSteps(dxy, dxy, deta);
+
+  enable_averaging_ =
+      (GetXMLElementInt({"IS", "Trento", "Averaging", "enableAveraging"}) == 1);
+  n_events_to_average_ =
+      GetXMLElementInt({"IS", "Trento", "Averaging", "nEvents"});
+
   JSINFO << "TRENTo set";
 }
 
@@ -430,50 +437,161 @@ double TrentoInitial::LookupCentrality(double density) const {
 
 void TrentoInitial::ExecuteTask() {
   JSINFO << " Exec TRENTo initial condition ";
-  TrentoGen_->run_events();
 
-  JSINFO << " TRENTo event info: ";
-  auto tmp_event = TrentoGen_->expose_event();
-  info_.impact_parameter = TrentoGen_->all_records().back().b;
-  info_.num_participant = tmp_event.npart();
-  info_.num_binary_collisions = tmp_event.ncoll();
-  info_.total_entropy = tmp_event.multiplicity();
-  info_.ecc = tmp_event.eccentricity();
-  info_.psi = tmp_event.participant_plane();
-  info_.xmid =
-      -GetXMax() + tmp_event.mass_center_index().first * tmp_event.dxy();
-  info_.ymid =
-      -GetYMax() + tmp_event.mass_center_index().second * tmp_event.dxy();
-  JSINFO << "b\tnpart\tncoll\tET\t(x-com, y-com) (fm)";
-  JSINFO << info_.impact_parameter << "\t" << info_.num_participant << "\t"
-         << info_.num_binary_collisions << "\t" << info_.total_entropy << "\t"
-         << "(" << info_.xmid << ", " << info_.ymid << ")";
+  if (!enable_averaging_) {
+    // Single-event mode (original behaviour)
+    TrentoGen_->run_events();
 
-  // Calculate event centrality
-  // The centrality table needs "un-normalized total density"
+    JSINFO << " TRENTo event info: ";
+    auto tmp_event = TrentoGen_->expose_event();
+    info_.impact_parameter = TrentoGen_->all_records().back().b;
+    info_.num_participant = tmp_event.npart();
+    info_.num_binary_collisions = tmp_event.ncoll();
+    info_.total_entropy = tmp_event.multiplicity();
+    info_.ecc = tmp_event.eccentricity();
+    info_.psi = tmp_event.participant_plane();
+    info_.xmid =
+        -GetXMax() + tmp_event.mass_center_index().first * tmp_event.dxy();
+    info_.ymid =
+        -GetYMax() + tmp_event.mass_center_index().second * tmp_event.dxy();
+    JSINFO << "b\tnpart\tncoll\tET\t(x-com, y-com) (fm)";
+    JSINFO << info_.impact_parameter << "\t" << info_.num_participant << "\t"
+           << info_.num_binary_collisions << "\t" << info_.total_entropy << "\t"
+           << "(" << info_.xmid << ", " << info_.ymid << ")";
+
+    // Calculate event centrality
+    // The centrality table needs "un-normalized total density"
+    info_.event_centrality =
+        LookupCentrality(info_.total_entropy / info_.normalization);
+    if (info_.event_centrality == -1.0) {
+      JSINFO << "No centrality information available in Minimum Biased Mode.";
+    } else {
+      JSINFO << "Event centrality: " << info_.event_centrality;
+    }
+
+    JSINFO << " Load TRENTo density and ncoll density to JETSCAPE memory ";
+    auto density_field = tmp_event.density_grid();
+    auto ncoll_field = tmp_event.TAB_grid();
+
+    JSINFO << density_field.num_elements() << " density elements";
+    JSINFO << ncoll_field.num_elements() << " ncoll elements";
+
+    // Transform density and ncoll grid to JETSCAPE convention
+    for (int ix = 0; ix < GetXSize(); ix++) {
+      for (int iy = 0; iy < GetYSize(); iy++) {
+        for (int ieta = 0; ieta < GetZSize(); ieta++) {
+          entropy_density_distribution_.push_back(density_field[iy][ix][ieta]);
+        }
+        num_of_binary_collisions_.push_back(ncoll_field[iy][ix]);
+      }
+    }
+    return;
+  }
+
+  // Averaging mode: run n_events_to_average_ TRENTo events (each independently
+  // satisfying any centrality cut already encoded in TrentoGen_) and store the
+  // arithmetic mean of the density and Ncoll grids as well as the scalar
+  // EventInfo quantities.
+  JSINFO << " TRENTo averaging mode: averaging over " << n_events_to_average_
+         << " events";
+
+  const int nx = GetXSize();
+  const int ny = GetYSize();
+  const int nz = GetZSize();
+
+  std::vector<double> acc_density(nx * ny * nz, 0.0);
+  std::vector<double> acc_ncoll(nx * ny, 0.0);
+
+  double acc_b = 0.0, acc_npart = 0.0, acc_ncoll_scalar = 0.0,
+         acc_entropy = 0.0, acc_xmid = 0.0, acc_ymid = 0.0;
+  // Complex eccentricity accumulator: eps_n * exp(i*n*Psi_n)
+  std::map<int, std::complex<double>> acc_ecc_complex;
+
+  const int report_interval = std::max(1, n_events_to_average_ / 10);
+  for (int i = 0; i < n_events_to_average_; ++i) {
+    if (i % report_interval == 0) {
+      JSINFO << "Averaging progress: " << (100.0 * i / n_events_to_average_)
+             << "%";
+    }
+    TrentoGen_->run_events();
+    const auto &tmp_event = TrentoGen_->expose_event();
+
+    acc_b += TrentoGen_->all_records().back().b;
+    acc_npart += tmp_event.npart();
+    acc_ncoll_scalar += tmp_event.ncoll();
+    acc_entropy += tmp_event.multiplicity();
+    acc_xmid +=
+        -GetXMax() + tmp_event.mass_center_index().first * tmp_event.dxy();
+    acc_ymid +=
+        -GetYMax() + tmp_event.mass_center_index().second * tmp_event.dxy();
+
+    // Accumulate eps_n * exp(i*n*Psi_n) for each harmonic order
+    const auto &ecc_map = tmp_event.eccentricity();
+    const auto &psi_map = tmp_event.participant_plane();
+    for (const auto &[order, eps] : ecc_map) {
+      const double psi = psi_map.at(order);
+      acc_ecc_complex[order] +=
+          eps * std::exp(std::complex<double>(0.0, order * psi));
+    }
+
+    const auto &density_field = tmp_event.density_grid();
+    const auto &ncoll_field = tmp_event.TAB_grid();
+
+    int idx_d = 0, idx_nc = 0;
+    for (int ix = 0; ix < nx; ix++) {
+      for (int iy = 0; iy < ny; iy++) {
+        for (int ieta = 0; ieta < nz; ieta++) {
+          acc_density[idx_d++] += density_field[iy][ix][ieta];
+        }
+        acc_ncoll[idx_nc++] += ncoll_field[iy][ix];
+      }
+    }
+  }
+
+  // Normalise
+  const double inv_n = 1.0 / n_events_to_average_;
+
+  info_.impact_parameter = acc_b * inv_n;
+  info_.num_participant = acc_npart * inv_n;
+  info_.num_binary_collisions = acc_ncoll_scalar * inv_n;
+  info_.total_entropy = acc_entropy * inv_n;
+  info_.xmid = acc_xmid * inv_n;
+  info_.ymid = acc_ymid * inv_n;
+  // Extract magnitude and phase from the averaged complex eccentricity
+  for (const auto &[order, z] : acc_ecc_complex) {
+    const std::complex<double> z_avg = z * inv_n;
+    // <eps_n> = |<eps_n * exp(i*n*Psi_n)>|
+    info_.ecc[order] = std::abs(z_avg);
+    // <Psi_n> = (1/n) * arg(<eps_n * exp(i*n*Psi_n)>)
+    info_.psi[order] = std::arg(z_avg) / order;
+  }
+
+  // Centrality from the averaged (un-normalised) entropy density
   info_.event_centrality =
       LookupCentrality(info_.total_entropy / info_.normalization);
   if (info_.event_centrality == -1.0) {
     JSINFO << "No centrality information available in Minimum Biased Mode.";
   } else {
-    JSINFO << "Event centrality: " << info_.event_centrality;
+    JSINFO << "Event centrality (averaged): " << info_.event_centrality;
   }
 
-  JSINFO << " Load TRENTo density and ncoll density to JETSCAPE memory ";
-  auto density_field = tmp_event.density_grid();
-  auto ncoll_field = tmp_event.TAB_grid();
+  JSINFO << " TRENTo averaged event info:";
+  JSINFO << "b\tnpart\tncoll\tET\t(x-com, y-com) (fm)";
+  JSINFO << info_.impact_parameter << "\t" << info_.num_participant << "\t"
+         << info_.num_binary_collisions << "\t" << info_.total_entropy << "\t"
+         << "(" << info_.xmid << ", " << info_.ymid << ")";
 
-  JSINFO << density_field.num_elements() << " density elements";
-  JSINFO << ncoll_field.num_elements() << " ncoll elements";
+  JSINFO
+      << " Load averaged TRENTo density and ncoll density to JETSCAPE memory ";
+  JSINFO << acc_density.size() << " density elements";
+  JSINFO << acc_ncoll.size() << " ncoll elements";
 
-  // Transform density and ncoll grid to JETSCAPE convention
-  for (int ix = 0; ix < GetXSize(); ix++) {
-    for (int iy = 0; iy < GetYSize(); iy++) {
-      for (int ieta = 0; ieta < GetZSize(); ieta++) {
-        entropy_density_distribution_.push_back(density_field[iy][ix][ieta]);
-      }
-      num_of_binary_collisions_.push_back(ncoll_field[iy][ix]);
-    }
+  // Store averaged grids in the JETSCAPE base-class vectors
+  for (const double val : acc_density) {
+    entropy_density_distribution_.push_back(val * inv_n);
+  }
+  for (const double val : acc_ncoll) {
+    num_of_binary_collisions_.push_back(val * inv_n);
   }
 }
 

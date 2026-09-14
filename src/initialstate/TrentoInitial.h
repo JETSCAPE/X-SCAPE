@@ -87,6 +87,10 @@ class TrentoInitial : public InitialState {
   /// The output instance.
   // Output output_;
 
+  // Parameters for optional averaging over multiple initial state densities
+  int n_events_to_average_ = 1000;  // Number of events to average over
+  bool enable_averaging_ = false;   // Flag to enable/disable averaging
+
   std::vector<std::pair<double, double>>
       centrality_table_;  // Store (centrality, density)
 
