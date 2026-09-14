@@ -319,8 +319,8 @@ void TrentoInitial::InitTask() {
 
   enable_averaging_ =
       (GetXMLElementInt({"IS", "Trento", "Averaging", "enableAveraging"}) == 1);
-  n_events_to_average_ = GetXMLElementInt(
-    {"IS", "Trento", "Averaging", "nEvents"});
+  n_events_to_average_ =
+      GetXMLElementInt({"IS", "Trento", "Averaging", "nEvents"});
 
   JSINFO << "TRENTo set";
 }
@@ -510,8 +510,8 @@ void TrentoInitial::ExecuteTask() {
   const int report_interval = std::max(1, n_events_to_average_ / 10);
   for (int i = 0; i < n_events_to_average_; ++i) {
     if (i % report_interval == 0) {
-      JSINFO << "Averaging progress: " 
-            << (100.0 * i / n_events_to_average_) << "%";
+      JSINFO << "Averaging progress: " << (100.0 * i / n_events_to_average_)
+             << "%";
     }
     TrentoGen_->run_events();
     const auto &tmp_event = TrentoGen_->expose_event();
@@ -581,7 +581,8 @@ void TrentoInitial::ExecuteTask() {
          << info_.num_binary_collisions << "\t" << info_.total_entropy << "\t"
          << "(" << info_.xmid << ", " << info_.ymid << ")";
 
-  JSINFO << " Load averaged TRENTo density and ncoll density to JETSCAPE memory ";
+  JSINFO
+      << " Load averaged TRENTo density and ncoll density to JETSCAPE memory ";
   JSINFO << acc_density.size() << " density elements";
   JSINFO << acc_ncoll.size() << " ncoll elements";
 
