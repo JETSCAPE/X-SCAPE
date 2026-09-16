@@ -402,6 +402,20 @@ class Hadron : public JetScapeParticleBase {
   Hadron &operator=(Hadron &c);
   Hadron &operator=(const Hadron &c);
 
+  void set_mother_labels(int mother1, int mother2) {
+    mother1_label_ = mother1;
+    mother2_label_ = mother2;
+  }
+  void set_daughter_labels(int daughter1, int daughter2) {
+    daughter1_label_ = daughter1;
+    daughter2_label_ = daughter2;
+  }
+
+  int mother1_label() const { return mother1_label_; }
+  int mother2_label() const { return mother2_label_; }
+  int daughter1_label() const { return daughter1_label_; }
+  int daughter2_label() const { return daughter2_label_; }
+
   void set_decay_width(double width) { width_ = width; }
 
   double decay_width() { return (width_); }
@@ -433,6 +447,10 @@ class Hadron : public JetScapeParticleBase {
   int baryon_number_ = 0;
   int strangeness_ = 0;
   bool participant_ = false;
+  int mother1_label_ = -1;
+  int mother2_label_ = -1;
+  int daughter1_label_ = -1;
+  int daughter2_label_ = -1;
 };
 
 class Photon : public Parton {
