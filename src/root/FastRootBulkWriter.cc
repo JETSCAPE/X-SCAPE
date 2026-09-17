@@ -265,16 +265,25 @@ void FastRootBulkWriter::Exec() {
   if (!isinit)
     init_tree();
   t->Fill();
+  n_events_written++;
 
   // Release MUSIC's native store now that this event has been written.
   music->clear_hydro_info_from_memory();
 }
 
-FastRootBulkWriter::~FastRootBulkWriter() {
-  if (f) {
-    f->cd();
-    if (t)
-      t->Write();
-    f->Close();
-  }
+void FastRootBulkWriter::FinishTask() {
+  if (!f)
+    return;
+  f->cd();
+  if (t)
+    t->Write();
+  f->Close();
+  delete f;  // also deletes t, which the file owns
+  f = nullptr;
+  t = nullptr;
+  isinit = false;
+  JSINFO << "FastRootBulkWriter: wrote " << n_events_written << " event(s) to "
+         << out_file_name;
 }
+
+FastRootBulkWriter::~FastRootBulkWriter() { FinishTask(); }

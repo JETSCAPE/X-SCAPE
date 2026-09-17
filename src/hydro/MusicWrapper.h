@@ -275,12 +275,14 @@ class MpiMusic : public FluidDynamics {
   void set_skip_surface(bool v) { skip_surface_ = v; }
 
   // Thin pass-throughs to MUSIC's native in-memory store (music_hydro_ptr is
-  // private, so the writer reaches it through these).
+  // private, so the writer reaches it through these). music_hydro_ptr is only
+  // created in InitializeHydro(), so guard against calls before that (Python).
   int get_number_of_fluid_cells() {
-    return music_hydro_ptr->get_number_of_fluid_cells();
+    return music_hydro_ptr ? music_hydro_ptr->get_number_of_fluid_cells() : 0;
   }
   void clear_hydro_info_from_memory() {
-    music_hydro_ptr->clear_hydro_info_from_memory();
+    if (music_hydro_ptr)
+      music_hydro_ptr->clear_hydro_info_from_memory();
   }
 
   // Fill a caller-owned FluidCellInfo straight from MUSIC's native store at flat

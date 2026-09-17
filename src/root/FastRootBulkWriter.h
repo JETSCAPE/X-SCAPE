@@ -56,6 +56,26 @@ public:
   virtual void Init();   // read xml configuration
   virtual void Exec();   // dump one event
   virtual void Clear() {}
+  // Write the tree and close the file (called by JetScape::Finish()). Idempotent;
+  // the destructor calls it too. Needed from Python, where destructor timing at
+  // interpreter exit is not guaranteed.
+  virtual void FinishTask();
+
+  // Read-only accessors (used by the PyJetscape bindings).
+  const std::string &GetOutFileName() const { return out_file_name; }
+  const std::string &GetGridMode() const { return grid_mode; }
+  int GetTauStride() const { return tau_stride; }
+  bool IsFileOpen() const { return f != nullptr; }
+  int GetNumberOfEventsWritten() const { return n_events_written; }
+  // Layout of the most recently written event: [ntau][nx][ny][neta][nFeatures].
+  int GetNx() const { return nx; }
+  int GetNy() const { return ny; }
+  int GetNeta() const { return neta; }
+  int GetNtauWritten() const { return ntau_written; }
+  int GetNFeatures() const { return nFeatures; }
+  float GetTauMin() const { return eff_tau_min; }
+  float GetDtau() const { return eff_dtau; }
+  float GetTauFreezeout() const { return tau_freezeout; }
 
 private:
   void init_tree();
@@ -82,6 +102,7 @@ private:
 
   // state / derived (filled at first Exec once the grid is known)
   bool isinit {false};
+  int n_events_written {0};
   int nx{0}, ny{0}, neta{0};
   int ntau_written {0};               // branch: number of tau steps in v_data
   float tau_freezeout {0};            // branch: tau one step past last stored step
