@@ -528,6 +528,12 @@ void MpiMusic::EvolveHydro() {
     // Publish the grid metadata (cheap scalars) but do NOT build bulk_info.data
     // (the per-cell framework AoS copy). Overrides ensure_MusicWrapper_output.
     SetHydroGridInfo();
+    // The native store holds hydro steps only. With pre-equilibrium evolution in
+    // memory SetHydroGridInfo() keeps the combined pre-eq + hydro tau axis
+    // (tau_min = pre-eq start), which would mislabel it, so always use MUSIC's.
+    bulk_info.tau_min = music_hydro_ptr->get_hydro_tau0();
+    bulk_info.dtau = music_hydro_ptr->get_hydro_dtau();
+    bulk_info.ntau = music_hydro_ptr->get_ntau();
     JSINFO << "MUSIC dump_hydro_only: retaining native store ("
            << music_hydro_ptr->get_number_of_fluid_cells()
            << " cells), skipping framework copy.";
