@@ -102,6 +102,21 @@ cd build_gpu
 You should see: `MUSIC dump_hydro_only: retaining native store (… cells), skipping
 framework copy.`
 
+In `native` mode on a 3D grid you may also see
+`Error in <TBufferFile::WriteByteCount>: bytecount too large (more than 1073741822)`.
+The data is still written; see §9.
+
+### 2e. From Python (PyJetscape)
+
+With js-contrib's PyJetscape built in-tree against this ROOT-enabled build, the writer is
+the Python type `jetscape.FastRootBulkWriter`. Python can add it to a pipeline with
+`create_module("FastRootBulkWriter")` or find it in `JetScape.GetTaskList()`. The file is
+written and closed by `JetScape.Finish()`. `MpiMusic.get_native_evolution_numpy()` copies
+the same native store straight into numpy, and `jetscape.fast_root_bulk.read_fast_root_bulk()`
+reads the ROOT file back (§4). See the "C++ `FastRootBulkWriter` from Python"
+section of `external_packages/js-contrib/contribs/PyJetscape/README.md` and
+`example/python_fast_bulk_root_writer.py` there.
+
 ---
 
 ## 3. XML reference (`<FastRootBulkWriter>`)
@@ -122,28 +137,53 @@ optionally `<skip_surface>1` (skip the unused freeze-out-surface export; output-
 
 ## 4. Output format & reading it
 
-Branches per event:
+Tree `t`, one entry per event:
 - `user_res` — `vector<float>`, flattened `[tau][x][y][eta][feature]`, feature order
   `(energy_density, vx, vy, vz)`.
 - `ntau_freezeout` — `int`, number of τ steps written this event.
+- `tau_freezeout` — `float`, τ one stored MUSIC step past the last stored step
+  (`tau_min_MUSIC + N × dtau_MUSIC` for `N` stored steps, independent of `tau_stride`).
 
-Metadata (`TParameter`/`TNamed`, written once): `nFeatures, nx, ny, neta, x_min, dx,
-y_min, dy, eta_min, deta, tau_min, dtau, ntau, tau_stride, grid_mode`. `tau_min`/`dtau`
-are the **effective** values (in native mode `dtau` already includes `tau_stride`).
+Metadata (`TParameter`, plus the `TNamed` `grid_mode`), written once at the first event:
+
+| keys | meaning |
+|---|---|
+| `nFeatures`, `nx`, `ny`, `neta` | layout of `user_res` (`nFeatures` is always 4) |
+| `tau_min`, `dtau` | **effective** τ axis of `user_res` (in `native` mode `dtau` already includes `tau_stride`) |
+| `x_min`, `dx`, `y_min`, `dy`, `eta_min`, `deta`, `ntau` | the `<FastRootBulkWriter>` grid. In `grid` mode this is the output grid (tags left at 0 are filled with MUSIC's value, except `ntau`). In `native` mode these are just the XML values (0 by default) and **do not describe the data** |
+| `nX_MUSIC`, `X_min_MUSIC`, `dX_MUSIC`, `nY_MUSIC`, `Y_min_MUSIC`, `dY_MUSIC`, `neta_MUSIC`, `eta_min_MUSIC`, `deta_MUSIC`, `tau_min_MUSIC`, `dtau_MUSIC` | MUSIC's stored grid; the coordinates of `user_res` in `native` mode |
+| `tau_stride` | `native`-mode τ thinning |
+| `use_vec` | always 1 (`user_res` is a `vector<float>`) |
+| `grid_mode` (`TNamed`, value in the title) | `native` or `grid` |
 
 ```python
 import uproot, numpy as np
 f = uproot.open("OO_test_fast.root")
-nx, ny, neta, nF = (f[k].member("fVal") for k in ("nx","ny","neta","nFeatures"))
+P = lambda k: f[k].member("fVal")
+nx, ny, neta, nF = (P(k) for k in ("nx","ny","neta","nFeatures"))
 t = f["t"]
 res  = t["user_res"].array(library="np")          # ragged: one vector per event
 ntau = t["ntau_freezeout"].array(library="np")
 arr  = np.asarray(res[0]).reshape(ntau[0], nx, ny, neta, nF)
 energy, vx, vy, vz = arr[...,0], arr[...,1], arr[...,2], arr[...,3]
+x   = P("X_min_MUSIC") + P("dX_MUSIC") * np.arange(nx)   # native mode; grid mode: x_min, dx
+tau = P("tau_min") + P("dtau") * np.arange(ntau[0])
 ```
 
-Same layout as the legacy `RootBulkWriter` (with `ntau=0`), so existing readers work
-with at most a filename change.
+A native-mode event is large (1.29 GB uncompressed for the O+O example), so load one
+event at a time with `t["user_res"].array(entry_start=i, entry_stop=i+1, library="np")`.
+
+From PyJetscape, `jetscape.fast_root_bulk.read_fast_root_bulk(path, entry_start,
+entry_stop)` does all of the above: it returns one `(ntau, nx, ny, neta, 4)` array per
+event and picks the right coordinate keys for the grid mode.
+
+The branches and the shared metadata keys match the legacy `RootBulkWriter` with `ntau=0`
+(which also writes `vector<float>`, `use_vec=1`), so existing readers work with at most a
+filename change. The fast writer adds `tau_stride` and `grid_mode`.
+
+Files from earlier versions of the fast writer have no `tau_freezeout` branch and no
+`use_vec` or `*_MUSIC` keys, so native-mode coordinates can't be recovered from them;
+`read_fast_root_bulk` returns `None` for those fields.
 
 ---
 
@@ -151,13 +191,14 @@ with at most a filename change.
 
 | file | change |
 |---|---|
-| `src/root/FastRootBulkWriter.{h,cc}` | **new** module; native grid-walk + grid-mode interpolation |
-| `src/hydro/MusicWrapper.h` | `MpiMusic`: `get_number_of_fluid_cells()`, `clear_hydro_info_from_memory()`, `get_native_fluid_cell(idx, FluidCellInfo&)`, `set/get_dump_hydro_only`, `dump_hydro_only_` |
-| `src/hydro/MusicWrapper.cc` | read `<dump_hydro_only>`; `EvolveHydro` keeps the native store + skips `PassHydroEvolutionHistoryToFramework` when set; defensive clear each event |
+| `src/root/FastRootBulkWriter.{h,cc}` | **new** module; native grid-walk + grid-mode interpolation; `tau_freezeout` branch and `use_vec` / `*_MUSIC` metadata matching the legacy writer; writes and closes the file in `FinishTask()` (called by `JetScape::Finish()`; the destructor calls it too, and repeated calls do nothing); read-only getters (`GetOutFileName()`, `GetNumberOfEventsWritten()`, `GetNtauWritten()`, …) for the Python bindings |
+| `src/hydro/MusicWrapper.h` | `MpiMusic`: `get_number_of_fluid_cells()`, `clear_hydro_info_from_memory()` (both safe before `InitializeHydro()`), `get_native_fluid_cell(idx, FluidCellInfo&)`, `set/get_dump_hydro_only`, `set/get_skip_surface` |
+| `src/hydro/MusicWrapper.cc` | read `<dump_hydro_only>` and `<skip_surface>`; `EvolveHydro` keeps the native store + skips `PassHydroEvolutionHistoryToFramework` when set; defensive clear each event; in dump mode sets `bulk_info.tau_min`/`dtau`/`ntau` from MUSIC's stored steps (see τ axis note below) |
 | `src/framework/JetScape.cc` | include + `DetermineTaskListFromXML` registration of `FastRootBulkWriter` |
 | `src/root/RootBulkWriter.cc` | perf fix: `auto bInfo` → `const auto &bInfo` (was deep-copying the whole history every event) |
 | `src/CMakeLists.txt` | compile `root/FastRootBulkWriter.cc` under `USE_ROOT` |
-| `config/jetscape_main.xml` | **required** default entries for `<dump_hydro_only>` and `<FastRootBulkWriter>` (X-SCAPE rejects user-XML tags with no default — `recurseToSearch: tag unrecognized`) |
+| `config/jetscape_main.xml` | **required** default entries for `<dump_hydro_only>`, `<skip_surface>` and `<FastRootBulkWriter>` (X-SCAPE rejects user-XML tags with no default — `recurseToSearch: tag unrecognized`) |
+| `external_packages/js-contrib/contribs/PyJetscape/` (separate repository) | `src/bind_root_bulk_writer.cc`: Python type `FastRootBulkWriter` (only with `USE_ROOT`; `jetscape.HAS_ROOT`). `src/bind_music.cc`: `get_native_evolution_numpy(tau_stride)` and the native-store accessors. `python/jetscape/fast_root_bulk.py`: reader. `example/python_fast_bulk_root_writer.py`: example |
 
 **Data path.** MUSIC stores each output timestep in `HydroinfoMUSIC::lattice_ideal`
 (tau-major, then x, y, eta). `native` mode walks that store via
@@ -165,7 +206,16 @@ with at most a filename change.
 interpolation, no `bulk_info.data`. `grid` mode builds a **transient**
 `EvolutionHistory` from the native store once per event and calls `get()`; freed after
 the event. The writer clears MUSIC's native store at the end of each `Exec`; `MpiMusic`
-also clears it defensively at the start of each event.
+also clears it defensively at the start of each event. The tree is written and the file
+closed in `FinishTask()`, so the output is complete after `JetScape::Finish()` without
+relying on destructor timing (which matters from Python).
+
+**τ axis.** The writer takes MUSIC's grid (including `tau_min`, `dtau`) from `bulk_info`.
+With `<Preequilibrium><evolutionInMemory>1` (the main-XML default) and initial profile 42,
+`bulk_info` normally describes the *combined* pre-equilibrium + hydro history, so its
+`tau_min` is the pre-equilibrium start. The native store holds hydro steps only, so in
+dump mode `MpiMusic` now overrides `tau_min`, `dtau` and `ntau` with MUSIC's own stored
+values (`get_hydro_tau0()`, `get_hydro_dtau()`, `get_ntau()`).
 
 > Build note: after editing `src/CMakeLists.txt`, **re-configure CMake**
 > (`cmake build_gpu`) before `cmake --build`, or the new source isn't compiled and the
@@ -202,6 +252,22 @@ Observed results:
 
 > Run `validate.py` for exact current numbers — it prints shapes, file sizes, max/mean
 > diff, and the native-vs-legacy peak.
+
+Later checks:
+
+- **Python path** (PyJetscape, `example/python_fast_bulk_root_writer.py`): on the O+O
+  native config, the file from `runJetscape`, the file from the Python-driven run, and
+  `MpiMusic.get_native_evolution_numpy()` are **bit-for-bit identical**
+  (`np.array_equal`, `max |diff| = 0`). A manual Python pipeline (Trento + MUSIC 2D,
+  `tau_stride=5`) gives the same numpy-vs-ROOT match.
+- **τ axis fix** (§5): on a Trento + NullPreDynamics 2D config with pre-equilibrium kept in
+  memory (hydro starts at 0.5 fm/c), `native` mode now records `tau_min = 0.5` (was 0) and
+  `tau_freezeout = 30.52` (was 30.02). With a fixed seed, `grid` mode with
+  `<tau_min>1.0</tau_min>` matches the native rows at the same τ (energy density
+  `max |diff| = 1.4e-6`); the old axis would have sampled τ + 0.5 fm/c. The O+O native
+  output (`evolutionInMemory = 0`) is unchanged, bit for bit.
+- **Large events:** ROOT C++ and uproot read identical data from native O+O events over
+  1 GB; see §9.
 
 ---
 
@@ -251,10 +317,125 @@ slice. `native` is slightly slower than `grid` here only because it writes 93 MB
 - **native mode writes MUSIC's full resolution** — it can be large (≈93 MB for one O+O
   event at 100×100×60×134; bigger on finer grids). That is *disk*, not RAM. Shrink it with
   `<tau_stride>`, with MUSIC's `output_evolution_every_N_*`, or use `grid` mode for a
-  fixed coarse grid.
+  fixed coarse grid. Uncompressed, that event is 1.29 GB, which is over ROOT's 1 GB
+  per-object limit; see §9.
 - **grid mode** removes the persistent AoS + the deep copy, but still builds one
   transient working copy and interpolates when the grid differs from MUSIC's.
 - The fast dump starts at MUSIC's `hydroTau0` (pre-equilibrium steps are **not**
   prepended). A τ-origin offset vs a legacy file with a different `tau_min` is expected,
   not a bug.
+- Files written by earlier versions with `<Preequilibrium><evolutionInMemory>1` and
+  initial profile 42 record the **pre-equilibrium** start as `tau_min` (and a
+  correspondingly shifted `tau_freezeout`), e.g. 0 instead of 0.5 fm/c. Their `native` data
+  is correct but labelled with the wrong τ; `grid` mode with an explicit `<tau_min>`
+  sampled the wrong times. Fixed in `MpiMusic::EvolveHydro` (§5, τ axis).
 - Hydro-only only: remove `<Eloss>`/hadronization/afterburner (see §1).
+
+---
+
+## 9. Per-event size limit (ROOT's 1 GB object limit)
+
+**Status: not fixed.** Large `native`-mode events currently work, but they log ROOT errors
+and are close to a harder limit.
+
+### Symptom
+
+Writing prints, once per oversized event:
+
+```
+Error in <TBufferFile::WriteByteCount>: bytecount too large (more than 1073741822)
+```
+
+Reading the file with ROOT C++ prints, once per oversized entry:
+
+```
+Error in <TBufferFile::CheckByteCount>: object of class vector<float> read too many bytes: 1286400006 instead of 212658182
+Warning in <TBufferFile::CheckByteCount>: vector<float>::Streamer() not in sync with data on file …, fix Streamer()
+```
+
+### Cause
+
+When ROOT writes an object into a basket, it stores the object's length in a 32-bit field
+in front of it. The two highest bits of that field are reserved for flags, so only 30 bits
+hold the value: the largest length it can store is 2³⁰ − 2 = **1,073,741,822 bytes**.
+
+`FastRootBulkWriter` writes each event as one `std::vector<float>` (`user_res`), so the
+object size is
+
+```
+bytes per event = 16 × (ntau × nx × ny × neta) + 6      (4 features × 4 bytes, + header)
+```
+
+For the O+O example (§6):
+
+| | O+O native event |
+|---|---|
+| cells | 134 × 100 × 100 × 60 = 80.4M |
+| floats (× 4 features) | 321.6M |
+| bytes | **1,286,400,006** |
+
+That is over the limit. ROOT logs the error and keeps only the low 30 bits of the length:
+1,286,400,006 − 2³⁰ = **212,658,182**, which is the value the read-side error reports.
+
+### What still works
+
+The vector also stores its own element count, and readers use that count to read the data.
+ROOT then only complains that the header length doesn't match. Verified on a 2-event
+native O+O file (seed 42) with ROOT 6.36.06 and uproot 5.6.9:
+
+| entry | ntau | bytes | stored length | ROOT C++ vs uproot |
+|---|---|---|---|---|
+| 0 | 134 | 1,286,400,006 | 212,658,182 | identical bits |
+| 1 | 199 | 1,910,400,006 | 836,658,182 | identical bits |
+
+- `TTree::GetEntry` and uproot return bit-identical data for both entries (compared with a
+  hash over every float's bit pattern).
+- A bad entry doesn't disturb the next one. The writer calls `SetAutoFlush(1)`, so each
+  event is in its own basket.
+- uproot readers (§4, `validate.py`, PyJetscape's `read_fast_root_bulk`) are unaffected and
+  print no errors.
+
+### Where it is a real problem
+
+1. **The ~2 GB limit.** ROOT's buffer sizes are signed 32-bit, so a single entry can't go
+   much past ~2.15 GB. Entry 1 above is already **1.91 GB**. What happens past that has not
+   been tested; expect the write to fail outright rather than only log an error.
+2. **Other tools.** Anything that skips an object using its stored length instead of reading
+   it could misread these entries. Only `TTree::GetEntry` and uproot have been checked, not
+   `hadd`, `TTree::CopyTree`, RDataFrame or other readers.
+3. **Noisy logs.** Every oversized event adds errors that can hide real ones.
+
+### When it triggers
+
+| limit | max cells per event (ntau × nx × ny × neta) | 100×100×60 grid (600k cells, 9.6 MB per τ step) |
+|---|---|---|
+| 1 GB (errors) | 67,108,863 | ntau ≥ **112** |
+| ~2 GB (untested) | ≈ 134,000,000 | ntau ≳ **224** |
+
+The number of steps is what `native` mode writes, after `tau_stride`. Boost-invariant 2D
+runs are far below this (a 150×150 Trento event with 301 steps is 6.8M cells), and so is
+`grid` mode on the legacy 65×65×33 grid (3.8M cells).
+
+To stay under 1 GB, the largest allowed number of written τ steps is
+`floor(67,108,863 / (nx × ny × neta))`.
+
+### Options
+
+1. **Configuration only (works now).** Keep each event under 1 GB with:
+   - `<tau_stride>` (with `N` stored steps, `tau_stride ≥ ceil(N / max steps)`; stride 2
+     brings both O+O events above under 1 GB at 67 and 100 steps),
+   - MUSIC's `output_evolution_every_N_timesteps` or `output_evolution_every_N_x/y/eta`,
+   - or `grid` mode on a coarser grid.
+2. **One tree entry per τ step.** Add event-index and step-index branches and fill one
+   entry per τ step (9.6 MB per entry on the O+O grid). Removes both limits for any grid
+   size. Changes the file layout, so readers (§4, `validate.py`, PyJetscape's
+   `read_fast_root_bulk`, FNO training readers) must regroup rows by event.
+3. **Plain float array with a length branch.** Store `user_res` as a leaf array
+   (`user_res[n]/F`) instead of a `vector<float>`. This should avoid the per-object length
+   field and keep one entry per event, so uproot readers barely change. It does not remove
+   the ~2 GB limit, which entry 1 above nearly reaches.
+4. **Warn in the writer.** When an event exceeds 1 GB, log its size and the smallest
+   `tau_stride` that would fit. Doesn't fix anything, but makes the problem obvious.
+
+**Recommendation:** option 2 if full-resolution `native` dumps on 3D grids are the goal;
+otherwise option 1 plus the warning from option 4.
