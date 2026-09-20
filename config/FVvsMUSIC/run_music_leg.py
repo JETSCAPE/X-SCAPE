@@ -303,8 +303,8 @@ def _probe_gate(arr, saved, ini, rtol):
         print(f"  FAIL shape: MUSIC {e_out.shape} vs IC {e_in.shape}")
         return 1
 
-    i_in = np.unravel_index(int(np.argmax(e_in)), e_in.shape)
-    i_out = np.unravel_index(int(np.argmax(e_out)), e_out.shape)
+    i_in = tuple(int(v) for v in np.unravel_index(int(np.argmax(e_in)), e_in.shape))
+    i_out = tuple(int(v) for v in np.unravel_index(int(np.argmax(e_out)), e_out.shape))
     print(f"  arg-max cell : IC {i_in}  MUSIC {i_out}   "
           f"{'OK' if i_in == i_out else 'FAIL -- transposed or shifted axis'}")
     ok &= (i_in == i_out)

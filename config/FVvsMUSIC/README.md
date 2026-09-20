@@ -8,6 +8,10 @@ The IC comes from `fast_data`'s own tilted Bozek–Wyskieł MC-Glauber (`glauber
 X-SCAPE's 3dMCGlauber or Trento — because the point is to test the two hydro solvers against
 each other, not two different initial states.
 
+**To reproduce the study end to end, use `FNO4d/README_fv_vs_music.md` and its
+`workflow_fastdata/fvmusic_run_all.sh`** — it drives both repos in order and checks the
+prerequisites first. The commands below are the X-SCAPE half on its own.
+
 Full design and the reasoning behind every setting: **`FNO4d/PLAN_fv_vs_music.md`**.
 Measured results: **`FNO4d/RESULTS_fv_vs_music.md`** — the two codes agree to ~0.3 % in energy
 density over a full central Au+Au lifetime in the ideal legs, and ~1–3 % with Israel–Stewart
