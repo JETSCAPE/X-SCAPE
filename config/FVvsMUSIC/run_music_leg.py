@@ -21,7 +21,7 @@ export is taken first).
 
 Usage
 -----
-    cd $XSCAPE/build_gpu
+    cd $XSCAPE_BUILD          # or wherever you built; see --workdir
     MUSIC_FORCE_CPU=1 python ../config/FVvsMUSIC/run_music_leg.py \
         --leg ideal_conformal \
         --ic  ~/FNO4d/workflow_fastdata/out/ic_fvmusic_AuAu_b0.h5 \
@@ -45,6 +45,8 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 XSCAPE = os.path.abspath(os.path.join(HERE, "..", ".."))
+# The build tree is not always build_gpu -- override with $XSCAPE_BUILD or --workdir.
+XBUILD = os.path.abspath(os.environ.get("XSCAPE_BUILD", os.path.join(XSCAPE, "build_gpu")))
 LEGS = ("ideal_conformal", "ideal_eos91", "is_eos91")
 
 
@@ -52,7 +54,7 @@ def _import_jetscape():
     """Import the PyJetscape package, adding its in-tree location to sys.path."""
     for p in (os.path.join(XSCAPE, "external_packages", "js-contrib", "contribs",
                            "PyJetscape", "python"),
-              os.path.join(XSCAPE, "build_gpu", "external_packages", "js-contrib",
+              os.path.join(XBUILD, "external_packages", "js-contrib",
                            "contribs", "PyJetscape", "python")):
         if os.path.isdir(p) and p not in sys.path:
             sys.path.insert(0, p)
@@ -168,8 +170,9 @@ def main(argv=None):
     ap.add_argument("--ic", required=True, help="the shared IC HDF5 from fvmusic_make_ic.py")
     ap.add_argument("--out", required=True, help="output .npz")
     ap.add_argument("--event", type=int, default=0, help="event index inside the IC file")
-    ap.add_argument("--workdir", default=os.path.join(XSCAPE, "build_gpu"),
-                    help="run here; MUSIC resolves EOS/ and music_input relative to it")
+    ap.add_argument("--workdir", default=XBUILD,
+                    help="the X-SCAPE build tree; MUSIC resolves EOS/ and music_input "
+                         "relative to it.  Defaults to $XSCAPE_BUILD, else <repo>/build_gpu")
     ap.add_argument("--main-xml", default=os.path.join(XSCAPE, "config", "jetscape_main.xml"))
     ap.add_argument("--user-xml", default=None, help="override the per-leg XML")
     ap.add_argument("--tau-stride", type=int, default=1)
