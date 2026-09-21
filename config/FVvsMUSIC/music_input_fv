@@ -144,7 +144,14 @@ Shear_to_S_ratio 0.0               # value of \eta/s
 T_dependent_Shear_to_S_ratio  0    # flag to use temperature dep. \eta/s(T)
 Include_Bulk_Visc_Yes_1_No_0 0 # include bulk viscous effect
 Include_second_order_terms 0       # include second order non-linear coupling terms
-shear_relax_time_factor 4.65
+# tau_pi = shear_relax_time_factor * eta/(e+p).  Stock music_input ships 4.65; MUSIC's own
+# code default is 5.0 (read_in_parameters.cpp:238) and nothing in the XML or MusicWrapper
+# overrides the file, so a run off stock solves tau_pi = 4.65 eta/(e+p) while fast_data's
+# Transport uses 5.0 -- a 7.5% difference in the ONE coefficient the shear sector relaxes on,
+# which no grid refinement can remove.  This study's whole premise is that nothing differs but
+# the solver, so it is set to match.  5.0 is also the DNMR conformal value and what
+# fv.test_gubser_viscous validates against (c_relax = 5.0, the Marrochio et al. tauR_hat).
+shear_relax_time_factor 5.0
 Include_Rhob_Yes_1_No_0 1
 #
 #
