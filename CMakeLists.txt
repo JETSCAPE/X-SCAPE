@@ -583,6 +583,15 @@ if(USE_ISS)
     # Override the vendored install destination (CMAKE_HOME_DIRECTORY).
     set_target_properties(iSS PROPERTIES
       INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    # iSS and MUSIC both export an unnamespaced class pretty_ostream, and
+    # music4gpu's has extra members. With ELF's flat symbol lookup, libiSS
+    # then runs libmusic's larger constructor on its own smaller objects and
+    # corrupts the heap (iSS::iSS aborts in malloc). -Bsymbolic binds libiSS's
+    # references to its own definitions. macOS's two-level namespace already
+    # does that, and its linker has no -Bsymbolic.
+    if(NOT APPLE)
+      set_property(TARGET iSS APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic")
+    endif()
   else()
     message(
       FATAL_ERROR
