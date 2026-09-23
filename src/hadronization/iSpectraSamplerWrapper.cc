@@ -115,10 +115,18 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->echo();
 }
 
-int iSpectraSamplerWrapper::getSurfCellVector() {
+int iSpectraSamplerWrapper::getSurfCellVector(bool from_evolution) {
   std::vector<SurfaceCellInfo> surfVec;
   std::vector<FO_surf> FOsurf_array;
   GetHydroHyperSurface(surfVec);
+  if (surfVec.empty() && from_evolution) {
+    // The hydro handed over no surface of its own (it only filled bulk_info):
+    // build one from its stored evolution with SurfaceFinder.
+    const auto &params = GetSurfaceFinderParams();
+    JSINFO << "No surface from the hydro; building one from its evolution at "
+           << "T_sw = " << params.T_sw << " GeV";
+    FindHydroHyperSurface(params, surfVec);
+  }
   int nCells = surfVec.size();
   JSINFO << "surface cell size: " << nCells;
   for (const auto surf_i : surfVec) {
@@ -220,7 +228,7 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   }
   inputfile.close();
 
-  int nCells = getSurfCellVector();
+  int nCells = getSurfCellVector(true);
   if (nCells == 0) {
     int status = iSpectraSampler_ptr_->read_in_FO_surface();
     if (status != 0) {

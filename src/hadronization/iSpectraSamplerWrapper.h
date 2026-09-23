@@ -51,7 +51,9 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   void ClearHadronList();
   void WriteTask(weak_ptr<JetScapeWriter> w);
 
-  int getSurfCellVector();
+  // from_evolution: if the hydro hands over no surface, build one from its
+  // stored evolution (FindHydroHyperSurface). Off in the time-stepped path.
+  int getSurfCellVector(bool from_evolution = false);
   void PassHadronListToJetscape();
   void PassHadronListToJetscapeSameEvent();
 };

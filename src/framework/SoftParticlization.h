@@ -44,6 +44,9 @@ class SoftParticlization : public JetScapeModuleBase {
   /// Flag for the connection status of the ClearHydroHyperSurface signal
   bool ClearHydroHyperSurfaceConnected_;
 
+  /// Parameters for building a surface from the stored evolution
+  SurfaceFinderParams surface_params_;
+
  public:
   /**
    * @brief Construct a new SoftParticlization object
@@ -78,9 +81,27 @@ class SoftParticlization : public JetScapeModuleBase {
       GetHydroHyperSurface;
 
   /**
+   * @brief Signal for building a surface from the hydro's stored evolution
+   * (FluidDynamics::FindSurfaceFromEvolution). Used when the hydro did not
+   * provide a surface of its own through GetHydroHyperSurface.
+   */
+  sigslot::signal2<SurfaceFinderParams, std::vector<SurfaceCellInfo> &,
+                   multi_threaded_local>
+      FindHydroHyperSurface;
+
+  /**
    * @brief Signal for clearing the hydrodynamic hypersurface
    */
   sigslot::signal0<multi_threaded_local> ClearHydroHyperSurface;
+
+  /**
+   * @brief Surface parameters for FindHydroHyperSurface, read in Init() from
+   * the optional XML keys SoftParticlization/{T_sw, surface_dtau,
+   * surface_dx, surface_deta}.
+   */
+  const SurfaceFinderParams &GetSurfaceFinderParams() const {
+    return surface_params_;
+  }
 
   /**
    * @brief Set the GetHydroHyperSurfaceConnected flag

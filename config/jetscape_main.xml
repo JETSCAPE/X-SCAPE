@@ -741,6 +741,17 @@
 
   <!-- Particlization Module  -->
   <SoftParticlization>
+    <!-- Id of the FluidDynamics task whose surface is sampled; "first" = the
+         first hydro in the task list (e.g. FastHydro_jet for a two-stage run) -->
+    <hydro_id>first</hydro_id>
+    <!-- Used only when the hydro provides no surface of its own (it only fills
+         bulk_info): the surface is then built from the stored evolution with
+         SurfaceFinder at T_sw [GeV] on a Cornelius lattice with these spacings
+         (0 = defaults dtau = 0.1 fm, dx = dy = 0.2 fm, deta = 0.2). -->
+    <T_sw>0.15</T_sw>
+    <surface_dtau>0</surface_dtau>
+    <surface_dx>0</surface_dx>
+    <surface_deta>0</surface_deta>
     <!-- iSpectraSampler -->
     <iSS>
       <!-- read in file type  -->

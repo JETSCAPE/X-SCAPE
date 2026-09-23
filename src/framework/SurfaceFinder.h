@@ -19,6 +19,7 @@
 #define SURFACEFINDER_H_
 
 #include <array>
+#include <atomic>
 #include <fstream>
 #include <omp.h>
 #include <vector>
@@ -38,6 +39,17 @@ namespace Jetscape {
  * evolution history, checks for intersections with the hypersurface, and
  * constructs a list of `SurfaceCellInfo` objects that represent the properties
  * of each surface cell.
+ *
+ * Conventions expected from bulk_info:
+ *  - vx, vy, vz are Cartesian lab-frame three-velocities (vz = dz/dt), not
+ *    four-velocity components and not the Milne longitudinal velocity
+ *    tau u^eta / u^tau. A producer storing the latter (CLViscWrapper appears
+ *    to) gets a wrong boost to Milne at eta != 0.
+ *  - pi^{mu nu} is copied unchanged, so it must be in Milne components.
+ *
+ * Output: umu = (u^tau, u^x, u^y, tau u^eta), u.u = 1, and d3sigma_mu are
+ * the raw Cornelius normals in (tau, x, y, eta), i.e. MUSIC's convention
+ * (iSS applies the tau Jacobian itself).
  */
 class SurfaceFinder {
  private:
@@ -53,6 +65,15 @@ class SurfaceFinder {
 
   /// @brief List of surface cells that form the identified hypersurface.
   std::vector<SurfaceCellInfo> surface_cell_list;
+
+  /// @brief Cornelius lattice spacing in tau, x (= y) and eta. The finder
+  /// interpolates bulk_info onto this lattice, independent of the hydro grid.
+  Jetscape::real grid_dt_ = 0.1;
+  Jetscape::real grid_dx_ = 0.2;
+  Jetscape::real grid_deta_ = 0.2;
+
+  /// @brief Set once the non-zero-pi-at-eta!=0 warning has been printed.
+  std::atomic<bool> warned_pi_frame_{false};
 
  public:
   /**
@@ -99,6 +120,18 @@ class SurfaceFinder {
    * `surface_cell_list`.
    */
   void Find_full_hypersurface();
+
+  /**
+   * @brief Sets the Cornelius lattice spacing (defaults: dtau = 0.1 fm,
+   * dx = dy = 0.2 fm, deta = 0.2). Non-positive values keep the default.
+   * Call before Find_full_hypersurface().
+   */
+  void set_lattice_spacing(Jetscape::real dtau, Jetscape::real dx,
+                           Jetscape::real deta) {
+    if (dtau > 0.) grid_dt_ = dtau;
+    if (dx > 0.) grid_dx_ = dx;
+    if (deta > 0.) grid_deta_ = deta;
+  }
 
   /**
    * @brief gets the number of surface cells in the identified hypersurface.

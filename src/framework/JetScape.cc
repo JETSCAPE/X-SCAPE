@@ -1017,6 +1017,29 @@ void JetScape::SetPointers() {
   bool bulk_pointer_is_set = false;
   bool iss_pointer_is_set = false;
 
+  // Optional <SoftParticlization><hydro_id>: sample the surface of the
+  // FluidDynamics task with this Id instead of the first one (e.g. the jet
+  // leg of a two-stage hydro). Only the soft-particlization signals use it;
+  // the jet signals keep the first hydro.
+  shared_ptr<FluidDynamics> soft_hydro;
+  std::string soft_hydro_id =
+      GetXMLElementText({"SoftParticlization", "hydro_id"}, false);
+  if (!soft_hydro_id.empty() && soft_hydro_id != "first") {
+    for (auto it : GetTaskList()) {
+      auto hydro = dynamic_pointer_cast<FluidDynamics>(it);
+      if (hydro && hydro->GetId() == soft_hydro_id) {
+        soft_hydro = hydro;
+        break;
+      }
+    }
+    if (!soft_hydro) {
+      JSWARN << "SoftParticlization/hydro_id = " << soft_hydro_id
+             << " matches no FluidDynamics task";
+      exit(-1);
+    }
+    JSINFO << "Soft particlization samples the surface of " << soft_hydro_id;
+  }
+
   for (auto it : GetTaskList()) {
     if (dynamic_pointer_cast<InitialState>(it)) {
       JetScapeSignalManager::Instance()->SetInitialStatePointer(
@@ -1052,10 +1075,17 @@ void JetScape::SetPointers() {
       JetScapeSignalManager::Instance()->SetSoftParticlizationPointer(
           dynamic_pointer_cast<SoftParticlization>(it));
       iss_pointer_is_set = true;
-      JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
-          dynamic_pointer_cast<SoftParticlization>(it));
-      JetScapeSignalManager::Instance()->ConnectClearHydroHyperSurfaceSignal(
-          dynamic_pointer_cast<SoftParticlization>(it));
+      if (soft_hydro) {
+        JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
+            dynamic_pointer_cast<SoftParticlization>(it), soft_hydro);
+        JetScapeSignalManager::Instance()->ConnectClearHydroHyperSurfaceSignal(
+            dynamic_pointer_cast<SoftParticlization>(it), soft_hydro);
+      } else {
+        JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
+            dynamic_pointer_cast<SoftParticlization>(it));
+        JetScapeSignalManager::Instance()->ConnectClearHydroHyperSurfaceSignal(
+            dynamic_pointer_cast<SoftParticlization>(it));
+      }
     } else if (dynamic_pointer_cast<HadronizationManager>(it)) {
       JetScapeSignalManager::Instance()->SetHadronizationManagerPointer(
           dynamic_pointer_cast<HadronizationManager>(it));

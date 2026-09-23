@@ -27,6 +27,15 @@ using JetscapeCornelius::Cornelius;
 
 namespace Jetscape {
 
+namespace {
+// Number of lattice cells of size d that fit in length L. Jetscape::real is
+// float, so e.g. 4 / 0.2f = 19.99999; a plain truncation would drop the last
+// cell in every direction.
+int n_lattice_cells(double L, double d) {
+  return static_cast<int>(std::floor(L / d + 1e-4));
+}
+}  // namespace
+
 /**
  * @brief Prepares a `SurfaceCellInfo` object with the given parameters.
  *
@@ -175,16 +184,16 @@ void SurfaceFinder::Find_full_hypersurface_3D() {
   auto grid_x0 = bulk_info.XMin();
   auto grid_y0 = bulk_info.YMin();
 
-  Jetscape::real grid_dt = 0.1;
-  Jetscape::real grid_dx = 0.2;
-  Jetscape::real grid_dy = 0.2;
+  Jetscape::real grid_dt = grid_dt_;
+  Jetscape::real grid_dx = grid_dx_;
+  Jetscape::real grid_dy = grid_dx_;
 
   const int dim = 3;
   std::array<double, 4> lattice_spacing{{grid_dt, grid_dx, grid_dy, 1.0}};
 
-  const int ntime = static_cast<int>((grid_tauf - grid_tau0) / grid_dt);
-  const int nx = static_cast<int>(std::abs(2. * grid_x0) / grid_dx);
-  const int ny = static_cast<int>(std::abs(2. * grid_y0) / grid_dy);
+  const int ntime = n_lattice_cells(grid_tauf - grid_tau0, grid_dt);
+  const int nx = n_lattice_cells(std::abs(2. * grid_x0), grid_dx);
+  const int ny = n_lattice_cells(std::abs(2. * grid_y0), grid_dy);
 
   int surface_cell_list_sz = ntime * nx * ny;
   std::vector<std::vector<SurfaceCellInfo>> surface_cell_list_local;
@@ -367,18 +376,18 @@ void SurfaceFinder::Find_full_hypersurface_4D() {
   auto grid_y0 = bulk_info.YMin();
   auto grid_eta0 = bulk_info.EtaMin();
 
-  Jetscape::real grid_dt = 0.1;
-  Jetscape::real grid_dx = 0.2;
-  Jetscape::real grid_dy = 0.2;
-  Jetscape::real grid_deta = 0.2;
+  Jetscape::real grid_dt = grid_dt_;
+  Jetscape::real grid_dx = grid_dx_;
+  Jetscape::real grid_dy = grid_dx_;
+  Jetscape::real grid_deta = grid_deta_;
 
   const int dim = 4;
   std::array<double, 4> lattice_spacing{{grid_dt, grid_dx, grid_dy, grid_deta}};
 
-  const int ntime = static_cast<int>((grid_tauf - grid_tau0) / grid_dt);
-  const int nx = static_cast<int>(std::abs(2. * grid_x0) / grid_dx);
-  const int ny = static_cast<int>(std::abs(2. * grid_y0) / grid_dy);
-  const int neta = static_cast<int>(std::abs(2. * grid_eta0) / grid_deta);
+  const int ntime = n_lattice_cells(grid_tauf - grid_tau0, grid_dt);
+  const int nx = n_lattice_cells(std::abs(2. * grid_x0), grid_dx);
+  const int ny = n_lattice_cells(std::abs(2. * grid_y0), grid_dy);
+  const int neta = n_lattice_cells(std::abs(2. * grid_eta0), grid_deta);
 
   int surface_cell_list_sz = ntime * nx * ny * neta;
   std::vector<std::vector<SurfaceCellInfo>> surface_cell_list_local;
@@ -505,14 +514,31 @@ SurfaceCellInfo SurfaceFinder::PrepareASurfaceCell(
   temp_cell.mu_Q = fluid_cell.mu_C;
   temp_cell.mu_S = fluid_cell.mu_S;
 
-  double u0 =
-      sqrt(1. + fluid_cell.vx * fluid_cell.vx + fluid_cell.vy * fluid_cell.vy +
-           fluid_cell.vz * fluid_cell.vz);
+  // vx, vy, vz are Cartesian lab-frame three-velocities (the FluidCellInfo
+  // convention, followed by MUSIC, freestream-milne, HydroFromFile and
+  // FastHydro), so u^t = gamma = 1/sqrt(1 - v^2) and u^i = gamma v^i.
+  // The clamp keeps an interpolated cell with v^2 >= 1 from giving a NaN.
+  double v2 = fluid_cell.vx * fluid_cell.vx + fluid_cell.vy * fluid_cell.vy +
+              fluid_cell.vz * fluid_cell.vz;
+  const double v2_max = 1. - 1e-10;
+  if (v2 > v2_max) v2 = v2_max;
+  double u0 = 1. / sqrt(1. - v2);
   double uz = u0 * fluid_cell.vz;
+  // boost (u^t, u^z) to Milne: umu = (u^tau, u^x, u^y, tau u^eta)
   temp_cell.umu[0] = u0 * cosh(eta) - uz * sinh(eta);
   temp_cell.umu[1] = u0 * fluid_cell.vx;
   temp_cell.umu[2] = u0 * fluid_cell.vy;
   temp_cell.umu[3] = -u0 * sinh(eta) + uz * cosh(eta);
+
+  // pi^{mu nu} is copied unchanged, i.e. it must already be in Milne
+  // components (tau, x, y, tau*eta). Harmless for pi = 0; warn once otherwise.
+  if (eta != 0. &&
+      (fluid_cell.pi[0][3] != 0. || fluid_cell.pi[3][3] != 0. ||
+       fluid_cell.pi[0][0] != 0.) &&
+      !warned_pi_frame_.exchange(true)) {
+    JSWARN << "SurfaceFinder: non-zero pi^{mu nu} at eta != 0 is passed to "
+              "the surface unchanged; it must be in Milne components.";
+  }
 
   temp_cell.pi[0] = fluid_cell.pi[0][0];
   temp_cell.pi[1] = fluid_cell.pi[0][1];

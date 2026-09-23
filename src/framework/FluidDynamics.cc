@@ -228,8 +228,30 @@ void FluidDynamics::CollectHeader(weak_ptr<JetScapeWriter> w) {
  */
 void FluidDynamics::FindAConstantTemperatureSurface(
     Jetscape::real T_sw, std::vector<SurfaceCellInfo> &surface_cells) {
+  SurfaceFinderParams params;
+  params.T_sw = T_sw;
+  FindSurfaceFromEvolution(params, surface_cells);
+}
+
+/**
+ * @brief Runs SurfaceFinder (Cornelius) on the stored evolution `bulk_info`
+ * with the given switching temperature and lattice spacing.
+ *
+ * Leaves `surface_cells` empty if no evolution is stored (e.g. MUSIC with
+ * output_evolution_to_memory = 0, or a run with hydro source terms).
+ */
+void FluidDynamics::FindSurfaceFromEvolution(
+    SurfaceFinderParams params, std::vector<SurfaceCellInfo> &surface_cells) {
+  surface_cells.clear();
+  if (bulk_info.data.empty() && bulk_info.data_vector.empty()) {
+    JSWARN << "FindSurfaceFromEvolution: no evolution stored in bulk_info, "
+              "no surface built.";
+    return;
+  }
   std::unique_ptr<SurfaceFinder> surface_finder_ptr(
-      new SurfaceFinder(T_sw, bulk_info));
+      new SurfaceFinder(params.T_sw, bulk_info));
+  surface_finder_ptr->set_lattice_spacing(params.dtau, params.dx,
+                                          params.deta);
   surface_finder_ptr->Find_full_hypersurface();
   surface_cells = surface_finder_ptr->get_surface_cells_vector();
   JSINFO << "number of surface cells: " << surface_cells.size();

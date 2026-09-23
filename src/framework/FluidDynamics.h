@@ -629,6 +629,17 @@ class FluidDynamics : public JetScapeModuleBase {
   void FindAConstantTemperatureSurface(
       Jetscape::real T_sw, std::vector<SurfaceCellInfo> &surface_cells);
 
+  /**
+   * @brief Builds a constant-temperature surface from the stored evolution
+   * (`bulk_info`) with SurfaceFinder, using `params` for the switching
+   * temperature and the Cornelius lattice spacing.
+   *
+   * This is how a SoftParticlization module gets a surface from a hydro that
+   * only fills `bulk_info` and has no surface finder of its own.
+   */
+  void FindSurfaceFromEvolution(SurfaceFinderParams params,
+                                std::vector<SurfaceCellInfo> &surface_cells);
+
   // all the following functions will call function GetHydroInfo()
   // to get thermaldynamic and dynamical information at a space-time point
   // (time, x, y, z)

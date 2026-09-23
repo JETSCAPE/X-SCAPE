@@ -44,6 +44,17 @@ void SoftParticlization::Init() {
 
   JSINFO << "boost invariance: " << boost_invariance;
 
+  // Optional: surface built from the hydro's stored evolution when the hydro
+  // provides none of its own (see FindHydroHyperSurface). 0 = default.
+  double T_sw = GetXMLElementDouble({"SoftParticlization", "T_sw"}, false);
+  if (T_sw > 0.) surface_params_.T_sw = T_sw;
+  surface_params_.dtau =
+      GetXMLElementDouble({"SoftParticlization", "surface_dtau"}, false);
+  surface_params_.dx =
+      GetXMLElementDouble({"SoftParticlization", "surface_dx"}, false);
+  surface_params_.deta =
+      GetXMLElementDouble({"SoftParticlization", "surface_deta"}, false);
+
   InitTask();
   InitTasks();
   // CreateSignalSlots();
