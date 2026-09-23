@@ -175,11 +175,23 @@ if(APPLE)
   include_directories("${OpenMP_libomp_PREFIX}/include")
 endif()
 find_package(OpenMP)
-if(OPENMP_FOUND)
+# Decide per language. OPENMP_FOUND needs every enabled language, and on macOS
+# only the C++ hints are set above, so the C component fails and OPENMP_FOUND
+# is false. Keyed on it, the framework (SurfaceFinder's omp loops, ...) was
+# silently compiled without -fopenmp and ran single-threaded.
+if(OpenMP_C_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+endif()
+if(OpenMP_CXX_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+  # Every target now compiles its omp pragmas, so every target -- shared
+  # libraries included, e.g. libiSS -- must also link the runtime.
+  link_libraries(OpenMP::OpenMP_CXX)
+else()
+  message(WARNING "OpenMP for C++ not found: OpenMP loops in the framework "
+                  "(e.g. SurfaceFinder) will run single-threaded")
 endif()
 
 # ##############################################################################
