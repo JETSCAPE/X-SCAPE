@@ -371,7 +371,7 @@ int MpiMusic::InitializeHydroEnergyProfile() {
 
   // need further improvement to accept multiple source term objects
   // this is a temporary solution
-  music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
+  music_hydro_ptr->add_hydro_source_terms_from_jet(hydro_source_terms_ptr);
 
   if (pre_eq_ptr == nullptr) {
     JSINFO << "Setting up the hydro without pre-equilibrium module ...";
