@@ -274,6 +274,11 @@ class MpiMusic : public FluidDynamics {
   bool get_skip_surface() const { return skip_surface_; }
   void set_skip_surface(bool v) { skip_surface_ = v; }
 
+  // True if the last evolution stopped because the freeze-out surface
+  // reached the transverse grid boundary (MUSIC's reRunHydro): the stored
+  // evolution is then truncated. Reset at the start of every evolution.
+  bool get_hit_grid_boundary() const { return hit_grid_boundary_; }
+
   // Thin pass-throughs to MUSIC's native in-memory store (music_hydro_ptr is
   // private, so the writer reaches it through these). music_hydro_ptr is only
   // created in InitializeHydro(), so guard against calls before that (Python).
@@ -333,6 +338,8 @@ class MpiMusic : public FluidDynamics {
   // Skip the freeze-out surface hand-off / file collection (see
   // set_skip_surface); read from <Hydro><MUSIC><skip_surface>.
   bool skip_surface_ = false;
+  bool hit_grid_boundary_ = false;
+  void WarnIfGridBoundaryHit();
 };
 
 #endif  // MUSICWRAPPER_H

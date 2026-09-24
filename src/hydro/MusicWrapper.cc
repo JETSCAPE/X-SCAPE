@@ -438,12 +438,16 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
     }
     music_hydro_ptr->prepare_run_hydro_one_time_step();
     hydro_source_terms_ptr->set_source_tau_max(GetSourceTermTauMax());
+    // see EvolveHydro(): MUSIC never clears this flag itself
+    music_hydro_ptr->setReRunHydro(false);
+    hit_grid_boundary_ = false;
   }
 
   if (hydro_status != FINISHED) {
     int status = music_hydro_ptr->run_hydro_upto(tauEnd);
     if (status != 0) {
       hydro_status = FINISHED;
+      WarnIfGridBoundaryHit();
     }
   }
   // PassHydroSurfaceToFramework();
@@ -519,8 +523,16 @@ void MpiMusic::EvolveHydro() {
 
   if (hydro_status == INITIALIZED) {
     JSINFO << "running MUSIC ...";
+    // MUSIC stops when its freeze-out surface reaches the transverse grid
+    // edge and sets reRunHydro, expecting its driver to re-run on a larger
+    // grid (MUSIC's own main.cpp does). X-SCAPE does not re-run, and MUSIC
+    // clears the flag only in its constructor, so without this reset every
+    // later event of this instance would stop at its first freeze-out check.
+    music_hydro_ptr->setReRunHydro(false);
+    hit_grid_boundary_ = false;
     music_hydro_ptr->run_hydro();
     hydro_status = FINISHED;
+    WarnIfGridBoundaryHit();
   }
 
   if (dump_hydro_only_) {
@@ -580,6 +592,17 @@ void MpiMusic::EvolveHydro() {
 
   if (hydro_status == FINISHED && doCooperFrye == 1) {
     music_hydro_ptr->run_Cooper_Frye();
+  }
+}
+
+void MpiMusic::WarnIfGridBoundaryHit() {
+  hit_grid_boundary_ = music_hydro_ptr->getReRunHydro();
+  if (hit_grid_boundary_) {
+    JSWARN << "MUSIC " << GetId() << ": the freeze-out surface reached the "
+           << "transverse grid boundary, so MUSIC stopped this event's "
+           << "evolution there (it expects a re-run on a larger grid, which "
+           << "X-SCAPE does not do). The stored evolution is truncated; "
+           << "enlarge <IS><grid_max_x>/<grid_max_y>.";
   }
 }
 
