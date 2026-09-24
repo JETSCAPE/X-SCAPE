@@ -535,6 +535,16 @@ if(USE_3DGlauber)
       "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/LHAPDF_Lib")
     set_target_properties(3dMCGlb 3dMCGlb.e Metropolis.e
       PROPERTIES INSTALL_RPATH "${_3dMCGlb_rpath}")
+    # 3dMCGlauber exports the same unnamespaced pretty_ostream as music4gpu,
+    # with a smaller layout. Whichever library loads first supplies the class to
+    # both, so a process that loads libmusic first (PyJetscape: libmusic is a
+    # direct dependency of pyjetscape_core) runs music4gpu's constructor on
+    # 3dMCGlauber's objects and aborts in free(). Bind to its own definitions,
+    # as for libiSS below. (music4gpu already links itself with
+    # -Bsymbolic-functions, which covers the other direction.)
+    if(NOT APPLE)
+      set_property(TARGET 3dMCGlb APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic")
+    endif()
   else()
     message(FATAL_ERROR "GSL are necessary for 3dMCGlauber")
   endif()
