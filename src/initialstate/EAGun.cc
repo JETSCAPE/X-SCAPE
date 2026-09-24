@@ -433,6 +433,10 @@ void EAGun::ExecuteTask() {
         // cout << "incoming q: " << pStruck[0] << " " << pStruck[1] << " " << pStruck[2] << " " << pStruck[3] << " MAG " << pow( pow(pStruck[1],2.) + pow(pStruck[2],2.) + pow(pStruck[3],2.), 0.5) << endl;
         // cout << endl;
         
+        // ofstream fout_incomingparton;
+        // fout_incomingparton.open("fout_incomingparton.txt", std::ios_base::app);
+        // fout_incomingparton << pStruck[0] << " " << pStruck[1] << " " << pStruck[2] << " " << pStruck[3] << endl;
+
         // tmp2 = pStruck;
 
         // polarRot.reset();

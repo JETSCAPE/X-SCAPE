@@ -597,40 +597,40 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       // cout << "LEFT DENS: " << ini->Get_target_nucleon_density_lab(xLeft[0], xLeft[1], xLeft[2], xLeft[3]) << endl;
       // cout << "RIGHT DENS" << ini->Get_target_nucleon_density_lab(xRight[0], xRight[1], xRight[2], xRight[3]) << endl;
 
-      //now binary search with the two endpoints
-      double xMid[4];
-      double retDist=1e-5; //return when right-left < this
-      double lrDist = velocityMod;
-      // cout << "DIST " << lrDist << endl;
-      while (lrDist > retDist) {
-        // cout << "\ttoo far, need to refine" << endl;
-        for (int j=0; j<4; j++) { xMid[j] = (xLeft[j]+xRight[j])/2.; }
-        // cout << "\tMID " << xMid[0] << " " << xMid[1] << " " << xMid[2] << " " << xMid[3] << endl;
+      // //now binary search with the two endpoints
+      // double xMid[4];
+      // double retDist=1e-5; //return when right-left < this
+      // double lrDist = velocityMod;
+      // // cout << "DIST " << lrDist << endl;
+      // while (lrDist > retDist) {
+      //   // cout << "\ttoo far, need to refine" << endl;
+      //   for (int j=0; j<4; j++) { xMid[j] = (xLeft[j]+xRight[j])/2.; }
+      //   // cout << "\tMID " << xMid[0] << " " << xMid[1] << " " << xMid[2] << " " << xMid[3] << endl;
       
-        if (ini->Get_target_nucleon_density_lab(xMid[0], xMid[1], xMid[2], xMid[3]) > MINDENS) { 
-          //still inside
-          // cout << "\tinside " << ini->Get_target_nucleon_density_lab(xMid[0], xMid[1], xMid[2], xMid[3]) << endl;
-          for (int j=0; j<4; j++) { xLeft[j] = xMid[j]; }
-        }
-        else { //outside
-          // cout << "\toutside " << ini->Get_target_nucleon_density_lab(xMid[0], xMid[1], xMid[2], xMid[3]) << endl;
-          for (int j=0; j<4; j++) { xRight[j] = xMid[j]; }
-        }
+      //   if (ini->Get_target_nucleon_density_lab(xMid[0], xMid[1], xMid[2], xMid[3]) > MINDENS) { 
+      //     //still inside
+      //     // cout << "\tinside " << ini->Get_target_nucleon_density_lab(xMid[0], xMid[1], xMid[2], xMid[3]) << endl;
+      //     for (int j=0; j<4; j++) { xLeft[j] = xMid[j]; }
+      //   }
+      //   else { //outside
+      //     // cout << "\toutside " << ini->Get_target_nucleon_density_lab(xMid[0], xMid[1], xMid[2], xMid[3]) << endl;
+      //     for (int j=0; j<4; j++) { xRight[j] = xMid[j]; }
+      //   }
 
-        //recalculate distance
-        lrDist = 0;
-        for (int j=1; j<4; j++) { lrDist += pow(xRight[j]-xLeft[j],2); }
-        lrDist = std::sqrt(lrDist);
+      //   //recalculate distance
+      //   lrDist = 0;
+      //   for (int j=1; j<4; j++) { lrDist += pow(xRight[j]-xLeft[j],2); }
+      //   lrDist = std::sqrt(lrDist);
 
-        // cout << "DIST " << lrDist << endl;
-      }
+      //   // cout << "DIST " << lrDist << endl;
+      // }
 
-      //now take either endpoint as the edge
-      double old_length = 0.;
-      for (int j=1; j<4; j++) { old_length += pow(xRight[j]-xStart[j],2); }
-      old_length = std::sqrt(old_length);
+      // //now take either endpoint as the edge
+      // double old_length = 0.;
+      // for (int j=1; j<4; j++) { old_length += pow(xRight[j]-xStart[j],2); }
+      // old_length = std::sqrt(old_length);
 
-      cout << "OLDLENGTH IS " << old_length << endl;
+      // cout << "OLDLENGTH IS " << old_length << endl;
 
 
 
@@ -661,7 +661,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       for (int j=1; j<4; j++) { length += pow(xEdge[j]-xStart[j],2); }
       length = std::sqrt(length);
 
-      cout << "LENGTH IS " << length << endl;
+      // cout << "LENGTH IS " << length << endl;
 
 
 
