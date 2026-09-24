@@ -468,6 +468,10 @@ Hadron::Hadron(const Hadron &srh)
   baryon_number_ = srh.baryon_number_;
   strangeness_ = srh.strangeness_;
   participant_ = srh.participant_;
+  mother1_label_ = srh.mother1_label_;
+  mother2_label_ = srh.mother2_label_;
+  daughter1_label_ = srh.daughter1_label_;
+  daughter2_label_ = srh.daughter2_label_;
 }
 
 Hadron::Hadron(int label, int id, int stat, const FourVector &p,
@@ -566,6 +570,10 @@ Hadron &Hadron::operator=(Hadron &c) {
   baryon_number_ = c.baryon_number_;
   strangeness_ = c.strangeness_;
   participant_ = c.participant_;
+  mother1_label_ = c.mother1_label_;
+  mother2_label_ = c.mother2_label_;
+  daughter1_label_ = c.daughter1_label_;
+  daughter2_label_ = c.daughter2_label_;
   return *this;
 }
 
@@ -576,6 +584,10 @@ Hadron &Hadron::operator=(const Hadron &c) {
   baryon_number_ = c.baryon_number_;
   strangeness_ = c.strangeness_;
   participant_ = c.participant_;
+  mother1_label_ = c.mother1_label_;
+  mother2_label_ = c.mother2_label_;
+  daughter1_label_ = c.daughter1_label_;
+  daughter2_label_ = c.daughter2_label_;
   return *this;
 }
 

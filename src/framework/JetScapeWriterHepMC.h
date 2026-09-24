@@ -17,8 +17,11 @@
 #ifndef JETSCAPEWRITERHEPMC_H
 #define JETSCAPEWRITERHEPMC_H
 
+#include <cstdlib>
 #include <fstream>
+#include <map>
 #include <string>
+#include <vector>
 
 #include "JetScapeWriter.h"
 #include "PartonShower.h"
@@ -147,11 +150,35 @@ class JetScapeWriterHepMC : public JetScapeWriter, public HepMC3::WriterAscii {
   vector<HepMC3::GenVertexPtr> vertices;
   HepMC3::GenVertexPtr hadronizationvertex;
 
+  std::map<int, HepMC3::GenParticlePtr> hadronsByLabel;
+  std::map<int, HepMC3::GenVertexPtr> hadronDecayVertices;
+
+  /** to hold hadrons before assignment on second pass */
+  std::vector<std::shared_ptr<Hadron>> bufferedHadrons;
+  void FlushBufferedHadrons();
+  void EnsureHadronizationVertex();
+  int FindMotherLabel(const Hadron &hadron) const;
+
   /**
    * @note WriteEvent needs to know whether it should overwrite final
    * partons status to 1
    */
   bool hashadrons = false;
+
+  /**
+   * @brief Maps a JetScape Hadron to a HepMC status code.
+   * @param hadron The JetScape Hadron to be mapped.
+   * @return The corresponding HepMC status code.
+   */
+  int mapHadronStatusForHepMC(const Hadron &hadron) const {
+    if (std::abs(hadron.pstat()) == 4) {
+      return 4;
+    }
+    if (hadron.daughter1_label() > 0 || hadron.daughter2_label() > 0) {
+      return 2;
+    }
+    return 1;
+  }
 
   /**
    * @brief Casts a JetScape Vertex to a HepMC GenVertex.
