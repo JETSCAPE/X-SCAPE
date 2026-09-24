@@ -698,6 +698,10 @@
        <additional_pythia_particles>0</additional_pythia_particles>
        <!-- Path to file with additional particles for pythia (for higher reco_Mlevelmax)-->
        <additional_pythia_particles_path>../config/HH_LightExcitedMesons.xml</additional_pythia_particles_path>
+       <!-- Possibility of shifting hadrons in ColoredHadronizationSinglet.cc -->
+       <shift_hadrons>0</shift_hadrons>
+       <!-- 1=Voronoi, 2=MC -->
+       <shift_type>0</shift_type>
    </JetHadronization>
 
   <!-- Particlization Module  -->
