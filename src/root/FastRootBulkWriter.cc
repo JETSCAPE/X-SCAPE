@@ -202,8 +202,11 @@ void FastRootBulkWriter::fill_grid(::MpiMusic *music, const EvolutionHistory &g)
 
   const double tau_max = g.tau_min + (ntau_native - 1) * g.dtau;
   int n_out_tau = ntau;
+  // The 1e-6 slack keeps an output frame that lands exactly on the last stored
+  // step: g.tau_min / g.dtau are float, so the quotient can come out at N-1e-7
+  // and truncate one frame short.
   if (n_out_tau <= 0)
-    n_out_tau = (dtau > 0) ? (int)((tau_max - tau_min) / dtau) + 1 : 0;
+    n_out_tau = (dtau > 0) ? (int)((tau_max - tau_min) / dtau + 1e-6) + 1 : 0;
 
   v_data.clear();
   v_data.reserve((size_t)n_out_tau * nx * ny * neta * nFeatures);
