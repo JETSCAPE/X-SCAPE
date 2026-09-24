@@ -505,8 +505,8 @@ SurfaceCellInfo SurfaceFinder::PrepareASurfaceCell(
   temp_cell.mu_Q = fluid_cell.mu_C;
   temp_cell.mu_S = fluid_cell.mu_S;
 
-  double v2 = (fluid_cell.vx * fluid_cell.vx + fluid_cell.vy * fluid_cell.vy
-               + fluid_cell.vz * fluid_cell.vz);
+  double v2 = (fluid_cell.vx * fluid_cell.vx + fluid_cell.vy * fluid_cell.vy +
+               fluid_cell.vz * fluid_cell.vz);
   double u0 = 1. / sqrt(1. - v2);
   double uz = u0 * fluid_cell.vz;
   temp_cell.umu[0] = u0 * cosh(eta) - uz * sinh(eta);
