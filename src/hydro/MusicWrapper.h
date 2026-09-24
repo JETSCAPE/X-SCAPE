@@ -37,6 +37,10 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
 
   double dtau;
 
+  // Per-step droplet pruning, see prepare_list_for_current_tau_frame().
+  double pruning_step_ = 0.1;  // [fm]; the hydro dtau once set_hydro_dtau() ran
+  std::shared_ptr<LiquefierBase> liquefier_step_;  // locked once per step
+
  public:
   HydroSourceJETSCAPE() = default;
   ~HydroSourceJETSCAPE() {}
@@ -46,6 +50,7 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   // add the value to the hadronic liquefier
   void set_hydro_dtau(double val) {
     dtau = val;
+    pruning_step_ = val;
     if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
       hadronic_liquefier_ptr.lock()->set_hydro_dtau(dtau);
     }
@@ -53,6 +58,23 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
 
   void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
     liquefier_ptr = new_liquefier;
+    liquefier_step_.reset();
+  }
+
+  //! Called by MUSIC once per time step, before its Runge-Kutta substeps
+  //! (query times tau and tau + dtau). A CausalLiquefier droplet deposits only
+  //! in the step containing tau_drop + tau_delay, so the liquefier keeps just
+  //! the droplets that can deposit at a query time in
+  //! [tau - step, tau + 2 step]; the result is unchanged, because the others
+  //! add exactly zero, and queries outside the window still see every droplet.
+  //! Also locks the liquefier once per step instead of once per cell.
+  void prepare_list_for_current_tau_frame(const double tau_local) {
+    if (weak_ptr_is_uninitialized(liquefier_ptr)) return;
+    liquefier_step_ = liquefier_ptr.lock();
+    if (liquefier_step_) {
+      liquefier_step_->prepare_active_droplets(tau_local - pruning_step_,
+                                               tau_local + 2. * pruning_step_);
+    }
   }
 
   void add_a_hadronic_liquefier(
@@ -134,7 +156,11 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
     j_mu = {0.0};
     if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
       std::array<Jetscape::real, 4> jmu_tmp = {0.0};
-      liquefier_ptr.lock()->get_source(tau, x, y, eta_s, jmu_tmp);
+      if (liquefier_step_) {
+        liquefier_step_->get_source(tau, x, y, eta_s, jmu_tmp);
+      } else {
+        liquefier_ptr.lock()->get_source(tau, x, y, eta_s, jmu_tmp);
+      }
       for (int i = 0; i < 4; i++) {
         j_mu[i] =
             jmu_tmp[i] / hbarC;  // convert the unit from GeV/fm^4 to 1/fm^5

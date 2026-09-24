@@ -31,7 +31,13 @@ void LiquefierBase::get_source(Jetscape::real tau, Jetscape::real x,
                                Jetscape::real y, Jetscape::real eta,
                                std::array<Jetscape::real, 4> &jmu) const {
   jmu = {0.0, 0.0, 0.0, 0.0};
-  for (const auto &drop_i : dropletlist) {
+  // Inside a prepared window only the droplets that can contribute there are
+  // visited, in their original order; the others would add exactly zero.
+  const bool pruned = (tau >= active_tau_lo_ && tau <= active_tau_hi_);
+  const std::size_t n_loop =
+      pruned ? active_droplets_.size() : dropletlist.size();
+  for (std::size_t k = 0; k < n_loop; k++) {
+    const auto &drop_i = dropletlist[pruned ? active_droplets_[k] : k];
     const auto x_drop = drop_i.get_xmu();
     double ds2 = tau * tau + x_drop[0] * x_drop[0] -
                  2.0 * tau * x_drop[0] * cosh(eta - x_drop[3]) -
@@ -227,7 +233,21 @@ void LiquefierBase::add_hydro_sources(std::vector<Parton> &pIn,
   }
 }
 
-void LiquefierBase::ClearTask() { dropletlist.clear(); }
+void LiquefierBase::ClearTask() {
+  dropletlist.clear();
+  invalidate_active_droplets();
+}
+
+void LiquefierBase::prepare_active_droplets(double tau_lo, double tau_hi) {
+  active_droplets_.clear();
+  for (std::size_t i = 0; i < dropletlist.size(); i++) {
+    if (droplet_may_contribute(dropletlist[i], tau_lo, tau_hi)) {
+      active_droplets_.push_back(static_cast<int>(i));
+    }
+  }
+  active_tau_lo_ = tau_lo;
+  active_tau_hi_ = tau_hi;
+}
 
 Jetscape::real LiquefierBase::get_dropletlist_total_energy() const {
   Jetscape::real total_E = 0.0;

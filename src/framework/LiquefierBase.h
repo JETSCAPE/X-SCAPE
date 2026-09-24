@@ -91,6 +91,13 @@ class LiquefierBase {
  private:
   std::vector<Droplet>
       dropletlist;  ///< List of droplets representing source contributions
+  /// Indices into dropletlist of the droplets that can contribute to a query
+  /// time in [active_tau_lo_, active_tau_hi_]; see prepare_active_droplets().
+  /// An empty window (lo > hi) means not prepared: get_source() then loops
+  /// over every droplet.
+  std::vector<int> active_droplets_;
+  double active_tau_lo_ = 1.;
+  double active_tau_hi_ = 0.;
   bool GetHydroCellSignalConnected;  ///< Flag for whether signal connection to
                                      ///< hydro exists
   const int drop_stat;               ///< Droplet statistics
@@ -117,7 +124,44 @@ class LiquefierBase {
    * @brief Add a droplet to the internal list.
    * @param droplet_in Droplet to add
    */
-  void add_a_droplet(Droplet droplet_in) { dropletlist.push_back(droplet_in); }
+  void add_a_droplet(Droplet droplet_in) {
+    dropletlist.push_back(droplet_in);
+    invalidate_active_droplets();
+  }
+
+  /**
+   * @brief Restrict get_source() to the droplets that can contribute to a
+   * query time in [tau_lo, tau_hi], e.g. one hydro time step with its
+   * Runge-Kutta substeps.
+   *
+   * Uses droplet_may_contribute(). Queries outside the window, and any query
+   * before the first call, still loop over every droplet, so a caller that
+   * never prepares gets the unpruned result. Adding a droplet or clearing
+   * the list drops the window.
+   */
+  void prepare_active_droplets(double tau_lo, double tau_hi);
+
+  /// Drop the prepared window: get_source() loops over every droplet again.
+  void invalidate_active_droplets() {
+    active_droplets_.clear();
+    active_tau_lo_ = 1.;
+    active_tau_hi_ = 0.;
+  }
+
+  /// Droplets kept by the last prepare_active_droplets() call.
+  int get_number_of_active_droplets() const {
+    return static_cast<int>(active_droplets_.size());
+  }
+
+  /**
+   * @brief Whether drop_i can give a non-zero smearing_kernel() for some
+   * query time in [tau_lo, tau_hi]. Must never return false for a droplet
+   * that contributes. The default keeps every droplet (no pruning).
+   */
+  virtual bool droplet_may_contribute(const Droplet &drop_i, double tau_lo,
+                                      double tau_hi) const {
+    return true;
+  }
 
   /**
    * @brief Get number of droplet conversions performed.

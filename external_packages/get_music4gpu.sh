@@ -15,9 +15,9 @@
 
 # using a commit from the MUSIC repository that is compatible with the current X-SCAPE version
 folderName="music4gpu"
-# XSCAPE branch with the jet source slot (add_hydro_source_terms_from_jet), which
-# MusicWrapper calls since X-SCAPE PR #138
-commitHash="b9cc8be6f086e7f7803f9fc463f0b3657ac9dbdd"
+# XSCAPE branch with the jet source slot (add_hydro_source_terms_from_jet, which
+# MusicWrapper calls since X-SCAPE PR #138) and per-step jet droplet pruning
+commitHash="3037be76518e4ae17b42c2236392bc93603c9f89"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
