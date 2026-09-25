@@ -392,8 +392,6 @@ int MpiMusic::InitializeHydroEnergyProfile() {
   if (pre_eq_ptr == nullptr) {
     JSINFO << "Setting up the hydro without pre-equilibrium module ...";
     music_hydro_ptr->initialize_hydro_xscape(nx, ny, nz, dx, dy, dz);
-    hydro_source_terms_ptr->set_hydro_dtau(
-        music_hydro_ptr->get_hydro_dtau_grid());
   } else if (initialProfile_ == 13 || initialProfile_ == 131) {
     auto QCDStringList = ini->GetQCDStringList();
     if (QCDStringList.size() == 0) {
@@ -414,6 +412,15 @@ int MpiMusic::InitializeHydroEnergyProfile() {
         pre_eq_ptr->pi13_, pre_eq_ptr->pi22_, pre_eq_ptr->pi23_,
         pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
   }
+  // The jet source needs the hydro time step whatever the initial condition:
+  // it sets the droplet pruning window (HydroSourceJETSCAPE::
+  // prepare_list_for_current_tau_frame, [tau - dtau, tau + 2 dtau]) and the
+  // hadronic liquefier's 1/dtau.  It used to be set only without a
+  // pre-equilibrium module, so string initial conditions (13 / 131) kept the
+  // 0.1 fm default window, five times wider than needed with Delta_Tau 0.02:
+  // correct (the window only has to hold the query times) but the droplet
+  // source was evaluated at ~2.6x as many steps.
+  hydro_source_terms_ptr->set_hydro_dtau(music_hydro_ptr->get_hydro_dtau_grid());
 
   if (pre_eq_ptr == nullptr &&
       (initialProfile_ != 13 && initialProfile_ != 131 &&
