@@ -77,6 +77,23 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
     }
   }
 
+  //! Whether this source can be non-zero at the current step's query times
+  //! (tau and tau + dtau), for MUSIC to skip evaluating it at steps where it
+  //! cannot (MUSIC4GPU HydroSourceBase::has_active_sources_current_tau; no
+  //! `override`, so this also compiles against a MUSIC without it).
+  //! prepare_list_for_current_tau_frame(tau) keeps the droplets that can
+  //! deposit at a query time in [tau - step, tau + 2 step], which holds both;
+  //! with none kept, get_source() adds exactly zero there.  Anything else --
+  //! a hadronic liquefier (not pruned), no prepared window -- stays true.
+  bool has_active_sources_current_tau() const {
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) return true;
+    if (weak_ptr_is_uninitialized(liquefier_ptr)) return false;
+    if (!liquefier_step_ || !liquefier_step_->active_droplets_prepared()) {
+      return true;
+    }
+    return liquefier_step_->get_number_of_active_droplets() > 0;
+  }
+
   void add_a_hadronic_liquefier(
       std::shared_ptr<HadronicLiquefier> new_liquefier) {
     hadronic_liquefier_ptr = new_liquefier;

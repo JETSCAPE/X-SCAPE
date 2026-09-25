@@ -156,6 +156,13 @@ class LiquefierBase {
     return static_cast<int>(active_droplets_.size());
   }
 
+  /// Whether a window is prepared, i.e. get_source() at a query time inside
+  /// [tau_lo, tau_hi] loops over the kept droplets only.  false after
+  /// add_a_droplet() or ClearTask(), until the next prepare_active_droplets().
+  bool active_droplets_prepared() const {
+    return active_tau_lo_ <= active_tau_hi_;
+  }
+
   /**
    * @brief Whether drop_i can give a non-zero smearing_kernel() for some
    * query time in [tau_lo, tau_hi]. Must never return false for a droplet
