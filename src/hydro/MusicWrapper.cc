@@ -61,6 +61,19 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   doCooperFrye =
       GetXMLElementInt({"Hydro", "MUSIC", "Perform_CooperFrye_Freezeout"});
 
+  // Write the EOS into the music input file BEFORE constructing MUSIC: MUSIC
+  // builds its EOS tables from EOS_to_use in the constructor, and
+  // set_parameter("EOS") afterwards only changes DATA.whichEOS. Updating the
+  // file later made the first instance in a process use whatever EOS the
+  // previous run (or a CMake re-configure, which restores the EOS 91 template)
+  // left there. The file is also read by iSS.
+  int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
+  try {
+    update_music_input_parameter(input_file, "EOS_to_use", EOS);
+  } catch (const std::exception &e) {
+    JSWARN << "Error updating EOS_to_use in MUSIC input file: " << e.what();
+  }
+
   music_hydro_ptr = std::unique_ptr<MUSIC>(new MUSIC(input_file));
 
   // overwrite input options
@@ -127,16 +140,7 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     freeze_out_surface_ = own_freeze_out_surface;
   }
 
-  int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
   music_hydro_ptr->set_parameter("EOS", EOS);
-  // Try to reset the EOS in the music input file
-  // This is needed for iSS, which reads this parameter from the music input
-  // file
-  try {
-    update_music_input_parameter(input_file, "EOS_to_use", EOS);
-  } catch (const std::exception &e) {
-    JSWARN << "Error updating EOS_to_use in MUSIC input file: " << e.what();
-  }
 
   int beastMode = (GetXMLElementInt({"Hydro", "MUSIC", "beastMode"}));
   music_hydro_ptr->set_parameter("beastMode", beastMode);
