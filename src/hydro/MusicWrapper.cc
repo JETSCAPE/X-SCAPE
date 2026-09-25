@@ -781,33 +781,40 @@ void MpiMusic::PassHydroEvolutionHistoryToFramework() {
 
   SetHydroGridInfo();
 
-  fluidCell *fluidCell_ptr = new fluidCell;
-  for (int i = 0; i < number_of_cells; i++) {
-    std::unique_ptr<FluidCellInfo> fluid_cell_info_ptr(new FluidCellInfo);
-    music_hydro_ptr->get_fluid_cell_with_index(i, fluidCell_ptr);
-
-    fluid_cell_info_ptr->energy_density = fluidCell_ptr->ed;
-    fluid_cell_info_ptr->entropy_density = fluidCell_ptr->sd;
-    fluid_cell_info_ptr->temperature = fluidCell_ptr->temperature;
-    fluid_cell_info_ptr->pressure = fluidCell_ptr->pressure;
-    fluid_cell_info_ptr->vx = fluidCell_ptr->vx;
-    fluid_cell_info_ptr->vy = fluidCell_ptr->vy;
-    fluid_cell_info_ptr->vz = fluidCell_ptr->vz;
-    fluid_cell_info_ptr->mu_B = 0.0;
-    fluid_cell_info_ptr->mu_C = 0.0;
-    fluid_cell_info_ptr->mu_S = 0.0;
-    fluid_cell_info_ptr->qgp_fraction = 0.0;
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-        fluid_cell_info_ptr->pi[i][j] = fluidCell_ptr->pi[i][j];
+  // Size the store once and fill it in parallel, instead of one heap-allocated
+  // FluidCellInfo and one push_back per cell: a 0-10% Au+Au event has ~10^8
+  // cells, and the growing vector's reallocations alone took ~3 s per event.
+  // get_fluid_cell_with_index only reads MUSIC's store, so the cells are
+  // independent, and each lands at the index the serial loop gave it.
+  const std::size_t first = bulk_info.data.size();
+  bulk_info.data.resize(first + static_cast<std::size_t>(number_of_cells));
+  FluidCellInfo *const out = bulk_info.data.data() + first;
+#pragma omp parallel
+  {
+    fluidCell cell;
+#pragma omp for schedule(static)
+    for (int i = 0; i < number_of_cells; i++) {
+      music_hydro_ptr->get_fluid_cell_with_index(i, &cell);
+      FluidCellInfo &info = out[i];
+      info.energy_density = cell.ed;
+      info.entropy_density = cell.sd;
+      info.temperature = cell.temperature;
+      info.pressure = cell.pressure;
+      info.vx = cell.vx;
+      info.vy = cell.vy;
+      info.vz = cell.vz;
+      info.mu_B = 0.0;
+      info.mu_C = 0.0;
+      info.mu_S = 0.0;
+      info.qgp_fraction = 0.0;
+      for (int a = 0; a < 4; a++) {
+        for (int b = 0; b < 4; b++) {
+          info.pi[a][b] = cell.pi[a][b];
+        }
       }
+      info.bulk_Pi = cell.bulkPi;
     }
-    fluid_cell_info_ptr->bulk_Pi = fluidCell_ptr->bulkPi;
-    StoreHydroEvolutionHistory(fluid_cell_info_ptr);
   }
-  // check the cells now
-  delete fluidCell_ptr;
-  // check the cells now
   music_hydro_ptr->clear_hydro_info_from_memory();
 }
 
