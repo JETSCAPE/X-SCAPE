@@ -15,6 +15,7 @@
  ******************************************************************************/
 
 #include <stdio.h>
+#include <cstdlib>
 #include <sys/stat.h>
 #include <MakeUniqueHelper.h>
 
@@ -114,6 +115,17 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   // only drops the unused export in a hydro-only dump. See <skip_surface>.
   skip_surface_ = (bool) GetXMLElementInt(
       {"Hydro", "MUSIC", "skip_surface"}, false);
+
+  // Freeze-out surface: the first <Hydro><MUSIC> block sets it for every
+  // instance, as for all MUSIC settings; the same tag inside this instance's
+  // own block (matched by <name>) overrides it, e.g. no surface for a
+  // two-stage background leg but one for the jet leg that gets particlized.
+  freeze_out_surface_ =
+      GetXMLElementInt({"Hydro", "MUSIC", "freeze_out_surface"});
+  const int own_freeze_out_surface = ReadOwnMusicBlockInt("freeze_out_surface");
+  if (own_freeze_out_surface >= 0) {
+    freeze_out_surface_ = own_freeze_out_surface;
+  }
 
   int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
   music_hydro_ptr->set_parameter("EOS", EOS);
@@ -441,6 +453,7 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
     // see EvolveHydro(): MUSIC never clears this flag itself
     music_hydro_ptr->setReRunHydro(false);
     hit_grid_boundary_ = false;
+    ApplyFreezeOutSurface();
   }
 
   if (hydro_status != FINISHED) {
@@ -530,6 +543,7 @@ void MpiMusic::EvolveHydro() {
     // later event of this instance would stop at its first freeze-out check.
     music_hydro_ptr->setReRunHydro(false);
     hit_grid_boundary_ = false;
+    ApplyFreezeOutSurface();
     music_hydro_ptr->run_hydro();
     hydro_status = FINISHED;
     WarnIfGridBoundaryHit();
@@ -592,6 +606,44 @@ void MpiMusic::EvolveHydro() {
 
   if (hydro_status == FINISHED && doCooperFrye == 1) {
     music_hydro_ptr->run_Cooper_Frye();
+  }
+}
+
+// The value of `tag` inside this instance's own <Hydro><MUSIC> block of the
+// user XML (the one whose <name> is this module's id), or -1 if not set there.
+int MpiMusic::ReadOwnMusicBlockInt(const char *tag) const {
+  auto *root = JetScapeXML::Instance()->GetXMLRootUser();
+  if (root == nullptr) return -1;
+  for (auto *hydro = root->FirstChildElement("Hydro"); hydro != nullptr;
+       hydro = hydro->NextSiblingElement("Hydro")) {
+    auto *music = hydro->FirstChildElement("MUSIC");
+    if (music == nullptr) continue;
+    auto *name = music->FirstChildElement("name");
+    if (name == nullptr || name->GetText() == nullptr) continue;
+    std::string id = name->GetText();
+    id.erase(0, id.find_first_not_of(" \t\n\r"));
+    id.erase(id.find_last_not_of(" \t\n\r") + 1);
+    if (id != GetId()) continue;
+    auto *value = music->FirstChildElement(tag);
+    if (value == nullptr || value->GetText() == nullptr) return -1;
+    return std::atoi(value->GetText());
+  }
+  return -1;
+}
+
+// Hand the freeze-out surface setting to MUSIC at the start of every
+// evolution, so a change made after Init() (set_freeze_out_surface) applies.
+void MpiMusic::ApplyFreezeOutSurface() {
+  music_hydro_ptr->set_parameter("freeze_out_surface", freeze_out_surface_);
+  if (freeze_out_surface_ == reported_freeze_out_surface_) return;
+  reported_freeze_out_surface_ = freeze_out_surface_;   // report on change only
+  JSINFO << "MUSIC " << GetId() << ": freeze-out surface "
+         << (freeze_out_surface_ ? "built"
+                                 : "NOT built (stops on max e < e_fo instead)");
+  if (freeze_out_surface_ == 0 && !skip_surface_) {
+    JSWARN << "MUSIC " << GetId() << ": freeze_out_surface = 0, so there is no "
+           << "freeze-out surface to hand on (soft particlization of this "
+           << "instance would get none).";
   }
 }
 

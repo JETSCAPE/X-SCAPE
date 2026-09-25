@@ -16,11 +16,14 @@
 #include "LiquefierBase.h"
 #include "JetScapeXML.h"
 #include <math.h>
+#include <algorithm>
+#include <cmath>
 
 namespace Jetscape {
 
 LiquefierBase::LiquefierBase()
     : hydro_source_abs_err(1e-10),
+      e_mom_rel_tol(5e-2),
       drop_stat(-11),
       miss_stat(-13),
       neg_stat(-17) {
@@ -86,10 +89,17 @@ void LiquefierBase::check_energy_momentum_conservation(
       std::abs(p_missing.x()) > hydro_source_abs_err ||
       std::abs(p_missing.y()) > hydro_source_abs_err ||
       std::abs(p_missing.z()) > hydro_source_abs_err) {
-    JSWARN << "A vertex does not conserve energy momentum!";
-    JSWARN << "E = " << p_missing.t() << " GeV, px = " << p_missing.x()
-           << " GeV, py = " << p_missing.y() << " GeV, pz = " << p_missing.z()
-           << " GeV.";
+    // Energy-loss kinematics (on-shell E recomputed from p, soft partons cut)
+    // miss by far more than 1e-10 GeV, so warn only above e_mom_rel_tol.
+    const double dmax = std::max(
+        {std::abs(p_missing.t()), std::abs(p_missing.x()),
+         std::abs(p_missing.y()), std::abs(p_missing.z())});
+    if (dmax > e_mom_rel_tol * std::abs(p_init.t())) {
+      JSWARN << "A vertex does not conserve energy momentum!";
+      JSWARN << "E = " << p_missing.t() << " GeV, px = " << p_missing.x()
+             << " GeV, py = " << p_missing.y() << " GeV, pz = "
+             << p_missing.z() << " GeV (E_in = " << p_init.t() << " GeV).";
+    }
     Parton parton_miss(0, 21, miss_stat, p_missing, x_final);
     pOut.push_back(parton_miss);
   }

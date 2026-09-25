@@ -300,6 +300,15 @@ class MpiMusic : public FluidDynamics {
   bool get_skip_surface() const { return skip_surface_; }
   void set_skip_surface(bool v) { skip_surface_ = v; }
 
+  // Build MUSIC's freeze-out surface (1) or not (0). Without a surface MUSIC
+  // stops on the equivalent max(e) < e_fo test (same stop step; music4gpu
+  // only, CPU MUSIC ignores the setting and always builds it). Read from the
+  // first <Hydro><MUSIC> block for every instance and overridden by the same
+  // tag in the instance's own block; the setter overrides both and applies
+  // from the next evolution on. See <freeze_out_surface>.
+  bool get_freeze_out_surface() const { return freeze_out_surface_ != 0; }
+  void set_freeze_out_surface(bool v) { freeze_out_surface_ = v ? 1 : 0; }
+
   // True if the last evolution stopped because the freeze-out surface
   // reached the transverse grid boundary (MUSIC's reRunHydro): the stored
   // evolution is then truncated. Reset at the start of every evolution.
@@ -365,6 +374,10 @@ class MpiMusic : public FluidDynamics {
   // set_skip_surface); read from <Hydro><MUSIC><skip_surface>.
   bool skip_surface_ = false;
   bool hit_grid_boundary_ = false;
+  int freeze_out_surface_ = 1;
+  int reported_freeze_out_surface_ = -1;
+  int ReadOwnMusicBlockInt(const char *tag) const;
+  void ApplyFreezeOutSurface();
   void WarnIfGridBoundaryHit();
 };
 

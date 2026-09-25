@@ -105,6 +105,9 @@ class LiquefierBase {
   const int neg_stat;                ///< Negative energy statistics
   const Jetscape::real
       hydro_source_abs_err;  ///< Error tolerance for hydro sources
+  /// A vertex whose 4-momentum mismatch exceeds this fraction of its incoming
+  /// energy is reported; smaller ones only get the p_missing parton.
+  const double e_mom_rel_tol;
   bool
       threshold_energy_switch;  ///< Whether to apply energy threshold filtering
   double e_threshold;           ///< Energy threshold value

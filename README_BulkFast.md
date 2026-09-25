@@ -40,6 +40,7 @@ Inside `<Hydro><MUSIC>` (alongside the existing evolution flags):
 <output_evolution_to_memory>1</output_evolution_to_memory>  <!-- required -->
 <dump_hydro_only>1</dump_hydro_only>                         <!-- skip the framework copy -->
 <skip_surface>1</skip_surface>                               <!-- skip the freeze-out surface export -->
+<freeze_out_surface>0</freeze_out_surface>                   <!-- do not build it at all (music4gpu) -->
 <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
 ```
 
@@ -47,10 +48,20 @@ Inside `<Hydro><MUSIC>` (alongside the existing evolution flags):
 building `bulk_info.data`. It requires `output_evolution_to_memory=1`.
 
 `skip_surface=1` (optional) additionally skips exporting MUSIC's freeze-out surface to
-the framework / `surface*.dat`. **MUSIC still finds the surface internally** — it is the
-hydro stop condition, so it cannot be turned off without breaking termination — this only
-drops the unused hand-off, which nothing consumes in a hydro-only dump. It is
-output-neutral (the evolution ROOT file is byte-identical with it on or off).
+the framework / `surface*.dat`. On its own it does not stop MUSIC from finding the surface,
+because MUSIC uses the surface finder to decide when to stop; it only drops the unused
+hand-off, which nothing consumes in a hydro-only dump. It is output-neutral (the evolution
+ROOT file is byte-identical with it on or off).
+
+`freeze_out_surface=0` (optional, music4gpu) removes the surface finding itself, about
+5.6 s per MUSIC run on a 0–10% Au+Au event. MUSIC then stops on the equivalent test,
+max(e) below the freeze-out energy density in the current and the previously checked step.
+That is the same stop step, and the evolution is bit-identical (measured: hydro-only 23.3 s
+→ 17.1 s per event). A surface reaching the grid edge is still detected. Set in the first
+`<Hydro><MUSIC>` block it applies to every MUSIC instance; the same tag in an instance's own
+`<Hydro><MUSIC>` block overrides it for that instance (e.g. a two-stage run whose jet leg is
+particlized later). `MpiMusic::set_freeze_out_surface()` overrides both after `Init()`. CPU
+MUSIC ignores it and always builds the surface. The main-XML default is 1.
 
 ### 2b. Add the writer — `native` mode (fastest)
 
@@ -131,7 +142,8 @@ section of `external_packages/js-contrib/contribs/PyJetscape/README.md` and
 | `x_min`,`dx` / `y_min`,`dy` / `eta_min`,`deta` | grid | MUSIC | output spatial grid |
 
 Plus, under `<Hydro><MUSIC>`: `<dump_hydro_only>1`, `<output_evolution_to_memory>1`, and
-optionally `<skip_surface>1` (skip the unused freeze-out-surface export; output-neutral).
+optionally `<skip_surface>1` (skip the unused freeze-out-surface export; output-neutral) and
+`<freeze_out_surface>0` (do not build the surface at all; music4gpu, bit-identical evolution).
 
 ---
 
