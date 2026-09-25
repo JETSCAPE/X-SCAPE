@@ -52,6 +52,9 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
                        Jetscape::real eta, const Droplet drop_i,
                        std::array<Jetscape::real, 4> &jmu) const;
 
+  bool droplet_may_contribute(const Droplet &drop_i, double tau_lo,
+                              double tau_hi) const override;
+
   double dumping(double t) const;
 
   double kernel_rho(double t, double r) const;

@@ -231,6 +231,17 @@ double CausalLiquefier::get_peta(double p0, double p3, double eta) const {
   return p3 * cosh(eta) - p0 * sinh(eta);
 }
 
+// smearing_kernel() deposits a droplet only in the step that contains
+// tau_drop + tau_delay: tau - dtau/2 <= tau_drop + tau_delay < tau + dtau/2.
+// The extra 1e-3 fm covers tau reaching get_source() as a float.
+bool CausalLiquefier::droplet_may_contribute(const Droplet &drop_i,
+                                             double tau_lo,
+                                             double tau_hi) const {
+  const double tau_deposit = drop_i.get_xmu()[0] + tau_delay;
+  const double margin = 0.5 * dtau + 1e-3;
+  return tau_deposit >= tau_lo - margin && tau_deposit <= tau_hi + margin;
+}
+
 // For debug, Change tau_delay
 void CausalLiquefier::set_t_delay(double new_tau_delay) {
   tau_delay = new_tau_delay;
