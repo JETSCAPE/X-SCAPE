@@ -22,7 +22,7 @@ folderName="music4gpu"
 # since X-SCAPE PR #144 -- and bin the strings by transverse reach; output bit-identical),
 # and StringFind4 failing loudly on a parameter file without EndOfData instead of
 # hanging (MUSIC4GPU PR #11)
-commitHash="566cea61ef6b5aa7a683fda5798af63b79f9cb06"
+commitHash="50585451acc931f8cd017bcadb9c1bafdad753d4"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
