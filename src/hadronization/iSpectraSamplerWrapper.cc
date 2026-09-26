@@ -261,6 +261,13 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   JSINFO << "iSS finished.";
 }
 
+bool iSpectraSamplerWrapper::SetNumberOfSamples(int n) {
+  if (!iSpectraSampler_ptr_ || n < 1)
+    return false;
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("number_of_repeated_sampling", n);
+  return true;
+}
+
 void iSpectraSamplerWrapper::ClearHadronList() {
   for (unsigned i = 0; i < Hadron_list_.size(); i++) {
     Hadron_list_.at(i).clear();

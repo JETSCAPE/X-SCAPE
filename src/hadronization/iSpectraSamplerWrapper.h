@@ -56,6 +56,10 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   int getSurfCellVector(bool from_evolution = false);
   void PassHadronListToJetscape();
   void PassHadronListToJetscapeSameEvent();
+
+  // number_of_repeated_sampling from the next event on (iSS's FSSW reads it per
+  // event); used to give a reused background more oversamples than a jet leg.
+  bool SetNumberOfSamples(int n) override;
 };
 
 #endif  // ISPECTRASAMPLERWRAPPER_H

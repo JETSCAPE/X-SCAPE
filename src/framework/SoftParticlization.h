@@ -139,6 +139,12 @@ class SoftParticlization : public JetScapeModuleBase {
   long GetLastRandomSeed() const { return last_random_seed_; }
 
   /**
+   * @brief Number of samples (oversamples) per event from the next event on.
+   * Returns false if this module has no such setting. iSS reads it per event.
+   */
+  virtual bool SetNumberOfSamples(int n) { return false; }
+
+  /**
    * @brief Set the GetHydroHyperSurfaceConnected flag
    *
    * @param m_GetHydroHyperSurfaceConnected Boolean flag
