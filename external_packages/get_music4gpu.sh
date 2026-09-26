@@ -19,8 +19,10 @@ folderName="music4gpu"
 # MusicWrapper calls since X-SCAPE PR #138), per-step jet droplet pruning, the
 # freeze_out_surface switch, and the GPU-path source fill speed-ups (MUSIC4GPU PR #10:
 # skip steps where no source can deposit -- HydroSourceJETSCAPE reports the jet side
-# since X-SCAPE PR #144 -- and bin the strings by transverse reach; output bit-identical)
-commitHash="ca94ed40d8ec16c423fdba8fac8ef2d69d05e49f"
+# since X-SCAPE PR #144 -- and bin the strings by transverse reach; output bit-identical),
+# and StringFind4 failing loudly on a parameter file without EndOfData instead of
+# hanging (MUSIC4GPU PR #11)
+commitHash="566cea61ef6b5aa7a683fda5798af63b79f9cb06"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
