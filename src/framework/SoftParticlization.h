@@ -47,6 +47,25 @@ class SoftParticlization : public JetScapeModuleBase {
   /// Parameters for building a surface from the stored evolution
   SurfaceFinderParams surface_params_;
 
+  /// One-shot seed override (SetNextRandomSeed) and the seed last used
+  long next_random_seed_ = 0;
+  bool has_next_random_seed_ = false;
+  long last_random_seed_ = 0;
+
+ protected:
+  /**
+   * @brief The seed for this event: the SetNextRandomSeed override if one is
+   * pending, else a draw from the module's generator. Recorded for
+   * GetLastRandomSeed().
+   */
+  long NextRandomSeed() {
+    last_random_seed_ = has_next_random_seed_
+                            ? next_random_seed_
+                            : static_cast<long>((*GetMt19937Generator())());
+    has_next_random_seed_ = false;
+    return last_random_seed_;
+  }
+
  public:
   /**
    * @brief Construct a new SoftParticlization object
@@ -102,6 +121,28 @@ class SoftParticlization : public JetScapeModuleBase {
   const SurfaceFinderParams &GetSurfaceFinderParams() const {
     return surface_params_;
   }
+
+  /**
+   * @brief Use this seed for the next event's sampling instead of drawing one
+   * from the module's generator (one-shot). This is how a stored surface is
+   * re-sampled exactly: pass the seed GetLastRandomSeed() reported in the
+   * original run.
+   */
+  void SetNextRandomSeed(long seed) {
+    next_random_seed_ = seed;
+    has_next_random_seed_ = true;
+  }
+
+  /**
+   * @brief The seed the last event's sampling used.
+   */
+  long GetLastRandomSeed() const { return last_random_seed_; }
+
+  /**
+   * @brief Number of samples (oversamples) per event from the next event on.
+   * Returns false if this module has no such setting. iSS reads it per event.
+   */
+  virtual bool SetNumberOfSamples(int n) { return false; }
 
   /**
    * @brief Set the GetHydroHyperSurfaceConnected flag

@@ -189,7 +189,8 @@ void iSpectraSamplerWrapper::CalculateTime() {
 
     statusCode_ = 1;
   }
-  long random_seed = (*GetMt19937Generator())();  // get random seed
+  // a draw from the module generator, unless SetNextRandomSeed() set one
+  long random_seed = NextRandomSeed();
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
@@ -244,7 +245,8 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   //   exit(-1);
   // }
 
-  long random_seed = (*GetMt19937Generator())();  // get random seed
+  // a draw from the module generator, unless SetNextRandomSeed() set one
+  long random_seed = NextRandomSeed();
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
@@ -257,6 +259,13 @@ void iSpectraSamplerWrapper::ExecuteTask() {
     PassHadronListToJetscape();
   }
   JSINFO << "iSS finished.";
+}
+
+bool iSpectraSamplerWrapper::SetNumberOfSamples(int n) {
+  if (!iSpectraSampler_ptr_ || n < 1)
+    return false;
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("number_of_repeated_sampling", n);
+  return true;
 }
 
 void iSpectraSamplerWrapper::ClearHadronList() {
