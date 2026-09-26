@@ -52,7 +52,36 @@ class SoftParticlization : public JetScapeModuleBase {
   bool has_next_random_seed_ = false;
   long last_random_seed_ = 0;
 
+ public:
+  /**
+   * @brief One event's hadrons as flat arrays, all samples concatenated in
+   * order: what SetCompactHadronOutput() fills instead of Hadron_list_.
+   */
+  struct HadronArrays {
+    std::vector<long long> sample_counts;  ///< hadrons per sample
+    std::vector<int> pid, pstat;
+    std::vector<float> p;     ///< (N, 4): E, px, py, pz [GeV]
+    std::vector<float> x;     ///< (N, 4): t, x, y, z [fm]
+    std::vector<float> mass;  ///< [GeV]
+
+    /// Empty the arrays and free their memory.
+    void clear() { HadronArrays().swap(*this); }
+    void swap(HadronArrays &o) {
+      sample_counts.swap(o.sample_counts);
+      pid.swap(o.pid);
+      pstat.swap(o.pstat);
+      p.swap(o.p);
+      x.swap(o.x);
+      mass.swap(o.mass);
+    }
+  };
+
  protected:
+  /// The last event's hadrons, if the module filled them in compact form
+  HadronArrays compact_hadrons_;
+  bool has_compact_hadrons_ = false;
+  bool compact_hadrons_taken_ = false;
+
   /**
    * @brief The seed for this event: the SetNextRandomSeed override if one is
    * pending, else a draw from the module's generator. Recorded for
@@ -143,6 +172,51 @@ class SoftParticlization : public JetScapeModuleBase {
    * Returns false if this module has no such setting. iSS reads it per event.
    */
   virtual bool SetNumberOfSamples(int n) { return false; }
+
+  /**
+   * @brief From the next event on, hand the hadrons over as flat arrays
+   * (GetCompactHadrons) instead of one Hadron object per hadron in
+   * Hadron_list_: ~8x less memory (44 instead of ~340 bytes per hadron), for
+   * callers that only want the numbers (PyJetscape's soft_hadrons_numpy, which
+   * takes them with TakeCompactHadrons). Hadron_list_ then stays empty, so
+   * writers and afterburners see no bulk hadrons. Returns false if this module
+   * cannot do it (it then fills Hadron_list_ as usual).
+   */
+  virtual bool SetCompactHadronOutput(bool on) { return false; }
+
+  /**
+   * @brief True if the last event's hadrons are in GetCompactHadrons() rather
+   * than in Hadron_list_.
+   */
+  bool HasCompactHadrons() const { return has_compact_hadrons_; }
+
+  /**
+   * @brief The last event's hadrons in compact form (see HasCompactHadrons);
+   * empty once TakeCompactHadrons() moved them out.
+   */
+  const HadronArrays &GetCompactHadrons() const { return compact_hadrons_; }
+
+  /**
+   * @brief Move the last event's compact hadrons into `out` without copying.
+   * Returns false if they were already taken this event.
+   */
+  bool TakeCompactHadrons(HadronArrays &out) {
+    if (compact_hadrons_taken_)
+      return false;
+    HadronArrays().swap(out);
+    out.swap(compact_hadrons_);
+    compact_hadrons_taken_ = true;
+    return true;
+  }
+
+  /**
+   * @brief Drop the compact hadrons (ClearTask does it every event).
+   */
+  void ClearCompactHadrons() {
+    compact_hadrons_.clear();
+    has_compact_hadrons_ = false;
+    compact_hadrons_taken_ = false;
+  }
 
   /**
    * @brief Set the GetHydroHyperSurfaceConnected flag

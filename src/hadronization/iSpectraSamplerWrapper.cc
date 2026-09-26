@@ -23,6 +23,9 @@
 #include <memory>
 #include <string>
 #include <fstream>
+#ifdef __GLIBC__
+#include <malloc.h>
+#endif
 
 using namespace Jetscape;
 
@@ -256,7 +259,11 @@ void iSpectraSamplerWrapper::ExecuteTask() {
       JSWARN << "Some errors happened in generating particle samples";
       exit(-1);
     }
-    PassHadronListToJetscape();
+    if (compact_output_) {
+      PassHadronArraysToJetscape();
+    } else {
+      PassHadronListToJetscape();
+    }
   }
   JSINFO << "iSS finished.";
 }
@@ -265,6 +272,11 @@ bool iSpectraSamplerWrapper::SetNumberOfSamples(int n) {
   if (!iSpectraSampler_ptr_ || n < 1)
     return false;
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("number_of_repeated_sampling", n);
+  return true;
+}
+
+bool iSpectraSamplerWrapper::SetCompactHadronOutput(bool on) {
+  compact_output_ = on;
   return true;
 }
 
@@ -279,6 +291,7 @@ void iSpectraSamplerWrapper::ClearTask() {
   VERBOSE(2) << "Finish the particle sampling";
   iSpectraSampler_ptr_->clear();
   ClearHadronList();
+  ClearCompactHadrons();
 }
 
 void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
@@ -385,6 +398,51 @@ void iSpectraSamplerWrapper::PassHadronListToJetscape() {
                  << Hadron_list_.at(iev).size() << " particles.";
     }
   }
+
+  // clear iSS memory, particles have passed to the framework
+  iSpectraSampler_ptr_->clear();
+}
+
+void iSpectraSamplerWrapper::PassHadronArraysToJetscape() {
+  // The same numbers PassHadronListToJetscape puts into Hadron objects (label
+  // 0, status 11), as flat arrays: no Hadron object per hadron.
+  ClearHadronList();
+  ClearCompactHadrons();
+  const unsigned int nev = iSpectraSampler_ptr_->get_number_of_sampled_events();
+  size_t n_total = 0;
+  for (unsigned int iev = 0; iev < nev; iev++) {
+    n_total += iSpectraSampler_ptr_->get_hadron_list_iev(iev)->size();
+  }
+  HadronArrays &a = compact_hadrons_;
+  a.sample_counts.reserve(nev);
+  a.pid.reserve(n_total);
+  a.pstat.reserve(n_total);
+  a.p.reserve(4 * n_total);
+  a.x.reserve(4 * n_total);
+  a.mass.reserve(n_total);
+  for (unsigned int iev = 0; iev < nev; iev++) {
+    std::vector<iSS_Hadron> *sample =
+        iSpectraSampler_ptr_->get_hadron_list_iev(iev);
+    a.sample_counts.push_back(static_cast<long long>(sample->size()));
+    for (const iSS_Hadron &h : *sample) {
+      a.pid.push_back(h.pid);
+      a.pstat.push_back(11);
+      a.p.insert(a.p.end(), {h.E, h.px, h.py, h.pz});
+      a.x.insert(a.x.end(), {h.t, h.x, h.y, h.z});
+      a.mass.push_back(h.mass);
+    }
+    // free each sample once copied, so iSS's copy and ours do not both peak
+    std::vector<iSS_Hadron>().swap(*sample);
+#ifdef __GLIBC__
+    // the samples live in the heap, and free() keeps their pages: hand them
+    // back to the OS as we go
+    if (iev % 64 == 63)
+      malloc_trim(0);
+#endif
+  }
+  has_compact_hadrons_ = true;
+  VERBOSE(4) << "JETSCAPE received " << nev << " samples, " << n_total
+             << " hadrons (compact).";
 
   // clear iSS memory, particles have passed to the framework
   iSpectraSampler_ptr_->clear();

@@ -67,6 +67,7 @@ void SoftParticlization::ClearTask() {
     Hadron_list_.at(i).clear();
   }
   Hadron_list_.clear();
+  ClearCompactHadrons();
 }
 
 bool SoftParticlization::check_boost_invariance() {
