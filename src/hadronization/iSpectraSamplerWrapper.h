@@ -34,6 +34,9 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   int statusCode_;
   std::unique_ptr<iSS> iSpectraSampler_ptr_;
 
+  // SetCompactHadronOutput: ExecuteTask fills compact_hadrons_, not Hadron_list_
+  bool compact_output_ = false;
+
   // Allows the registration of the module so that it is available to be used by
   // the Jetscape framework.
   static RegisterJetScapeModule<iSpectraSamplerWrapper> reg;
@@ -56,10 +59,15 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   int getSurfCellVector(bool from_evolution = false);
   void PassHadronListToJetscape();
   void PassHadronListToJetscapeSameEvent();
+  void PassHadronArraysToJetscape();
 
   // number_of_repeated_sampling from the next event on (iSS's FSSW reads it per
   // event); used to give a reused background more oversamples than a jet leg.
   bool SetNumberOfSamples(int n) override;
+
+  // flat arrays instead of Hadron objects (ExecuteTask only; the time-stepped
+  // ExecTime path keeps filling Hadron_list_)
+  bool SetCompactHadronOutput(bool on) override;
 };
 
 #endif  // ISPECTRASAMPLERWRAPPER_H
