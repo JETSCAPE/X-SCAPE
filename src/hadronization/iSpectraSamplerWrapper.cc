@@ -189,7 +189,8 @@ void iSpectraSamplerWrapper::CalculateTime() {
 
     statusCode_ = 1;
   }
-  long random_seed = (*GetMt19937Generator())();  // get random seed
+  // a draw from the module generator, unless SetNextRandomSeed() set one
+  long random_seed = NextRandomSeed();
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
@@ -244,7 +245,8 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   //   exit(-1);
   // }
 
-  long random_seed = (*GetMt19937Generator())();  // get random seed
+  // a draw from the module generator, unless SetNextRandomSeed() set one
+  long random_seed = NextRandomSeed();
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 

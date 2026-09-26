@@ -738,6 +738,8 @@
        <pythia_decays>on</pythia_decays> <!-- lets the particles given to pythia decay-->
        <tau0Max>10.0</tau0Max> <!-- only particles with tau0 < tau0Max (given in mm/c) can decay, increase to include weak decays-->
        <weak_decays>depracted</weak_decays> <!-- use the parameters pythia_decays and tau0Max, this parameter is only a dummy to make old xml files work-->
+       <!-- colorless only: 1 = reseed Pythia every event from the module's generator (the seed is recorded), so each event's hadronization can be reproduced on its own; 0 = one Pythia stream for the whole run -->
+       <reseed_per_event>0</reseed_per_event>
        <!-- You can add any number of additional lines to initialize pythia hadronization here -->
        <!-- Note that if the tag exists it cannot be empty (tinyxml produces a segfault) -->
        <LinesToRead>
