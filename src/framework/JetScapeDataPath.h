@@ -67,6 +67,23 @@ inline std::string XSCAPEDataPath(const std::string &relative_path) {
   return GetXSCAPEDataDir() + "/" + relative_path;
 }
 
+// Directory holding the LBT data tables, read by LBT and by Matter's recoil
+// (ratedata-HQ, distB.dat, distF.dat). Priority:
+//   1. xml_override, if non-empty (an explicit <LBT_table_path> element)
+//   2. LBT_TABLES_PATH environment variable
+//   3. XSCAPEDataPath("LBT-tables"), i.e. XSCAPE_DATA_DIR/LBT-tables, else
+//      ./LBT-tables
+inline std::string LBTTablesPath(const std::string &xml_override = "") {
+  if (!xml_override.empty()) {
+    return xml_override;
+  }
+  const char *env = std::getenv("LBT_TABLES_PATH");
+  if (env != nullptr && env[0] != '\0') {
+    return std::string(env);
+  }
+  return XSCAPEDataPath("LBT-tables");
+}
+
 }  // namespace Jetscape
 
 #endif  // JETSCAPEDATAPATH_H

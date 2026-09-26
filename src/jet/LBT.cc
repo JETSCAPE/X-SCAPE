@@ -98,15 +98,9 @@ void LBT::InitTask() {
   //   1. XML element {Eloss, Lbt, LBT_table_path} if set
   //   2. LBT_TABLES_PATH environment variable
   //   3. XSCAPE_DATA_DIR/LBT-tables (./LBT-tables when XSCAPE_DATA_DIR is unset)
-  lbt_table_path_ = GetXMLElementText({"Eloss", "Lbt", "LBT_table_path"}, false);
-  if (lbt_table_path_.empty()) {
-    const char *env = std::getenv("LBT_TABLES_PATH");
-    if (env != nullptr && env[0] != '\0') {
-      lbt_table_path_ = env;
-    } else {
-      lbt_table_path_ = XSCAPEDataPath("LBT-tables");
-    }
-  }
+  // (JetScapeDataPath.h: LBTTablesPath; Matter's recoil uses the same.)
+  lbt_table_path_ = LBTTablesPath(
+      GetXMLElementText({"Eloss", "Lbt", "LBT_table_path"}, false));
   JSINFO << "LBT tables path: " << lbt_table_path_;
 
   setParameter(lbt_table_path_ +
