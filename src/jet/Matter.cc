@@ -24,6 +24,7 @@
 #include <iostream>
 
 #include "FluidDynamics.h"
+#include "JetScapeDataPath.h"
 #include <GTL/dfs.h>
 
 #define MAGENTA "\033[35m"
@@ -5454,10 +5455,24 @@ void Matter::read_tables() {  // intialize various tables for LBT
   //   }
   // f1.close();
 
+  // The LBT tables, resolved like LBT's (JetScapeDataPath.h: LBTTablesPath):
+  // {Eloss, Matter, LBT_table_path}, else {Eloss, Lbt, LBT_table_path}, else
+  // LBT_TABLES_PATH, else XSCAPE_DATA_DIR/LBT-tables. They used to be opened
+  // relative to the working directory, so a run outside the build tree (e.g.
+  // examples/run_in_workdir.sh) silently left them all zero.
+  std::string xml_path =
+      GetXMLElementText({"Eloss", "Matter", "LBT_table_path"}, false);
+  if (xml_path.empty()) {
+    xml_path = GetXMLElementText({"Eloss", "Lbt", "LBT_table_path"}, false);
+  }
+  const std::string table_path = LBTTablesPath(xml_path);
+  JSINFO << "Matter recoil: LBT tables path: " << table_path;
+
   // duplicate for heavy quark
-  ifstream f11("LBT-tables/ratedata-HQ");
+  ifstream f11(table_path + "/ratedata-HQ");
   if (!f11.is_open()) {
-    cout << "Erro openning HQ data file!\n";
+    JSWARN << "Matter: cannot open " << table_path
+           << "/ratedata-HQ; heavy-quark recoil rates stay zero";
   } else {
     for (int i = 1; i <= n; i++) {
       f11 >> it >> ie;
@@ -5467,9 +5482,10 @@ void Matter::read_tables() {  // intialize various tables for LBT
   f11.close();
 
   // preparation for HQ 2->2
-  ifstream fileB("LBT-tables/distB.dat");
+  ifstream fileB(table_path + "/distB.dat");
   if (!fileB.is_open()) {
-    cout << "Erro openning data file distB.dat!" << endl;
+    JSWARN << "Matter: cannot open " << table_path
+           << "/distB.dat; heavy-quark recoil (collHQ22) will be wrong";
   } else {
     for (int i = 0; i < N_T; i++) {
       for (int j = 0; j < N_p1; j++) {
@@ -5490,9 +5506,10 @@ void Matter::read_tables() {  // intialize various tables for LBT
   }
   fileB.close();
 
-  ifstream fileF("LBT-tables/distF.dat");
+  ifstream fileF(table_path + "/distF.dat");
   if (!fileF.is_open()) {
-    cout << "Erro openning data file distF.dat!" << endl;
+    JSWARN << "Matter: cannot open " << table_path
+           << "/distF.dat; heavy-quark recoil (collHQ22) will be wrong";
   } else {
     for (int i = 0; i < N_T; i++) {
       for (int j = 0; j < N_p1; j++) {

@@ -13,7 +13,7 @@
 # Read-only assets are located via:
 #   * XSCAPE_DATA_DIR  -> mcglauber.input (resolved in MCGlauberWrapper)
 #   * HYDROPROGRAMPATH -> MUSIC EOS tables (resolved in MUSIC)
-#   * LBT_TABLES_PATH  -> LBT tables (resolved in LBT)
+#   * LBT_TABLES_PATH  -> LBT tables (resolved in LBT and in Matter's recoil)
 #   * a per-run copy of jetscape_main.xml with iSS paths rewritten absolute
 #   * symlinks for the few dirs the vendored code still reads CWD-relative
 # Writable per-run state (music_input and all simulation output) lives in the
@@ -115,7 +115,9 @@ fi
 
 # Symlink the dirs that the vendored 3dMCGlauber / trento code still reads
 # CWD-relative. These are read-only, so sharing them across runs is safe.
-for asset in tables eps09 LHAPDF_Lib nucleusConfigs data_table; do
+# LBT-tables: Matter's recoil now honours LBT_TABLES_PATH too, but binaries
+# built before that read ./LBT-tables, so the link keeps them working.
+for asset in tables eps09 LHAPDF_Lib nucleusConfigs data_table LBT-tables; do
   if [ -e "$DATA_DIR/$asset" ] && [ ! -e "$RUN_DIR/$asset" ]; then
     ln -s "$DATA_DIR/$asset" "$RUN_DIR/$asset"
   fi
