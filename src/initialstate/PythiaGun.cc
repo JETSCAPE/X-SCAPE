@@ -21,6 +21,10 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <cmath>
+#include <cstdint>
+#include <random>
+#include <stdexcept>
 #define MAGENTA "\033[35m"
 
 using namespace std;
@@ -34,22 +38,169 @@ void PythiaGun::InitTask() {
   JSDEBUG << "Initialize PythiaGun";
   VERBOSE(8);
 
+  // random seed
+  // xml limits us to unsigned int :-/ -- but so does 32 bits Mersenne Twist
+  tinyxml2::XMLElement *RandomXmlDescription = GetXMLElement({"Random"});
+  unsigned int seed = 0;
+  if (RandomXmlDescription) {
+    tinyxml2::XMLElement *xmle =
+        RandomXmlDescription->FirstChildElement("seed");
+    if (!xmle)
+      throw std::runtime_error("Cannot parse xml");
+    xmle->QueryUnsignedText(&seed);
+  } else {
+    JSWARN << "No <Random> element found in xml, seeding to 0";
+  }
+
+  ReadPtHatBins();
+  const int nBins = GetNPtHatBins();
+
+  // Window 0 keeps the seed as it is (a single window is unchanged).  The other
+  // windows need their own streams: Pythia seeds from Random:seed only, so equal
+  // seeds would repeat window 0's random numbers.  Pythia's seeds run from 1 to
+  // 900,000,000; seed 0 (Pythia: from the clock) gives the others fresh ones.
+  seedBin_.assign(nBins, seed);
+  std::random_device entropy;
+  for (int k = 1; k < nBins; ++k) {
+    if (seed == 0) {
+      seedBin_[k] = 1 + entropy() % 900000000u;
+    } else {
+      uint64_t z = (static_cast<uint64_t>(seed) << 16) + k;  // splitmix64
+      z += 0x9e3779b97f4a7c15ULL;
+      z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+      z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+      z ^= z >> 31;
+      seedBin_[k] = 1 + static_cast<unsigned int>(z % 900000000ULL);
+    }
+  }
+
+  // The extra instances copy this one's settings and particle data while they
+  // are still the defaults (nothing has been read into them yet).
+  extraPythia_.clear();
+  for (int k = 1; k < nBins; ++k)
+    extraPythia_.emplace_back(
+        std::make_unique<Pythia8::Pythia>(settings, particleData, false));
+
+  softQCDBin_.assign(nBins, false);
+  for (int k = 0; k < nBins; ++k)
+    ConfigurePythia(PythiaOf(k), k);
+
+  activeBin_ = 0;
+  pTHatMin = pTHatBins_[0].first;
+  pTHatMax = pTHatBins_[0].second;
+  softQCD = softQCDBin_[0];
+
+  std::ofstream sigma_printer;
+  sigma_printer.open(printer, std::ios::trunc);
+}
+
+//! <pTHatBins>: pairs of numbers, "min max min max ...".  Absent or empty:
+//! the one window pTHatMin .. pTHatMax.
+void PythiaGun::ReadPtHatBins() {
+  pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
+  pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
+  pTHatBins_.clear();
+
+  std::stringstream text(
+      GetXMLElementText({"Hard", "PythiaGun", "pTHatBins"}, false));
+  std::vector<double> edges;
+  std::string token;
+  while (text >> token) {
+    try {
+      size_t used = 0;
+      edges.push_back(std::stod(token, &used));
+      if (used != token.size())
+        throw std::invalid_argument(token);
+    } catch (const std::exception &) {
+      throw std::runtime_error("PythiaGun: <pTHatBins> takes numbers, got '" +
+                               token + "'");
+    }
+  }
+  if (edges.empty()) {
+    pTHatBins_.emplace_back(pTHatMin, pTHatMax);
+    return;
+  }
+  if (edges.size() % 2)
+    throw std::runtime_error("PythiaGun: <pTHatBins> needs pairs 'min max', "
+                             "got an odd number of values");
+  for (size_t j = 0; j < edges.size(); j += 2) {
+    if (!(edges[j] >= 0 && edges[j + 1] > edges[j]))
+      throw std::runtime_error(
+          "PythiaGun: every <pTHatBins> window needs 0 <= min < max");
+    // ConfigurePythia hands the edges over with one decimal, as for pTHatMin.
+    for (size_t e = j; e < j + 2; ++e)
+      if (std::fabs(edges[e] * 10 - std::round(edges[e] * 10)) > 1e-6)
+        throw std::runtime_error(
+            "PythiaGun: <pTHatBins> edges take at most one decimal (Pythia "
+            "gets them rounded to one), got " + std::to_string(edges[e]));
+    pTHatBins_.emplace_back(edges[j], edges[j + 1]);
+  }
+  const int nBins = GetNPtHatBins();
+  if (nBins == 1)
+    return;
+
+  // Settings that would apply to every window at once.
+  std::string lines =
+      GetXMLElementText({"Hard", "PythiaGun", "LinesToRead"}, false);
+  if (lines.find("PhaseSpace:pTHat") != std::string::npos)
+    throw std::runtime_error(
+        "PythiaGun: <LinesToRead> sets PhaseSpace:pTHat..., which would "
+        "override every <pTHatBins> window");
+
+  // Hydro reuse: every hydro event should get the same number of jets per
+  // window.  Event i uses window i mod K and a reuse group starts at a multiple
+  // of nReuseHydro, so that needs nReuseHydro % K == 0.
+  std::string reuse = GetXMLElementText({"setReuseHydro"}, false);
+  int nReuse = GetXMLElementInt({"nReuseHydro"}, false);
+  if (reuse.find("true") != std::string::npos && nReuse % nBins != 0)
+    throw std::runtime_error(
+        "PythiaGun: nReuseHydro = " + std::to_string(nReuse) +
+        " is not a multiple of the " + std::to_string(nBins) +
+        " <pTHatBins> windows, so the hydro events would not get the same "
+        "number of jets per window");
+
+  std::ostringstream msg;
+  for (const auto &b : pTHatBins_)
+    msg << " [" << b.first << ", " << b.second << "]";
+  JSINFO << MAGENTA << "Pythia Gun with " << nBins
+         << " pTHat windows (event i uses window i mod " << nBins
+         << "):" << msg.str();
+}
+
+Pythia8::Pythia &PythiaGun::PythiaOf(int bin) {
+  if (bin == 0)
+    return *this;
+  return *extraPythia_.at(bin - 1);
+}
+
+const Pythia8::Info &PythiaGun::InfoOf(int bin) {
+  if (bin == 0)
+    return info;
+  return extraPythia_.at(bin - 1)->info;
+}
+
+//! One window's Pythia instance: the settings of pTHatMin/pTHatMax, with that
+//! window's range and seed.  For window 0 this is the former InitTask body.
+void PythiaGun::ConfigurePythia(Pythia8::Pythia &py, int bin) {
+  const double binMin = pTHatBins_[bin].first;
+  const double binMax = pTHatBins_[bin].second;
+
   // Show initialization at INFO level
-  readString("Init:showProcesses = off");
-  readString("Init:showChangedSettings = off");
-  readString("Init:showMultipartonInteractions = off");
-  readString("Init:showChangedParticleData = off");
+  py.readString("Init:showProcesses = off");
+  py.readString("Init:showChangedSettings = off");
+  py.readString("Init:showMultipartonInteractions = off");
+  py.readString("Init:showChangedParticleData = off");
   if (JetScapeLogger::Instance()->GetInfo()) {
-    readString("Init:showProcesses = on");
-    readString("Init:showChangedSettings = on");
-    readString("Init:showMultipartonInteractions = on");
-    readString("Init:showChangedParticleData = on");
+    py.readString("Init:showProcesses = on");
+    py.readString("Init:showChangedSettings = on");
+    py.readString("Init:showMultipartonInteractions = on");
+    py.readString("Init:showChangedParticleData = on");
   }
 
   // No event record printout.
-  readString("Next:numberShowInfo = 0");
-  readString("Next:numberShowProcess = 0");
-  readString("Next:numberShowEvent = 0");
+  py.readString("Next:numberShowInfo = 0");
+  py.readString("Next:numberShowProcess = 0");
+  py.readString("Next:numberShowEvent = 0");
 
   // For parsing text
   stringstream numbf(stringstream::app | stringstream::in | stringstream::out);
@@ -63,76 +214,62 @@ void PythiaGun::InitTask() {
   // cout << s << endl;
 
   // other Pythia settings
-  readString("HadronLevel:Decay = off");
-  readString("HadronLevel:all = off");
-  readString("PartonLevel:ISR = on");
-  readString("PartonLevel:MPI = on");
-  // readString("PartonLevel:FSR = on");
-  readString("PromptPhoton:all=on");
-  readString("WeakSingleBoson:all=off");
-  readString("WeakDoubleBoson:all=off");
+  py.readString("HadronLevel:Decay = off");
+  py.readString("HadronLevel:all = off");
+  py.readString("PartonLevel:ISR = on");
+  py.readString("PartonLevel:MPI = on");
+  // py.readString("PartonLevel:FSR = on");
+  py.readString("PromptPhoton:all=on");
+  py.readString("WeakSingleBoson:all=off");
+  py.readString("WeakDoubleBoson:all=off");
 
-  pTHatMin = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMin"});
-  pTHatMax = GetXMLElementDouble({"Hard", "PythiaGun", "pTHatMax"});
-
-  if (pTHatMin < 0.01) {  // assuming low bin where softQCD should be used
+  if (binMin < 0.01) {  // assuming low bin where softQCD should be used
     // running softQCD - inelastic nondiffrative (min-bias)
-    readString("HardQCD:all = off");
-    readString("SoftQCD:nonDiffractive = on");
-    softQCD = true;
-  } else {                           // running normal hardQCD
-    readString("HardQCD:all = on");  // will repeat this line in the xml for
-                                     // demonstration
-    //  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
-    // readString("HardQCD:qqbar2ccbar = on");
+    py.readString("HardQCD:all = off");
+    py.readString("SoftQCD:nonDiffractive = on");
+    softQCDBin_[bin] = true;
+  } else {                              // running normal hardQCD
+    py.readString("HardQCD:all = on");  // will repeat this line in the xml for
+                                        // demonstration
+    //  py.readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
+    // py.readString("HardQCD:qqbar2ccbar = on");
     numbf.str("PhaseSpace:pTHatMin = ");
-    numbf << pTHatMin;
-    readString(numbf.str());
+    numbf << binMin;
+    py.readString(numbf.str());
     numbf.str("PhaseSpace:pTHatMax = ");
-    numbf << pTHatMax;
-    readString(numbf.str());
-    softQCD = false;
+    numbf << binMax;
+    py.readString(numbf.str());
+    softQCDBin_[bin] = false;
   }
 
   // SC: read flag for FSR
   FSR_on = GetXMLElementInt({"Hard", "PythiaGun", "FSR_on"});
   if (FSR_on)
-    readString("PartonLevel:FSR = on");
+    py.readString("PartonLevel:FSR = on");
   else
-    readString("PartonLevel:FSR = off");
+    py.readString("PartonLevel:FSR = off");
 
   JSINFO << MAGENTA << "Pythia Gun with FSR_on: " << FSR_on;
-  JSINFO << MAGENTA << "Pythia Gun with " << pTHatMin << " < pTHat < "
-         << pTHatMax;
+  JSINFO << MAGENTA << "Pythia Gun with " << binMin << " < pTHat < " << binMax
+         << (GetNPtHatBins() > 1 ? " (window " + std::to_string(bin) + ")"
+                                 : std::string());
 
-  // random seed
-  // xml limits us to unsigned int :-/ -- but so does 32 bits Mersenne Twist
-  tinyxml2::XMLElement *RandomXmlDescription = GetXMLElement({"Random"});
-  readString("Random:setSeed = on");
+  // random seed (read in InitTask)
+  py.readString("Random:setSeed = on");
   numbi.str("Random:seed = ");
-  unsigned int seed = 0;
-  if (RandomXmlDescription) {
-    tinyxml2::XMLElement *xmle =
-        RandomXmlDescription->FirstChildElement("seed");
-    if (!xmle)
-      throw std::runtime_error("Cannot parse xml");
-    xmle->QueryUnsignedText(&seed);
-  } else {
-    JSWARN << "No <Random> element found in xml, seeding to 0";
-  }
-  VERBOSE(7) << "Seeding pythia to " << seed;
-  numbi << seed;
-  readString(numbi.str());
+  VERBOSE(7) << "Seeding pythia to " << seedBin_[bin];
+  numbi << seedBin_[bin];
+  py.readString(numbi.str());
 
   // Species
-  readString("Beams:idA = 2212");
-  readString("Beams:idB = 2212");
+  py.readString("Beams:idA = 2212");
+  py.readString("Beams:idB = 2212");
 
   // Energy
   eCM = GetXMLElementDouble({"Hard", "PythiaGun", "eCM"});
   numbf.str("Beams:eCM = ");
   numbf << eCM;
-  readString(numbf.str());
+  py.readString(numbf.str());
 
   // Reading vir_factor from xml for MATTER
   vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
@@ -148,26 +285,33 @@ void PythiaGun::InitTask() {
 
   std::stringstream lines;
   lines << GetXMLElementText({"Hard", "PythiaGun", "LinesToRead"}, false);
-  int i = 0;
   while (std::getline(lines, s, '\n')) {
     if (s.find_first_not_of(" \t\v\f\r") == s.npos)
       continue;  // skip empty lines
     VERBOSE(7) << "Also reading in: " << s;
-    readString(s);
+    py.readString(s);
   }
 
   // And initialize
-  if (!init()) {  // Pythia>8.1
+  if (!py.init()) {  // Pythia>8.1
     throw std::runtime_error("Pythia init() failed.");
   }
-
-  std::ofstream sigma_printer;
-  sigma_printer.open(printer, std::ios::trunc);
 }
 
 void PythiaGun::ExecuteTask() {
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
+
+  // This event's pTHat window: event i uses window i mod K.
+  const int nBins = GetNPtHatBins();
+  activeBin_ = nBins > 1 ? GetCurrentEvent() % nBins : 0;
+  pTHatMin = pTHatBins_[activeBin_].first;
+  pTHatMax = pTHatBins_[activeBin_].second;
+  softQCD = softQCDBin_[activeBin_];
+  Pythia8::Pythia &py = PythiaOf(activeBin_);
+  if (nBins > 1)
+    VERBOSE(1) << "pTHat window " << activeBin_ << ": " << pTHatMin
+               << " < pTHat < " << pTHatMax;
 
   bool flag62 = false;
   vector<Pythia8::Particle> p62;
@@ -181,14 +325,17 @@ void PythiaGun::ExecuteTask() {
   };
 
   do {
-    next();
+    py.next();
     p62.clear();
     if (!printer.empty()) {
       std::ofstream sigma_printer;
       sigma_printer.open(printer, std::ios::out | std::ios::app);
 
       sigma_printer << "sigma = " << GetSigmaGen()
-                    << " Err =  " << GetSigmaErr() << endl;
+                    << " Err =  " << GetSigmaErr();
+      if (nBins > 1)
+        sigma_printer << " window " << activeBin_;
+      sigma_printer << endl;
       // sigma_printer.close();
 
       //      JSINFO << BOLDYELLOW << " sigma = " << GetSigmaGen() << " sigma
@@ -199,10 +346,10 @@ void PythiaGun::ExecuteTask() {
     // pTarr[0]=0.0; pTarr[1]=0.0;
     // pindexarr[0]=0; pindexarr[1]=0;
 
-    for (int parid = 0; parid < event.size(); parid++) {
+    for (int parid = 0; parid < py.event.size(); parid++) {
       if (parid < 3)
         continue;  // 0, 1, 2: total event and beams
-      Pythia8::Particle &particle = event[parid];
+      Pythia8::Particle &particle = py.event[parid];
 
       // replacing diquarks with antiquarks (and anti-dq's with quarks)
       // the id is set to the heaviest quark in the diquark (except down quark)
@@ -265,7 +412,7 @@ void PythiaGun::ExecuteTask() {
 
     // skipping event if softQCD is on & pThat exceeds max (where next bin is
     // HardQCD with this as pThatmin)
-    if (softQCD && (info.pTHat() >= pTHatMax)) {
+    if (softQCD && (py.info.pTHat() >= pTHatMax)) {
       continue;
     }
 
