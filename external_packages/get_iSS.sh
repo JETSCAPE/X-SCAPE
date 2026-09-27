@@ -14,12 +14,12 @@
 ##############################################################################
 
 # using a commit from the iSS repository that is compatible with the current X-SCAPE version
-# (jhputschke/iSS yield_cache: chunshen1987/iSS XSCAPE d242555 + the FSSW yield-loop
-# speed-up, until it is merged upstream)
+# (jhputschke/iSS common_seeds: chunshen1987/iSS XSCAPE d242555 + the FSSW yield-loop
+# speed-up + correlated sampling, until they are merged upstream)
 folderName="iSS"
-commitHash="01f7cf904b24cfce0da43ff1b92fbf259278c891"
+commitHash="3192982552409ca8bfcc54aa90975571e0490db8"
 
-git clone https://github.com/jhputschke/iSS -b yield_cache iSS
+git clone https://github.com/jhputschke/iSS -b common_seeds iSS
 cd $folderName
 git checkout $commitHash
 

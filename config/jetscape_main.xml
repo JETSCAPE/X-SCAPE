@@ -790,6 +790,14 @@
       <deltaf_type>20</deltaf_type>
       <number_of_repeated_sampling>1</number_of_repeated_sampling>
       <Perform_resonance_decays>0</Perform_resonance_decays>
+      <!-- 1: random numbers addressed by the cell (blocks of quantized
+           tau, x, y, eta), so two surfaces that agree in a region give the
+           same hadrons there and their difference is less noisy; 0: the
+           conventional sequence -->
+      <correlated_sampling>0</correlated_sampling>
+      <correlated_block_dtau>0.5</correlated_block_dtau>
+      <correlated_block_dx>1.0</correlated_block_dx>
+      <correlated_block_deta>0.5</correlated_block_deta>
     </iSS>
   </SoftParticlization>
 

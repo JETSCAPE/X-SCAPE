@@ -66,6 +66,14 @@ void iSpectraSamplerWrapper::InitTask() {
       (GetXMLElementInt({"SoftParticlization", "iSS", "include_deltaf_bulk"}));
   int deltaf_type =
       (GetXMLElementInt({"SoftParticlization", "iSS", "deltaf_type"}));
+  int correlated_sampling = GetXMLElementInt(
+      {"SoftParticlization", "iSS", "correlated_sampling"});
+  double correlated_block_dtau = GetXMLElementDouble(
+      {"SoftParticlization", "iSS", "correlated_block_dtau"});
+  double correlated_block_dx = GetXMLElementDouble(
+      {"SoftParticlization", "iSS", "correlated_block_dx"});
+  double correlated_block_deta = GetXMLElementDouble(
+      {"SoftParticlization", "iSS", "correlated_block_deta"});
 
   if (!boost_invariance) {
     hydro_mode = 2;
@@ -103,6 +111,14 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("include_deltaf_bulk",
                                             include_deltaf_bulk);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("bulk_deltaf_kind", deltaf_type);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("correlated_sampling",
+                                            correlated_sampling);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("correlated_block_dtau",
+                                            correlated_block_dtau);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("correlated_block_dx",
+                                            correlated_block_dx);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("correlated_block_deta",
+                                            correlated_block_deta);
 
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("restrict_deltaf", 0);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("deltaf_max_ratio", 1.0);
