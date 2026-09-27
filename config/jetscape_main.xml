@@ -239,6 +239,12 @@
       <FSR_on>0</FSR_on>
       <pTHatMin>100</pTHatMin>
       <pTHatMax>120</pTHatMax>
+      <!-- Optional: several pTHat windows in one run, "min max min max ...", e.g.
+           "20 40 50 70" (edges with at most one decimal). Each window has its own
+           Pythia (own seed and cross section); event i uses window i mod K, so with
+           setReuseHydro and nReuseHydro a multiple of K every hydro event gets
+           nReuseHydro/K jets per window. Empty: the one window pTHatMin-pTHatMax. -->
+      <pTHatBins></pTHatBins>
       <eCM>5020</eCM>
       <!-- The soft momentum cutoff in GeV removes partons from the pythia gun. The default matches the PP19 setup. -->
       <softMomentumCutoff>2.0</softMomentumCutoff>
