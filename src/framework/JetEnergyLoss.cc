@@ -23,6 +23,8 @@
 #include "JetEnergyLoss.h"
 #include "JetScapeLogger.h"
 #include "JetScapeXML.h"
+#include <cmath>
+#include <limits>
 #include <string>
 #include "tinyxml2.h"
 #include "JetScapeSignalManager.h"
@@ -338,6 +340,29 @@ void JetEnergyLoss::CalculateTime() {
   // << GetModuleCurrentTime() << " dT = " << GetModuleDeltaT(); ClockInfo();
 }
 
+void JetEnergyLoss::MarkLiquefiedEdge(node v, const Parton &p) {
+  // Normally one candidate; with extra roots (several input partons) take
+  // the one closest in energy to p.
+  shared_ptr<Parton> own;
+  double dE_min = std::numeric_limits<double>::max();
+  for (auto eIt = v.in_edges_begin(); eIt != v.in_edges_end(); ++eIt) {
+    auto edge_parton = pShower->GetParton(*eIt);
+    if (!edge_parton || edge_parton->pstat() == neg_stat)
+      continue;
+    double dE = std::abs(edge_parton->e() - p.e());
+    if (dE < dE_min) {
+      dE_min = dE;
+      own = edge_parton;
+    }
+  }
+  if (own) {
+    own->set_stat(droplet_stat);
+  } else {
+    JSWARN << "Liquefied parton without a shower edge; it stays in the "
+              "final state and its energy is counted twice.";
+  }
+}
+
 void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
   VERBOSE(3) << "Execute JLoss per time step ... Current (Module) Time = "
              << currentTime << " dT = " << deltaT;
@@ -405,6 +430,13 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
           pOutTemp[0].pstat() != miss_stat && pOutTemp[0].pstat() != neg_stat &&
           !pOutTemp[0].isPhoton(pOutTemp[0].pid())) {
         vStartVecTemp.push_back(vStart);
+      } else if (!weak_ptr_is_uninitialized(liquefier_ptr) &&
+                 pOutTemp[0].pstat() == droplet_stat) {
+        // The liquefier absorbed a free-streaming parton and deposited all
+        // of it as a droplet. No edge is written for a single outgoing
+        // parton, so mark the parton's own edge (the one ending at vStart);
+        // otherwise it stays a final-state parton and is hadronized too.
+        MarkLiquefiedEdge(vStart, pInTempModule[0]);
       }
     } else {
       for (int k = 0; k < pOutTemp.size(); k++) {
