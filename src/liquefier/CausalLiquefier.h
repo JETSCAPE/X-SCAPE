@@ -55,6 +55,14 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   bool droplet_may_contribute(const Droplet &drop_i, double tau_lo,
                               double tau_hi) const override;
 
+  // The source is (n . kernel) x p^mu, deposited in the one step containing
+  // tau_d + tau_delay: LiquefierBase can normalize it on the hydro grid.
+  bool normalizable_on_grid() const override { return true; }
+  double deposit_time(const Droplet &drop_i) const override {
+    return drop_i.get_xmu()[0] + tau_delay;
+  }
+  double deposit_half_width() const override { return 0.5 * dtau + 1e-3; }
+
   double dumping(double t) const;
 
   double kernel_rho(double t, double r) const;
