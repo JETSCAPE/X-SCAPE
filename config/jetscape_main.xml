@@ -245,6 +245,13 @@
            setReuseHydro and nReuseHydro a multiple of K every hydro event gets
            nReuseHydro/K jets per window. Empty: the one window pTHatMin-pTHatMax. -->
       <pTHatBins></pTHatBins>
+      <!-- Optional: a rapidity cut on the partons PythiaGun hands to the framework
+           (status 62 after ISR/MPI; final partons with FSR_on), on their two
+           hardest: partonYMode leading (the hardest has |y| < partonYMax), both
+           (the two hardest) or any (either). Rejected events are regenerated; the
+           cross section is sigmaGen x kept/tried per window. Empty: no cut. -->
+      <partonYMax></partonYMax>
+      <partonYMode>leading</partonYMode>
       <eCM>5020</eCM>
       <!-- The soft momentum cutoff in GeV removes partons from the pythia gun. The default matches the PP19 setup. -->
       <softMomentumCutoff>2.0</softMomentumCutoff>

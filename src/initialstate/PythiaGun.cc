@@ -53,6 +53,7 @@ void PythiaGun::InitTask() {
   }
 
   ReadPtHatBins();
+  ReadPartonYCut();
   const int nBins = GetNPtHatBins();
 
   // Window 0 keeps the seed as it is (a single window is unchanged).  The other
@@ -82,6 +83,8 @@ void PythiaGun::InitTask() {
         std::make_unique<Pythia8::Pythia>(settings, particleData, false));
 
   softQCDBin_.assign(nBins, false);
+  yTried_.assign(partonYMax_ > 0 ? nBins : 0, 0);
+  yKept_.assign(partonYMax_ > 0 ? nBins : 0, 0);
   for (int k = 0; k < nBins; ++k)
     ConfigurePythia(PythiaOf(k), k);
 
@@ -165,6 +168,62 @@ void PythiaGun::ReadPtHatBins() {
   JSINFO << MAGENTA << "Pythia Gun with " << nBins
          << " pTHat windows (event i uses window i mod " << nBins
          << "):" << msg.str();
+}
+
+//! <partonYMax> (empty: no cut) and <partonYMode> (leading | both | any).
+void PythiaGun::ReadPartonYCut() {
+  partonYMax_ = 0.;
+  std::stringstream text(
+      GetXMLElementText({"Hard", "PythiaGun", "partonYMax"}, false));
+  std::string token;
+  if (text >> token) {
+    size_t used = 0;
+    try {
+      partonYMax_ = std::stod(token, &used);
+    } catch (const std::exception &) {
+      used = 0;
+    }
+    if (used != token.size() || !(partonYMax_ > 0))
+      throw std::runtime_error(
+          "PythiaGun: <partonYMax> takes a rapidity > 0 (empty: no cut), got '" +
+          token + "'");
+  }
+  std::stringstream mode(
+      GetXMLElementText({"Hard", "PythiaGun", "partonYMode"}, false));
+  partonYMode_ = "leading";
+  mode >> partonYMode_;
+  if (partonYMode_ != "leading" && partonYMode_ != "both" &&
+      partonYMode_ != "any")
+    throw std::runtime_error(
+        "PythiaGun: <partonYMode> is leading, both or any, got '" +
+        partonYMode_ + "'");
+  if (partonYMax_ > 0)
+    JSINFO << MAGENTA << "Pythia Gun: handed-over partons, two hardest, |y| < "
+           << partonYMax_ << " (" << partonYMode_
+           << "); sigma = sigmaGen x kept/tried";
+}
+
+//! The two hardest partons to hand over (``sorted`` by pT, at least two) against
+//! |y| < partonYMax_: the hardest ("leading"), both ("both") or either ("any").
+bool PythiaGun::PassesPartonYCut(
+    const std::vector<Pythia8::Particle> &sorted) const {
+  const bool in0 = std::fabs(sorted[0].y()) < partonYMax_;
+  const bool in1 = std::fabs(sorted[1].y()) < partonYMax_;
+  if (partonYMode_ == "leading")
+    return in0;
+  if (partonYMode_ == "both")
+    return in0 && in1;
+  return in0 || in1;
+}
+
+double PythiaGun::GetSigmaErr(int bin) {
+  const double e = InfoOf(bin).sigmaErr();
+  if (!(partonYMax_ > 0))
+    return e;
+  const double s = InfoOf(bin).sigmaGen(), a = GetYAcceptance(bin);
+  const long n = GetNYTried(bin);
+  const double ea = n > 0 ? std::sqrt(a * (1. - a) / n) : 0.;
+  return std::sqrt(e * a * e * a + s * ea * s * ea);
 }
 
 Pythia8::Pythia &PythiaGun::PythiaOf(int bin) {
@@ -414,6 +473,14 @@ void PythiaGun::ExecuteTask() {
     // HardQCD with this as pThatmin)
     if (softQCD && (py.info.pTHat() >= pTHatMax)) {
       continue;
+    }
+
+    // rapidity cut on what is handed over (<partonYMax>)
+    if (partonYMax_ > 0) {
+      ++yTried_[activeBin_];
+      if (!PassesPartonYCut(p62))
+        continue;
+      ++yKept_[activeBin_];
     }
 
     flag62 = true;
