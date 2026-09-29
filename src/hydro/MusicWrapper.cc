@@ -422,6 +422,26 @@ int MpiMusic::InitializeHydroEnergyProfile() {
   // source was evaluated at ~2.6x as many steps.
   hydro_source_terms_ptr->set_hydro_dtau(music_hydro_ptr->get_hydro_dtau_grid());
 
+  // MUSIC's computational grid, as initialize_hydro_xscape() and the
+  // pre-equilibrium path set it (cell centres -size/2 + i d, size = n d; the
+  // pre-equilibrium path uses dy = dx).  The liquefier normalizes each
+  // droplet on exactly these cells.  One eta cell (boost invariant): no grid.
+  {
+    HydroGrid grid;
+    const bool pre_eq_path = !(pre_eq_ptr == nullptr ||
+                               initialProfile_ == 13 || initialProfile_ == 131);
+    grid.nx = nx;
+    grid.ny = ny;
+    grid.neta = nz;
+    grid.dx = dx;
+    grid.dy = pre_eq_path ? dx : dy;
+    grid.deta = dz;
+    grid.x_min = -0.5 * grid.nx * grid.dx;
+    grid.y_min = -0.5 * grid.ny * grid.dy;
+    grid.eta_min = -0.5 * grid.neta * grid.deta;
+    hydro_source_terms_ptr->set_hydro_grid(grid);
+  }
+
   if (pre_eq_ptr == nullptr &&
       (initialProfile_ != 13 && initialProfile_ != 131 &&
        initialProfile_ != 43)) {
@@ -558,6 +578,10 @@ void MpiMusic::EvolveHydro() {
     music_hydro_ptr->run_hydro();
     hydro_status = FINISHED;
     WarnIfGridBoundaryHit();
+    if (has_source_terms) {
+      const std::string s = hydro_source_terms_ptr->liquefier_normalization_summary();
+      if (!s.empty()) JSINFO << "Jet source: " << s;
+    }
   }
 
   if (dump_hydro_only_) {

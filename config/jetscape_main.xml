@@ -438,6 +438,13 @@
       <!--threshold_energy_switch = 1, use e_threshold; threshold_energy_switch = 0, use |e_threshold|*T-->
       <threshold_energy_switch>1</threshold_energy_switch>
       <e_threshold>2.0</e_threshold>
+      <!-- 1: scale each droplet so that its kernel, point-sampled at the hydro's
+           cell centres, sums to exactly its four-momentum (droplets whose kernel
+           misses every cell centre go whole into the nearest cell).  0: deposit
+           what the sampled kernel sums to (before 2026-09: 0 to ~6 times the
+           droplet at large |eta_s| or late tau).  Missing: 1.  Droplets at the hard
+           vertex (tau = 0) deposit in both cases (before: eta = 0/0, never). -->
+      <normalize_on_hydro_grid>1</normalize_on_hydro_grid>
 
       <!-- CausalLiquefier -->
       <CausalLiquefier>

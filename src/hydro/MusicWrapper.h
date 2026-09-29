@@ -40,6 +40,10 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   // Per-step droplet pruning, see prepare_list_for_current_tau_frame().
   double pruning_step_ = 0.1;  // [fm]; the hydro dtau once set_hydro_dtau() ran
   std::shared_ptr<LiquefierBase> liquefier_step_;  // locked once per step
+  // MUSIC's computational grid, for the liquefier to normalize each droplet
+  // on the cells MUSIC samples it at (LiquefierBase::normalize_active_droplets)
+  HydroGrid hydro_grid_;
+  double last_tau_ = -1.0;  // the previous step's tau, to notice a new dtau
 
  public:
   HydroSourceJETSCAPE() = default;
@@ -68,13 +72,40 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   //! [tau - step, tau + 2 step]; the result is unchanged, because the others
   //! add exactly zero, and queries outside the window still see every droplet.
   //! Also locks the liquefier once per step instead of once per cell.
+  //! Then normalizes the droplets that deposit within reach of this step on
+  //! MUSIC's grid (set_hydro_grid()), so that each deposits exactly its
+  //! four-momentum; the step's query times are tau and tau + dtau.
   void prepare_list_for_current_tau_frame(const double tau_local) {
     if (weak_ptr_is_uninitialized(liquefier_ptr)) return;
     liquefier_step_ = liquefier_ptr.lock();
     if (liquefier_step_) {
+      // MUSIC can change dtau during a run (beastMode 2): follow the steps
+      if (last_tau_ > 0. && tau_local > last_tau_ &&
+          std::abs((tau_local - last_tau_) - pruning_step_) > 1e-6 * pruning_step_) {
+        pruning_step_ = tau_local - last_tau_;
+      }
+      last_tau_ = tau_local;
       liquefier_step_->prepare_active_droplets(tau_local - pruning_step_,
                                                tau_local + 2. * pruning_step_);
+      if (hydro_grid_.valid()) {
+        liquefier_step_->set_hydro_grid(hydro_grid_);
+        liquefier_step_->normalize_active_droplets(tau_local, pruning_step_);
+      }
     }
+  }
+
+  //! MUSIC's computational grid (cell centres -size/2 + i d); an invalid
+  //! grid (e.g. boost-invariant, one eta cell) leaves the droplets as sampled.
+  void set_hydro_grid(const HydroGrid &grid) {
+    hydro_grid_ = grid;
+    last_tau_ = -1.0;
+  }
+
+  //! The liquefier's summary of this event's normalization ("" without one).
+  std::string liquefier_normalization_summary() const {
+    if (weak_ptr_is_uninitialized(liquefier_ptr)) return "";
+    auto lq = liquefier_ptr.lock();
+    return lq ? lq->normalization_summary() : "";
   }
 
   //! Whether this source can be non-zero at the current step's query times

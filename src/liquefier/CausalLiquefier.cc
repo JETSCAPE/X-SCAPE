@@ -86,6 +86,15 @@ void CausalLiquefier::InitializeParameters() {
   width_delta = JetScapeXML::Instance()->GetElementDouble(
       {"Liquefier", "CausalLiquefier", "width_delta"});  // in [fm]
 
+  // The kernel is point-sampled at the hydro's cell centres; unless switched
+  // off, each droplet is normalized on that grid so that it deposits exactly
+  // its four-momentum (LiquefierBase::normalize_active_droplets()).
+  const std::string norm = JetScapeXML::Instance()->GetElementText(
+      {"Liquefier", "normalize_on_hydro_grid"}, false);
+  set_normalize_on_hydro_grid(norm.find('0') == std::string::npos);
+  JSINFO << "<CausalLiquefier> normalize_on_hydro_grid = "
+         << get_normalize_on_hydro_grid();
+
   // for debug
   //    JSINFO
   //    << "<CausalLiquefier> Fluid Time Step and Cell Size: dtau="

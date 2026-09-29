@@ -17,7 +17,10 @@
 #include "CausalLiquefier.h"
 #include "LiquefierBase.h"
 #include "gtest/gtest.h"
+#include <algorithm>
+#include <cmath>
 #include <iostream>
+#include <string>
 
 using namespace Jetscape;
 
@@ -208,4 +211,174 @@ TEST(CausalLiquifierTest, TEST_GRID_TAU_ETA_CONSERVATION) {
       EXPECT_NEAR(1.0, integrated_value, 0.05);
     }
   }
+}
+
+// ── normalization on the hydro grid ─────────────────────────────────────────
+// MUSIC samples get_source() once per cell centre, at the query times tau_n and
+// tau_n + dtau of each step (Runge-Kutta, weight dtau/2 each), and adds
+// tau dtau dx dy deta J^mu per cell.  With a production grid (0.3 fm, deta 0.2)
+// the point-sampled kernel does not sum to the droplet's four-momentum (6.19x,
+// 0.98x, 0.0125x for the droplets below, taken from a 0-10% Au+Au run); after
+// LiquefierBase::normalize_active_droplets() it does.
+
+namespace {
+
+// the production liquefier: <dtau> 0.02, tau_delay 1, time_relax 0.1,
+// d_diff 0.08, width_delta 0.1
+void set_production_parameters(CausalLiquefier &lqf) {
+  lqf.tau_delay = 1.0;
+  lqf.time_relax = 0.1;
+  lqf.d_diff = 0.08;
+  lqf.width_delta = 0.1;
+  lqf.c_diff = sqrt(lqf.d_diff / lqf.time_relax);
+  lqf.gamma_relax = 0.5 / lqf.time_relax;
+}
+
+// MUSIC's grid for the IS grid grid_max_x 15, grid_step_x 0.3, grid_max_z 6,
+// grid_step_z 0.2 (cell centres -size/2 + i d)
+HydroGrid music_grid(double dx = 0.3, int nx = 100) {
+  HydroGrid g;
+  g.nx = g.ny = nx;
+  g.neta = 60;
+  g.dx = g.dy = dx;
+  g.deta = 0.2;
+  g.x_min = g.y_min = -0.5 * nx * dx;
+  g.eta_min = -6.0;
+  return g;
+}
+
+// Run the liquefier through the steps around the droplet's deposit as MUSIC
+// does, and return the lab four-momentum MUSIC receives.
+std::array<double, 4> deposited(CausalLiquefier &lqf, const Droplet &drop,
+                                const HydroGrid &g, double tau0 = 0.4) {
+  const double dt = lqf.dtau;
+  const long k_dep = std::lround((lqf.deposit_time(drop) - tau0) / dt);
+  std::array<double, 4> P = {0., 0., 0., 0.};
+  const double dV = g.dx * g.dy * g.deta;
+  for (long n = k_dep - 4; n <= k_dep + 3; n++) {
+    const double tau_n = tau0 + n * dt;
+    lqf.prepare_active_droplets(tau_n - dt, tau_n + 2. * dt);
+    lqf.set_hydro_grid(g);
+    lqf.normalize_active_droplets(tau_n, dt);
+    for (int stage = 0; stage < 2; stage++) {
+      const double tau = tau_n + stage * dt;
+      for (int ie = 0; ie < g.neta; ie++) {
+        const double eta = g.eta_min + ie * g.deta;
+        const double ch = cosh(eta), sh = sinh(eta);
+        for (int ix = 0; ix < g.nx; ix++) {
+          for (int iy = 0; iy < g.ny; iy++) {
+            std::array<Jetscape::real, 4> j = {0., 0., 0., 0.};
+            lqf.get_source(tau, g.x_min + ix * g.dx, g.y_min + iy * g.dy, eta,
+                           j);
+            const double w = 0.5 * dt * tau * dV;
+            P[0] += w * (ch * j[0] + sh * j[3]);
+            P[1] += w * j[1];
+            P[2] += w * j[2];
+            P[3] += w * (sh * j[0] + ch * j[3]);
+          }
+        }
+      }
+    }
+  }
+  return P;
+}
+
+struct Case {
+  std::array<Jetscape::real, 4> x, p;
+  double raw_flux;
+};
+
+// tau_d, x, y, eta_d and E, px, py, pz of three production droplets
+const Case kCases[] = {
+    {{1.05349f, 1.06941f, -3.74047f, -2.23919f},
+     {12.7132f, 2.63322f, -0.447677f, -12.3924f}, 6.1897},  // large |eta_s|
+    {{0.133141f, 0.0040877f, -3.68418f, -0.498067f},
+     {1.68015f, 0.582329f, -1.41034f, -0.473678f}, 0.9775},  // resolved
+    {{8.4334f, 4.29754f, 4.26602f, 0.530885f},
+     {3.41514f, 2.47391f, 1.43562f, 1.81253f}, 0.012520},  // late tau
+};
+
+}  // namespace
+
+// Without normalization MUSIC receives raw_flux x p (the bug); with it, p.
+TEST(CausalLiquifierTest, TEST_NORMALIZED_ON_HYDRO_GRID) {
+  const HydroGrid g = music_grid();
+  for (const auto &c : kCases) {
+    const Droplet drop(c.x, c.p);
+    for (bool on : {false, true}) {
+      CausalLiquefier lqf(0.02, 0.3, 0.3, 0.2);
+      set_production_parameters(lqf);
+      lqf.set_normalize_on_hydro_grid(on);
+      lqf.add_a_droplet(drop);
+      const auto P = deposited(lqf, drop, g);
+      const double f = on ? 1.0 : c.raw_flux;
+      for (int i = 0; i < 4; i++) {
+        EXPECT_NEAR(f * c.p[i], P[i], 2e-3 * std::abs(c.p[0]) * std::max(f, 1.0))
+            << "component " << i << ", normalize " << on << ", eta_d " << c.x[3];
+      }
+      if (on) {
+        EXPECT_NEAR(c.raw_flux, lqf.get_droplet_flux(0), 1e-3 * c.raw_flux);
+      }
+    }
+  }
+}
+
+// All droplets of one step together: each is normalized on its own.
+TEST(CausalLiquifierTest, TEST_NORMALIZED_SEVERAL_DROPLETS) {
+  const HydroGrid g = music_grid();
+  CausalLiquefier lqf(0.02, 0.3, 0.3, 0.2);
+  set_production_parameters(lqf);
+  // the large-|eta| droplet and a copy moved to eta 0, same deposit time
+  Case a = kCases[0], b = kCases[0];
+  b.x[3] = 0.0f;
+  lqf.add_a_droplet(Droplet(a.x, a.p));
+  lqf.add_a_droplet(Droplet(b.x, b.p));
+  const auto P = deposited(lqf, Droplet(a.x, a.p), g);
+  for (int i = 0; i < 4; i++)
+    EXPECT_NEAR(a.p[i] + b.p[i], P[i], 4e-3 * a.p[0]) << "component " << i;
+}
+
+// A kernel that misses every cell centre (3 fm cells) is deposited whole into
+// the nearest cell; one off the grid is lost and deposits nothing.
+TEST(CausalLiquifierTest, TEST_NORMALIZED_POINT_AND_LOST) {
+  const HydroGrid g = music_grid(3.0, 10);  // centres at -15 + 3 i
+  const Case c = {{1.0f, -1.5f, -1.5f, 0.0f}, {5.0f, 1.0f, -2.0f, 0.5f}, 0.};
+  {
+    CausalLiquefier lqf(0.02, 3.0, 3.0, 0.2);
+    set_production_parameters(lqf);
+    const Droplet drop(c.x, c.p);
+    lqf.add_a_droplet(drop);
+    const auto P = deposited(lqf, drop, g);
+    EXPECT_EQ(0.0, lqf.get_droplet_flux(0));
+    for (int i = 0; i < 4; i++)
+      EXPECT_NEAR(c.p[i], P[i], 1e-4 * c.p[0]) << "component " << i;
+  }
+  {
+    CausalLiquefier lqf(0.02, 0.3, 0.3, 0.2);
+    set_production_parameters(lqf);
+    Case far = c;
+    far.x[1] = 100.0f;
+    const Droplet drop(far.x, far.p);
+    lqf.add_a_droplet(drop);
+    const auto P = deposited(lqf, drop, music_grid());
+    for (int i = 0; i < 4; i++)
+      EXPECT_EQ(0.0, P[i]);
+    EXPECT_NE(std::string::npos,
+              lqf.normalization_summary().find("1 lost off the grid"));
+  }
+}
+
+// A droplet at the hard vertex (tau_d = 0; add_hydro_sources() stores eta = 0
+// there, 0/0 before) deposits normally and, normalized, exactly.
+TEST(CausalLiquifierTest, TEST_NORMALIZED_AT_THE_VERTEX) {
+  const HydroGrid g = music_grid();
+  const Case c = {{0.0f, 0.0268f, 1.2035f, 0.0f}, {3.2287f, -2.3416f, 0.4344f, 1.7589f}, 0.};
+  CausalLiquefier lqf(0.02, 0.3, 0.3, 0.2);
+  set_production_parameters(lqf);
+  const Droplet drop(c.x, c.p);
+  lqf.add_a_droplet(drop);
+  const auto P = deposited(lqf, drop, g);
+  EXPECT_GT(lqf.get_droplet_flux(0), 0.5);   // the kernel itself deposits it
+  for (int i = 0; i < 4; i++)
+    EXPECT_NEAR(c.p[i], P[i], 2e-3 * c.p[0]) << "component " << i;
 }
