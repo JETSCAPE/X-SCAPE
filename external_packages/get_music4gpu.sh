@@ -21,8 +21,11 @@ folderName="music4gpu"
 # skip steps where no source can deposit -- HydroSourceJETSCAPE reports the jet side
 # since X-SCAPE PR #144 -- and bin the strings by transverse reach; output bit-identical),
 # and StringFind4 failing loudly on a parameter file without EndOfData instead of
-# hanging (MUSIC4GPU PR #11)
-commitHash="6b238c4138f23bc584df06da7165b4950c2393eb"
+# hanging (MUSIC4GPU PR #11), the parallel, deterministic freeze-out surface search
+# (MUSIC4GPU PR #12), and the GPU fix for grids freezing in dilute regions: vacuum
+# cells at rest, a guard against non-finite W^{mu nu}/Pi with a counter and warning
+# (MUSIC_ABORT_ON_NONFINITE=1 stops instead), see VacReset_BUG.md (MUSIC4GPU PR #13)
+commitHash="15ec5e3ba87fa89749c1f06aad479add4aa0f556"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
