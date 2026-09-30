@@ -120,13 +120,13 @@ endif()
 file(GLOB readersources reader/*.cc)
 set(SOURCES ${SOURCES} ${readersources})
 
-if(USE_ROOT)
+if(USE_ROOT AND ROOT_FOUND)
     set(SOURCES ${SOURCES} root/RootBulkWriter.cc)
     set(SOURCES ${SOURCES} root/FastRootBulkWriter.cc)
 endif()
 
 if("${HEPMC_FOUND}")
-  if(USE_ROOT)
+  if(USE_ROOT AND ROOT_FOUND)
     set(SOURCES ${SOURCES} root/JetScapeWriterRootHepMC.cc)
   endif()
 endif()
@@ -158,7 +158,7 @@ target_link_libraries(
   ${Boost_LIBRARIES}
   ${GSL_LIBRARIES})
 
-if(USE_ROOT)
+if(USE_ROOT AND ROOT_FOUND)
   target_link_libraries(JetScape ${ROOT_LIBRARIES})
 endif()
 
@@ -168,7 +168,7 @@ endif()
 
 if(${HEPMC_FOUND})
   target_link_libraries(JetScape -L${HEPMC_LIB_DIR} -lHepMC3)
-  if(USE_ROOT)
+  if(USE_ROOT AND ROOT_FOUND)
     target_link_libraries(JetScape ${ROOT_LIBRARIES} -L${HEPMC_LIB_DIR}
                           -lHepMC3 -lHepMC3rootIO)
   endif()
