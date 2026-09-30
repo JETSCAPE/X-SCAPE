@@ -26,8 +26,10 @@
 #include "CausalLiquefier.h"
 #include "HadronicLiquefier.h"
 #include "HadronicEMT.h"
+#ifdef USE_ROOT
 #include "RootBulkWriter.h"
 #include "FastRootBulkWriter.h"
+#endif
 
 #include "QueryHistory.h"
 
@@ -867,6 +869,7 @@ void JetScape::DetermineTaskListFromXML() {
                   "task list.";
       }
     }
+#ifdef USE_ROOT
     else if (elementName == "RootBulkWriter") {
         auto rbwriter = JetScapeModuleFactory::createInstance("RootBulkWriter");
         auto _this = new RootBulkWriter();
@@ -883,6 +886,13 @@ void JetScape::DetermineTaskListFromXML() {
             JSINFO << " JetScape::DetermineTaskList() -- FastRootBulkWriter";
         }
     }
+#else
+    else if (elementName == "RootBulkWriter" ||
+             elementName == "FastRootBulkWriter") {
+      JSWARN << "JetScape::DetermineTaskList() -- " << elementName
+             << " requested, but X-SCAPE was built without ROOT: not added.";
+    }
+#endif
 
 
     else {
