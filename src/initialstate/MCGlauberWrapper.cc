@@ -282,7 +282,6 @@ void MCGlauberWrapper::GetTargetNucleonPositionsAtt(
     const double t, const int idx, double &x, double &y, double &z) {
     mc_gen_->get_target_nucleon_xyz_at_t(t, idx, x, y, z);
 }
-)
 
 void MCGlauberWrapper::SampleABinaryCollisionPoint(
         double &t, double &x, double &y, double &z) {
