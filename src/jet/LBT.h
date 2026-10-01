@@ -168,6 +168,12 @@ class LBT
   static double RHQ12[60][20];   // Qg->Qg
   static double qhatHQ[60][20];  // qhat of heavy quark
   double qhat_over_T3;           // qhat/T^3 for heavy quark as fnc of (T,p)
+  // Radiative qhat: 0 = LBT tables (default); 1 = EMD holographic
+  // qhat_K * Q(T) * sqrt(lambda_t) * T^3 for gluons (x C_F/C_A for light
+  // quarks), the same convention as MATTER QhatParametrizationType 8/9.
+  // Heavy quarks keep the tables; elastic scattering is unchanged.
+  int qhat_model = 0;
+  double emd_lambda_t = 1.0, emd_qhat_K = 1.0;
   double D2piT;
 
   // for heavy quark radiation table

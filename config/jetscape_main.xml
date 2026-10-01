@@ -336,6 +336,9 @@
       <hydro_Tc> 0.16 </hydro_Tc>
       <alphas> 0.2 </alphas>
       <run_alphas>1</run_alphas>   <!-- 0 for fixed alpha_s and 1 for running alpha_s -->
+      <qhat_model> 0 </qhat_model> <!-- radiative qhat: 0 = LBT tables; 1 = EMD holographic qhat_K*Q(T)*sqrt(lambda_t)*T^3 (gluon; x CF/CA for quarks) -->
+      <lambda_t> 1.0 </lambda_t>    <!-- used only if qhat_model = 1 -->
+      <qhat_K> 1.0 </qhat_K>        <!-- used only if qhat_model = 1 -->
     </Lbt>
 
     <Martini>

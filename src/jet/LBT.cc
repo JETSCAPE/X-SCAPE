@@ -15,6 +15,7 @@
  ******************************************************************************/
 
 #include "LBT.h"
+#include "EMDQhat.h"
 #include "JetScapeLogger.h"
 #include "JetScapeXML.h"
 
@@ -128,6 +129,22 @@ void LBT::InitTask() {
   tStart = GetXMLElementDouble({"Eloss", "tStart"});
   ModificationFactor = GetXMLElementDouble({"Eloss", "ModificationFactor"});
   ModificationCorr = 1.0;
+  qhat_model = GetXMLElementInt({"Eloss", "Lbt", "qhat_model"});
+  if (qhat_model == 1) {
+    emd_lambda_t = GetXMLElementDouble({"Eloss", "Lbt", "lambda_t"});
+    emd_qhat_K = GetXMLElementDouble({"Eloss", "Lbt", "qhat_K"});
+    JSINFO << MAGENTA << "LBT radiative qhat: EMD holographic, lambda_t = "
+           << emd_lambda_t << ", qhat_K = " << emd_qhat_K
+           << " (gluon qhat/T^3 at T=0.2/0.3/0.4 GeV = "
+           << emd_qhat_K * std::sqrt(emd_lambda_t) * EMDQhat::QhatOverSqrtLambdaT3(0.2)
+           << " / "
+           << emd_qhat_K * std::sqrt(emd_lambda_t) * EMDQhat::QhatOverSqrtLambdaT3(0.3)
+           << " / "
+           << emd_qhat_K * std::sqrt(emd_lambda_t) * EMDQhat::QhatOverSqrtLambdaT3(0.4)
+           << ")";
+  } else if (qhat_model != 0) {
+    throw std::runtime_error("LBT: qhat_model must be 0 (tables) or 1 (EMD)");
+  }
 
   JSINFO << MAGENTA << "LBT parameters -- in_med: " << vacORmed
          << " Q0: " << Q00 << "  only_leading: " << Kprimary
@@ -981,6 +998,15 @@ void LBT::LBT0(int &n, double &ti) {
         if (ModificationFactor > 0.0) {
           ModificationCorr = 1.0 + 1.0 / ModificationFactor / T;
           qhatTP = qhatTP / pow(ModificationCorr, 3.0);
+        }
+
+        // EMD holographic radiative qhat/T^3 instead of the tables (light
+        // quarks and gluons); replaces the K factors as well.
+        if (qhat_model == 1 && std::abs(KATTC0) != 4 && std::abs(KATTC0) != 5) {
+          qhatTP = emd_qhat_K * std::sqrt(emd_lambda_t) *
+                   EMDQhat::QhatOverSqrtLambdaT3(T);
+          if (KATTC0 != 21)
+            qhatTP *= CF / CA;
         }
 
         ////reset by hand for unit test
