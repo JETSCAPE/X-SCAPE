@@ -542,6 +542,12 @@
       <dump_hydro_only> 0 </dump_hydro_only>
       <!--skip exporting the freeze-out surface (hand-off + surface*.dat); MUSIC still finds it internally for hydro termination. Only use in hydro-only dumps.-->
       <skip_surface> 0 </skip_surface>
+      <!-- 1: hand the evolution to the framework (bulk_info, for jet energy loss)
+           as a slim copy: e, s, T, vx, vy, vz only, 24 instead of 112 bytes per
+           cell. P, pi^{mu nu}, Pi, the mu's and qgp_fraction then read as zero,
+           and a surface built from the evolution (FindSurfaceFromEvolution) is
+           refused. 0 (default): the full FluidCellInfo copy. -->
+      <slim_bulk_info> 0 </slim_bulk_info>
       <!-- 1: MUSIC builds the freeze-out surface (it also decides when the
            evolution stops). 0: no surface, stop on max(e) < e_fo instead (same
            stop step; music4gpu only), for runs that need just the evolution.

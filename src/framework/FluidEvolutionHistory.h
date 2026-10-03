@@ -177,6 +177,32 @@ class EvolutionHistory {
   /** Store the entry names of one record in the data array*/
   std::vector<std::string> data_info;
 
+  /** data_info resolved to EntryName once (SetDataInfo, FromVector), so
+   * GetFluidCell does not resolve the names on every lookup. Used only while
+   * it has as many entries as data_info; set data_info through SetDataInfo. */
+  std::vector<EntryName> data_ids;
+
+  /** Entry names of the slim copy: the fields jet energy loss (Matter, LBT)
+   * and the liquefier read. See SetDataInfo and MUSIC's <slim_bulk_info>. */
+  static const std::vector<std::string> &SlimDataInfo() {
+    static const std::vector<std::string> names = {
+        "energy_density", "entropy_density", "temperature", "vx", "vy", "vz"};
+    return names;
+  }
+
+  /**
+   * @brief Describe the records of data_vector: their entry names in order
+   * (see ResolveEntryName), resolved once for GetFluidCell. Fields not named
+   * read back as zero.
+   */
+  void SetDataInfo(const std::vector<std::string> &names);
+
+  /** True if records are the flat data_vector described by data_info. */
+  bool UsesDataVector() const { return !data_info.empty(); }
+
+  /** True if this is MUSIC's slim copy (data_info == SlimDataInfo()). */
+  bool IsSlimCopy() const { return data_info == SlimDataInfo(); }
+
   /** Default constructor. */
   EvolutionHistory() = default;
 
@@ -221,13 +247,19 @@ class EvolutionHistory {
   /**
    * @brief Clear the evolution history data.
    */
-  void clear_up_evolution_data() { data.clear(); }
+  void clear_up_evolution_data() {
+    data.clear();
+    data_vector.clear();
+  }
 
   /**
-   * @brief Get the size of the data vector.
-   * @return The size of the data vector.
+   * @brief Get the number of stored cells (records), in either layout.
+   * @return data.size(), or data_vector.size() / data_info.size().
    */
-  int get_data_size() const { return (data.size()); }
+  int get_data_size() const {
+    return UsesDataVector() ? data_vector.size() / data_info.size()
+                            : data.size();
+  }
 
   /**
    * @brief Check the boost invariance flag.

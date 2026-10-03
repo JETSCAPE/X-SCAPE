@@ -17,6 +17,8 @@
 
 #include <iostream>
 #include <array>
+#include <stdexcept>
+#include <string>
 #include "FluidDynamics.h"
 #include "LinearInterpolation.h"
 #include "JetScapeSignalManager.h"
@@ -247,6 +249,17 @@ void FluidDynamics::FindSurfaceFromEvolution(
     JSWARN << "FindSurfaceFromEvolution: no evolution stored in bulk_info, "
               "no surface built.";
     return;
+  }
+  if (bulk_info.IsSlimCopy()) {
+    // MUSIC's slim copy (<slim_bulk_info>1) keeps no P (nor pi^{mu nu}, Pi):
+    // the surface would get zeros for them and pass them to iSS silently.
+    std::string held;
+    for (const auto &name : bulk_info.data_info)
+      held += (held.empty() ? "" : ", ") + name;
+    throw std::runtime_error(
+        "FindSurfaceFromEvolution: bulk_info holds only {" + held +
+        "}, not the pressure a surface needs. Hand over the hydro's own "
+        "surface, or switch <Hydro><MUSIC><slim_bulk_info> off.");
   }
   std::unique_ptr<SurfaceFinder> surface_finder_ptr(
       new SurfaceFinder(params.T_sw, bulk_info));
