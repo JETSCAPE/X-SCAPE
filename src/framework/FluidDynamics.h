@@ -546,7 +546,7 @@ class FluidDynamics : public JetScapeModuleBase {
   virtual void GetHydroInfo(
       Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
       std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr) {
-    if (hydro_status != FINISHED || bulk_info.data.size() == 0) {
+    if (hydro_status != FINISHED || bulk_info.get_data_size() == 0) {
       throw std::runtime_error(
           "Hydro evolution is not finished "
           "or EvolutionHistory is empty");

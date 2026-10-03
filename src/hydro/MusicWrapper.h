@@ -327,6 +327,7 @@ class MpiMusic : public FluidDynamics {
   void GetHyperSurface(Jetscape::real T_cut,
                        SurfaceCellInfo *surface_list_ptr){};
   void collect_freeze_out_surface();
+  void PassSlimEvolutionHistoryToFramework(int number_of_cells);
 
   // ── Python-interop: preserve bulk_info across ClearTasks() ─────────────────
   // When set to true, Clear() skips clear_up_evolution_data() so that
@@ -347,6 +348,13 @@ class MpiMusic : public FluidDynamics {
   // the exported surface, so the hand-off is wasted work. See <skip_surface>.
   bool get_skip_surface() const { return skip_surface_; }
   void set_skip_surface(bool v) { skip_surface_ = v; }
+
+  // Hand the evolution to the framework as a slim copy: only the fields jet
+  // energy loss and the liquefier read (EvolutionHistory::SlimDataInfo(): e, s,
+  // T, vx, vy, vz; 24 instead of 112 bytes per cell). P, pi^{mu nu}, Pi, the
+  // mu's and qgp_fraction then read back as zero. See <slim_bulk_info>.
+  bool get_slim_bulk_info() const { return slim_bulk_info_; }
+  void set_slim_bulk_info(bool v) { slim_bulk_info_ = v; }
 
   // Build MUSIC's freeze-out surface (1) or not (0). Without a surface MUSIC
   // stops on the equivalent max(e) < e_fo test (same stop step; music4gpu
@@ -421,6 +429,7 @@ class MpiMusic : public FluidDynamics {
   // Skip the freeze-out surface hand-off / file collection (see
   // set_skip_surface); read from <Hydro><MUSIC><skip_surface>.
   bool skip_surface_ = false;
+  bool slim_bulk_info_ = false;
   bool hit_grid_boundary_ = false;
   int freeze_out_surface_ = 1;
   int reported_freeze_out_surface_ = -1;

@@ -129,6 +129,16 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   skip_surface_ = (bool) GetXMLElementInt(
       {"Hydro", "MUSIC", "skip_surface"}, false);
 
+  // Slim framework copy of the evolution: e, s, T, vx, vy, vz only. See
+  // <slim_bulk_info> and PassHydroEvolutionHistoryToFramework.
+  slim_bulk_info_ = (bool) GetXMLElementInt(
+      {"Hydro", "MUSIC", "slim_bulk_info"}, false);
+  if (slim_bulk_info_ && flag_preEq_output_evo_to_memory == 1) {
+    JSWARN << "MUSIC: slim_bulk_info is not supported with a pre-equilibrium "
+              "evolution in memory; handing over the full copy.";
+    slim_bulk_info_ = false;
+  }
+
   // Freeze-out surface: the first <Hydro><MUSIC> block sets it for every
   // instance, as for all MUSIC settings; the same tag inside this instance's
   // own block (matched by <name>) overrides it, e.g. no surface for a
@@ -607,12 +617,14 @@ void MpiMusic::EvolveHydro() {
       }
       PassHydroEvolutionHistoryToFramework();
       JSINFO << "Number of fluid cells received by JETSCAPE: "
-             << bulk_info.data.size();
+             << bulk_info.get_data_size()
+             << (bulk_info.UsesDataVector() ? " (slim copy)" : "");
     }
   } else if (flag_ensure_MusicWrapper_output) {
       PassHydroEvolutionHistoryToFramework();
       JSINFO << "number of fluid cells received by the JETSCAPE: "
-               << bulk_info.data.size();
+               << bulk_info.get_data_size()
+               << (bulk_info.UsesDataVector() ? " (slim copy)" : "");
   }
 
   if (flag_output_evo_to_file == 1) {
@@ -812,6 +824,15 @@ void MpiMusic::PassHydroEvolutionHistoryToFramework() {
 
   SetHydroGridInfo();
 
+  if (slim_bulk_info_) {
+    PassSlimEvolutionHistoryToFramework(number_of_cells);
+    music_hydro_ptr->clear_hydro_info_from_memory();
+    return;
+  }
+  // the FluidCellInfo layout (and no slim buffer left from set_slim_bulk_info)
+  bulk_info.SetDataInfo({});
+  std::vector<float>().swap(bulk_info.data_vector);
+
   // Size the store once and fill it in parallel, instead of one heap-allocated
   // FluidCellInfo and one push_back per cell: a 0-10% Au+Au event has ~10^8
   // cells, and the growing vector's reallocations alone took ~3 s per event.
@@ -853,6 +874,38 @@ void MpiMusic::PassHydroEvolutionHistoryToFramework() {
     }
   }
   music_hydro_ptr->clear_hydro_info_from_memory();
+}
+
+// The slim copy: per cell the floats of EvolutionHistory::SlimDataInfo(), the
+// same values the full copy's FluidCellInfo gets, so the fields jet energy loss
+// reads interpolate to the same numbers.
+void MpiMusic::PassSlimEvolutionHistoryToFramework(int number_of_cells) {
+  const auto &names = EvolutionHistory::SlimDataInfo();
+  const std::size_t width = names.size();
+  std::vector<FluidCellInfo>().swap(bulk_info.data);   // no full copy left over
+  bulk_info.SetDataInfo(names);
+  const std::size_t total = width * static_cast<std::size_t>(number_of_cells);
+  // As in the full copy: free a smaller buffer before allocating a larger one.
+  if (total > bulk_info.data_vector.capacity())
+    std::vector<float>().swap(bulk_info.data_vector);
+  bulk_info.data_vector.resize(total);
+  float *const out = bulk_info.data_vector.data();
+#pragma omp parallel
+  {
+    fluidCell cell;
+#pragma omp for schedule(static)
+    for (int i = 0; i < number_of_cells; i++) {
+      music_hydro_ptr->get_fluid_cell_with_index(i, &cell);
+      float *const rec = out + width * static_cast<std::size_t>(i);
+      // in the order of SlimDataInfo(): e, s, T, vx, vy, vz
+      rec[0] = cell.ed;
+      rec[1] = cell.sd;
+      rec[2] = cell.temperature;
+      rec[3] = cell.vx;
+      rec[4] = cell.vy;
+      rec[5] = cell.vz;
+    }
+  }
 }
 
 void MpiMusic::GetHydroInfo(
