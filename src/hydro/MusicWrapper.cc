@@ -818,7 +818,13 @@ void MpiMusic::PassHydroEvolutionHistoryToFramework() {
   // get_fluid_cell_with_index only reads MUSIC's store, so the cells are
   // independent, and each lands at the index the serial loop gave it.
   const std::size_t first = bulk_info.data.size();
-  bulk_info.data.resize(first + static_cast<std::size_t>(number_of_cells));
+  const std::size_t total = first + static_cast<std::size_t>(number_of_cells);
+  // clear_up_evolution_data() keeps the capacity, so an event larger than every
+  // earlier one would reallocate with the old buffer still resident: both at
+  // once, ~13 GB at 0-10% Au+Au.  With nothing to keep, free the old one first.
+  if (first == 0 && total > bulk_info.data.capacity())
+    std::vector<FluidCellInfo>().swap(bulk_info.data);
+  bulk_info.data.resize(total);
   FluidCellInfo *const out = bulk_info.data.data() + first;
 #pragma omp parallel
   {
