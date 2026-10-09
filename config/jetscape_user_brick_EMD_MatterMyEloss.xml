@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+
+<!-- MATTER+MyEloss in a brick with the EMD holographic qhat(T): MATTER
+     QhatParametrizationType 9 above Q0, MyEloss (BDMPS-Z radiation and
+     broadening) below. In a static brick at T = 0.2-0.3 GeV and L = 4 fm,
+     lambda_t = 9 gives the energy loss of the default MATTER+LBT setup. In
+     hydro the BDMPS-Z kernel needs a much larger normalisation (lambda_t ~ 256
+     for the ATLAS 0-10% jet R_AA at 5.02 TeV) because coherent radiation is
+     suppressed at short path length. qhat_model 1 in MyEloss switches to the
+     HTL qhat of MATTER for comparison. -->
+
+<jetscape>
+
+  <nEvents> 50 </nEvents>
+
+  <outputFilename>test_brick_EMD_MatterMyEloss</outputFilename>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+
+  <Random>
+    <seed>1</seed>
+  </Random>
+
+  <!-- Hard Process -->
+  <Hard>
+    <PythiaGun>
+      <pTHatMin>20</pTHatMin>
+      <pTHatMax>30</pTHatMax>
+      <eCM>200</eCM>
+    </PythiaGun>
+  </Hard>
+
+  <!-- Hydro  Module  -->
+  <Hydro>
+    <Brick bjorken_expansion_on="false" start_time="0.6">
+      <name>Brick</name>
+      <T>0.3</T>
+    </Brick>
+  </Hydro>
+
+  <!--Eloss Modules -->
+  <Eloss>
+    <maxT>20</maxT>
+    <Matter>
+      <Q0> 2.0 </Q0>
+      <in_vac> 0 </in_vac>
+      <vir_factor> 0.25 </vir_factor>
+      <recoil_on> 0 </recoil_on>
+      <brick_med> 1 </brick_med>
+      <brick_length> 4 </brick_length>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <alphas> 0.3 </alphas>
+      <QhatParametrizationType> 9 </QhatParametrizationType>
+      <qhat0> 2.0 </qhat0>
+      <qhatA> 10.0 </qhatA>
+      <qhatB> 100.0 </qhatB>
+      <lambda_t> 9.0 </lambda_t>
+      <qhat_K> 1.0 </qhat_K>
+    </Matter>
+
+    <MyEloss>
+      <name> MyEloss </name>
+      <Q0> 2.0 </Q0>
+      <qhat_model> 0 </qhat_model>
+      <lambda_t> 9.0 </lambda_t>
+      <qhat_K> 1.0 </qhat_K>
+      <radiation_on> 1 </radiation_on>
+      <broadening_on> 1 </broadening_on>
+      <recoil_on> 0 </recoil_on>
+    </MyEloss>
+  </Eloss>
+
+  <!-- Jet Hadronization Module -->
+  <JetHadronization>
+    <name>colorless</name>
+  </JetHadronization>
+
+</jetscape>
