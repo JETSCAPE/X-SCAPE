@@ -161,6 +161,9 @@ class Matter : public JetEnergyLossModule<
                              double sdLoc, double enerLoc, double muSquare);
   double IntegralPDF(double xB, double a, double b);
   double qhatA, qhatB, qhatC, qhatD;
+  double emd_lambda_t;  // QhatParametrizationType=8,9 (EMD holography)
+  double emd_qhat_K;    // qhat normalisation for Types 5, 8, 9 (default 1)
+  double emd_conformal_Tref;        // > 0: conformal control, Q(T) frozen
 
   // SC: for elastic scattering
   void flavor(int &CT, int &KATT0, int &KATT2, int &KATT3,

@@ -706,6 +706,15 @@ void JetScape::DetermineTaskListFromXML() {
                       "to Eloss list.";
           }
         }
+        //   - MyEloss: BDMPS-Z radiation + broadening with EMD qhat(T)
+        else if (childElementName == "MyEloss") {
+          auto myeloss = JetScapeModuleFactory::createInstance(childElementName);
+          if (myeloss) {
+            jloss->Add(myeloss);
+            JSINFO << "JetScape::DetermineTaskList() -- Eloss: Added MyEloss "
+                      "to Eloss list.";
+          }
+        }
         //   - Custom module
         else if (((int)childElementName.find("CustomModule") >= 0)) {
           auto customModule =

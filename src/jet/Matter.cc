@@ -15,6 +15,7 @@
  ******************************************************************************/
 
 #include "Matter.h"
+#include "EMDQhat.h"
 #include "JetScapeLogger.h"
 #include "JetScapeParticles.h"
 #include "Pythia8/Pythia.h"
@@ -143,6 +144,23 @@ void Matter::InitTask() {
   // run_alphas = GetXMLElementInt({"Eloss", "Matter", "run_alphas"});
   QhatParametrizationType =
       GetXMLElementInt({"Eloss", "Matter", "QhatParametrizationType"});
+  emd_lambda_t = 0.;
+  emd_qhat_K = 1.;
+  emd_conformal_Tref = 0.;
+  if (QhatParametrizationType == 8 || QhatParametrizationType == 9) {
+    emd_lambda_t = GetXMLElementDouble({"Eloss", "Matter", "lambda_t"});
+    emd_qhat_K = GetXMLElementDouble({"Eloss", "Matter", "qhat_K"});
+    emd_conformal_Tref =
+        GetXMLElementDouble({"Eloss", "Matter", "conformal_Tref"});
+    JSINFO << "MATTER uses EMD holographic qhat with lambda_t = "
+           << emd_lambda_t << ", qhat_K = " << emd_qhat_K
+           << ", conformal_Tref = " << emd_conformal_Tref;
+  } else if (QhatParametrizationType == 5) {
+    // Overall normalisation of the HTL qhat (1 = JETSCAPE tune).
+    emd_qhat_K = GetXMLElementDouble({"Eloss", "Matter", "qhat_K"});
+    if (emd_qhat_K != 1.)
+      JSINFO << "MATTER Type 5 qhat scaled by qhat_K = " << emd_qhat_K;
+  }
   hydro_Tc = GetXMLElementDouble({"Eloss", "Matter", "hydro_Tc"});
   brick_length = GetXMLElementDouble({"Eloss", "Matter", "brick_length"});
   vir_factor = GetXMLElementDouble({"Eloss", "Matter", "vir_factor"});
@@ -4033,7 +4051,7 @@ double Matter::GeneralQhatFunction(int QhatParametrization, double Temperature,
     case 5:
       qhat = (Ca * 50.4864 / pi) * RunningAlphaS(ScaleNet) * FixAlphas *
              pow(Temperature, 3) * log(ScaleNet / DebyeMassSquare);
-      qhat = qhat * VirtualityQhatFunction(5, E, muSquare);
+      qhat = emd_qhat_K * qhat * VirtualityQhatFunction(5, E, muSquare);
       break;
 
     // HTL q-hat multiplied by Virtuality dependent function to mimic PDF-Scale
@@ -4052,6 +4070,17 @@ double Matter::GeneralQhatFunction(int QhatParametrization, double Temperature,
       qhat = (Ca * 50.4864 / pi) * RunningAlphaS(ScaleNet) * FixAlphas *
              pow(Temperature, 3) * log(ScaleNet / DebyeMassSquare);
       qhat = qhat * VirtualityQhatFunction(7, E, muSquare);
+      break;
+
+    // EMD holographic qhat: Q(T) sqrt(lambda_t) T^3 (gluon)
+    case 8:
+      qhat = emd_qhat_K * EMDQhat::GluonQhat(Temperature, emd_lambda_t, emd_conformal_Tref);
+      break;
+
+    // EMD holographic qhat with the virtuality dependence of Type=5
+    case 9:
+      qhat = emd_qhat_K * EMDQhat::GluonQhat(Temperature, emd_lambda_t, emd_conformal_Tref);
+      qhat = qhat * VirtualityQhatFunction(9, E, muSquare);
       break;
 
     default:
@@ -4115,7 +4144,12 @@ double Matter::VirtualityQhatFunction(int QhatParametrization, double enerLoc,
         ans = 1.0;
         break;
 
+      case 8:
+        ans = 1.0;
+        break;
+
       case 5:
+      case 9:
         ans = 1.0 + qhatA * log(Q00 * Q00) * log(Q00 * Q00) +
               qhatB * pow(log(Q00 * Q00), 4);
         ans = ans / (1.0 + qhatA * log(muSquare) * log(muSquare) +
@@ -4234,6 +4268,19 @@ double Matter::ModifiedProbability(int QhatParametrization, double tempLoc,
     case 4:
       qhatLoc = qhat0 * (sdLoc / 96.0) * 0.1973;  // w.r.t S0=96 fm^-3
       ModifiedAlphas = solve_alphas(qhatLoc, enerLoc, tempLoc);
+      break;
+
+      // EMD holographic qhat, alphas is computed using HTL formula with all
+      // alpha_s fixed
+    case 8:
+      qhatLoc = emd_qhat_K * EMDQhat::GluonQhat(tempLoc, emd_lambda_t, emd_conformal_Tref);
+      ModifiedAlphas = solve_alphas(qhatLoc, enerLoc, tempLoc);
+      break;
+
+    case 9:
+      qhatLoc = emd_qhat_K * EMDQhat::GluonQhat(tempLoc, emd_lambda_t, emd_conformal_Tref);
+      ModifiedAlphas = solve_alphas(qhatLoc, enerLoc, tempLoc) *
+                       VirtualityQhatFunction(9, enerLoc, muSquare);
       break;
 
       // HTL q-hat multiplied by Virtuality dependent function to mimic
