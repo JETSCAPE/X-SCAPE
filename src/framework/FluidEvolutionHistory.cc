@@ -357,7 +357,8 @@ FluidCellInfo EvolutionHistory::GetAtTimeStep(int id_tau, Jetscape::real x,
  * This function performs interpolation to retrieve the FluidCellInfo at a
  * specified space-time point. It interpolates along the time direction (tau)
  * between the two closest time steps. If the requested point is outside the
- * valid range, a default "zero" fluid cell is returned.
+ * valid range, or the history holds no cells (an event without a medium, e.g.
+ * no string from 3dMCGlauber), a default "zero" fluid cell is returned.
  *
  * @param tau The light-cone time coordinate to retrieve the fluid information
  * at.
@@ -370,6 +371,13 @@ FluidCellInfo EvolutionHistory::GetAtTimeStep(int id_tau, Jetscape::real x,
 FluidCellInfo EvolutionHistory::get(Jetscape::real tau, Jetscape::real x,
                                     Jetscape::real y,
                                     Jetscape::real eta) const {
+  // An empty history keeps the grid of the last event that had one (only the
+  // cells are cleared), so the range check alone would let the lookup run
+  // into the empty storage.
+  if (get_data_size() == 0) {
+    FluidCellInfo zero_cell;
+    return (zero_cell);
+  }
   int status = CheckInRange(tau, x, y, eta);
   if (status == 0) {
     FluidCellInfo zero_cell;
