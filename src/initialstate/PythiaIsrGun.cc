@@ -43,7 +43,10 @@ void PythiaIsrGun::InitTask() {
   FSR_on = GetXMLElementInt({"Hard", "PythiaGun", "FSR_on"});
   eCM = GetXMLElementDouble({"Hard", "PythiaGun", "eCM"});
   ReadPtHatBins();
+  ReadPartonYCut();
   const int nBins = GetNPtHatBins();
+  yTried_.assign(partonYMax_ > 0 ? nBins : 0, 0);
+  yKept_.assign(partonYMax_ > 0 ? nBins : 0, 0);
 
   // random seed
   // xml limits us to unsigned int :-/ -- but so does 32 bits Mersenne Twist
@@ -154,6 +157,69 @@ void PythiaIsrGun::ReadPtHatBins() {
   JSINFO << MAGENTA << "Pythia ISR Gun with " << nBins
          << " pTHat windows (event i uses window i mod " << nBins
          << ", every event complete, no hydro reuse):" << msg.str();
+}
+
+//! <partonYMax> (empty: no cut) and <partonYMode> (both | any; PythiaGun's
+//! "leading" is refused: the two outgoing hard partons have equal pT here).
+void PythiaIsrGun::ReadPartonYCut() {
+  partonYMax_ = 0.;
+  std::stringstream text(
+      GetXMLElementText({"Hard", "PythiaGun", "partonYMax"}, false));
+  std::string token;
+  if (text >> token) {
+    size_t used = 0;
+    try {
+      partonYMax_ = std::stod(token, &used);
+    } catch (const std::exception &) {
+      used = 0;
+    }
+    if (used != token.size() || !(partonYMax_ > 0))
+      throw std::runtime_error(
+          "PythiaIsrGun: <partonYMax> takes a rapidity > 0 (empty: no cut), "
+          "got '" +
+          token + "'");
+  }
+  if (!(partonYMax_ > 0))
+    return;
+  std::stringstream mode(
+      GetXMLElementText({"Hard", "PythiaGun", "partonYMode"}, false));
+  partonYMode_ = "both";
+  mode >> partonYMode_;
+  if (partonYMode_ != "both" && partonYMode_ != "any")
+    throw std::runtime_error(
+        "PythiaIsrGun: <partonYMode> is both or any, got '" + partonYMode_ +
+        "' (the two outgoing hard partons have equal pT before the ISR, so "
+        "'leading' is not defined)");
+  JSINFO << MAGENTA << "Pythia ISR Gun: outgoing hard partons, |y| < "
+         << partonYMax_ << " (" << partonYMode_
+         << "); sigma = sigmaGen x kept/tried";
+}
+
+bool PythiaIsrGun::PassesPartonYCut(
+    const std::vector<Pythia8::Particle> &partons) const {
+  int n = 0, in = 0;
+  for (const auto &p : partons) {
+    if (p.status() != -23)
+      continue;
+    ++n;
+    in += std::fabs(p.y()) < partonYMax_;
+  }
+  if (n != 2)
+    throw std::runtime_error(
+        "PythiaIsrGun: expected two outgoing hard "
+        "partons (status -23), got " +
+        std::to_string(n));
+  return partonYMode_ == "both" ? in == 2 : in > 0;
+}
+
+double PythiaIsrGun::GetSigmaErr(int bin) {
+  const double e = InfoOf(bin).sigmaErr();
+  if (!(partonYMax_ > 0))
+    return e;
+  const double s = InfoOf(bin).sigmaGen(), a = GetYAcceptance(bin);
+  const long n = GetNYTried(bin);
+  const double ea = n > 0 ? std::sqrt(a * (1. - a) / n) : 0.;
+  return std::sqrt(e * a * e * a + s * ea * s * ea);
 }
 
 Pythia8::Pythia &PythiaIsrGun::PythiaOf(int bin) {
@@ -411,6 +477,14 @@ ReDoSampling:
     // std::sort(p62.begin(), p62.end(), greater_than_pt());
     // // check...
     // for (auto& p : p62 ) cout << p.pT() << endl;
+
+    // rapidity cut on the outgoing hard partons (<partonYMax>)
+    if (partonYMax_ > 0) {
+      ++yTried_[activeBin_];
+      if (!PassesPartonYCut(p62))
+        continue;
+      ++yKept_[activeBin_];
+    }
 
     flag62 = true;
 
