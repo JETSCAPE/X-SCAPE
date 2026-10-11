@@ -249,7 +249,10 @@
            (status 62 after ISR/MPI; final partons with FSR_on), on their two
            hardest: partonYMode leading (the hardest has |y| < partonYMax), both
            (the two hardest) or any (either). Rejected events are regenerated; the
-           cross section is sigmaGen x kept/tried per window. Empty: no cut. -->
+           cross section is sigmaGen x kept/tried per window. Empty: no cut.
+           PythiaIsrGun (<Hard><ISR>) cuts the two outgoing partons of the hard
+           scattering, before the ISR: mode both or any (leading is refused, their
+           pT is equal there). -->
       <partonYMax></partonYMax>
       <partonYMode>leading</partonYMode>
       <eCM>5020</eCM>
