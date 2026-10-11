@@ -293,6 +293,22 @@
       <photoproduction>0</photoproduction>
       <breit_vir>1</breit_vir>
     </EPGun>
+
+    <!-- Initial-state radiation (automatic task list only).  An <ISR> block in the USER
+         XML, next to <PythiaGun>, runs the hard process as PythiaIsrGun (it reads the
+         PythiaGun settings) with iMATTER showering the initial-state partons backward
+         from 0 to -maxT, then 3dMCGlauber's strings from what the hard scattering left
+         (MCGlauberGenString), and starts the <Eloss> shower at -maxT.  Needs
+         <IS><MCGlauber><generateOnlyPositions>1; <JetHadronization><name>iColored
+         hadronizes with the beam remnants.  <PythiaGun><pTHatBins> works as for PythiaGun
+         (event i in window i mod K), but the hydro is never reused: the medium is made
+         from what each hard event left, and <setReuseHydro> true is refused with ISR.
+         This entry here switches nothing on.
+         maxT, deltaT [fm/c]: 0 = the <Eloss> maxT and deltaT. -->
+    <ISR>
+      <maxT>0</maxT>
+      <deltaT>0</deltaT>
+    </ISR>
   </Hard>
 
   <!--Eloss Modules -->

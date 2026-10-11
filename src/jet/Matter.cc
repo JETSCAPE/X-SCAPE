@@ -3880,6 +3880,14 @@ double Matter::fillQhatTab(double y) {
     //            tempLoc = T;
     //        }
 
+    // Outside the forward light cone there is no medium: the hydro returns a
+    // zero cell there (EvolutionHistory::get_tz), so qhat = 0 below anyway.
+    // Partons made at negative times (initial-state radiation) start out there.
+    if (std::isfinite(tLoc) && std::isfinite(zLoc) && std::abs(zLoc) > tLoc) {
+      qhatTab1D[i] = 0.0;
+      continue;
+    }
+
     if (std::isinf(tLoc) || std::isnan(tLoc) || std::isinf(zLoc) ||
         std::isnan(zLoc) || std::abs(zLoc) > tLoc) {
       JSWARN << "Third instance";

@@ -249,7 +249,13 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   inputfile.close();
 
   int nCells = getSurfCellVector(true);
-  if (nCells == 0) {
+  if (nCells == 0 && GetGetHydroHyperSurfaceConnected()) {
+    // The hydro ran and has no freeze-out surface: an event without a medium
+    // (e.g. 3dMCGlauber made no string). No hadrons, instead of iSS's file
+    // fallback, which stops the run when there is no surface file.
+    JSWARN << "iSS: the hydro handed over no freeze-out surface; no hadrons "
+              "this event";
+  } else if (nCells == 0) {
     int status = iSpectraSampler_ptr_->read_in_FO_surface();
     if (status != 0) {
       JSWARN << "hyper-surface not read in";
