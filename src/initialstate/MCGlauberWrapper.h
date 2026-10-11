@@ -88,6 +88,18 @@ class MCGlauberWrapper : public Jetscape::InitialState {
 
   std::shared_ptr<InitialState> ini;
 
+  //! ISR: this event's hard-parton momentum handed over for subtraction
+  //! (OutputHardPartonMomentum), projectile / target side: E, px, py, pz
+  std::vector<double> GetHardPartonMomentumProj() override {
+    return {proj_parton_e_, proj_parton_px_, proj_parton_py_, proj_parton_pz_};
+  }
+  std::vector<double> GetHardPartonMomentumTarg() override {
+    return {targ_parton_e_, targ_parton_px_, targ_parton_py_, targ_parton_pz_};
+  }
+  //! <Subtract_hard_momentum>: 0 = 3dMCGlauber zeroes the momentum above
+  //! before subtracting, so nothing is subtracted
+  int GetSubtractHardMomentum() const override { return subtract_hard_momentum_; }
+
  private:
   std::shared_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
@@ -104,6 +116,7 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   std::shared_ptr<std::uniform_int_distribution<int>> rand_int_ptr_;
   int ncoll_ = -1;
   bool generateOnlyPositions_ = false;
+  int subtract_hard_momentum_ = -1;
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberWrapper> reg;

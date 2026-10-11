@@ -122,6 +122,7 @@ void MCGlauberWrapper::InitTask() {
   para_temp_int =
       (GetXMLElementInt({"IS", "MCGlauber", "Subtract_hard_momentum"}));
   mc_gen_->set_parameter("Subtract_hard_momentum", para_temp_int);
+  subtract_hard_momentum_ = para_temp_int;
 
   para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", "lambdaBs"}));
   mc_gen_->set_parameter("lambdaBs", para_temp_double);

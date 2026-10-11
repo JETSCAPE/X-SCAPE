@@ -18,9 +18,10 @@
 
   The 3dMCGlauber and MUSIC settings are the tuned O+O set of
   config/BulkFastTest/OO_one_event.xml (tuned at 200 GeV; tau_form_mean 0.5), except EOS 9
-  (as the Au+Au production: iSS decays the resonances itself), generateOnlyPositions 1 for
-  the ISR and b <= 3 fm.  PythiaIsrMUSIC builds
-  its task list in C++, so enableAutomaticTaskListDetermination must stay false here.  The same chain from
+  (as the Au+Au production: iSS decays the resonances itself), Subtract_hard_momentum 1
+  (ISR: the hard partons' momentum is taken from the colliding nucleons),
+  generateOnlyPositions 1 for the ISR and b <= 3 fm.  PythiaIsrMUSIC builds its task list
+  in C++, so enableAutomaticTaskListDetermination must stay false here.  The same chain from
   the XML alone: <Hard><ISR/> (see JetScape::DetermineTaskListFromXML).
 
   iMATTER reads Pythia's PDF tables from $PYTHIA8DIR/share/Pythia8/pdfdata, or next to
@@ -74,7 +75,10 @@
       <d_min>0.9</d_min> <!--Minimum distance between two nucleons in fm-->
       <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
       <BG>3.960</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
-      <Subtract_hard_momentum>0</Subtract_hard_momentum>
+      <!--1 with ISR: the hard partons' momentum is taken from the colliding nucleons
+          (valence quark; their remnants go to the jet hadronization, not to strings).
+          0 (config/BulkFastTest, no ISR) would count that energy twice.-->
+      <Subtract_hard_momentum>1</Subtract_hard_momentum>
       <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
       <baryonInStringProb>0.0</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
       <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> <!--Fluctuate number of strings produced per NN collision-->

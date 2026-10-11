@@ -346,6 +346,16 @@ void JetScape::DetermineTaskListFromXML() {
                   "(the strings are made after the ISR, by MCGlauberGenString)";
         exit(-1);
       }
+      // Without the subtraction 3dMCGlauber zeroes the hard momentum: the
+      // hard partons' valence quark keeps it in the strings, and the hard
+      // pair's remnants make strings although iColoredHadronization also
+      // hadronizes them -- the energy is counted twice.
+      if (GetXMLElementInt({"IS", "MCGlauber", "Subtract_hard_momentum"}) !=
+          1) {
+        JSWARN << "<Hard><ISR> with <IS><MCGlauber><Subtract_hard_momentum> "
+                  "!= 1: the hard partons' momentum is not subtracted from "
+                  "the strings, so energy is counted twice";
+      }
       JSINFO << "JetScape::DetermineTaskList() -- ISR on: iMATTER from 0 to "
              << -isr_max_t << " fm/c in steps of " << -isr_delta_t
              << ", final-state shower from " << -isr_max_t << " fm/c";
