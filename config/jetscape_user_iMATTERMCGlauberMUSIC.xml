@@ -1,5 +1,14 @@
 <?xml version="1.0"?>
 
+<!--
+  p+p with ISR and MUSIC rarely has a medium: the only collision is the hard one, and
+  3dMCGlauber makes strings from that nucleon pair only if it is not connected yet
+  (Glauber::decide_produce_string_num); in a 12-event test 9 had no string at all.  MUSIC
+  then has no source, and iSS stops the run ("No freeze-out fluid cell").  Use
+  jetscape_user_iMATTERMCGlauberMUSIC_OO.xml (O+O), the default of PythiaIsrMUSIC, or
+  PythiaIsrTest (no hydro) for p+p.
+-->
+
 <jetscape>
 
   <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
