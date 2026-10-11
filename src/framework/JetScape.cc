@@ -32,6 +32,10 @@
 #endif
 
 #include "QueryHistory.h"
+#include "IsrManager.h"
+#include "IsrJet.h"
+#include "IsrShowerPSG.h"
+#include "iMATTER.h"
 
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
@@ -103,6 +107,25 @@ void JetScape::Init() {
   }
 
   QueryHistory::Instance()->AddMainTask(shared_from_this());
+
+  // With ISR the hard process shapes the medium: the strings are made from
+  // what the hard scattering left (MCGlauberGenString subtracts its partons'
+  // momentum), so a hydro event belongs to one hard event and is never reused.
+  if (reuse_hydro_) {
+    for (auto it : GetTaskList()) {
+      if (!dynamic_pointer_cast<HardProcess>(it))
+        continue;
+      for (auto itt : it->GetTaskList()) {
+        if (dynamic_pointer_cast<IsrManager>(itt)) {
+          JSWARN << "setReuseHydro is not allowed with initial-state radiation "
+                    "(an IsrManager under the hard process): the medium "
+                    "depends on each hard event; set <setReuseHydro> false";
+          throw std::runtime_error(
+              "Hydro reuse is not allowed with initial-state radiation.");
+        }
+      }
+    }
+  }
 
   // Has to be called explicitly since not really fully recursively (if ever
   // needed) So --> JetScape is "Task Manager" of all modules ...
@@ -273,6 +296,62 @@ void JetScape::DetermineTaskListFromXML() {
     elementXML2 = elementXML2->NextSiblingElement();
   }
 
+  // Initial-state radiation: a <Hard><ISR> block switches the hard process to
+  // the ISR chain of examples/custom_examples/PythiaIsrMUSIC.cc, built here
+  // from the XML: PythiaIsrGun (settings from <Hard><PythiaGun>) with
+  //   IsrManager -> IsrJet (IsrShowerPSG) -> iMATTER   backward, 0 -> -maxT
+  //   MCGlauberGenString                                3dMCGlauber strings
+  //                                                     after the hard momentum
+  //                                                     is subtracted
+  // and the final-state shower (<Eloss>) starting at -maxT instead of 0.  It
+  // needs <IS><MCGlauber> with <generateOnlyPositions>1 and a
+  // <Preequilibrium> module for MUSIC's string initial condition.
+  bool isr = false;
+  double isr_max_t = 0.0, isr_delta_t = 0.0;
+  {
+    auto *hardXML =
+        JetScapeXML::Instance()->GetXMLRootUser()->FirstChildElement("Hard");
+    if (hardXML && hardXML->FirstChildElement("ISR")) {
+      isr = true;
+      isr_max_t = GetXMLElementDouble({"Eloss", "maxT"});
+      isr_delta_t = GetXMLElementDouble({"Eloss", "deltaT"});
+      // <ISR><maxT>/<deltaT> > 0 override the <Eloss> values
+      double v = GetXMLElementDouble({"Hard", "ISR", "maxT"});
+      if (v > 0.0)
+        isr_max_t = v;
+      v = GetXMLElementDouble({"Hard", "ISR", "deltaT"});
+      if (v > 0.0)
+        isr_delta_t = v;
+      if (!(isr_max_t > 0.0) || !(isr_delta_t > 0.0)) {
+        JSWARN << "<Hard><ISR>: maxT = " << isr_max_t
+               << " and deltaT = " << isr_delta_t << " must be positive";
+        exit(-1);
+      }
+      // The task list follows the XML order, and PythiaIsrGun samples its
+      // vertex from 3dMCGlauber's collisions of this event.
+      bool is_seen = false;
+      for (auto *e = JetScapeXML::Instance()->GetXMLRootUser()
+                         ->FirstChildElement();
+           e && e != hardXML; e = e->NextSiblingElement())
+        if (std::string(e->Name()) == "IS")
+          is_seen = true;
+      if (!is_seen) {
+        JSWARN << "<Hard><ISR> needs <IS> before <Hard> in the user XML (the "
+                  "task list follows the XML order)";
+        exit(-1);
+      }
+      if (GetXMLElementInt({"IS", "MCGlauber", "generateOnlyPositions"}) !=
+          1) {
+        JSWARN << "<Hard><ISR> needs <IS><MCGlauber><generateOnlyPositions>1 "
+                  "(the strings are made after the ISR, by MCGlauberGenString)";
+        exit(-1);
+      }
+      JSINFO << "JetScape::DetermineTaskList() -- ISR on: iMATTER from 0 to "
+             << -isr_max_t << " fm/c in steps of " << -isr_delta_t
+             << ", final-state shower from " << -isr_max_t << " fm/c";
+    }
+  }
+
   // Loop through and create all modules
   tinyxml2::XMLElement *element =
       (tinyxml2::XMLElement *)JetScapeXML::Instance()
@@ -368,8 +447,37 @@ void JetScape::DetermineTaskListFromXML() {
                       "PGun to task list.";
           }
         }
-        //   - PythiaGun
-        else if (childElementName == "PythiaGun") {
+        //   - PythiaGun, or with <ISR> PythiaIsrGun + the ISR chain
+        else if (childElementName == "PythiaGun" && isr) {
+          auto pythiaIsrGun =
+              JetScapeModuleFactory::createInstance("PythiaIsrGun");
+          auto genStrings =
+              JetScapeModuleFactory::createInstance("MCGlauberGenString");
+          if (!pythiaIsrGun || !genStrings) {
+            JSWARN << "<Hard><ISR> needs PythiaIsrGun and MCGlauberGenString "
+                      "(X-SCAPE built with -DUSE_3DGlauber=ON)";
+            exit(-1);
+          }
+          auto isrManager = make_shared<IsrManager>();
+          auto isrJloss = make_shared<IsrJet>();
+          auto isrPSG = make_shared<IsrShowerPSG>();
+          auto imatter = make_shared<iMATTER>();
+          // iMATTER showers the initial-state partons backward in time
+          isrJloss->SetDeltaT(-isr_delta_t);
+          isrJloss->SetStartT(0);
+          isrJloss->SetMaxT(-isr_max_t);
+          imatter->SetMaxT(-isr_max_t);
+          isrJloss->AddPartonShowerGenerator(isrPSG);
+          isrJloss->Add(imatter);
+          isrManager->Add(isrJloss);
+          // order matters: the ISR first, then the strings from what is left
+          pythiaIsrGun->Add(isrManager);
+          pythiaIsrGun->Add(genStrings);
+          Add(pythiaIsrGun);
+          JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
+                    "PythiaIsrGun (ISR: IsrManager/iMATTER, "
+                    "MCGlauberGenString) to task list.";
+        } else if (childElementName == "PythiaGun") {
           auto pythiaGun =
               JetScapeModuleFactory::createInstance(childElementName);
           if (pythiaGun) {
@@ -377,6 +485,12 @@ void JetScape::DetermineTaskListFromXML() {
             JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
                       "PythiaGun to task list.";
           }
+        } else if (childElementName == "ISR") {
+          // handled with <PythiaGun> above
+        } else if (isr) {
+          JSWARN << "<Hard><ISR> works with <PythiaGun> only, not <"
+                 << childElementName << ">";
+          exit(-1);
         }
         //   - epemGun
         else if (childElementName == "epemGun") {
@@ -653,6 +767,11 @@ void JetScape::DetermineTaskListFromXML() {
     else if (elementName == "Eloss") {
       auto jlossmanager = make_shared<JetEnergyLossManager>();
       auto jloss = make_shared<JetEnergyLoss>();
+      // With ISR the final-state shower starts where iMATTER ended: the
+      // timelike partons it emitted were made at negative times.
+      if (isr) {
+        jloss->SetStartT(-isr_max_t);
+      }
 
       // Check if liquefier should be added, and add it if so
       std::string strAddLiquefier =
@@ -752,6 +871,20 @@ void JetScape::DetermineTaskListFromXML() {
           hadro->Add(hadroModule);
           JSINFO << "JetScape::DetermineTaskList() -- JetHadronization: Added "
                     "ColorlessHadronization to task list.";
+        }
+      } else if (hadronizationName == "iColored") {
+        // the ISR hadronization: final partons + the beam remnants, colour
+        // connected from the ISR through the final-state shower
+        if (!isr) {
+          JSWARN << "<JetHadronization><name>iColored needs <Hard><ISR>";
+          exit(-1);
+        }
+        auto hadroModule =
+            JetScapeModuleFactory::createInstance("iColoredHadronization");
+        if (hadroModule) {
+          hadro->Add(hadroModule);
+          JSINFO << "JetScape::DetermineTaskList() -- JetHadronization: Added "
+                    "iColoredHadronization to task list.";
         }
       } else if (hadronizationName == "hybrid") {
         auto hadroModule =
