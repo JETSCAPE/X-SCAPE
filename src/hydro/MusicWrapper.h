@@ -374,6 +374,22 @@ class MpiMusic : public FluidDynamics {
   bool get_store_evolution() const { return store_evolution_; }
   void set_store_evolution(bool v) { store_evolution_ = v; }
 
+  // The jet leg starting from the background's state (music4gpu; js-contrib
+  // docs/Plans/PLAN_music2_restart.md).  set_checkpoint_tau: every evolution
+  // of this instance keeps a checkpoint of its state at the last freeze-out
+  // step whose RK step ends by tau [fm/c] (0: off).  set_restart_from: every
+  // evolution of this instance starts from that instance's latest checkpoint
+  // when it fits -- same parameters, initial arena and initial-state source,
+  // and no droplet before its step -- and from tau0 otherwise; the output is
+  // the same either way.  MUSIC_RESTART_VERIFY=1 runs from tau0 and compares
+  // the state with the checkpoint at its step.  CPU MUSIC: no effect.
+  void set_checkpoint_tau(double tau) { checkpoint_tau_ = tau; }
+  double get_checkpoint_tau() const { return checkpoint_tau_; }
+  void set_restart_from(MpiMusic *bg) { restart_from_ = bg; }
+  MpiMusic *get_restart_from() const { return restart_from_; }
+  // what the last evolution did with set_restart_from ("" if not set)
+  const std::string &get_restart_status() const { return restart_status_; }
+
   // True if the last evolution stopped because the freeze-out surface
   // reached the transverse grid boundary (MUSIC's reRunHydro): the stored
   // evolution is then truncated. Reset at the start of every evolution.
@@ -443,6 +459,9 @@ class MpiMusic : public FluidDynamics {
   int freeze_out_surface_ = 1;
   int reported_freeze_out_surface_ = -1;
   bool store_evolution_ = true;
+  double checkpoint_tau_ = 0.;
+  MpiMusic *restart_from_ = nullptr;
+  std::string restart_status_;
   int ReadOwnMusicBlockInt(const char *tag) const;
   void ApplyFreezeOutSurface();
   void WarnIfGridBoundaryHit();
