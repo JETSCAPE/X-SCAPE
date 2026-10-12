@@ -35,7 +35,7 @@ folderName="music4gpu"
 # are not evolved, the output_momentum_anisotropy_vs_etas switch, frames packed in
 # place into a huge-page store (pinned staging on discrete GPUs), the no-surface
 # edge test as a GPU reduction, and store_hydro_info_frames (output bit-identical)
-commitHash="089c682bc43357fd99ba4369e9bf9c0dfbce138c"
+commitHash="943b08996bf16125c263f7273c5086feea682f3e"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
