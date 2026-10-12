@@ -30,8 +30,12 @@ folderName="music4gpu"
 # and less host CPU per event (MUSIC4GPU PR #18): MUSIC_CUDA_SYNC=block|yield|spin|auto
 # selects how the host waits for the GPU (unset keeps CUDA's default), and the string
 # source computes per-string constants once per step and skips zero envelopes and,
-# without preflow, the transverse-flow terms (output bit-identical)
-commitHash="bc8543af87aa992ae27de2e2a7d3541cd495a7e7"
+# without preflow, the transverse-flow terms (output bit-identical),
+# and less host work per run (MUSIC4GPU PR #19): no source fills for charges that
+# are not evolved, the output_momentum_anisotropy_vs_etas switch, frames packed in
+# place into a huge-page store (pinned staging on discrete GPUs), the no-surface
+# edge test as a GPU reduction, and store_hydro_info_frames (output bit-identical)
+commitHash="089c682bc43357fd99ba4369e9bf9c0dfbce138c"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
