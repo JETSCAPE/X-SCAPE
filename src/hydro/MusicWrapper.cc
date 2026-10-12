@@ -139,6 +139,16 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     slim_bulk_info_ = false;
   }
 
+  // MUSIC's momentum anisotropy / eccentricities vs eta_s (.dat files at four
+  // steps per run, a serial pass over every cell). Missing tag: on, as before.
+  int output_anisotropy_vs_etas = 1;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "output_momentum_anisotropy_vs_etas"}, false)) {
+    el->QueryIntText(&output_anisotropy_vs_etas);
+  }
+  music_hydro_ptr->set_parameter("output_momentum_anisotropy_vs_etas",
+                                 output_anisotropy_vs_etas);
+
   // Freeze-out surface: the first <Hydro><MUSIC> block sets it for every
   // instance, as for all MUSIC settings; the same tag inside this instance's
   // own block (matched by <name>) overrides it, e.g. no surface for a
@@ -585,6 +595,8 @@ void MpiMusic::EvolveHydro() {
     music_hydro_ptr->setReRunHydro(false);
     hit_grid_boundary_ = false;
     ApplyFreezeOutSurface();
+    music_hydro_ptr->set_parameter("store_hydro_info_frames",
+                                   store_evolution_ ? 1 : 0);
     music_hydro_ptr->run_hydro();
     hydro_status = FINISHED;
     WarnIfGridBoundaryHit();
@@ -605,9 +617,14 @@ void MpiMusic::EvolveHydro() {
     bulk_info.tau_min = music_hydro_ptr->get_hydro_tau0();
     bulk_info.dtau = music_hydro_ptr->get_hydro_dtau();
     bulk_info.ntau = music_hydro_ptr->get_ntau();
-    JSINFO << "MUSIC dump_hydro_only: retaining native store ("
-           << music_hydro_ptr->get_number_of_fluid_cells()
-           << " cells), skipping framework copy.";
+    if (store_evolution_) {
+      JSINFO << "MUSIC dump_hydro_only: retaining native store ("
+             << music_hydro_ptr->get_number_of_fluid_cells()
+             << " cells), skipping framework copy.";
+    } else {
+      JSINFO << "MUSIC " << GetId() << ": evolution not stored ("
+             << bulk_info.ntau << " steps, grid metadata only).";
+    }
   } else if (flag_output_evo_to_memory == 1 && !has_source_terms) {
     if (!has_source_terms) {
       // only the first hydro without source term will be stored
