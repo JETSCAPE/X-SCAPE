@@ -35,9 +35,9 @@ folderName="music4gpu"
 # are not evolved, the output_momentum_anisotropy_vs_etas switch, frames packed in
 # place into a huge-page store (pinned staging on discrete GPUs), the no-surface
 # edge test as a GPU reduction, and store_hydro_info_frames (output bit-identical),
-# and MusicCheckpoint (MUSIC4GPU music2_restart): a run starts from another run's
+# and MusicCheckpoint (MUSIC4GPU PR #20): a run starts from another run's
 # saved state, the jet leg of the two-stage chain from the background's
-commitHash="13030792213a9d1eec092402f1a8c93e0bc4154f"
+commitHash="46296c7f5bf9940ec0958a5b78c44555cbad0e6d"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
