@@ -148,7 +148,8 @@ int iSpectraSamplerWrapper::getSurfCellVector(bool from_evolution) {
   }
   int nCells = surfVec.size();
   JSINFO << "surface cell size: " << nCells;
-  for (const auto surf_i : surfVec) {
+  FOsurf_array.reserve(nCells);
+  for (const auto &surf_i : surfVec) {
     FO_surf iSS_surf_cell;
     iSS_surf_cell.tau = surf_i.tau;
     iSS_surf_cell.xpt = surf_i.x;
