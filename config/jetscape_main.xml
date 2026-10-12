@@ -574,6 +574,10 @@
            instance; in an instance's own <Hydro><MUSIC> block it overrides
            that for this instance only. -->
       <freeze_out_surface> 1 </freeze_out_surface>
+      <!-- 1: MUSIC writes momentum_anisotropy_tau_*.dat and
+           eccentricities_evo_*_tau_*.dat at four steps of every run (a serial
+           pass over every cell); 0: it skips them. -->
+      <output_momentum_anisotropy_vs_etas> 1 </output_momentum_anisotropy_vs_etas>
       <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
       <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
       <surface_in_memory>1</surface_in_memory>

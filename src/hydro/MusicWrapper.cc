@@ -139,6 +139,16 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     slim_bulk_info_ = false;
   }
 
+  // MUSIC's momentum anisotropy / eccentricities vs eta_s (.dat files at four
+  // steps per run, a serial pass over every cell). Missing tag: on, as before.
+  int output_anisotropy_vs_etas = 1;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "output_momentum_anisotropy_vs_etas"}, false)) {
+    el->QueryIntText(&output_anisotropy_vs_etas);
+  }
+  music_hydro_ptr->set_parameter("output_momentum_anisotropy_vs_etas",
+                                 output_anisotropy_vs_etas);
+
   // Freeze-out surface: the first <Hydro><MUSIC> block sets it for every
   // instance, as for all MUSIC settings; the same tag inside this instance's
   // own block (matched by <name>) overrides it, e.g. no surface for a
