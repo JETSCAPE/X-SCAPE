@@ -64,6 +64,7 @@ private:
   double p_fake;
   int targZ, targA;
   int shiftHadrons, shiftType;
+  double smashEndTime;
 
   // Allows the registration of the module so that it is available to be used by the Jetscape framework.
   static RegisterJetScapeModule<ColoredHadronizationSinglet> reg;

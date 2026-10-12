@@ -124,6 +124,8 @@ void ColoredHadronizationSinglet::InitTask() {
   shiftHadrons = GetXMLElementInt({"JetHadronization", "shift_hadrons"});
   shiftType = GetXMLElementInt({"JetHadronization", "shift_type"});
 
+  smashEndTime = GetXMLElementDouble({"Afterburner", "SMASH", "end_time"});
+
   if (shiftHadrons) {
     if (!shiftType) {
       JSWARN << "Hadron shifting turned on but shifting algorithm not set, use 'shift_type' to choose. Defaulting to Monte Carlo.";
@@ -729,10 +731,14 @@ void ColoredHadronizationSinglet::DoHadronization(
     }
 
     double hinf = 999999.;
-    if (x[0]>hinf || x[1]>hinf || x[2]>hinf || x[3]>hinf) {
+    double xmag = pow(R3dot(x,x), 0.5);
+    double smashEdgeRadius = 0.99 * smashEndTime;
+    if (x[0]>hinf || xmag>hinf) {
       // cout << "???????????????????????????????????????????????????????????????????????????????????????????????????" << endl;
-      JSWARN << "Hadron formed at infinity. Setting it to the origin at t=1.";
-      x[0] = 1.; x[1] = 0.; x[2] = 0.; x[3] = 0.;
+      JSWARN << "Hadron formed at infinity. Setting it to just inside the SMASH envelope.";
+      //put this just at the edge
+      x[0] = smashEdgeRadius;
+      for (int i=1; i<4; i++) { x[i] *= smashEdgeRadius/xmag; }
     }
 
     hOut.push_back(make_shared<Hadron>(ip, event[eventi].id(), event[eventi].status(),
