@@ -36,8 +36,11 @@ folderName="music4gpu"
 # place into a huge-page store (pinned staging on discrete GPUs), the no-surface
 # edge test as a GPU reduction, and store_hydro_info_frames (output bit-identical),
 # and MusicCheckpoint (MUSIC4GPU PR #20): a run starts from another run's
-# saved state, the jet leg of the two-stage chain from the background's
-commitHash="46296c7f5bf9940ec0958a5b78c44555cbad0e6d"
+# saved state, the jet leg of the two-stage chain from the background's,
+# and a cheaper freeze-out search (MUSIC4GPU PR #21): no full grid copies,
+# only e from the GPU plus the cells of the cubes the surface crosses
+# (surface bit-identical; MUSIC_FREEZEOUT_GATHER=0 copies everything)
+commitHash="2ea5a34966afbbd12a4c60967644f33df29871b2"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
