@@ -597,7 +597,28 @@ void MpiMusic::EvolveHydro() {
     ApplyFreezeOutSurface();
     music_hydro_ptr->set_parameter("store_hydro_info_frames",
                                    store_evolution_ ? 1 : 0);
+    restart_status_.clear();
+#if defined(USE_CUDA) || defined(USE_METAL)
+    music_hydro_ptr->set_checkpoint_tau(checkpoint_tau_);
+    if (restart_from_ != nullptr) {
+      auto checkpoint = restart_from_->music_hydro_ptr->get_checkpoint();
+      if (checkpoint && checkpoint->valid) {
+        music_hydro_ptr->set_resume_from(checkpoint);
+      } else {
+        restart_status_ = "run from tau0: " + restart_from_->GetId() +
+                          " has no checkpoint";
+      }
+    }
+#endif
     music_hydro_ptr->run_hydro();
+#if defined(USE_CUDA) || defined(USE_METAL)
+    if (restart_from_ != nullptr) {
+      if (restart_status_.empty()) {
+        restart_status_ = music_hydro_ptr->get_resume_status();
+      }
+      JSINFO << "MUSIC " << GetId() << " restart: " << restart_status_;
+    }
+#endif
     hydro_status = FINISHED;
     WarnIfGridBoundaryHit();
     if (has_source_terms) {
