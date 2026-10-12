@@ -365,6 +365,15 @@ class MpiMusic : public FluidDynamics {
   bool get_freeze_out_surface() const { return freeze_out_surface_ != 0; }
   void set_freeze_out_surface(bool v) { freeze_out_surface_ = v ? 1 : 0; }
 
+  // Store the evolution frames in MUSIC's in-memory store (default) or not.
+  // false: music4gpu keeps the store's grid and tau bookkeeping (get_ntau,
+  // bulk_info's grid) but packs and stores no cells, for an instance whose
+  // evolution nobody reads (the jet leg of a particlize-only two-stage run).
+  // Applies from the next evolution on; only with output_evolution_to_memory,
+  // and CPU MUSIC ignores it.
+  bool get_store_evolution() const { return store_evolution_; }
+  void set_store_evolution(bool v) { store_evolution_ = v; }
+
   // True if the last evolution stopped because the freeze-out surface
   // reached the transverse grid boundary (MUSIC's reRunHydro): the stored
   // evolution is then truncated. Reset at the start of every evolution.
@@ -433,6 +442,7 @@ class MpiMusic : public FluidDynamics {
   bool hit_grid_boundary_ = false;
   int freeze_out_surface_ = 1;
   int reported_freeze_out_surface_ = -1;
+  bool store_evolution_ = true;
   int ReadOwnMusicBlockInt(const char *tag) const;
   void ApplyFreezeOutSurface();
   void WarnIfGridBoundaryHit();
