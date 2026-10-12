@@ -40,7 +40,7 @@ folderName="music4gpu"
 # and a cheaper freeze-out search (MUSIC4GPU PR #21): no full grid copies,
 # only e from the GPU plus the cells of the cubes the surface crosses
 # (surface bit-identical; MUSIC_FREEZEOUT_GATHER=0 copies everything)
-commitHash="2ea5a34966afbbd12a4c60967644f33df29871b2"
+commitHash="81f38d9e2696c09974768f507a74ddf0a17e7a61"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
