@@ -4311,7 +4311,9 @@ double Matter::fncQhat(double zeta) {
             0.5);  // zeta was in 1/GeV and light cone coordinate
 
   // if(indexZeta >= dimQhatTab) indexZeta = dimQhatTab-1;
-  if (indexZeta >= dimQhatTab)
+  // before t = 0 (index < 0; partons from initial-state radiation) there is no
+  // medium, and qhatTab1D[indexZeta < 0] would read before the table
+  if (indexZeta >= dimQhatTab || indexZeta < 0)
     return (0);
 
   double avrQhat =
@@ -4340,9 +4342,27 @@ double Matter::fncAvrQhat(double zeta, double tau) {
     return (0);
   if (indexTau >= dimQhatTab)
     indexTau = dimQhatTab - 1;
+  if (indexTau < 0)
+    indexTau = 0;
+
+  // The table starts at t = 0 (index 0); before that there is no medium.  A
+  // parton made at negative times (initial-state radiation) can ask for a
+  // window that starts there: average over the window with qhat = 0 before
+  // t = 0, i.e. the mean over [0, indexZeta + indexTau] times its share of the
+  // window.  Without this, qhatTab2D[indexZeta < 0] read the memory before the
+  // table (garbage qhat, or a crash for a far negative index).
+  double tabQhat;
+  if (indexZeta >= 0) {
+    tabQhat = qhatTab2D[indexZeta][indexTau];
+  } else {
+    const int last = indexZeta + indexTau;  // last index of the window
+    if (last < 0)
+      return (0);
+    tabQhat = qhatTab2D[0][last] * (last + 1) / (indexTau + 1);
+  }
 
   double avrQhat =
-      qhatTab2D[indexZeta][indexTau] *
+      tabQhat *
       VirtualityQhatFunction(QhatParametrizationType, initEner, tscale);
   return (avrQhat);
 }
