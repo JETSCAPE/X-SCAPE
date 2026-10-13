@@ -47,6 +47,7 @@ CausalLiquefier::CausalLiquefier(double dtau_in, double dx_in, double dy_in,
   VERBOSE(8);
   JSINFO << "Initialize CausalLiquefier (for Unit Test) ...";
   dtau = dtau_in;
+  dtau0_ = dtau_in;
   dx = dx_in;
   dy = dy_in;
   deta = deta_in;
@@ -71,6 +72,7 @@ void CausalLiquefier::InitializeParameters() {
 
   dtau = JetScapeXML::Instance()->GetElementDouble(
       {"Liquefier", "CausalLiquefier", "dtau"});
+  dtau0_ = dtau;
   dx = JetScapeXML::Instance()->GetElementDouble(
       {"Liquefier", "CausalLiquefier", "dx"});
   dy = JetScapeXML::Instance()->GetElementDouble(
@@ -123,8 +125,9 @@ void CausalLiquefier::smearing_kernel(
   x_drop[0] = get_t(tau_drop, eta_drop);
   x_drop[3] = get_z(tau_drop, eta_drop);
 
-  if (tau - 0.5 * dtau <= tau_drop + tau_delay &&
-      tau + 0.5 * dtau > tau_drop + tau_delay) {
+  double win_lo, win_hi;
+  deposit_window(tau, win_lo, win_hi);
+  if (win_lo <= tau_drop + tau_delay && win_hi > tau_drop + tau_delay) {
     double t =
         get_t(tau, eta);  // position in the fluid in the Cartesian coordinates
     double z = get_z(tau, eta);
@@ -247,8 +250,43 @@ bool CausalLiquefier::droplet_may_contribute(const Droplet &drop_i,
                                              double tau_lo,
                                              double tau_hi) const {
   const double tau_deposit = drop_i.get_xmu()[0] + tau_delay;
-  const double margin = 0.5 * dtau + 1e-3;
+  const double margin = deposit_half_width();
   return tau_deposit >= tau_lo - margin && tau_deposit <= tau_hi + margin;
+}
+
+// The step schedule.  A step ending at tau is the late one when tau lies
+// after the switch; a step starting at tau when tau lies at or after it.
+double CausalLiquefier::step_before(double tau) const {
+  if (dtau_late_ > 0. && tau_switch_ > 0. && tau > tau_switch_ + 1e-9)
+    return dtau_late_;
+  return dtau0_;
+}
+
+double CausalLiquefier::step_from(double tau) const {
+  if (dtau_late_ > 0. && tau_switch_ > 0. && tau >= tau_switch_ - 1e-9)
+    return dtau_late_;
+  return dtau0_;
+}
+
+// [lo, hi) of the query at tau: half the step before it on the left, half
+// the step from it on the right.  With a constant step this is
+// [tau - dtau/2, tau + dtau/2), as before.
+void CausalLiquefier::deposit_window(double tau, double &lo, double &hi) const {
+  lo = tau - 0.5 * step_before(tau);
+  hi = tau + 0.5 * step_from(tau);
+}
+
+// The hydro's query times along the schedule, for the normalization
+// (LiquefierBase::sampled_flux): a constant step without one.
+double CausalLiquefier::query_time(double tau, double dtau_in, int k) const {
+  if (dtau_late_ <= 0. || tau_switch_ <= 0.)
+    return tau + k * dtau_in;
+  double t = tau;
+  for (int i = 0; i < k; i++)
+    t += step_from(t);
+  for (int i = 0; i > k; i--)
+    t -= step_before(t);
+  return t;
 }
 
 // For debug, Change tau_delay

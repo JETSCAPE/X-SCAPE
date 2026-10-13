@@ -219,6 +219,7 @@ or sets these. CPU MUSIC ignores all of them.
 | setting | default | effect |
 |---|---|---|
 | `<Hydro><MUSIC><freeze_out_surface>` | 1 | 0: no freeze-out surface, MUSIC stops on max(e) < e_fo at the same step; per instance in its own `<Hydro><MUSIC>` block, or `MpiMusic::set_freeze_out_surface` |
+| `<Hydro><MUSIC><late_delta_tau>`, `<late_tau_switch>` | 0, 0 (also when missing) | a larger MUSIC time step from `late_tau_switch` on (music4gpu `late_delta_tau`), with the freeze-out checks and the stored frames kept at their spacing; the jet source follows the step (`HydroSourceJETSCAPE::hydro_dtau_changed`, `CausalLiquefier`'s deposition windows tile the axis across the switch). The production XMLs in js-contrib set 0.05 fm/c from 3 fm/c |
 | `<Hydro><MUSIC><output_momentum_anisotropy_vs_etas>` | 1 (also when missing) | 0: no `momentum_anisotropy_*` / `eccentricities_*` `.dat` files, which skips a serial pass over the grid at four steps of every run |
 | `MpiMusic::set_store_evolution(bool)` | true | false: the instance keeps its grid metadata and frame count (`bulk_info`) but stores no evolution frames (for a leg nobody reads) |
 | `MpiMusic::set_checkpoint_tau(tau)`, `set_restart_from(other)` | off | the instance keeps a checkpoint of its state at tau in every evolution; `other` starts every evolution from its latest checkpoint when it fits, and from tau0 otherwise, with the same output either way (the jet leg of the two-stage chain from the background's state; `get_restart_status()`, `MUSIC_RESTART_VERIFY=1` checks it) |

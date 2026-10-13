@@ -17,7 +17,7 @@
 # (jhputschke/iSS iSS_optim: chunshen1987/iSS XSCAPE d242555 + the FSSW yield-loop
 # speed-ups + correlated sampling, until they are merged upstream)
 folderName="iSS"
-commitHash="896e19865f5e68c28bc17577f01e39548441e879"
+commitHash="98deaff32a98cdba660b321145aa68bfd05f1928"
 
 git clone https://github.com/jhputschke/iSS -b iSS_optim iSS
 cd $folderName

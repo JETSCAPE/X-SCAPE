@@ -327,7 +327,7 @@ double LiquefierBase::sampled_flux(const Droplet &drop_i, double tau,
   const double reach = std::max(hw, 0.5 * dtau + 1e-6);
   double flux = 0.0, best = -1.0, best_d = 1e300;
   for (int k = -3; k <= 6; k++) {
-    const double tq = tau + k * dtau;
+    const double tq = query_time(tau, dtau, k);
     if (tq <= 0.0)
       continue;
     const double d = std::abs(tq - t_dep);

@@ -75,6 +75,26 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   //! Then normalizes the droplets that deposit within reach of this step on
   //! MUSIC's grid (set_hydro_grid()), so that each deposits exactly its
   //! four-momentum; the step's query times are tau and tau + dtau.
+  //! MUSIC's step changed to dtau_new at tau (late_delta_tau): the pruning
+  //! window, the hadronic liquefier's 1/dtau and the causal liquefier's
+  //! 1/dtau follow it.  No `override`, so this also compiles against a
+  //! MUSIC without the hook.
+  void hydro_dtau_changed(const double dtau_new, const double /*tau*/) {
+    set_hydro_dtau(dtau_new);
+    last_tau_ = -1.0;  // the next step's tau is one new step away
+    if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
+      liquefier_ptr.lock()->set_hydro_step(dtau_new);
+    }
+  }
+
+  //! The step schedule, for the liquefier's deposition windows (set once,
+  //! from the MUSIC settings; 0: constant step).
+  void set_late_hydro_step(double dtau_late, double tau_switch) {
+    if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
+      liquefier_ptr.lock()->set_late_hydro_step(dtau_late, tau_switch);
+    }
+  }
+
   void prepare_list_for_current_tau_frame(const double tau_local) {
     if (weak_ptr_is_uninitialized(liquefier_ptr)) return;
     liquefier_step_ = liquefier_ptr.lock();
@@ -260,6 +280,9 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
 //! library for the JETSCAPE integrated framework
 class MpiMusic : public FluidDynamics {
  private:
+  // music4gpu late_delta_tau / late_tau_switch (0: constant step)
+  double late_delta_tau_ = 0.;
+  double late_tau_switch_ = 0.;
   // int mode;            //!< records running mode
   std::unique_ptr<MUSIC> music_hydro_ptr;
 
