@@ -26,6 +26,7 @@
 
 #include <cmath>
 #include <gsl/gsl_sf_bessel.h>
+#include <algorithm>
 
 namespace Jetscape {
 
@@ -41,6 +42,9 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   //---------------------------
   double c_diff;
   double gamma_relax;
+  double dtau0_ = -1.;     // the initial hydro step (the XML's dtau)
+  double dtau_late_ = 0.;  // the step from tau_switch_ on (0: constant)
+  double tau_switch_ = -1.;
 
   CausalLiquefier();
   CausalLiquefier(double dtau, double dx, double dy, double deta);
@@ -61,7 +65,27 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   double deposit_time(const Droplet &drop_i) const override {
     return drop_i.get_xmu()[0] + tau_delay;
   }
-  double deposit_half_width() const override { return 0.5 * dtau + 1e-3; }
+  //! the widest window of the schedule: the exact cut is deposit_window()
+  double deposit_half_width() const override {
+    return 0.5 * std::max(dtau, std::max(dtau0_, dtau_late_)) + 1e-3;
+  }
+
+  // The hydro's step schedule (MUSIC late_delta_tau): dtau is the step in
+  // effect (the 1/dtau of the source), dtau0_ the initial one, dtau_late_
+  // the one from tau_switch_ on (0: constant).  A query at tau deposits the
+  // droplets with tau_d + tau_delay in [tau - step_before/2, tau + step_from/2),
+  // so the windows of consecutive queries tile the axis also across the
+  // switch, and both Runge-Kutta stages at the switch time see the same
+  // droplets.
+  void set_hydro_step(double dtau_in) override { dtau = dtau_in; }
+  void set_late_hydro_step(double dtau_late, double tau_switch) override {
+    dtau_late_ = dtau_late;
+    tau_switch_ = tau_switch;
+  }
+  double query_time(double tau, double dtau_in, int k) const override;
+  double step_before(double tau) const;
+  double step_from(double tau) const;
+  void deposit_window(double tau, double &lo, double &hi) const;
 
   double dumping(double t) const;
 

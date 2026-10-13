@@ -39,8 +39,12 @@ folderName="music4gpu"
 # saved state, the jet leg of the two-stage chain from the background's,
 # and a cheaper freeze-out search (MUSIC4GPU PR #21): no full grid copies,
 # only e from the GPU plus the cells of the cubes the surface crosses
-# (surface bit-identical; MUSIC_FREEZEOUT_GATHER=0 copies everything)
-commitHash="81f38d9e2696c09974768f507a74ddf0a17e7a61"
+# (surface bit-identical; MUSIC_FREEZEOUT_GATHER=0 copies everything),
+# and, on branch reconst_stall (not merged yet), the reconstruction solvers
+# stopping at float resolution (-29 % GPU time per step) and the larger late
+# time step late_delta_tau / late_tau_switch (HydroSourceBase::hydro_dtau_changed,
+# which HydroSourceJETSCAPE implements); neither is bit-identical
+commitHash="547da26d7a0635d485ee05f1cd92d173fb51963c"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName

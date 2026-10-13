@@ -165,6 +165,27 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   int beastMode = (GetXMLElementInt({"Hydro", "MUSIC", "beastMode"}));
   music_hydro_ptr->set_parameter("beastMode", beastMode);
 
+  // A larger time step from <late_tau_switch> on (<late_delta_tau>; absent or
+  // 0: a constant step).  MUSIC keeps the checks and the stored frames at
+  // their spacing; the jet source follows the step
+  // (HydroSourceJETSCAPE::hydro_dtau_changed, CausalLiquefier's schedule).
+  late_delta_tau_ = 0.;
+  late_tau_switch_ = 0.;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "late_delta_tau"}, false)) {
+    el->QueryDoubleText(&late_delta_tau_);
+  }
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "late_tau_switch"}, false)) {
+    el->QueryDoubleText(&late_tau_switch_);
+  }
+  music_hydro_ptr->set_parameter("late_delta_tau", late_delta_tau_);
+  music_hydro_ptr->set_parameter("late_tau_switch", late_tau_switch_);
+  if (late_delta_tau_ > 0.) {
+    JSINFO << "MUSIC late step: delta_tau " << late_delta_tau_
+           << " fm/c from tau = " << late_tau_switch_ << " fm/c on";
+  }
+
   double tau_hydro =
       (GetXMLElementDouble({"Hydro", "MUSIC", "Initial_time_tau_0"}));
   music_hydro_ptr->set_parameter("Initial_time_tau_0", tau_hydro);
@@ -441,6 +462,7 @@ int MpiMusic::InitializeHydroEnergyProfile() {
   // correct (the window only has to hold the query times) but the droplet
   // source was evaluated at ~2.6x as many steps.
   hydro_source_terms_ptr->set_hydro_dtau(music_hydro_ptr->get_hydro_dtau_grid());
+  hydro_source_terms_ptr->set_late_hydro_step(late_delta_tau_, late_tau_switch_);
 
   // MUSIC's computational grid, as initialize_hydro_xscape() and the
   // pre-equilibrium path set it (cell centres -size/2 + i d, size = n d; the

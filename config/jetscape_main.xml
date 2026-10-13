@@ -578,6 +578,10 @@
            eccentricities_evo_*_tau_*.dat at four steps of every run (a serial
            pass over every cell); 0: it skips them. -->
       <output_momentum_anisotropy_vs_etas> 1 </output_momentum_anisotropy_vs_etas>
+      <!-- a larger time step from late_tau_switch on, with the freeze-out checks and the
+           stored frames kept at their spacing (music4gpu); 0: a constant step -->
+      <late_delta_tau>0</late_delta_tau>
+      <late_tau_switch>0</late_tau_switch>
       <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
       <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
       <surface_in_memory>1</surface_in_memory>

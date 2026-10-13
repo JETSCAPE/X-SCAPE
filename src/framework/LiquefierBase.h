@@ -206,6 +206,17 @@ class LiquefierBase {
   /// deposit_time()| within this (CausalLiquefier: its dtau / 2).
   virtual double deposit_half_width() const { return 0.0; }
 
+  //! The hydro's time step: the one in effect (MUSIC can change it during a
+  //! run, late_delta_tau) and the schedule of that change, for liquefiers
+  //! whose deposition window depends on the step.  The defaults ignore it.
+  virtual void set_hydro_step(double dtau) {}
+  virtual void set_late_hydro_step(double dtau_late, double tau_switch) {}
+  //! The hydro's query time k steps from tau (k may be negative) along the
+  //! step schedule; the default is a constant step.
+  virtual double query_time(double tau, double dtau, int k) const {
+    return tau + k * dtau;
+  }
+
   /**
    * @brief What the hydro receives from a droplet, as a fraction of its
    * four-momentum: sum over the query times tau_q = tau + k dtau near its
