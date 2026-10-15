@@ -98,11 +98,11 @@ class MCGlauberWrapper : public Jetscape::InitialState {
 
   std::shared_ptr<InitialState> ini;
 
-  int MCGlauberWrapper::GetNucleonPid(const int idx);
+  int GetNucleonPid(const int idx);
 
-  void MCGlauberWrapper::SetNucleonUsed(const int idx, const int isUsed);
-  int MCGlauberWrapper::GetNucleonUsed(const int idx);
-  
+  void SetNucleonUsed(const int idx, const int isUsed);
+  int GetNucleonUsed(const int idx);
+
  private:
   int targZ, targA;
   std::vector<int> nucleonPids;

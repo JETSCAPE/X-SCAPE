@@ -330,7 +330,7 @@ void EAGun::ExecuteTask() {
     //     // readString("Beams:idA = 2112");
     //     pythiaindex = 1;
     // }
-    int nucleonPid = ini->getNucleonPid(nucleonIdx);
+    int nucleonPid = ini->GetNucleonPid(nucleonIdx);
     if (nucleonPid == 2212) { //hit proton
         cout << "PROTON!!!!" << endl;
         pythiaindex = 0;

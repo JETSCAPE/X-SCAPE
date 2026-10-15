@@ -77,6 +77,17 @@ std::tuple<double, double, double> InitialState::CoordFromIdx(int idx) {
                          -grid_max_z_ + ieta * grid_step_z_);
 }
 
+void MCGlauberWrapper::GetProjectileNucleonPositionsAtt(
+    const double t, const int idx, double &x, double &y, double &z) { return; }
+
+void MCGlauberWrapper::GetTargetNucleonPositionsAtt(
+    const double t, const int idx, double &x, double &y, double &z) { return; }
+
+int InitialState::GetNucleonPid(const int idx) { return 0; }
+
+void InitialState::SetNucleonUsed(const int idx, const int isUsed) { return; }
+int InitialState::GetNucleonUsed(const int idx) { return 0; }
+
 void InitialState::SampleABinaryCollisionPoint(double &t, double &x, double &y,
                                                double &z) {
   if (num_of_binary_collisions_.size() == 0) {
