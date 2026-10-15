@@ -1,0 +1,60 @@
+\documentclass[border=8pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{pgfplots}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{compat=1.18}
+\definecolor{comb}{HTML}{8E4C8A}
+\definecolor{combband}{HTML}{E6D3E4}
+\definecolor{khan}{HTML}{4FB8C2}
+\definecolor{khanband}{HTML}{C9F3F6}
+\definecolor{emd}{HTML}{C2410C}
+\definecolor{emdband}{HTML}{F6C8AE}
+\definecolor{holo}{HTML}{1F5FA8}
+% q-hat/T^3 versus T:
+%  - JETSCAPE "Combined" posterior (E_ref = 100 GeV, mu^2 = Q0^2), median and 90%,
+%    digitized from the JETSCAPE figure (jetscape_combined.dat)
+%  - the JETSCAPE band shown in Khan et al., arXiv:2603.20482v2, Fig. 10 right
+%    (read from the SVG paths; khan_jetscape_band.dat)
+%  - EMD as the QUARK q-hat: the holographic q-hat is adjoint (gluon), so
+%    q_quark/T^3 = (C_F/C_A) sqrt(lambda_t) Q(T) = (4/9) sqrt(lambda_t) Q(T)
+%    lambda_t = 1/25, 1/16, 1/9 (the values of Khan et al.), and lambda_t = 2.4
+%    (2.0-4.0) from our MATTER+LBT fit to ATLAS jets; dotted: lambda_t = 1/16
+%    without the colour factor, as plotted in Khan et al. Fig. 10
+\begin{document}
+\begin{tikzpicture}
+\begin{axis}[width=13cm,height=9.5cm,xmin=0.15,xmax=0.5,ymin=0,ymax=12,ytick={0,2,4,6,8,10,12},
+  xlabel={$T$ [GeV]},ylabel={$\hat q/T^3$},
+  label style={font=\large},tick label style={font=\normalsize},
+  legend style={font=\small,draw=none,at={(0.5,-0.16)},anchor=north,legend columns=2,/tikz/column 2/.style={column sep=12pt}},
+  legend cell align=left]
+% JETSCAPE Combined band + median
+\addplot[name path=cu,draw=none,forget plot] table[x=T,y=up]{jetscape_combined.dat};
+\addplot[name path=cl,draw=none,forget plot] table[x=T,y=lo]{jetscape_combined.dat};
+\addplot[combband,opacity=0.85] fill between[of=cu and cl];
+\addlegendentry{JETSCAPE ``Combined'', 90\% ($E=100$ GeV, $\mu^2=Q_0^2$)}
+\addplot[comb,very thick] table[x=T,y=med]{jetscape_combined.dat};
+\addlegendentry{JETSCAPE ``Combined'', median}
+% JETSCAPE band used by Khan et al.
+\addplot[name path=ku,draw=none,forget plot] table[x=T,y=up]{khan_jetscape_band.dat};
+\addplot[name path=kl,draw=none,forget plot] table[x=T,y=lo]{khan_jetscape_band.dat};
+\addplot[khanband,opacity=0.75] fill between[of=ku and kl];
+\addlegendentry{JETSCAPE 2021 hadron-only ($\mu^2\approx(2.7$ GeV$)^2$), as in Khan et al.\ Fig.~10}
+% EMD at the holographers' normalisation
+\addplot[holo,thick,dashed] table[x=T,y=k9]{emd_curves.dat};
+\addlegendentry{EMD quark $\hat q$, $\lambda_t=1/9,\ 1/16,\ 1/25$ (top to bottom; Khan et al.\ values)}
+\addplot[holo,thick,dotted] table[x=T,y=k16raw]{emd_curves.dat};
+\addlegendentry{$\lambda_t=1/16$ without $C_F/C_A$ (as plotted in Khan et al.)}
+\addplot[holo,thick,dashed,forget plot] table[x=T,y=k16]{emd_curves.dat};
+\addplot[holo,thick,dashed,forget plot] table[x=T,y=k25]{emd_curves.dat};
+% EMD at our data-calibrated normalisation
+\addplot[name path=eu,draw=none,forget plot] table[x=T,y=ourshi]{emd_curves.dat};
+\addplot[name path=el,draw=none,forget plot] table[x=T,y=ourslo]{emd_curves.dat};
+\addplot[emdband,opacity=0.6] fill between[of=eu and el];
+\addlegendentry{EMD quark $\hat q$ fitted to ATLAS jets (MATTER+LBT): $\lambda_t=2.0$--$4.0$}
+\addplot[emd,very thick] table[x=T,y=ours]{emd_curves.dat};
+\addlegendentry{EMD quark $\hat q$ fitted: $\lambda_t\approx2.4$}
+\end{axis}
+\end{tikzpicture}
+\end{document}

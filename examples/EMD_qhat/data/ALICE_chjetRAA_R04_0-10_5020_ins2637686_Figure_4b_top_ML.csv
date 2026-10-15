@@ -1,0 +1,15 @@
+#: table_doi: 10.17182/hepdata.146027.v1/t17
+#: name: Figure 4b top ML
+#: description: Nuclear modification factor for jets with R = 0.4 in central collisions with ML subtraction
+#: data_file: figure_4b_top_ml.yaml
+#: keyword observables: nuclear modification factor
+pT [GeV/#it{c}],"Nuclear Modification Factor, R = 0.4, Central, ML","Raa, R = 0.4, Central, ML, statistical uncertainty +","Raa, R = 0.4, Central, ML, statistical uncertainty -","Raa, R = 0.4, Central, ML, systematic uncertainty +","Raa, R = 0.4, Central, ML, systematic uncertainty -"
+35.0,0.22045,0.0024342,-0.0024342,0.084215,-0.044546
+45.0,0.2597,0.0050015,-0.0050015,0.09171,-0.038898
+55.0,0.29709,0.0080169,-0.0080169,0.10619,-0.04933
+65.0,0.32526,0.012303,-0.012303,0.12079,-0.058429
+77.5,0.36554,0.018181,-0.018181,0.10426,-0.053508
+92.5,0.33364,0.026476,-0.026476,0.12329,-0.082714
+110.0,0.36608,0.037357,-0.037357,0.098808,-0.06469
+130.0,0.46168,0.056153,-0.056153,0.087059,-0.083853
+

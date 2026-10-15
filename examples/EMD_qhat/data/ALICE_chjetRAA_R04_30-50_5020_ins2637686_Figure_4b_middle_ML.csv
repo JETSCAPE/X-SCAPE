@@ -1,0 +1,14 @@
+#: table_doi: 10.17182/hepdata.146027.v1/t21
+#: name: Figure 4b middle ML
+#: description: Nuclear modification factor for jets with R = 0.4 in semicentral collisions with ML-based subtraction
+#: data_file: figure_4b_middle_ml.yaml
+#: keyword observables: nuclear modification factor
+pT [GeV/#it{c}],"Nuclear Modification Factor, R = 0.4, SemiCentral, ML","Raa, R = 0.4, Semi Central, ML, statistical uncertainty +","Raa, R = 0.4, Semi Central, ML, statistical uncertainty -","Raa, R = 0.4, SemiCentral, ML, systematic uncertainty +","Raa, R = 0.4, SemiCentral, ML, systematic uncertainty -"
+35.0,0.43781,0.0013219,-0.0013219,0.067451,-0.067451
+45.0,0.48915,0.0039083,-0.0039083,0.05494,-0.05494
+55.0,0.56871,0.011756,-0.011756,0.074364,-0.074364
+65.0,0.59802,0.019116,-0.019116,0.10365,-0.10365
+77.5,0.57786,0.028221,-0.028221,0.090969,-0.090969
+92.5,0.65509,0.033268,-0.033268,0.10018,-0.10018
+110.0,0.68017,0.037725,-0.037725,0.13403,-0.13403
+

@@ -1,0 +1,237 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.0cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb}
+\usepackage{pgfplots}
+\usepgfplotslibrary{groupplots}
+\pgfplotsset{compat=1.18}
+\usepackage{caption}
+\usepackage[colorlinks=true,linkcolor=blue!50!black]{hyperref}
+\newcommand{\qhat}{\hat q}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\definecolor{tune}{HTML}{1F5FA8}
+\definecolor{emd}{HTML}{C2410C}
+\definecolor{emdA}{HTML}{F2A066}
+\definecolor{emdB}{HTML}{E06A1F}
+\definecolor{emdC}{HTML}{8A2E06}
+\definecolor{typeeight}{HTML}{7E22CE}
+\definecolor{conf}{HTML}{555B66}
+\definecolor{htl}{HTML}{15803D}
+
+\pgfplotsset{
+  every axis/.append style={width=0.47\textwidth,height=0.36\textwidth,
+    tick label style={font=\small},label style={font=\small},title style={font=\small},
+    legend style={font=\footnotesize,draw=none,fill=white,fill opacity=0.85,text opacity=1}},
+  tunestyle/.style={color=tune,mark=*,mark size=1.8pt,thick},
+  emdstyle/.style={color=emd,mark=square*,mark size=1.8pt,thick},
+  confstyle/.style={color=conf,mark=o,mark size=2pt,thick,dashed,mark options={solid}},
+  errs/.style={error bars/.cd,y dir=both,y explicit},
+  htlstyle/.style={color=htl,mark=diamond*,mark size=2.4pt,thick},
+}
+
+\title{Brick energy loss with different $\qhat(T)$}
+\author{MyEloss study, X-SCAPE 2.1}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\noindent All results are parton level. A 100~GeV quark (or gluon where stated) starts at
+$\eta=0$ in a static brick. The energy loss is the drop, relative to the vacuum run, of the
+leading parton's $p_T$ and of the $p_T$ within $R=0.4$ of the leading parton (medium recoils
+included, LBT holes subtracted). Error bars are statistical (1000--2000 events per point).
+``Tune'' is the JETSCAPE MATTER+LBT setup: MATTER \code{QhatParametrizationType}~5 (HTL
+$\qhat$ times the virtuality factor, $A=10$, $B=100$, $\alpha_s=0.3$, $Q_0=2$~GeV) and LBT with
+its tabulated $\qhat$. Route~A is MATTER (EMD $\qhat$, Type~8 or 9) + MyEloss (BDMPS-Z radiation
+and broadening with the same EMD $\qhat$). Route~B is MATTER Type~9 + LBT with the EMD radiative
+$\qhat$ (\code{qhat\_model}=1). In all EMD runs $\qhat_g=\sqrt{\lambda_t}\,Q(T)\,T^3$. ``HTL + MyEloss'' is route~A with JETSCAPE's HTL $\qhat$ in both stages (MATTER Type~5 and MyEloss \code{qhat\_model}=1), multiplied by $K$; since the two $\qhat$ have the same size at $\lambda_t=1$, $K=1$ pairs with $\lambda_t=1$ and $K=3$ with $\lambda_t=9$.
+Figures~\ref{fig:tA}--\ref{fig:emdhtl} use runs from before the shower-graph fix (the HTL runs use the same build), which changes the
+transverse kicks but not the energy numbers. Tables: \texttt{figs\_brick/*.dat}, made by
+\texttt{brick\_qhat\_compare.py}.
+
+%======================================================================
+\begin{figure}[h]\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.62\textwidth,height=0.40\textwidth,xlabel={$T$ [GeV]},ylabel={gluon $\qhat/T^3$},
+  xmin=0.15,xmax=0.5,ymin=4,ymax=17,ytick={6,8,10,12,14,16},legend cell align=left,legend style={at={(0.5,-0.22)},anchor=north,legend columns=2}]
+\addplot[color=emd,very thick] table[x=T,y=emd1]{figs_brick/qhat_curves.dat};
+\addlegendentry{EMD, $\lambda_t=1$}
+\addplot[color=emd,thick,dash pattern=on 6pt off 3pt] table[x=T,y=emd2]{figs_brick/qhat_curves.dat};
+\addlegendentry{EMD, $\lambda_t=2$}
+\addplot[color=conf,thick,dashed] table[x=T,y expr=\thisrow{conf9}/3]{figs_brick/qhat_curves.dat};
+\addlegendentry{conformal control, $\lambda_t=1$ ($Q$ frozen at 0.3 GeV)}
+\addplot[color=tune,thick,dotted] table[x=T,y=htl20]{figs_brick/qhat_curves.dat};
+\addlegendentry{JETSCAPE HTL, $E=20$ GeV}
+\addplot[color=tune,very thick] table[x=T,y=htl50]{figs_brick/qhat_curves.dat};
+\addlegendentry{JETSCAPE HTL, $E=50$ GeV}
+\addplot[color=tune,thick,dashed] table[x=T,y=htl100]{figs_brick/qhat_curves.dat};
+\addlegendentry{JETSCAPE HTL, $E=100$ GeV}
+\end{axis}
+\end{tikzpicture}
+\caption{The $\qhat$ choices compared below. EMD:
+$\qhat/T^3=\sqrt{\lambda_t}\,Q(T)$. JETSCAPE HTL: MATTER's Type~1/5 $\qhat$ below $Q_0$
+($\alpha_s=0.3$, running $\alpha_s(2ET)$). At $\lambda_t=1$ the EMD $\qhat$ has the size of the
+HTL $\qhat$ (both 10.2 at $T=0.3$~GeV, $E=50$~GeV). The EMD $\qhat/T^3$ peaks near 210~MeV and
+falls slowly; the conformal control is flat.}
+\label{fig:qhat}
+\end{figure}
+
+%======================================================================
+\begin{figure}[h]\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1,horizontal sep=1.6cm},
+  xlabel={$T$ [GeV]},xmin=0.16,xmax=0.52,ymin=0,ymax=26,legend pos=north west,legend cell align=left]
+\nextgroupplot[ylabel={$\Delta p_T$ [GeV]},title={leading parton}]
+\addplot[tunestyle,errs] table[x=T,y=dlead,y error=elead]{figs_brick/tscan_tune.dat}; \addlegendentry{tune}
+\addplot[color=typeeight,mark=triangle*,mark size=2.2pt,thick,errs] table[x=T,y=dlead,y error=elead]{figs_brick/tscan_emd.dat}; \addlegendentry{EMD Type 8 + MyEloss}
+\addplot[emdstyle,errs] table[x=T,y=dlead,y error=elead]{figs_brick/tscan_emdv.dat}; \addlegendentry{EMD Type 9 + MyEloss}
+\addplot[htlstyle,errs] table[x=T,y=dlead,y error=elead]{figs_brick/htl_k1.dat}; \addlegendentry{HTL + MyEloss, $K=1$}
+\nextgroupplot[title={within $R=0.4$}]
+\addplot[tunestyle,errs] table[x=T,y=dcone,y error=econe]{figs_brick/tscan_tune.dat};
+\addplot[color=typeeight,mark=triangle*,mark size=2.2pt,thick,errs] table[x=T,y=dcone,y error=econe]{figs_brick/tscan_emd.dat};
+\addplot[emdstyle,errs] table[x=T,y=dcone,y error=econe]{figs_brick/tscan_emdv.dat};
+\addplot[htlstyle,errs] table[x=T,y=dcone,y error=econe]{figs_brick/htl_k1.dat};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Route~A at the natural normalisation $\lambda_t=1$, $L=4$~fm. With Type~8 (EMD $\qhat$ at
+all virtualities) MATTER alone over-quenches the leading parton, mostly by moving energy inside
+the cone, and the loss hardly grows with $T$. Type~9 (with the tune's virtuality factor)
+restores the $T$ dependence but at $\lambda_t=1$ loses much less than the tune; the HTL $\qhat$ in the same kernel ($K=1$) gives the same loss within errors, so the BDMPS-Z
+kernel needs a larger normalisation (Fig.~\ref{fig:lam}).}
+\label{fig:tA}
+\end{figure}
+
+%======================================================================
+\begin{figure}[h]\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1,horizontal sep=1.6cm},
+  xlabel={$T$ [GeV]},xmin=0.18,xmax=0.52,ymin=0,ymax=26,legend pos=north west,legend cell align=left]
+\nextgroupplot[ylabel={$\Delta p_T$ [GeV]},title={leading parton}]
+\addplot[tunestyle,errs] table[x=T,y=dlead,y error=elead]{figs_brick/tscan_tune.dat}; \addlegendentry{tune}
+\addplot[color=emdA,mark=square*,mark size=1.8pt,thick,errs] table[x=T,y=dlead,y error=elead]{figs_brick/lscan_emdv_l4.dat}; \addlegendentry{EMD, $\lambda_t=4$}
+\addplot[color=emdB,mark=square*,mark size=1.8pt,thick,errs] table[x=T,y=dlead,y error=elead]{figs_brick/lscan_emdv_l9.dat}; \addlegendentry{EMD, $\lambda_t=9$}
+\addplot[color=emdC,mark=square*,mark size=1.8pt,thick,errs] table[x=T,y=dlead,y error=elead]{figs_brick/lscan_emdv_l16.dat}; \addlegendentry{EMD, $\lambda_t=16$}
+\addplot[confstyle,errs] table[x=T,y=dlead,y error=elead]{figs_brick/lscan_emdc_l9.dat}; \addlegendentry{conformal, $\lambda_t=9$}
+\addplot[htlstyle,errs] table[x=T,y=dlead,y error=elead]{figs_brick/htl_k3.dat}; \addlegendentry{HTL, $K=3$}
+\nextgroupplot[title={within $R=0.4$}]
+\addplot[tunestyle,errs] table[x=T,y=dcone,y error=econe]{figs_brick/tscan_tune.dat};
+\addplot[color=emdA,mark=square*,mark size=1.8pt,thick,errs] table[x=T,y=dcone,y error=econe]{figs_brick/lscan_emdv_l4.dat};
+\addplot[color=emdB,mark=square*,mark size=1.8pt,thick,errs] table[x=T,y=dcone,y error=econe]{figs_brick/lscan_emdv_l9.dat};
+\addplot[color=emdC,mark=square*,mark size=1.8pt,thick,errs] table[x=T,y=dcone,y error=econe]{figs_brick/lscan_emdv_l16.dat};
+\addplot[confstyle,errs] table[x=T,y=dcone,y error=econe]{figs_brick/lscan_emdc_l9.dat};
+\addplot[htlstyle,errs] table[x=T,y=dcone,y error=econe]{figs_brick/htl_k3.dat};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Route~A (MATTER + MyEloss), $\lambda_t$ scan at $L=4$~fm, with the HTL $\qhat$ at the matching size ($K=3$, green). $\lambda_t=9$ matches
+the tune at $T=0.2$--0.3~GeV in both the leading and the in-cone loss. The conformal control
+($Q$ frozen at $T=0.3$~GeV, same $\lambda_t$) agrees by construction at 0.3~GeV, loses less at
+0.2~GeV (where $Q_\text{EMD}>Q(0.3)$) and more at 0.4--0.5~GeV (where $Q_\text{EMD}<Q(0.3)$):
+at fixed normalisation the EMD shape changes the loss by about 5--15\% at 0.4--0.5~GeV, while at 0.2~GeV the difference is within the statistical errors.}
+\label{fig:lam}
+\end{figure}
+
+%======================================================================
+\begin{figure}[h]\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1,horizontal sep=1.6cm},
+  xlabel={$T$ [GeV]},xmin=0.18,xmax=0.52,ymin=0.4,ymax=1.6,legend pos=north east,legend cell align=left]
+\nextgroupplot[ylabel={$\Delta p_T/\Delta p_T^\text{tune}$},title={leading parton}]
+\addplot[gray,thin,forget plot] coordinates {(0.18,1) (0.52,1)};
+\addplot[emdstyle,errs] table[x=T,y=rlead,y error=erlead]{figs_brick/ratio_emdv_l9.dat}; \addlegendentry{EMD, $\lambda_t=9$}
+\addplot[confstyle,errs] table[x=T,y=rlead,y error=erlead]{figs_brick/ratio_emdc_l9.dat}; \addlegendentry{conformal, $\lambda_t=9$}
+\addplot[htlstyle,errs] table[x=T,y=rlead,y error=erlead]{figs_brick/ratio_htl_k3.dat}; \addlegendentry{HTL, $K=3$}
+\nextgroupplot[title={within $R=0.4$}]
+\addplot[gray,thin,forget plot] coordinates {(0.18,1) (0.52,1)};
+\addplot[emdstyle,errs] table[x=T,y=rcone,y error=ercone]{figs_brick/ratio_emdv_l9.dat};
+\addplot[confstyle,errs] table[x=T,y=rcone,y error=ercone]{figs_brick/ratio_emdc_l9.dat};
+\addplot[htlstyle,errs] table[x=T,y=rcone,y error=ercone]{figs_brick/ratio_htl_k3.dat};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Ratio to the tune of Fig.~\ref{fig:lam}'s $\lambda_t=9$ and $K=3$ curves. The HTL $\qhat$ in MyEloss follows the same pattern as EMD, so the departure from the tune at high $T$ is a kernel (mechanism) effect. At 0.5~GeV both EMD and the conformal control lose 10--20\% less than the tune, which also has
+LBT's elastic loss. At 0.4--0.5~GeV the EMD shape lowers the ratio by about 5--15\% relative to the
+conformal control, as expected from $Q(T)$ falling 7--11\% below its value at 0.3~GeV; at
+0.2~GeV the errors are large.}
+\label{fig:ratio}
+\end{figure}
+
+%======================================================================
+\begin{figure}[h]\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1,horizontal sep=1.6cm},
+  xlabel={$L$ [fm]},xmin=0.5,xmax=8.5,ymin=0,ymax=32,legend pos=north west,legend cell align=left]
+\nextgroupplot[ylabel={$\Delta p_T$ [GeV]},title={leading parton}]
+\addplot[tunestyle,errs] table[x=L,y=dlead,y error=elead]{figs_brick/lscan_L_tune.dat}; \addlegendentry{tune}
+\addplot[emdstyle,errs] table[x=L,y=dlead,y error=elead]{figs_brick/lscan_L_emdv.dat}; \addlegendentry{EMD + MyEloss, $\lambda_t=9$}
+\addplot[htlstyle,errs] table[x=L,y=dlead,y error=elead]{figs_brick/lscan_L_htl.dat}; \addlegendentry{HTL + MyEloss, $K=3$}
+\nextgroupplot[title={within $R=0.4$}]
+\addplot[tunestyle,errs] table[x=L,y=dcone,y error=econe]{figs_brick/lscan_L_tune.dat};
+\addplot[emdstyle,errs] table[x=L,y=dcone,y error=econe]{figs_brick/lscan_L_emdv.dat};
+\addplot[htlstyle,errs] table[x=L,y=dcone,y error=econe]{figs_brick/lscan_L_htl.dat};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Path-length dependence at $T=0.3$~GeV. Normalised to agree at 3--4~fm, route~A's
+coherent BDMPS-Z radiation (formation time $\le L$, $\omega\le\qhat L^2/2$) grows faster than
+the tune's incoherent LBT scatterings, with either $\qhat$ (EMD and HTL agree at every $L$): less loss at $L\le2$~fm, more at $L\ge6$~fm. This is why
+the BDMPS-Z kernel needs a larger $\lambda_t$ in hydro, where jets see the hottest medium only
+briefly.}
+\label{fig:L}
+\end{figure}
+
+%======================================================================
+\begin{figure}[h]\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1,horizontal sep=1.6cm},ymin=0.4,ymax=1.8,
+  legend cell align=left,ylabel={$\Delta p_T^\text{EMD}/\Delta p_T^\text{HTL}$}]
+\nextgroupplot[xlabel={$T$ [GeV]},xmin=0.18,xmax=0.52,title={$L=4$~fm},legend pos=north west]
+\addplot[gray,thin,forget plot] coordinates {(0.18,1) (0.52,1)};
+\addplot[black,thick,dash pattern=on 2pt off 2pt,domain=0.18:0.52] table[x=T,y expr=\thisrow{emd1}/\thisrow{htl50}]{figs_brick/qhat_curves.dat}; \addlegendentry{$\qhat$ ratio ($E=50$ GeV)}
+\addplot[emdstyle,errs] table[x=x,y=rlead,y error=erlead]{figs_brick/emd_over_htl_l9k3.dat}; \addlegendentry{leading, $\lambda_t=9$ / $K=3$}
+\addplot[emdstyle,mark=square,dashed,mark options={solid},errs] table[x=x,y=rcone,y error=ercone]{figs_brick/emd_over_htl_l9k3.dat}; \addlegendentry{$R=0.4$, $\lambda_t=9$ / $K=3$}
+\addplot[color=emdA,mark=*,mark size=1.6pt,thick,errs] table[x=x,y=rlead,y error=erlead]{figs_brick/emd_over_htl_l1k1.dat}; \addlegendentry{leading, $\lambda_t=1$ / $K=1$}
+\nextgroupplot[xlabel={$L$ [fm]},xmin=1.5,xmax=8.5,title={$T=0.3$~GeV, $\lambda_t=9$ / $K=3$},ylabel={},restrict x to domain=1.5:9]
+\addplot[gray,thin,forget plot] coordinates {(1.5,1) (8.5,1)};
+\addplot[emdstyle,errs] table[x=x,y=rlead,y error=erlead]{figs_brick/emd_over_htl_L.dat};
+\addplot[emdstyle,mark=square,dashed,mark options={solid},errs] table[x=x,y=rcone,y error=ercone]{figs_brick/emd_over_htl_L.dat};
+\end{groupplot}
+\end{tikzpicture}
+\caption{EMD versus HTL $\qhat$ in the same kernel (MATTER + MyEloss), at matched size. Left:
+against $T$; the dashed black line is the ratio of the two $\qhat$ themselves (0.91 at 0.2~GeV
+to 1.08 at 0.5~GeV). At $\lambda_t=9$/$K=3$ the energy-loss ratio is flat within errors:
+0.88--1.02 for the leading parton and 1.05--1.08 within $R=0.4$. The $\lambda_t=1$/$K=1$ ratio
+(smaller losses, larger relative errors) rises with $T$ roughly like the $\qhat$ ratio. Right:
+against path length at $T=0.3$~GeV ($L\ge2$~fm; at 1~fm the losses are below 1.5~GeV and
+the ratio is undetermined). The shapes of the two $\qhat(T)$ change the brick energy loss by
+$\lesssim10\%$.}
+\label{fig:emdhtl}
+\end{figure}
+
+%======================================================================
+\begin{figure}[h]\centering
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1,horizontal sep=1.6cm},
+  xlabel={$\lambda_t$},xmode=log,log basis x=2,xmin=0.7,xmax=11,xtick={1,2,4,8},xticklabels={1,2,4,8},
+  ymin=0,ymax=18,legend cell align=left]
+\nextgroupplot[ylabel={$\Delta p_T$ [GeV]},title={100 GeV quark},legend pos=south east]
+\addplot[tune,thick,forget plot] table[x=lam,y=dlead]{figs_brick/opt1_quark_tune.dat};
+\addplot[tune,thick,dashed,forget plot] table[x=lam,y=dcone]{figs_brick/opt1_quark_tune.dat};
+\addplot[emdstyle,errs] table[x=lam,y=dlead,y error=elead]{figs_brick/opt1_quark.dat}; \addlegendentry{EMD, leading}
+\addplot[emdstyle,mark=square,dashed,mark options={solid},errs] table[x=lam,y=dcone,y error=econe]{figs_brick/opt1_quark.dat}; \addlegendentry{EMD, $R=0.4$}
+\addlegendimage{tune,thick}\addlegendentry{tune, leading}
+\addlegendimage{tune,thick,dashed}\addlegendentry{tune, $R=0.4$}
+\nextgroupplot[title={100 GeV gluon}]
+\addplot[tune,thick] table[x=lam,y=dlead]{figs_brick/opt1_gluon_tune.dat};
+\addplot[tune,thick,dashed] table[x=lam,y=dcone]{figs_brick/opt1_gluon_tune.dat};
+\addplot[emdstyle,errs] table[x=lam,y=dlead,y error=elead]{figs_brick/opt1_gluon.dat};
+\addplot[emdstyle,mark=square,dashed,mark options={solid},errs] table[x=lam,y=dcone,y error=econe]{figs_brick/opt1_gluon.dat};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Route~B: the default chain with only $\qhat(T)$ replaced by EMD (MATTER Type~9 + LBT
+\code{qhat\_model}=1), $T=0.3$~GeV, $L=4$~fm. Horizontal lines: the tune. At $\lambda_t=1$ the
+EMD chain reproduces the tune (quark: 9.89 vs 9.82~GeV leading, 9.25 vs 9.17~GeV in-cone). The
+loss depends only weakly on $\qhat$: a factor 2.8 ($\lambda_t=1\to8$) adds 2--4~GeV. In hydro, $\lambda_t\approx2$ describes the ATLAS jet $R_{AA}$.}
+\label{fig:optB}
+\end{figure}
+
+\end{document}
