@@ -157,10 +157,13 @@ class EvolutionHistory {
    * Set flag tau_eta_is_tz to true if hydro dynamics
    * is setup in (t,x,y,z) coordinate.
    */
-  bool tau_eta_is_tz;
+  // must be initialized: the default constructor is used by FluidDynamics and
+  // MpiMusic never sets it, so an indeterminate value made jets see an empty
+  // medium depending on heap layout
+  bool tau_eta_is_tz = false;
 
   /** Boost_invariant flag. */
-  bool boost_invariant;
+  bool boost_invariant = false;
 
   /**
    * The bulk information of hydro dynamics, in the form of

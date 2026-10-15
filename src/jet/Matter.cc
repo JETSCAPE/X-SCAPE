@@ -311,7 +311,14 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   VERBOSE(8) << " qhat0 = " << qhat0 << " qhat = " << qhat;
 
-  GetHydroTau0Signal(tStart);
+  // use the hydro start time only if the bulk manager set one; otherwise keep
+  // the XML tStart (the value was uninitialized memory in per-event mode)
+  {
+    double hydro_tau0 = -1.0;
+    GetHydroTau0Signal(hydro_tau0);
+    if (hydro_tau0 >= 0.0)
+      tStart = hydro_tau0;
+  }
 
   for (int i = 0; i < pIn.size(); i++) {
     // Reject photons

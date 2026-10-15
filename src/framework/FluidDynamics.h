@@ -95,7 +95,9 @@ class FluidDynamics : public JetScapeModuleBase {
    * @var Jetscape::real hydro_tau_0
    * @var Jetscape::real hydro_tau_max
    */
-  Jetscape::real hydro_tau_0, hydro_tau_max;
+  // < 0 means "not set": only the bulk-dynamics (clock) mode sets the start
+  // time; eloss modules then keep their XML tStart (per-event mode)
+  Jetscape::real hydro_tau_0 = -1.0, hydro_tau_max = -1.0;
 
   /**
    * @brief Record the hydro freeze out temperature.
