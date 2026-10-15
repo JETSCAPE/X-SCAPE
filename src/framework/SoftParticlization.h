@@ -21,6 +21,14 @@
 #ifndef SOFTPARTICLIZATION_H_
 #define SOFTPARTICLIZATION_H_
 
+// Capabilities, for code built against several X-SCAPE versions (PyJetscape):
+// GetCompactPrimaries/TakeCompactPrimaries (iSS <keep_primaries>), and iSS's
+// <decay_smash_list> (iSS decays the SMASH hadron list of EOS 91 itself),
+// SampleCells (sampling given cells outside the framework's event loop).
+#define SOFTPARTICLIZATION_HAS_PRIMARIES 1
+#define ISS_DECAYS_SMASH_LIST 1
+#define SOFTPARTICLIZATION_HAS_SAMPLE_CELLS 1
+
 #include <vector>
 
 #include "JetScapeModuleBase.h"
@@ -81,6 +89,11 @@ class SoftParticlization : public JetScapeModuleBase {
   HadronArrays compact_hadrons_;
   bool has_compact_hadrons_ = false;
   bool compact_hadrons_taken_ = false;
+
+  /// The undecayed (primary) hadrons of the first samples, if the module kept
+  /// them (iSS <keep_primaries> N, compact output only)
+  HadronArrays compact_primaries_;
+  bool has_compact_primaries_ = false;
 
   /**
    * @brief The seed for this event: the SetNextRandomSeed override if one is
@@ -185,6 +198,21 @@ class SoftParticlization : public JetScapeModuleBase {
   virtual bool SetCompactHadronOutput(bool on) { return false; }
 
   /**
+   * @brief Sample the given surface cells now, with this seed and number of
+   * samples, outside the framework's event loop: the steps of ExecuteTask on
+   * cells handed over directly instead of through GetHydroHyperSurface. The
+   * hadrons (and primaries) are left in compact form, as with
+   * SetCompactHadronOutput: take them with TakeCompactHadrons /
+   * TakeCompactPrimaries. Used to hadronize both legs of a two-stage hydro
+   * event in the production process, where the framework has room for one
+   * soft particlization only. Returns false if this module cannot do it.
+   */
+  virtual bool SampleCells(const std::vector<SurfaceCellInfo> &cells,
+                           long seed, int n_samples) {
+    return false;
+  }
+
+  /**
    * @brief True if the last event's hadrons are in GetCompactHadrons() rather
    * than in Hadron_list_.
    */
@@ -210,12 +238,44 @@ class SoftParticlization : public JetScapeModuleBase {
   }
 
   /**
-   * @brief Drop the compact hadrons (ClearTask does it every event).
+   * @brief True if the last event also kept its undecayed (primary) hadrons,
+   * for the first N samples (iSS <keep_primaries> N, with
+   * SetCompactHadronOutput): in GetCompactPrimaries(), pstat 11 as the
+   * decayed ones. They are the hadrons as sampled, before any decay, for an
+   * afterburner (SMASH) run later.
+   */
+  bool HasCompactPrimaries() const { return has_compact_primaries_; }
+
+  /**
+   * @brief The last event's primaries (see HasCompactPrimaries); sample_counts
+   * has one entry per kept sample. Empty once TakeCompactPrimaries() moved
+   * them out.
+   */
+  const HadronArrays &GetCompactPrimaries() const { return compact_primaries_; }
+
+  /**
+   * @brief Move the last event's primaries into `out` without copying.
+   * Returns false if there are none (or they were already taken).
+   */
+  bool TakeCompactPrimaries(HadronArrays &out) {
+    if (!has_compact_primaries_)
+      return false;
+    HadronArrays().swap(out);
+    out.swap(compact_primaries_);
+    has_compact_primaries_ = false;
+    return true;
+  }
+
+  /**
+   * @brief Drop the compact hadrons and primaries (ClearTask does it every
+   * event).
    */
   void ClearCompactHadrons() {
     compact_hadrons_.clear();
     has_compact_hadrons_ = false;
     compact_hadrons_taken_ = false;
+    compact_primaries_.clear();
+    has_compact_primaries_ = false;
   }
 
   /**

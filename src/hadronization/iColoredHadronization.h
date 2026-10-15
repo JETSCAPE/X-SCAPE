@@ -20,6 +20,11 @@
 #include "HadronizationModule.h"
 #include "Pythia8/Pythia.h"
 
+// Capability, for code built against several X-SCAPE versions (PyJetscape):
+// per-event reseeding (<reseed_per_event>), the recorded Pythia input
+// (<store_input>, GetLastInput) and HadronizeInput.
+#define ICOLORED_HAS_INPUT_RECORD 1
+
 using namespace Jetscape;
 
 class iColoredHadronization
@@ -34,8 +39,56 @@ class iColoredHadronization
                        vector<shared_ptr<Parton>> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
 
+  /// One entry of the parton list handed to Pythia (status 23): the final
+  /// partons, the beam remnants and the colour-balancing parton, as appended.
+  struct InputParton {
+    int id, col, acol;
+    double px, py, pz, e, m;
+  };
+
+  /**
+   * Use this seed for the next DoHadronization/HadronizeInput (one-shot): the
+   * Pythia generator is reseeded with it first.
+   */
+  void SetNextRandomSeed(unsigned int seed) {
+    next_seed_ = seed;
+    has_next_seed_ = true;
+  }
+
+  /// The seed the last hadronization used; 0 if it was not reseeded.
+  unsigned int GetLastRandomSeed() const { return last_seed_; }
+
+  /// With <store_input> 1: the last DoHadronization's Pythia input (else empty).
+  const std::vector<InputParton> &GetLastInput() const { return last_input_; }
+
+  /**
+   * Hadronize a stored Pythia input (GetLastInput of an earlier run) the way
+   * DoHadronization does after building it: no beam remnants or hydro needed.
+   * With the seed of that run (SetNextRandomSeed) and the same Pythia version
+   * and settings, the hadrons are the same.
+   */
+  void HadronizeInput(const std::vector<InputParton> &input,
+                      vector<shared_ptr<Hadron>> &hOut);
+
  private:
   double p_fake;
+
+  // <JetHadronization><reseed_per_event> 1: every event draws a seed from the
+  // module's generator and reseeds Pythia with it, so each event can be
+  // reproduced on its own (GetLastRandomSeed). 0 (default): Pythia runs on
+  // unbroken from its default seed.
+  bool reseed_per_event_ = false;
+  bool has_next_seed_ = false;
+  unsigned int next_seed_ = 0;
+  unsigned int last_seed_ = 0;
+  // <JetHadronization><store_input> 1: keep the Pythia input (GetLastInput)
+  bool store_input_ = false;
+  std::vector<InputParton> last_input_;
+
+  void Reseed(unsigned int seed);
+  void ReseedForEvent();
+  // the final hadrons of pythia.event after pythia.next()
+  void CollectHadrons(vector<shared_ptr<Hadron>> &hOut);
 
   // Allows the registration of the module so that it is available to be used by
   // the Jetscape framework.

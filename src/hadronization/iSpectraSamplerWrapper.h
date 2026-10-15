@@ -57,6 +57,10 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   // from_evolution: if the hydro hands over no surface, build one from its
   // stored evolution (FindHydroHyperSurface). Off in the time-stepped path.
   int getSurfCellVector(bool from_evolution = false);
+  // the cells into iSS (FO_surf); returns their number
+  int PassSurfaceToISS(const std::vector<SurfaceCellInfo> &surfVec);
+  // <iSS_working_path>/music_input -> MUSIC's input file, unless it exists
+  void LinkMusicInput();
   void PassHadronListToJetscape();
   void PassHadronListToJetscapeSameEvent();
   void PassHadronArraysToJetscape();
@@ -68,6 +72,11 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   // flat arrays instead of Hadron objects (ExecuteTask only; the time-stepped
   // ExecTime path keeps filling Hadron_list_)
   bool SetCompactHadronOutput(bool on) override;
+
+  // ExecuteTask's steps on given cells, with this seed and number of samples;
+  // the hadrons in compact form (SoftParticlization::SampleCells)
+  bool SampleCells(const std::vector<SurfaceCellInfo> &cells, long seed,
+                   int n_samples) override;
 };
 
 #endif  // ISPECTRASAMPLERWRAPPER_H

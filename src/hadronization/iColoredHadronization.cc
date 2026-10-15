@@ -96,7 +96,30 @@ void iColoredHadronization::InitTask() {
     pythia.readString(s);
   }
 
+  reseed_per_event_ =
+      GetXMLElementInt({"JetHadronization", "reseed_per_event"}, false) == 1;
+  if (reseed_per_event_) {
+    JSINFO << "iColoredHadronization: reseeding Pythia every event";
+  }
+  store_input_ =
+      GetXMLElementInt({"JetHadronization", "store_input"}, false) == 1;
+
   pythia.init();
+}
+
+void iColoredHadronization::Reseed(unsigned int seed) {
+  // Pythia's Rndm takes 0 < seed <= 900000000 (0 would mean "from the clock")
+  pythia.rndm.init(static_cast<int>(seed % 900000000u) + 1);
+  last_seed_ = seed;
+}
+
+void iColoredHadronization::ReseedForEvent() {
+  if (has_next_seed_) {
+    Reseed(next_seed_);
+    has_next_seed_ = false;
+  } else if (reseed_per_event_) {
+    Reseed((*GetMt19937Generator())());
+  }
 }
 
 void iColoredHadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
@@ -111,7 +134,7 @@ void iColoredHadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
 void iColoredHadronization::DoHadronization(
     vector<vector<shared_ptr<Parton>>> &shower,
     vector<shared_ptr<Hadron>> &hOut, vector<shared_ptr<Parton>> &pOut) {
-  // JSINFO << "Starting "
+  ReseedForEvent();
   Event &event = pythia.event;
   event.reset();
   double pz = p_fake;
@@ -260,9 +283,37 @@ void iColoredHadronization::DoHadronization(
   VERBOSE(2) << "There are " << hOut.size() << " Hadrons and " << pOut.size()
              << " partons after Hadronization";
 
+  if (store_input_) {
+    // entry 0 is the system line event.reset() adds
+    last_input_.clear();
+    for (int i = 1; i < event.size(); ++i) {
+      last_input_.push_back({event[i].id(), event[i].col(), event[i].acol(),
+                             event[i].px(), event[i].py(), event[i].pz(),
+                             event[i].e(), event[i].m()});
+    }
+  }
+
   pythia.next();
   // event.list();
 
+  CollectHadrons(hOut);
+  shower.clear();
+}
+
+void iColoredHadronization::HadronizeInput(
+    const std::vector<InputParton> &input, vector<shared_ptr<Hadron>> &hOut) {
+  ReseedForEvent();
+  Event &event = pythia.event;
+  event.reset();
+  for (const auto &q : input) {
+    event.append(q.id, 23, q.col, q.acol, q.px, q.py, q.pz, q.e, q.m);
+  }
+  pythia.next();
+  CollectHadrons(hOut);
+}
+
+void iColoredHadronization::CollectHadrons(vector<shared_ptr<Hadron>> &hOut) {
+  Event &event = pythia.event;
   unsigned int ip = hOut.size();
   for (unsigned int i = 0; i < event.size(); ++i) {
     if (!event[i].isFinal())
@@ -277,6 +328,4 @@ void iColoredHadronization::DoHadronization(
                                        event[i].phi(), event[i].e(), x));
     ++ip;
   }
-
-  shower.clear();
 }
