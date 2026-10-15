@@ -791,8 +791,10 @@
        <pythia_decays>on</pythia_decays> <!-- lets the particles given to pythia decay-->
        <tau0Max>10.0</tau0Max> <!-- only particles with tau0 < tau0Max (given in mm/c) can decay, increase to include weak decays-->
        <weak_decays>depracted</weak_decays> <!-- use the parameters pythia_decays and tau0Max, this parameter is only a dummy to make old xml files work-->
-       <!-- colorless only: 1 = reseed Pythia every event from the module's generator (the seed is recorded), so each event's hadronization can be reproduced on its own; 0 = one Pythia stream for the whole run -->
+       <!-- colorless and iColored: 1 = reseed Pythia every event from the module's generator (the seed is recorded), so each event's hadronization can be reproduced on its own; 0 = one Pythia stream for the whole run -->
        <reseed_per_event>0</reseed_per_event>
+       <!-- iColored only: 1 = keep the parton list handed to Pythia every event (beam remnants and colour-balancing parton included), so the event can be hadronized again later -->
+       <store_input>0</store_input>
        <!-- You can add any number of additional lines to initialize pythia hadronization here -->
        <!-- Note that if the tag exists it cannot be empty (tinyxml produces a segfault) -->
        <LinesToRead>
@@ -843,6 +845,13 @@
       <deltaf_type>20</deltaf_type>
       <number_of_repeated_sampling>1</number_of_repeated_sampling>
       <Perform_resonance_decays>0</Perform_resonance_decays>
+      <!-- 1: iSS decays the SMASH hadron list (EOS 91) too, for runs without
+           SMASH (Breit-Wigner masses for the unstable daughters of channels
+           the pole masses close); 0: that list is left to SMASH -->
+      <decay_smash_list>0</decay_smash_list>
+      <!-- N > 0: also hand over the undecayed hadrons of the first N samples
+           (compact output only), for an afterburner run later -->
+      <keep_primaries>0</keep_primaries>
       <!-- 1: random numbers addressed by the cell (blocks of quantized
            tau, x, y, eta), so two surfaces that agree in a region give the
            same hadrons there and their difference is less noisy; 0: the
