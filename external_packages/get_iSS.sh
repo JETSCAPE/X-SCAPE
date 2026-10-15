@@ -14,12 +14,13 @@
 ##############################################################################
 
 # using a commit from the iSS repository that is compatible with the current X-SCAPE version
-# (jhputschke/iSS iSS_optim: chunshen1987/iSS XSCAPE d242555 + the FSSW yield-loop
-# speed-ups + correlated sampling, until they are merged upstream)
+# (jhputschke/iSS smash_ready: chunshen1987/iSS XSCAPE d242555 + the FSSW yield-loop
+# speed-ups + correlated sampling (iSS_optim) + decays of the SMASH hadron list and the
+# undecayed primaries (decay_smash_list, keep_primaries), until they are merged upstream)
 folderName="iSS"
-commitHash="98deaff32a98cdba660b321145aa68bfd05f1928"
+commitHash="6ac0333125f2a8521120eb4580e828cde428166e"
 
-git clone https://github.com/jhputschke/iSS -b iSS_optim iSS
+git clone https://github.com/jhputschke/iSS -b smash_ready iSS
 cd $folderName
 git checkout $commitHash
 
