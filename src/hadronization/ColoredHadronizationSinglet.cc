@@ -497,7 +497,7 @@ void ColoredHadronizationSinglet::DoHadronization(
   if (shiftHadrons) { 
     for (int nuci=0; nuci<nucleonPositions.size(); nuci++) {
       if (!ini->GetNucleonUsed(nuci)) { //do not add depleted nucleons
-        nucleonSpheres.push_back(InitSphere(nucleonPositions[i][1], nucleonPositions[i][2], nucleonPositions[i][3], ini->GetNucleonPid(nuci)));
+        nucleonSpheres.push_back(InitSphere(nucleonPositions[nuci][1], nucleonPositions[nuci][2], nucleonPositions[nuci][3], ini->GetNucleonPid(nuci)));
       }
       else { cout << "HADRONIZATION: NOT ADDING USED NUCLEON " << nuci << endl; }
     }
@@ -578,7 +578,7 @@ void ColoredHadronizationSinglet::DoHadronization(
     if (fabs(event[eventi].eta()) > 20)
       continue; //To prevent "nan" from propagating, very rare though
 
-    if (event[eventi].pid() == 11) continue; //don't pass electrons to smash
+    if (event[eventi].id() == 11) continue; //don't pass electrons to smash
 
     double x[4] = {event[eventi].vProd().e()*Pythia8::MM2FM, 
             event[eventi].vProd().px()*Pythia8::MM2FM, 
@@ -761,12 +761,13 @@ void ColoredHadronizationSinglet::DoHadronization(
   // std::vector<int> nucleonPids; //TODO: we currently just make these up, and keep all the nucleons...
 
   //push the intact glauber nucleons
-  double thisnuc_m;
+  double thisnuc_m, thisnuc_pid;
   for (int nuci=0; nuci<targA; nuci++) {
-    if (ini->GetNucleonPid(nuci) == 2212) { thisnuc_m = 0.938; } //p
+    thisnuc_pid = ini->GetNucleonPid(nuci);
+    if (thisnuc_pid == 2212) { thisnuc_m = 0.938; } //p
     else { thisnuc_m = 0.939; } //n
     if (!ini->GetNucleonUsed(nuci)) {
-      hOut.push_back(make_shared<Hadron>(ip, nucleonPids[nuci], 91,
+      hOut.push_back(make_shared<Hadron>(ip, thisnuc_pid, 91,
           FourVector(0., 0., 0., thisnuc_m), 
           FourVector(nucleonPositions[nuci][1], nucleonPositions[nuci][2], nucleonPositions[nuci][3], 0.), 
           thisnuc_m));

@@ -77,10 +77,10 @@ std::tuple<double, double, double> InitialState::CoordFromIdx(int idx) {
                          -grid_max_z_ + ieta * grid_step_z_);
 }
 
-void MCGlauberWrapper::GetProjectileNucleonPositionsAtt(
+void InitialState::GetProjectileNucleonPositionsAtt(
     const double t, const int idx, double &x, double &y, double &z) { return; }
 
-void MCGlauberWrapper::GetTargetNucleonPositionsAtt(
+void InitialState::GetTargetNucleonPositionsAtt(
     const double t, const int idx, double &x, double &y, double &z) { return; }
 
 int InitialState::GetNucleonPid(const int idx) { return 0; }
