@@ -999,8 +999,25 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       // qhatLoc= GeneralQhatFunction(QhatParametrizationType, tempLoc, sdLoc, alphas, qhat0, enerLoc, muSquare);
 
       double nuclear_dens = ini->Get_target_nucleon_density_lab(el_time, el_rx, el_ry, el_rz);
-      if (el_time < 0.1) { nuclear_dens = 0.; } //no self interaction in the first moment
+
+      //find the closest nucleon, assume that's where the density comes from... 
+      //TODO: some way to update the density and tie to nucleon idx
+      int closestNucIdx = 0;
+      double mindistsq = 999999.;
+      double nucx, nucy, nucz, thisdistsq;
+      for (int nuci=0; nuci<targA; nuci++) {
+        ini->GetProjectileNucleonPositionsAtt(el_time, nuci, nucx, nucy, nucz);
+        thisdistsq = pow(el_rx - nucx, 2.) + pow(el_ry - nucy, 2.) + pow(el_rz - nucz, 2.);
+        if (thisdistsq < mindistsq) {
+          closestNucIdx = nuci;
+          mindistsq = thisdistsq;
+        }
+      }
+
       if (!hasExited && nuclear_dens == 0.) { hasExited = true; cout << "EXITING, VIRT IS " << pIn[i].t() << endl; }
+      // if (el_time < 0.1) { nuclear_dens = 0.; } //no self interaction in the first moment
+      if (ini->GetNucleonUsed(closestNucIdx)) { cout << "EMATTER: USED NUCLEON ALREADY " << closestNucIdx << endl; nuclear_dens = 0.; }
+
       if (pIn[i].pid()==21) {
         qhatLoc = interpolate_pdf_tables(initEner,21,2);
       }
@@ -1045,7 +1062,9 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
           // cout << "dens " << nuclear_dens << " rate " << rate_per_vol << " dt " << dt_lrf << " prob is " << prob_el << " rand is " << el_rand << endl;
           if (el_rand > prob_el) { // elastic scattering happens
 
-            cout << "elastic scattering happens" << endl;
+            cout << "elastic scattering happens, t = " << el_dt << endl;
+
+
             int CT = -1;
             int pid0 = -999;
             int pid2 = -999;
@@ -1149,8 +1168,9 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
             // if (eremn*eremn < psq) { cout << "REMNANT ESQ < PSQ " << eremn << " " << psq << endl; exit(-1); return; }
             FourVector premnant = FourVector(0-pc2[1],0-pc2[2],0-pc2[3],0.938-pc2[0]); //at rest
 
-            int remnant_pid; //for now all nucleons are protons
-            if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
+            int remnant_pid;
+            // if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
+            if (ini->GetNucleonPid(closestNucIdx) == 2212) { //hit proton
                 switch (pid2) {
                   case 21: //g
                     remnant_pid = 21; break; //need a gluon to stay color neutral with recoiled gluon
@@ -1191,6 +1211,9 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
             cout << "RECOIL " << pid2 << " E " << pc2[0] << " MOM " << pc2[1] << " " << pc2[2] << " " << pc2[3] << endl;
             cout << "REMNANT " << remnant_pid << " E " << remnant.p(0) << " MOM " << remnant.p(1) << " " << remnant.p(2) << " " << remnant.p(3) << endl;
 
+            //mark this nucleon as used
+            ini->SetNucleonUsed(closestNucIdx, 1);
+            cout << "EMATTER: USING NUCLEON " << closestNucIdx << endl;
 
 
             pOut.push_back(remnant);

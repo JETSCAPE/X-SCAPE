@@ -319,16 +319,27 @@ void EAGun::ExecuteTask() {
     VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
     int pythiaindex;
-    if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
+    int nucleonIdx = (int)( (targA + 1) * ZeroOneDistribution(*GetMt19937Generator()) );
+    // if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
+    //     cout << "PROTON!!!!" << endl;
+    //     // readString("Beams:idA = 2212");
+    //     pythiaindex = 0;
+    // }
+    // else {
+    //     cout << "NEUTRON!!!!" << endl;
+    //     // readString("Beams:idA = 2112");
+    //     pythiaindex = 1;
+    // }
+    int nucleonPid = ini->getNucleonPid(nucleonIdx);
+    if (nucleonPid == 2212) { //hit proton
         cout << "PROTON!!!!" << endl;
-        // readString("Beams:idA = 2212");
         pythiaindex = 0;
     }
     else {
         cout << "NEUTRON!!!!" << endl;
-        // readString("Beams:idA = 2112");
         pythiaindex = 1;
     }
+
     // cout << pythiaindex << endl;
     Pythia8::Pythia& py = *pythia_vec[pythiaindex];
     // Pythia8::RotBstMatrix cmBoost = cmboost_vec[pythiaindex];
@@ -613,9 +624,13 @@ void EAGun::ExecuteTask() {
         for (int i=0; i<4; i++) { xLoc[i] = 0.; }
     } 
     else {
-        nucleonPositions = ini->GetTargetNucleonPositions();
-        int randInd = (int)( ZeroOneDistribution(*GetMt19937Generator()) * nucleonPositions.size() );
-        for (int i=0; i<4; i++) { xLoc[i] = nucleonPositions[randInd][i]; }
+        // nucleonPositions = ini->GetTargetNucleonPositions();
+        // int randInd = (int)( ZeroOneDistribution(*GetMt19937Generator()) * nucleonPositions.size() );
+        // for (int i=0; i<4; i++) { xLoc[i] = nucleonPositions[randInd][i]; }
+        xLoc[0] = 0.;
+        ini->GetTargetNucleonPositionsAtt(xLoc[0], nucleonIdx, xLoc[1], xLoc[2], xLoc[3]);
+        ini->SetNucleonUsed(nucleonIdx, 1);
+        cout << "EAGUN: USING NUCLEON " << nucleonIdx << endl;
     }
     // cout << "INITIAL COLLISION IS AT: " << xLoc[0] << " " << xLoc[1] << " " << xLoc[2] << " " << xLoc[3] << endl;
 

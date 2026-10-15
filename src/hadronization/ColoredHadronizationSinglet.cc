@@ -484,19 +484,22 @@ void ColoredHadronizationSinglet::DoHadronization(
   // exit(1);
 
   std::vector<std::array<double, 4>> nucleonPositions = ini->GetTargetNucleonPositions();
-  std::vector<int> nucleonPids; //TODO: we currently just make these up, and keep all the nucleons...
+  // std::vector<int> nucleonPids; //TODO: we currently just make these up, and keep all the nucleons...
 
-  int pidi=0;
-  for (; pidi<targZ; pidi++) { nucleonPids.push_back(2212); }
-  for (; pidi<targA; pidi++) { nucleonPids.push_back(2112); }
-  random_shuffle(nucleonPids.begin(), nucleonPids.end());
+  // int pidi=0;
+  // for (; pidi<targZ; pidi++) { nucleonPids.push_back(2212); }
+  // for (; pidi<targA; pidi++) { nucleonPids.push_back(2112); }
+  // random_shuffle(nucleonPids.begin(), nucleonPids.end());
 
   std::vector<Sphere> nucleonSpheres;
   std::vector<Sphere> nuclearHoles;
 
   if (shiftHadrons) { 
-    for (int i=0; i<nucleonPositions.size(); i++) {
-      nucleonSpheres.push_back(InitSphere(nucleonPositions[i][1], nucleonPositions[i][2], nucleonPositions[i][3], nucleonPids[i]));
+    for (int nuci=0; nuci<nucleonPositions.size(); nuci++) {
+      if (!ini->GetNucleonUsed(nuci)) { //do not add depleted nucleons
+        nucleonSpheres.push_back(InitSphere(nucleonPositions[i][1], nucleonPositions[i][2], nucleonPositions[i][3], ini->GetNucleonPid(nuci)));
+      }
+      else { cout << "HADRONIZATION: NOT ADDING USED NUCLEON " << nuci << endl; }
     }
 
     if (shiftType==VORONOI_SHIFT_TYPE) {
@@ -574,6 +577,8 @@ void ColoredHadronizationSinglet::DoHadronization(
     //if ( !event[eventi].isHadron() )  continue;
     if (fabs(event[eventi].eta()) > 20)
       continue; //To prevent "nan" from propagating, very rare though
+
+    if (event[eventi].pid() == 11) continue; //don't pass electrons to smash
 
     double x[4] = {event[eventi].vProd().e()*Pythia8::MM2FM, 
             event[eventi].vProd().px()*Pythia8::MM2FM, 
@@ -755,17 +760,20 @@ void ColoredHadronizationSinglet::DoHadronization(
   // std::vector<std::array<double, 4>> nucleonPositions = ini->GetTargetNucleonPositions();
   // std::vector<int> nucleonPids; //TODO: we currently just make these up, and keep all the nucleons...
 
-  //push the glauber nucleons
+  //push the intact glauber nucleons
   double thisnuc_m;
-  for (int nuci=0; nuci<nucleonPids.size(); nuci++) {
-    if (nucleonPids[nuci]==2212) { thisnuc_m = 0.938; } //p
+  for (int nuci=0; nuci<targA; nuci++) {
+    if (ini->GetNucleonPid(nuci) == 2212) { thisnuc_m = 0.938; } //p
     else { thisnuc_m = 0.939; } //n
-    hOut.push_back(make_shared<Hadron>(ip, nucleonPids[nuci], 91,
-        FourVector(0., 0., 0., thisnuc_m), 
-        FourVector(nucleonPositions[nuci][1], nucleonPositions[nuci][2], nucleonPositions[nuci][3], 0.), 
-        thisnuc_m));
-    ip++;
-    // cout << "ADDED NUCLEON " << thisnuc_m << endl;
+    if (!ini->GetNucleonUsed(nuci)) {
+      hOut.push_back(make_shared<Hadron>(ip, nucleonPids[nuci], 91,
+          FourVector(0., 0., 0., thisnuc_m), 
+          FourVector(nucleonPositions[nuci][1], nucleonPositions[nuci][2], nucleonPositions[nuci][3], 0.), 
+          thisnuc_m));
+      ip++;
+      // cout << "ADDED NUCLEON " << thisnuc_m << endl;
+    }
+    else { cout << "SMASH: NOT ADDING USED NUCLEON " << nuci << endl; }
   }
 
   cout << "DONE HADRONIZING" << endl;
