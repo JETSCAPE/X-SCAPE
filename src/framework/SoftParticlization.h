@@ -23,9 +23,11 @@
 
 // Capabilities, for code built against several X-SCAPE versions (PyJetscape):
 // GetCompactPrimaries/TakeCompactPrimaries (iSS <keep_primaries>), and iSS's
-// <decay_smash_list> (iSS decays the SMASH hadron list of EOS 91 itself).
+// <decay_smash_list> (iSS decays the SMASH hadron list of EOS 91 itself),
+// SampleCells (sampling given cells outside the framework's event loop).
 #define SOFTPARTICLIZATION_HAS_PRIMARIES 1
 #define ISS_DECAYS_SMASH_LIST 1
+#define SOFTPARTICLIZATION_HAS_SAMPLE_CELLS 1
 
 #include <vector>
 
@@ -194,6 +196,21 @@ class SoftParticlization : public JetScapeModuleBase {
    * cannot do it (it then fills Hadron_list_ as usual).
    */
   virtual bool SetCompactHadronOutput(bool on) { return false; }
+
+  /**
+   * @brief Sample the given surface cells now, with this seed and number of
+   * samples, outside the framework's event loop: the steps of ExecuteTask on
+   * cells handed over directly instead of through GetHydroHyperSurface. The
+   * hadrons (and primaries) are left in compact form, as with
+   * SetCompactHadronOutput: take them with TakeCompactHadrons /
+   * TakeCompactPrimaries. Used to hadronize both legs of a two-stage hydro
+   * event in the production process, where the framework has room for one
+   * soft particlization only. Returns false if this module cannot do it.
+   */
+  virtual bool SampleCells(const std::vector<SurfaceCellInfo> &cells,
+                           long seed, int n_samples) {
+    return false;
+  }
 
   /**
    * @brief True if the last event's hadrons are in GetCompactHadrons() rather

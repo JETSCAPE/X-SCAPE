@@ -147,7 +147,6 @@ void iSpectraSamplerWrapper::InitTask() {
 
 int iSpectraSamplerWrapper::getSurfCellVector(bool from_evolution) {
   std::vector<SurfaceCellInfo> surfVec;
-  std::vector<FO_surf> FOsurf_array;
   GetHydroHyperSurface(surfVec);
   if (surfVec.empty() && from_evolution) {
     // The hydro handed over no surface of its own (it only filled bulk_info):
@@ -157,6 +156,12 @@ int iSpectraSamplerWrapper::getSurfCellVector(bool from_evolution) {
            << "T_sw = " << params.T_sw << " GeV";
     FindHydroHyperSurface(params, surfVec);
   }
+  return PassSurfaceToISS(surfVec);
+}
+
+int iSpectraSamplerWrapper::PassSurfaceToISS(
+    const std::vector<SurfaceCellInfo> &surfVec) {
+  std::vector<FO_surf> FOsurf_array;
   int nCells = surfVec.size();
   JSINFO << "surface cell size: " << nCells;
   FOsurf_array.reserve(nCells);
@@ -243,9 +248,7 @@ void iSpectraSamplerWrapper::ExecTime() {
              << GetMainClock()->GetCurrentTime() << " fm/c ...";
 }
 
-void iSpectraSamplerWrapper::ExecuteTask() {
-  JSINFO << "running iSS ...";
-
+void iSpectraSamplerWrapper::LinkMusicInput() {
   // generate symbolic links with music_input_file
   std::string music_input_file_path =
       GetXMLElementText({"Hydro", "MUSIC", "MUSIC_input_file"});
@@ -259,6 +262,12 @@ void iSpectraSamplerWrapper::ExecuteTask() {
     system(system_command.str().c_str());
   }
   inputfile.close();
+}
+
+void iSpectraSamplerWrapper::ExecuteTask() {
+  JSINFO << "running iSS ...";
+
+  LinkMusicInput();
 
   int nCells = getSurfCellVector(true);
   if (nCells == 0 && GetGetHydroHyperSurfaceConnected()) {
@@ -300,6 +309,34 @@ void iSpectraSamplerWrapper::ExecuteTask() {
     }
   }
   JSINFO << "iSS finished.";
+}
+
+bool iSpectraSamplerWrapper::SampleCells(
+    const std::vector<SurfaceCellInfo> &cells, long seed, int n_samples) {
+  if (!iSpectraSampler_ptr_ || n_samples < 1)
+    return false;
+  // the state ClearTask leaves after a framework event
+  iSpectraSampler_ptr_->clear();
+  ClearHadronList();
+  ClearCompactHadrons();
+
+  LinkMusicInput();
+  SetNumberOfSamples(n_samples);
+  // the same order as ExecuteTask: the cells, then the seed
+  const int nCells = PassSurfaceToISS(cells);
+  SetNextRandomSeed(seed);
+  iSpectraSampler_ptr_->set_random_seed(NextRandomSeed());
+  if (nCells > 0) {
+    int status = iSpectraSampler_ptr_->generate_samples();
+    if (status != 0) {
+      JSWARN << "Some errors happened in generating particle samples";
+      exit(-1);
+    }
+    PassHadronArraysToJetscape();
+  } else {
+    has_compact_hadrons_ = true;  // no cells: no samples
+  }
+  return true;
 }
 
 bool iSpectraSamplerWrapper::SetNumberOfSamples(int n) {
