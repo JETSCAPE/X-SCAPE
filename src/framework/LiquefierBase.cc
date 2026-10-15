@@ -156,8 +156,8 @@ void LiquefierBase::filter_partons(std::vector<Parton> &pOut) {
     if (iparton.pstat() == miss_stat)
       continue;
 
-    // ignore photons
-    if (iparton.isPhoton(iparton.pid()))
+    // ignore photons and leptons
+    if (iparton.isNonParton(iparton.pid()))
       continue;
 
     // ignore heavy quarks

@@ -35,6 +35,10 @@
 //! Set when PythiaGun understands <partonYMax> / <partonYMode> (a rapidity cut on
 //! the partons it hands to the framework).
 #define PYTHIAGUN_HAS_PARTON_Y_CUT 1
+//! Set when PythiaGun hands over final-state leptons next to the partons and
+//! understands <minPartons> and <trigger>Z (with <triggerYMax>, <leptonPtMin>,
+//! <leptonEtaMax>: the Z acceptance on its decay leptons).
+#define PYTHIAGUN_HAS_Z_TRIGGER 1
 
 using namespace Jetscape;
 
@@ -57,12 +61,31 @@ using namespace Jetscape;
     (e.g. 0.6) and <partonYMode> on their two hardest (by pT): "leading" the
     hardest has |y| < partonYMax, "both" the two hardest, "any" either of them.
     (At the process level the two hard partons have equal pT, so "leading" is
-    only defined after ISR.)  A rejected event is regenerated, like one with
-    fewer than two partons.  Pythia's sigmaGen still counts rejected events, so
-    per window the events reaching the cut and those passing it are counted, and
+    only defined after ISR; with a single parton all three modes cut on it.)
+    A rejected event is regenerated, like one with fewer than <minPartons>
+    partons.  Pythia's sigmaGen still counts rejected events, so per window the
+    events reaching the cut and those passing it are counted, and
     GetSigmaGen()/GetSigmaErr() return sigmaGen x kept/tried (GetSigmaGenRaw is
     Pythia's own).  An accepted event keeps all its partons.  Without
     <partonYMax> nothing is cut and everything is as before.
+
+    Leptons: final-state electrons and muons (a Z's decay products, status 23
+    after the resonance decay, not 62) are handed over next to the partons, and
+    the energy loss and the liquefier pass them through like photons
+    (Parton::isNonParton).  They are not partons: <softMomentumCutoff>,
+    <minPartons> and <partonYMax> ignore them.  <minPartons> (default 2) is the
+    number of quarks, gluons or photons an event needs; with fewer it is
+    regenerated.
+
+    Optional: <trigger>Z</trigger> (default none).  The event needs an
+    opposite-charge, same-flavour lepton pair (the one with the largest
+    invariant mass if there are several), the Z, which passes <triggerYMax>
+    (|y| of the pair), <leptonPtMin> and <leptonEtaMax> (each lepton); each cut
+    is off when empty.  A rejected event is regenerated and counted with
+    <partonYMax>: an event is kept if it passes both, and kept/tried is the
+    acceptance of both.  GetTriggerLeptons() gives the current event's pair.
+    After 100000 rejected tries in one event PythiaGun throws (a process that
+    never passes, e.g. <trigger>Z without a Z in <LinesToRead>).
 */
 class PythiaGun : public HardProcess, public Pythia8::Pythia {
  private:
@@ -85,12 +108,29 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
 
   double partonYMax_ = 0.;  //!< 0: no cut
   std::string partonYMode_ = "leading";
-  std::vector<long> yTried_, yKept_;  //!< per window: events tested / passing
+  //! per window: events tested / passing <partonYMax> and the trigger
+  std::vector<long> yTried_, yKept_;
+
+  int minPartons_ = 2;  //!< quarks, gluons, photons an event needs
+  std::string trigger_ = "none";  //!< none | Z
+  //! the Z acceptance (0: no cut)
+  double triggerYMax_ = 0., leptonPtMin_ = 0., leptonEtaMax_ = 0.;
+  //! this event's trigger leptons, hardest first (two with trigger Z)
+  std::vector<Pythia8::Particle> triggerLeptons_;
 
   void ReadPtHatBins();
   void ReadPartonYCut();
-  //! the rapidity cut on the pT-sorted partons to hand over (at least two)
+  void ReadTrigger();
+  //! whether events are counted and cut (<partonYMax> or a trigger)
+  bool CutsOn() const { return partonYMax_ > 0 || trigger_ == "Z"; }
+  //! the rapidity cut on the pT-sorted particles to hand over (at least one
+  //! parton; leptons are skipped)
   bool PassesPartonYCut(const std::vector<Pythia8::Particle> &sorted) const;
+  //! the trigger's lepton pair among the particles to hand over ->
+  //! triggerLeptons_; false if there is none
+  bool FindTriggerPair(const std::vector<Pythia8::Particle> &sorted);
+  //! triggerLeptons_ against <triggerYMax>, <leptonPtMin>, <leptonEtaMax>
+  bool PassesTriggerCut() const;
   void ConfigurePythia(Pythia8::Pythia &py, int bin);
   Pythia8::Pythia &PythiaOf(int bin);
   const Pythia8::Info &InfoOf(int bin);
@@ -121,7 +161,7 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   double GetpTHatMax() const { return pTHatMax; }
 
   // Cross-section information in mb and event weight, of the current event's
-  // window (with <partonYMax>: of the events passing the cut).
+  // window (with <partonYMax> or a trigger: of the events passing the cuts).
   double GetSigmaGen() { return GetSigmaGen(activeBin_); };
   double GetSigmaErr() { return GetSigmaErr(activeBin_); };
   double GetPtHat() { return InfoOf(activeBin_).pTHat(); };
@@ -134,11 +174,11 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   double GetPtHatBinMax(int bin) const { return pTHatBins_.at(bin).second; }
   unsigned int GetPythiaSeed(int bin) const { return seedBin_.at(bin); }
   //! one window's cross section so far [mb]: Pythia's estimate, times the
-  //! acceptance of <partonYMax> if set (then the error includes the
-  //! acceptance's binomial error)
+  //! acceptance of <partonYMax> and the trigger if set (then the error
+  //! includes the acceptance's binomial error)
   double GetSigmaGen(int bin) {
     const double s = InfoOf(bin).sigmaGen();
-    return partonYMax_ > 0 ? s * GetYAcceptance(bin) : s;
+    return CutsOn() ? s * GetYAcceptance(bin) : s;
   }
   double GetSigmaErr(int bin);
   //! Pythia's own estimate, including the events the cut rejected
@@ -151,7 +191,8 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   // Rapidity cut on the handed-over partons (<partonYMax>; 0 = none).
   double GetPartonYMax() const { return partonYMax_; }
   std::string GetPartonYMode() const { return partonYMode_; }
-  //! events that reached / passed the cut in one window (0 without it)
+  //! events that reached / passed the cuts (<partonYMax> and the trigger) in
+  //! one window (0 without any)
   long GetNYTried(int bin) const {
     return yTried_.empty() ? 0 : yTried_.at(bin);
   }
@@ -160,6 +201,18 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   double GetYAcceptance(int bin) const {
     const long n = GetNYTried(bin);
     return n > 0 ? double(GetNYKept(bin)) / n : 1.0;
+  }
+
+  // Leptons and the trigger (<minPartons>, <trigger>; 0 = no cut).
+  int GetMinPartons() const { return minPartons_; }
+  std::string GetTrigger() const { return trigger_; }
+  double GetTriggerYMax() const { return triggerYMax_; }
+  double GetLeptonPtMin() const { return leptonPtMin_; }
+  double GetLeptonEtaMax() const { return leptonEtaMax_; }
+  //! the current event's trigger leptons, hardest first (two with <trigger>Z,
+  //! else none)
+  const std::vector<Pythia8::Particle> &GetTriggerLeptons() const {
+    return triggerLeptons_;
   }
 };
 

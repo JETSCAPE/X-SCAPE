@@ -297,12 +297,12 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
   GetHydroTau0Signal(tStart);
 
   for (int i = 0; i < pIn.size(); i++) {
-    // Reject photons
-    if (pIn[i].pid() == photonid) {
+    // Reject photons and leptons (passed through untouched)
+    if (pIn[i].isNonParton(pIn[i].pid())) {
       if (pIn[i].pstat() != 22) {
         pIn[i].set_stat(22);
-        VERBOSE(1) << BOLDYELLOW
-                   << " A photon was RECEIVED with px = " << pIn[i].px()
+        VERBOSE(1) << BOLDYELLOW << " A photon or lepton (pid " << pIn[i].pid()
+                   << ") was RECEIVED with px = " << pIn[i].px()
                    << " from framework and sent back ";
 
         pOut.push_back(pIn[i]);

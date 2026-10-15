@@ -341,6 +341,11 @@ class Parton : public JetScapeParticleBase {
       unsigned int acol);  ///< sets anti-color of the parton
   bool isPhoton(int pid);  // Checks to see if the particle is a photon,
                            // separate derived class for photons
+  //! an electron or a muon (e.g. a Z's decay leptons from the hard process)
+  static bool isLepton(int pid);
+  //! a photon or a lepton: no colour, so the energy loss and the liquefier
+  //! pass it through untouched (status 22) and hadronization keeps it as it is
+  static bool isNonParton(int pid);
 
   Parton(int label, int id, int stat, const FourVector &p, const FourVector &x);
   Parton(int label, int id, int stat, double pt, double eta, double phi,

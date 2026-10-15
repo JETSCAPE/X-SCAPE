@@ -255,6 +255,21 @@
            pT is equal there). -->
       <partonYMax></partonYMax>
       <partonYMode>leading</partonYMode>
+      <!-- PythiaGun also hands over the final-state electrons and muons (a Z's decay
+           products, status 23), which the energy loss and the liquefier pass through
+           like photons. minPartons: the quarks, gluons and photons an event needs
+           (leptons do not count, nor do they for partonYMax); with fewer it is
+           regenerated. -->
+      <minPartons>2</minPartons>
+      <!-- Optional: trigger Z: an event needs an opposite-charge, same-flavour lepton
+           pair (the Z; the one with the largest invariant mass), which passes
+           triggerYMax (|y| of the pair), leptonPtMin and leptonEtaMax (each lepton);
+           empty: no cut. Rejected events are regenerated and counted with partonYMax
+           (sigmaGen x kept/tried of both). none: no trigger. -->
+      <trigger>none</trigger>
+      <triggerYMax></triggerYMax>
+      <leptonPtMin></leptonPtMin>
+      <leptonEtaMax></leptonEtaMax>
       <eCM>5020</eCM>
       <!-- The soft momentum cutoff in GeV removes partons from the pythia gun. The default matches the PP19 setup. -->
       <softMomentumCutoff>2.0</softMomentumCutoff>
