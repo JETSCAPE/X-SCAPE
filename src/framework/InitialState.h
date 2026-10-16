@@ -316,15 +316,17 @@ class InitialState : public JetScapeModuleBase {
   std::vector<double> pTHat;
 
   
-  void GetProjectileNucleonPositionsAtt(
+  virtual void GetProjectileNucleonPositionsAtt(
     const double t, const int idx, double &x, double &y, double &z);
-  void GetTargetNucleonPositionsAtt(
+  virtual void GetTargetNucleonPositionsAtt(
     const double t, const int idx, double &x, double &y, double &z);
 
-  int GetNucleonPid(const int idx);
+  virtual int GetNucleonPid(const int idx);
 
-  void SetNucleonUsed(const int idx, const int isUsed);
-  int GetNucleonUsed(const int idx);
+  virtual void SetNucleonUsed(const int idx, const int isUsed);
+  virtual int GetNucleonUsed(const int idx);
+
+  virtual void ResetNucTracking();
 
  protected:
   // initial state entropy density distribution for the given grids

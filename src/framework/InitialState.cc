@@ -88,6 +88,8 @@ int InitialState::GetNucleonPid(const int idx) { return 0; }
 void InitialState::SetNucleonUsed(const int idx, const int isUsed) { return; }
 int InitialState::GetNucleonUsed(const int idx) { return 0; }
 
+void InitialState::ResetNucTracking() { return; }
+
 void InitialState::SampleABinaryCollisionPoint(double &t, double &x, double &y,
                                                double &z) {
   if (num_of_binary_collisions_.size() == 0) {

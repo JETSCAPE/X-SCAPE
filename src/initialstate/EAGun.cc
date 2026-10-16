@@ -318,6 +318,8 @@ void EAGun::ExecuteTask() {
     VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
     VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
+    ini->ResetNucTracking();
+
     int pythiaindex;
     int nucleonIdx = (int)( (targA + 1) * ZeroOneDistribution(*GetMt19937Generator()) );
     // if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
@@ -331,6 +333,7 @@ void EAGun::ExecuteTask() {
     //     pythiaindex = 1;
     // }
     int nucleonPid = ini->GetNucleonPid(nucleonIdx);
+    cout << "EAGUN PICKING NUCLEON " << nucleonIdx << " PID IS " << nucleonPid << endl;
     if (nucleonPid == 2212) { //hit proton
         cout << "PROTON!!!!" << endl;
         pythiaindex = 0;

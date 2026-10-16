@@ -574,6 +574,7 @@ void ColoredHadronizationSinglet::DoHadronization(
     // cout << "ON " << eventi << " OF " << event.size() << endl;
     if (!event[eventi].isFinal())
       continue;
+
     //if ( !event[eventi].isHadron() )  continue;
     if (fabs(event[eventi].eta()) > 20)
       continue; //To prevent "nan" from propagating, very rare though
@@ -588,11 +589,8 @@ void ColoredHadronizationSinglet::DoHadronization(
     //JSINFO << "hadron " << event[eventi].id() << " location from pythia: " << event[eventi].vProd()*Pythia8::MM2FM;
 
     // cout << "ORIG POS " << x[0] << " " << x[1] << " " << x[2] << " " << x[3] << endl;
-
-    if (shiftHadrons) {
-
-      //check if we are inside any nucleon
-      if (!isOverlap(x, event[eventi].id(), nucleonSpheres)) continue;
+    
+    if (shiftHadrons && isOverlap(x, event[eventi].id(), nucleonSpheres)) {
 
       //it overlaps with a nucleon, have to move it
       // cout << "\toverlap" << endl;
@@ -626,9 +624,6 @@ void ColoredHadronizationSinglet::DoHadronization(
         for (int i=0; i<4; i++) { d_o1[i] = x[i] - x_o1[i]; }
         double d_o1sq = R3dot(d_o1, d_o1);
 
-        // cout << "A" << endl;
-
-        //TODO: THIS USES POSITION LOL NOT VELOCITY
         //option 2: find edge of nuclear medium by going way out and reeling it back in
         double x_o2[4] = {0.};
 
@@ -651,8 +646,6 @@ void ColoredHadronizationSinglet::DoHadronization(
         double d_o2[4] = {0.};
         for (int i=0; i<4; i++) { d_o2[i] = x[i] - x_o2[i]; }
         double d_o2sq = R3dot(d_o2, d_o2);
-
-        // cout << "B" << endl;
 
         if (foundOpen) { //we have two options, see which one is closer
           if (d_o1sq<d_o2sq) {
@@ -734,7 +727,7 @@ void ColoredHadronizationSinglet::DoHadronization(
         x[3] = newz;
       }
     }
-
+    
     double hinf = 999999.;
     double xmag = pow(R3dot(x,x), 0.5);
     double smashEdgeRadius = 0.99 * smashEndTime;
@@ -746,12 +739,12 @@ void ColoredHadronizationSinglet::DoHadronization(
       for (int i=1; i<4; i++) { x[i] *= smashEdgeRadius/xmag; }
     }
 
+    cout << "ADDING PID " << event[eventi].id() << endl;
     hOut.push_back(make_shared<Hadron>(ip, event[eventi].id(), event[eventi].status(),
                                        event[eventi].pT(), event[eventi].eta(),
                                        event[eventi].phi(), event[eventi].e(), x));
 
     // cout << "END  POS " << x[0] << " " << x[1] << " " << x[2] << " " << x[3] << endl;
-    
     // cout << "PUSHED BACK" << event[eventi].status() << endl;
     ++ip;
   }
@@ -764,6 +757,7 @@ void ColoredHadronizationSinglet::DoHadronization(
   double thisnuc_m, thisnuc_pid;
   for (int nuci=0; nuci<targA; nuci++) {
     thisnuc_pid = ini->GetNucleonPid(nuci);
+    cout << nuci << " PID " << ini->GetNucleonPid(nuci) << " USED " << ini->GetNucleonUsed(nuci) << endl;
     if (thisnuc_pid == 2212) { thisnuc_m = 0.938; } //p
     else { thisnuc_m = 0.939; } //n
     if (!ini->GetNucleonUsed(nuci)) {
@@ -772,13 +766,14 @@ void ColoredHadronizationSinglet::DoHadronization(
           FourVector(nucleonPositions[nuci][1], nucleonPositions[nuci][2], nucleonPositions[nuci][3], 0.), 
           thisnuc_m));
       ip++;
-      // cout << "ADDED NUCLEON " << thisnuc_m << endl;
+      cout << "ADDED GLAUBER NUCLEON " << thisnuc_pid << endl;
     }
     else { cout << "SMASH: NOT ADDING USED NUCLEON " << nuci << endl; }
   }
 
   cout << "DONE HADRONIZING" << endl;
   // cout << hOut.size() << endl;
+  // cout << pOut.size() << endl;
   shower.clear();
   // cout << hOut.size() << endl;
 }

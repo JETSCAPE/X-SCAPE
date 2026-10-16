@@ -194,13 +194,23 @@ void MCGlauberWrapper::InitTask() {
   targA = GetXMLElementDouble({"Hard", "EAGun", "targetA"});
 
   //keep track of p vs n
-  int pidi=0;
-  for (; pidi<targZ; pidi++) { nucleonPids.push_back(2212); }
-  for (; pidi<targA; pidi++) { nucleonPids.push_back(2112); }
-  random_shuffle(nucleonPids.begin(), nucleonPids.end());
+  nucleonPids = std::make_shared<std::vector<int>>();
+  nucleonUsed = std::make_shared<std::vector<int>>();
+}
 
-  //keep track of which was hit
-  for (pidi=0; pidi<targA; pidi++) { nucleonUsed.push_back(0); }
+
+void MCGlauberWrapper::ResetNucTracking() {
+  cout << "MCGLAUBER INITIALIZING PIDS" << endl;
+
+  nucleonPids->clear();
+  nucleonUsed->clear();
+
+  int pidi=0;
+  for (; pidi<targZ; pidi++) { nucleonPids->push_back(2212); }
+  for (; pidi<targA; pidi++) { nucleonPids->push_back(2112); }
+  random_shuffle(nucleonPids->begin(), nucleonPids->end());
+
+  for (pidi=0; pidi<targA; pidi++) { nucleonUsed->push_back(0); }
 }
 
 void MCGlauberWrapper::ClearTask() {
@@ -213,6 +223,7 @@ void MCGlauberWrapper::ClearTask() {
 }
 
 void MCGlauberWrapper::ExecuteTask() {
+    // JSWARN << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!GLAUBER EXECUTE";
     ClearTask();
     VERBOSE(1) << "Run 3DMCGlauber to generate initial hard positions "
                      << "...";
@@ -286,10 +297,10 @@ std::vector<std::array<double, 4>> MCGlauberWrapper::GetTargetNucleonPositions()
     return(mc_gen_->MCGlb_target_nucleon_xyz());
 }
 
-int MCGlauberWrapper::GetNucleonPid(const int idx) { return nucleonPids[idx]; }
+int MCGlauberWrapper::GetNucleonPid(const int idx) { return (*nucleonPids)[idx]; }
 
-void MCGlauberWrapper::SetNucleonUsed(const int idx, const int isUsed) { nucleonUsed[idx] = isUsed; }
-int MCGlauberWrapper::GetNucleonUsed(const int idx) { return nucleonUsed[idx]; }
+void MCGlauberWrapper::SetNucleonUsed(const int idx, const int isUsed) { (*nucleonUsed)[idx] = isUsed; }
+int MCGlauberWrapper::GetNucleonUsed(const int idx) { return (*nucleonUsed)[idx]; }
 
 void MCGlauberWrapper::GetProjectileNucleonPositionsAtt(
     const double t, const int idx, double &x, double &y, double &z) {
