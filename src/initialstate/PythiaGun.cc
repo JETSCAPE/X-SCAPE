@@ -659,6 +659,30 @@ void PythiaGun::ExecuteTask() {
     ini->SampleABinaryCollisionPoint(t, x, y, z);
     xLoc[1] = x;
     xLoc[2] = y;
+
+    // LO hard subtraction (3dMCGlauber <LO_hard_subtraction>): what Pythia
+    // took from each proton, the beam minus its remnants (status 63) -- the
+    // hard process with its ISR and the MPI, i.e. everything handed over --
+    // is taken from the strings of this binary collision's two nucleons in
+    // the jet leg's copy of the strings.  Beam A (+z) is the projectile.
+    if (ini->GetLOHardSubtraction() > 0) {
+      Pythia8::Vec4 taken[2] = {py.event[1].p(), py.event[2].p()};
+      for (int i = 0; i < py.event.size(); ++i) {
+        const auto &q = py.event[i];
+        if (std::abs(q.status()) != 63)
+          continue;
+        taken[q.pz() >= 0. ? 0 : 1] -= q.p();
+      }
+      // the hard system's own incoming partons (after its ISR), for the record
+      const Pythia8::Vec4 in_a = py.event[py.partonSystems.getInA(0)].p();
+      const Pythia8::Vec4 in_b = py.event[py.partonSystems.getInB(0)].p();
+      ini->SubtractHardMomentumJetLeg(
+          {taken[0].e(), taken[0].px(), taken[0].py(), taken[0].pz()},
+          {taken[1].e(), taken[1].px(), taken[1].py(), taken[1].pz()},
+          {{"E_sys0_proj", in_a.e()},
+           {"E_sys0_targ", in_b.e()},
+           {"n_mpi", static_cast<double>(py.info.nMPI())}});
+    }
   }
 
   // Loop through particles

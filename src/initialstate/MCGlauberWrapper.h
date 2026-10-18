@@ -100,6 +100,18 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   //! before subtracting, so nothing is subtracted
   int GetSubtractHardMomentum() const override { return subtract_hard_momentum_; }
 
+  //! <LO_hard_subtraction> (InitialState::GetLOHardSubtraction)
+  int GetLOHardSubtraction() const override { return lo_hard_subtraction_; }
+  void SubtractHardMomentumJetLeg(
+      const std::vector<double> &p_proj, const std::vector<double> &p_targ,
+      const std::map<std::string, double> &extra = {}) override;
+  std::vector<std::vector<double>> GetQCDStringListJetLeg() override {
+    return jet_leg_strings_set_ ? QCDStringListJetLeg_ : QCDStringList_;
+  }
+  std::map<std::string, double> GetLOHardSubtractionInfo() const override {
+    return lo_sub_info_;
+  }
+
  private:
   std::shared_ptr<MCGlb::EventGenerator> mc_gen_;
   std::vector<double> binary_collision_t_;
@@ -117,6 +129,13 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   int ncoll_ = -1;
   bool generateOnlyPositions_ = false;
   int subtract_hard_momentum_ = -1;
+  int lo_hard_subtraction_ = 0;
+  //! the binary collision SampleABinaryCollisionPoint returned last
+  int sampled_collision_idx_ = -1;
+  //! the jet leg's strings (SubtractHardMomentumJetLeg) for this event
+  std::vector<std::vector<double>> QCDStringListJetLeg_;
+  bool jet_leg_strings_set_ = false;
+  std::map<std::string, double> lo_sub_info_;
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MCGlauberWrapper> reg;

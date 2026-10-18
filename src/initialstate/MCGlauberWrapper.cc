@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+#include <stdexcept>
 #include <vector>
 
 #include "JetScapeLogger.h"
@@ -124,6 +125,25 @@ void MCGlauberWrapper::InitTask() {
   mc_gen_->set_parameter("Subtract_hard_momentum", para_temp_int);
   subtract_hard_momentum_ = para_temp_int;
 
+  // LO hard subtraction for the jet leg (no ISR): the strings stay as made
+  // here for the background; SubtractHardMomentumJetLeg makes a copy
+  lo_hard_subtraction_ =
+      GetXMLElementInt({"IS", "MCGlauber", "LO_hard_subtraction"}, false);
+  if (lo_hard_subtraction_ != 0 && lo_hard_subtraction_ != 1) {
+    JSWARN << "<IS><MCGlauber><LO_hard_subtraction> = " << lo_hard_subtraction_
+           << ": only 0 (off) and 1 exist";
+    exit(-1);
+  }
+  if (lo_hard_subtraction_ > 0) {
+    if (GetXMLElementInt({"IS", "MCGlauber", "generateOnlyPositions"}) != 0) {
+      JSWARN << "<LO_hard_subtraction> needs <generateOnlyPositions>0 (with "
+                "ISR the strings are made after the hard process instead)";
+      exit(-1);
+    }
+    JSINFO << "MCGlauber: LO hard subtraction mode " << lo_hard_subtraction_
+           << " for the jet leg's strings";
+  }
+
   para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", "lambdaBs"}));
   mc_gen_->set_parameter("lambdaBs", para_temp_double);
 
@@ -209,6 +229,10 @@ void MCGlauberWrapper::ClearTask() {
 
 void MCGlauberWrapper::ExecuteTask() {
   ClearTask();
+  QCDStringListJetLeg_.clear();
+  jet_leg_strings_set_ = false;
+  lo_sub_info_.clear();
+  sampled_collision_idx_ = -1;
   VERBOSE(1) << "Run 3DMCGlauber to generate initial hard positions "
              << "...";
 
@@ -269,6 +293,7 @@ void MCGlauberWrapper::ExecuteTask() {
 void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x,
                                                    double &y, double &z) {
   const int rand_idx = (*rand_int_ptr_)(*GetMt19937Generator());
+  sampled_collision_idx_ = rand_idx;
   t = binary_collision_t_[rand_idx];
   x = binary_collision_x_[rand_idx];
   y = binary_collision_y_[rand_idx];
@@ -403,6 +428,62 @@ void MCGlauberWrapper::GetHardPartonPosAndMomentumTarg() {
   mc_gen_->GetMomandPos_Targ(hard_parton_t_, hard_parton_x_, hard_parton_y_,
                              hard_parton_z_, targ_parton_e_, targ_parton_px_,
                              targ_parton_py_, targ_parton_pz_);
+}
+
+void MCGlauberWrapper::SubtractHardMomentumJetLeg(
+    const std::vector<double> &p_proj, const std::vector<double> &p_targ,
+    const std::map<std::string, double> &extra) {
+  if (lo_hard_subtraction_ <= 0) {
+    throw std::runtime_error(
+        "MCGlauberWrapper: SubtractHardMomentumJetLeg with "
+        "<LO_hard_subtraction> 0");
+  }
+  if (sampled_collision_idx_ < 0 || p_proj.size() < 4 || p_targ.size() < 4) {
+    throw std::runtime_error(
+        "MCGlauberWrapper: SubtractHardMomentumJetLeg needs a sampled binary "
+        "collision (SampleABinaryCollisionPoint) and two four-momenta");
+  }
+  std::vector<MCGlb::real> info;
+  auto strings = mc_gen_->get_QCD_strings_hard_subtracted(
+      sampled_collision_idx_, p_proj[0], p_targ[0], lo_hard_subtraction_,
+      info);
+  QCDStringListJetLeg_.clear();
+  for (auto &string_i : strings) {
+    QCDStringListJetLeg_.emplace_back(string_i.begin(), string_i.end());
+  }
+  jet_leg_strings_set_ = true;
+
+  // MCGlb::Glauber::get_QCD_strings_output_list_hard_subtracted's info
+  static const char *names[] = {
+      "E_req_proj",        "E_req_targ",        "E_taken_proj",
+      "E_taken_targ",      "nq_proj",           "nq_targ",
+      "dy_proj",           "dy_targ",           "Eq_proj",
+      "Eq_targ",           "n_strings_changed", "n_capped",
+      "n_evolve_mismatch", "E_strings_before",  "E_strings_after",
+      "Pz_strings_before", "Pz_strings_after",  "n_hard_pair_strings"};
+  static_assert(sizeof(names) / sizeof(names[0]) ==
+                    MCGlb::Glauber::HARD_SUBTRACTION_INFO,
+                "one name per info entry");
+  lo_sub_info_.clear();
+  for (std::size_t i = 0; i < info.size(); i++) lo_sub_info_[names[i]] = info[i];
+  lo_sub_info_["mode"] = lo_hard_subtraction_;
+  lo_sub_info_["collision_idx"] = sampled_collision_idx_;
+  lo_sub_info_["pz_req_proj"] = p_proj[3];
+  lo_sub_info_["pz_req_targ"] = p_targ[3];
+  for (const auto &kv : extra) lo_sub_info_[kv.first] = kv.second;
+
+  JSINFO << "LO hard subtraction: E taken proj " << info[2] << " of "
+         << info[0] << " GeV (" << info[4] << " quark(s), E_q " << info[8]
+         << ", dy " << info[6] << "), targ " << info[3] << " of " << info[1]
+         << " GeV (" << info[5] << " quark(s), E_q " << info[9] << ", dy "
+         << info[7] << "); strings E " << info[13] << " -> " << info[14]
+         << " GeV, " << info[10] << " strings changed";
+  if (info[11] > 0 || info[12] > 0) {
+    JSWARN << "LO hard subtraction: " << info[11]
+           << " string(s) with a capped rapidity loss, " << info[12]
+           << " not reproduced by evolve_QCD_string: the energy taken is not "
+              "exact";
+  }
 }
 
 void MCGlauberWrapper::GenerateStrings(bool wound_nucleons, int event_id) {

@@ -26,6 +26,7 @@
 #include <regex>
 
 #include "JetScapeLogger.h"
+#include "JetScapeSignalManager.h"
 #include "MusicWrapper.h"
 #include "surfaceCell.h"
 #include "music_logo.h"
@@ -434,11 +435,22 @@ int MpiMusic::InitializeHydroEnergyProfile() {
     JSINFO << "Setting up the hydro without pre-equilibrium module ...";
     music_hydro_ptr->initialize_hydro_xscape(nx, ny, nz, dx, dy, dz);
   } else if (initialProfile_ == 13 || initialProfile_ == 131) {
-    auto QCDStringList = ini->GetQCDStringList();
+    // A jet leg (any hydro but the framework's first, i.e. MUSIC_2) reads the
+    // strings with the hard process's energy taken out when the initial state
+    // made them (3dMCGlauber <LO_hard_subtraction>); the first reads the
+    // event's strings.
+    auto first = JetScapeSignalManager::Instance()->GetHydroPointer().lock();
+    const bool jet_leg = (ini->GetLOHardSubtraction() > 0 && first &&
+                          first.get() != static_cast<FluidDynamics *>(this));
+    auto QCDStringList =
+        jet_leg ? ini->GetQCDStringListJetLeg() : ini->GetQCDStringList();
     if (QCDStringList.size() == 0) {
       status = -1;
     } else {
-      music_hydro_ptr->generate_hydro_source_terms(ini->GetQCDStringList());
+      if (jet_leg)
+        JSINFO << "MUSIC " << GetId()
+               << ": the jet leg's strings (LO hard subtraction)";
+      music_hydro_ptr->generate_hydro_source_terms(QCDStringList);
       music_hydro_ptr->initialize_hydro_xscape(nx, ny, nz, dx, dy, dz);
     }
   } else {

@@ -18,7 +18,9 @@
 #define INITIALSTATE_H
 
 #include <tuple>
+#include <map>
 #include <memory>
+#include <string>
 #include "JetScapeModuleBase.h"
 #include "JetClass.h"
 
@@ -217,6 +219,29 @@ class InitialState : public JetScapeModuleBase {
   //! nucleons (3dMCGlauber <Subtract_hard_momentum>), 0 if not, -1: no such
   //! setting.
   virtual int GetSubtractHardMomentum() const { return -1; }
+
+  //! LO hard subtraction for a jet leg (3dMCGlauber <LO_hard_subtraction>):
+  //! 0 off, 1 the energy the hard process took is taken from a valence quark
+  //! of each nucleon of its binary collision, in a copy of the strings that
+  //! only the jet leg's hydro reads (GetQCDStringListJetLeg).
+  virtual int GetLOHardSubtraction() const { return 0; }
+  //! The jet leg's strings for this event: the energies (E, px, py, pz) taken
+  //! from the projectile (+z) and target (-z) nucleon of the binary
+  //! collision last sampled by SampleABinaryCollisionPoint.  Only with
+  //! GetLOHardSubtraction() > 0.
+  //! extra: further values to record with this event's info.
+  virtual void SubtractHardMomentumJetLeg(
+      const std::vector<double> &p_proj, const std::vector<double> &p_targ,
+      const std::map<std::string, double> &extra = {});
+  //! The strings the jet leg's hydro reads: the subtracted copy after
+  //! SubtractHardMomentumJetLeg in this event, else GetQCDStringList().
+  virtual std::vector<std::vector<double>> GetQCDStringListJetLeg() {
+    return GetQCDStringList();
+  }
+  //! This event's LO hard subtraction (names -> values; empty if none ran).
+  virtual std::map<std::string, double> GetLOHardSubtractionInfo() const {
+    return {};
+  }
 
   virtual std::vector<double> Get_projectile_nucleon_z_lab();
   virtual std::vector<double> Get_target_nucleon_z_lab();

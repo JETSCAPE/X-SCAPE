@@ -17,6 +17,7 @@
 #include "InitialState.h"
 #include "JetScapeWriter.h"
 #include <iostream>
+#include <stdexcept>
 
 namespace Jetscape {
 
@@ -104,6 +105,14 @@ void InitialState::OutputHardPartonMomentum(double E, double px, double py,
                                             double P_A) {}
 
 void InitialState::ClearHardPartonMomentum() {}
+
+void InitialState::SubtractHardMomentumJetLeg(
+    const std::vector<double> &p_proj, const std::vector<double> &p_targ,
+    const std::map<std::string, double> &extra) {
+  JSWARN << "This initial state has no LO hard subtraction (3dMCGlauber's "
+            "<LO_hard_subtraction>)";
+  throw std::runtime_error("InitialState: no LO hard subtraction");
+}
 
 void InitialState::GetHardPartonPosAndMomentumProj() {}
 

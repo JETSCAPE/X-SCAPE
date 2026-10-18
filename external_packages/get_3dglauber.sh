@@ -17,11 +17,12 @@ folderName="3dMCGlauber"
 # jhputschke/3dMCGlauber, a fork of chunshen1987/3dMCGlauber: the JETSCAPE commit
 # X-SCAPE used before (71116fe) plus a cap on the draws for the target's hard-quark
 # position, which could loop forever with ISR (~1 in 500-1300 O+O events);
-# upstream PR chunshen1987/3dMCGlauber#7
-commitHash="b99d680b2f2d44694053232804386d3d60474c04"
+# upstream PR chunshen1987/3dMCGlauber#7; branch zjet_LO_sub adds the strings with a
+# hard process's energy taken out, for a jet leg's hydro (<LO_hard_subtraction>)
+commitHash="38808df87d4d82cfdc4c619945d6bc0b0546216d"
 # download the code package
 rm -fr $folderName
-git clone https://github.com/jhputschke/3dMCGlauber.git --branch cap_hard_quark_draws $folderName
+git clone https://github.com/jhputschke/3dMCGlauber.git --branch zjet_LO_sub $folderName
 cd $folderName
 git checkout $commitHash
 ./get_LHAPDF.sh
