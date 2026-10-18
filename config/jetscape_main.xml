@@ -150,7 +150,7 @@
       <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
       <BG>5.0</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
       <Subtract_hard_momentum>1</Subtract_hard_momentum>
-      <LO_hard_subtraction>0</LO_hard_subtraction> <!--Jet leg without ISR: 0 off, 1 the hard process's energy (PythiaGun: beam minus remnants) taken from a valence quark of each nucleon of its binary collision, in a copy of the strings read only by the second hydro (MUSIC_2)-->
+      <LO_hard_subtraction>0</LO_hard_subtraction> <!--Jet leg without ISR: 0 off, 1 the hard process's energy (PythiaGun: beam minus remnants) taken from a valence quark of each nucleon of its binary collision, 2 that quark's strings and the pair's strings with each other removed and the momentum taken from their remnants (3dMCGlauber's ISR picture), in a copy of the strings read only by the second hydro (MUSIC_2)-->
       <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
       <baryonInStringProb>0.2</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
       <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> <!--Fluctuate number of strings produced per NN collision-->

@@ -222,8 +222,10 @@ class InitialState : public JetScapeModuleBase {
 
   //! LO hard subtraction for a jet leg (3dMCGlauber <LO_hard_subtraction>):
   //! 0 off, 1 the energy the hard process took is taken from a valence quark
-  //! of each nucleon of its binary collision, in a copy of the strings that
-  //! only the jet leg's hydro reads (GetQCDStringListJetLeg).
+  //! of each nucleon of its binary collision, 2 that quark's strings and the
+  //! nucleons' strings with each other are removed and the momentum is taken
+  //! from their remnants (3dMCGlauber's ISR picture), in a copy of the strings
+  //! that only the jet leg's hydro reads (GetQCDStringListJetLeg).
   virtual int GetLOHardSubtraction() const { return 0; }
   //! The jet leg's strings for this event: the energies (E, px, py, pz) taken
   //! from the projectile (+z) and target (-z) nucleon of the binary

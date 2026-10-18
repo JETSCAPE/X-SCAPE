@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
+#include <cmath>
 #include <stdexcept>
 #include <vector>
 
@@ -129,9 +130,9 @@ void MCGlauberWrapper::InitTask() {
   // here for the background; SubtractHardMomentumJetLeg makes a copy
   lo_hard_subtraction_ =
       GetXMLElementInt({"IS", "MCGlauber", "LO_hard_subtraction"}, false);
-  if (lo_hard_subtraction_ != 0 && lo_hard_subtraction_ != 1) {
+  if (lo_hard_subtraction_ < 0 || lo_hard_subtraction_ > 2) {
     JSWARN << "<IS><MCGlauber><LO_hard_subtraction> = " << lo_hard_subtraction_
-           << ": only 0 (off) and 1 exist";
+           << ": only 0 (off), 1 and 2 exist";
     exit(-1);
   }
   if (lo_hard_subtraction_ > 0) {
@@ -444,9 +445,10 @@ void MCGlauberWrapper::SubtractHardMomentumJetLeg(
         "collision (SampleABinaryCollisionPoint) and two four-momenta");
   }
   std::vector<MCGlb::real> info;
+  const MCGlb::MomentumVec pp = {p_proj[0], p_proj[1], p_proj[2], p_proj[3]};
+  const MCGlb::MomentumVec pt = {p_targ[0], p_targ[1], p_targ[2], p_targ[3]};
   auto strings = mc_gen_->get_QCD_strings_hard_subtracted(
-      sampled_collision_idx_, p_proj[0], p_targ[0], lo_hard_subtraction_,
-      info);
+      sampled_collision_idx_, pp, pt, lo_hard_subtraction_, info);
   QCDStringListJetLeg_.clear();
   for (auto &string_i : strings) {
     QCDStringListJetLeg_.emplace_back(string_i.begin(), string_i.end());
@@ -460,7 +462,9 @@ void MCGlauberWrapper::SubtractHardMomentumJetLeg(
       "dy_proj",           "dy_targ",           "Eq_proj",
       "Eq_targ",           "n_strings_changed", "n_capped",
       "n_evolve_mismatch", "E_strings_before",  "E_strings_after",
-      "Pz_strings_before", "Pz_strings_after",  "n_hard_pair_strings"};
+      "Pz_strings_before", "Pz_strings_after",  "n_hard_pair_strings",
+      "n_strings_removed", "n_remnants_changed", "n_baryons_dropped",
+      "tau_start_min_before", "tau_start_min_after"};
   static_assert(sizeof(names) / sizeof(names[0]) ==
                     MCGlb::Glauber::HARD_SUBTRACTION_INFO,
                 "one name per info entry");
@@ -477,7 +481,13 @@ void MCGlauberWrapper::SubtractHardMomentumJetLeg(
          << ", dy " << info[6] << "), targ " << info[3] << " of " << info[1]
          << " GeV (" << info[5] << " quark(s), E_q " << info[9] << ", dy "
          << info[7] << "); strings E " << info[13] << " -> " << info[14]
-         << " GeV, " << info[10] << " strings changed";
+         << " GeV, " << info[10] << " strings changed, " << info[18]
+         << " removed";
+  if (std::abs(info[22] - info[21]) > 1e-9) {
+    JSWARN << "LO hard subtraction: the strings' earliest start moved from "
+           << info[21] << " to " << info[22]
+           << " fm/c: MUSIC_2 starts at another tau0 than MUSIC_1";
+  }
   if (info[11] > 0 || info[12] > 0) {
     JSWARN << "LO hard subtraction: " << info[11]
            << " string(s) with a capped rapidity loss, " << info[12]
