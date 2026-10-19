@@ -1,0 +1,24 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t44
+#: name: Table 44
+#: description: Groomed jet invariant mass $m_{\mathrm{jet},g}$ in Pb--Pb data.
+$80<p_{\mathrm{T}}^{\mathrm{ch jet}}<100$ GeV/$c$, Soft Drop $z_{\mathrm{cut}}=0.2, \beta=0$.
+
+Note: The first bin corresponds to the Soft Drop untagged fraction.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_44.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,Pb Pb --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+"$m_{\textrm{jet},g}$","$m_{\textrm{jet},g}$ LOW","$m_{\textrm{jet},g}$ HIGH","$\frac{1}{\sigma_{inc}} \frac{d\sigma}{d m_{\textrm{jet},g}}$",stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -","sys,subtraction1 +","sys,subtraction1 -","sys,thermal_closure +","sys,thermal_closure -"
+-0.05,-0.1,0.0,1.34,0.0314,-0.0314,0.196,-0.196,0.0252,-0.0252,-0.0727,0.0727,0.0134,-0.0134,0.0573,-0.0573,0.00666,-0.00666
+0.9,0.0,1.8,0.257,0.00243,-0.00243,0.0124,-0.0124,0.00423,-0.00423,-0.00208,0.00208,0.000594,-0.000594,0.00646,-0.00646,0.0017,-0.0017
+2.7,1.8,3.6,0.143,0.00164,-0.00164,0.00419,-0.00419,0.000722,-0.000722,0.00233,-0.00233,2.54e-05,-2.54e-05,0.00488,-0.00488,0.000595,-0.000595
+4.7,3.6,5.8,0.046,0.000662,-0.000662,0.00252,-0.00252,0.00215,-0.00215,0.00147,-0.00147,0.000229,-0.000229,0.00219,-0.00219,3.26e-05,-3.26e-05
+6.9,5.8,8.0,0.0206,0.000381,-0.000381,0.00155,-0.00155,0.000526,-0.000526,0.00127,-0.00127,0.000115,-0.000115,0.00115,-0.00115,0.000276,-0.000276
+10.0,8.0,12.0,0.00655,0.000221,-0.000221,0.000367,-0.000367,0.000375,-0.000375,0.000436,-0.000436,5.65e-05,-5.65e-05,0.000267,-0.000267,0.00013,-0.00013
+

@@ -15,7 +15,11 @@ configs/<name>.xml):
   lamcal   lambda_t = 1, 1.5, 3 at the LHC, 0-10% and 30-50% (chi^2 calibration)
   bestfit  the best fit lambda_t = 2.4 against the default MATTER+LBT, RHIC and LHC,
            0-10% and 30-50%, plus pp; run with KEEP_EVENTS=1 to keep the events
-           (these are the inputs of x_compare.py: x_J, D(z), rho(r), jet mass, ...)
+           (these are the inputs of x_compare.py: x_J, D(z), rho(r), jet mass, ...,
+           and, through jetana_data, of data_compare.py)
+  ppvar    pp hadronization study (pp_variants.py): the LHC pp of bestfit, seeds 1-8,
+           with PYTHIA MPI off, colored or hybrid hadronization, plus 2 x 64 short
+           colored runs (see group_ppvar); run with KEEP_EVENTS=1
 
 Hydro tasks write their final-state hadrons to the named pipe
 /tmp/fifo/<name>, which run_task.sh reads with jetana; bricks write
@@ -156,9 +160,40 @@ def group_bestfit():
     return out
 
 
+def group_ppvar():
+    """LHC pp with the hadronization and MPI varied (pp_variants.py). PythiaGun
+    switches MPI on in the code; the LinesToRead line overrides it."""
+    out = {}
+    for s in range(1, 9):
+        base = mkcfg.collision("vac", "/tmp/fifo/NAME", (10, 500), 25000, 100 + s)
+        for v in ("nompi", "colored", "colored_nompi", "hybrid"):
+            n = f"ppv_{v}_s{s}"
+            x = base.replace("/tmp/fifo/NAME", f"/tmp/fifo/{n}")
+            had = "colored" if v.startswith("colored") else "hybrid" if v == "hybrid" else "colorless"
+            x = x.replace("<name>colorless</name>", f"<name>{had}</name>")
+            if v.endswith("nompi"):
+                x = x.replace("PhaseSpace:bias2SelectionRef = 10.0\n",
+                              "PhaseSpace:bias2SelectionRef = 10.0\n      PartonLevel:MPI = off\n")
+            out[n] = x
+    # ColoredHadronization never recovers after its first PYTHIA junction failure
+    # in a run (it then writes unhadronized partons, which jetana_data skips),
+    # so the colored samples are mostly made of many short runs
+    for s in range(1, 65):
+        for v, nev, seed0 in (("coloredr", 600, 2000), ("colorednompir", 300, 3000)):
+            n = f"ppv_{v}_s{s}"
+            x = mkcfg.collision("vac", f"/tmp/fifo/{n}", (10, 500), nev, seed0 + s)
+            x = x.replace("<name>colorless</name>", "<name>colored</name>")
+            if v == "colorednompir":
+                x = x.replace("PhaseSpace:bias2SelectionRef = 10.0\n",
+                              "PhaseSpace:bias2SelectionRef = 10.0\n      PartonLevel:MPI = off\n")
+            out[n] = x
+    return out
+
+
 def main(groups, work=HERE):
     gens = {"bricks": lambda: group_bricks(work), "pp": group_pp, "routeA": group_routeA,
-            "routeB": group_routeB, "lamcal": group_lamcal, "bestfit": group_bestfit}
+            "routeB": group_routeB, "lamcal": group_lamcal, "bestfit": group_bestfit,
+            "ppvar": group_ppvar}
     os.makedirs(os.path.join(work, "configs"), exist_ok=True)
     os.makedirs(os.path.join(work, "tasks"), exist_ok=True)
     os.makedirs(os.path.join(work, "logs"), exist_ok=True)   # SLURM output of slurm/array.sbatch

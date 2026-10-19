@@ -1,0 +1,25 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t25
+#: name: Table 25
+#: description: Jet angularity $\lambda_{\alpha}$ for $\alpha = 1$.
+$100<p_{\mathrm{T}}^{\mathrm{ch jet}}<150$ GeV/$c$.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_25.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,Pb Pb --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+$\lambda_{{\alpha}}$,$\lambda_{{\alpha}}$ LOW,$\lambda_{{\alpha}}$ HIGH,$\frac{1}{\sigma} \frac{d\sigma}{d\lambda_{\alpha}}$,stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -","sys,subtraction1 +","sys,subtraction1 -","sys,thermal_closure +","sys,thermal_closure -"
+0.035,0.0,0.07,1.54,0.0815,-0.0815,0.024,-0.024,0.0172,-0.0172,-1.16,1.16,0.00736,-0.00736,0.141,-0.141,0.0493,-0.0493
+0.085,0.07,0.1,6.03,0.201,-0.201,0.098,-0.098,0.084,-0.084,-0.513,0.513,0.115,-0.115,0.418,-0.418,0.138,-0.138
+0.11,0.1,0.12,6.29,0.158,-0.158,0.0483,-0.0483,0.106,-0.106,0.157,-0.157,0.1,-0.1,0.538,-0.538,0.0823,-0.0823
+0.13,0.12,0.14,5.48,0.167,-0.167,0.00895,-0.00895,0.21,-0.21,0.293,-0.293,0.0405,-0.0405,0.226,-0.226,0.0376,-0.0376
+0.15500000000000003,0.14,0.17,4.31,0.151,-0.151,0.0807,-0.0807,0.129,-0.129,0.318,-0.318,0.0255,-0.0255,0.0906,-0.0906,0.111,-0.111
+0.185,0.17,0.2,3.22,0.113,-0.113,0.0684,-0.0684,0.0572,-0.0572,0.311,-0.311,0.0479,-0.0479,0.169,-0.169,0.0855,-0.0855
+0.22,0.2,0.24,2.26,0.0888,-0.0888,0.0497,-0.0497,0.0536,-0.0536,0.258,-0.258,0.0627,-0.0627,0.128,-0.128,0.0468,-0.0468
+0.27,0.24,0.3,1.3,0.0637,-0.0637,0.0158,-0.0158,0.0231,-0.0231,0.154,-0.154,0.0407,-0.0407,0.0356,-0.0356,0.0736,-0.0736
+0.4,0.3,0.5,0.408,0.0224,-0.0224,0.0087,-0.0087,0.019,-0.019,0.0381,-0.0381,0.00331,-0.00331,0.0453,-0.0453,0.00334,-0.00334
+

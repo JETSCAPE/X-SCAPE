@@ -1,0 +1,24 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t24
+#: name: Table 24
+#: description: Groomed jet angularity $\lambda_{\alpha,g}$ for $\alpha = 3$.
+$80<p_{\mathrm{T}}^{\mathrm{ch jet}}<100$ GeV/$c$, Soft Drop $z_{\mathrm{cut}}=0.2, \beta=0$.
+
+Note: The first bin corresponds to the Soft Drop untagged fraction.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_24.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,Pb Pb --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+"$\lambda_{\alpha,g}$","$\lambda_{\alpha,g}$ LOW","$\lambda_{\alpha,g}$ HIGH","$\frac{1}{\sigma_{inc}} \frac{d\sigma}{d\lambda_{\alpha,g}}$",stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -","sys,subtraction1 +","sys,subtraction1 -","sys,thermal_closure +","sys,thermal_closure -"
+-0.05,-0.1,0.0,1.37,0.0486,-0.0486,0.0443,-0.0443,0.247,-0.247,0.0248,-0.0248,0.0794,-0.0794,0.041,-0.041,0.00216,-0.00216
+0.0005,0.0,0.001,388.0,8.8,-8.8,6.09,-6.09,9.37,-9.37,-6.81,6.81,3.02,-3.02,10.2,-10.2,1.75,-1.75
+0.003,0.001,0.005,69.4,1.52,-1.52,0.711,-0.711,1.97,-1.97,-0.282,0.282,0.446,-0.446,0.669,-0.669,0.53,-0.53
+0.0125,0.005,0.02,9.21,0.265,-0.265,0.232,-0.232,0.434,-0.434,0.233,-0.233,0.151,-0.151,0.606,-0.606,0.134,-0.134
+0.035,0.02,0.05,1.97,0.0659,-0.0659,0.0553,-0.0553,0.12,-0.12,0.0554,-0.0554,0.0484,-0.0484,0.133,-0.133,0.0435,-0.0435
+0.07500000000000001,0.05,0.1,0.772,0.0346,-0.0346,0.0172,-0.0172,0.0822,-0.0822,0.0264,-0.0264,0.0384,-0.0384,0.0718,-0.0718,0.0187,-0.0187
+

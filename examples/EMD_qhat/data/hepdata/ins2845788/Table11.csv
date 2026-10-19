@@ -1,0 +1,23 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t11
+#: name: Table 11
+#: description: Jet angularity $\lambda_{\alpha}$ for $\alpha = 2$.
+$60<p_{\mathrm{T}}^{\mathrm{ch jet}}<80$ GeV/$c$.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_11.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,Pb Pb --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+$\lambda_{{\alpha}}$,$\lambda_{{\alpha}}$ LOW,$\lambda_{{\alpha}}$ HIGH,$\frac{1}{\sigma} \frac{d\sigma}{d\lambda_{\alpha}}$,stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -","sys,subtraction1 +","sys,subtraction1 -","sys,thermal_closure +","sys,thermal_closure -"
+0.01,0.0,0.02,6.94,0.106,-0.106,0.171,-0.171,0.125,-0.125,-0.641,0.641,0.0492,-0.0492,0.831,-0.831,0.0395,-0.0395
+0.03,0.02,0.04,9.33,0.109,-0.109,0.0782,-0.0782,0.309,-0.309,-0.43,0.43,0.0325,-0.0325,0.545,-0.545,0.116,-0.116
+0.05500000000000001,0.04,0.07,8.01,0.0676,-0.0676,0.0494,-0.0494,0.0921,-0.0921,-0.00769,0.00769,0.0666,-0.0666,0.246,-0.246,0.0711,-0.0711
+0.085,0.07,0.1,5.63,0.0469,-0.0469,0.0683,-0.0683,0.016,-0.016,0.146,-0.146,0.0021,-0.0021,0.192,-0.192,0.0286,-0.0286
+0.115,0.1,0.13,3.6,0.0448,-0.0448,0.0497,-0.0497,0.0321,-0.0321,0.153,-0.153,0.0184,-0.0184,0.237,-0.237,0.035,-0.035
+0.165,0.13,0.2,1.66,0.0238,-0.0238,0.0132,-0.0132,0.0182,-0.0182,0.1,-0.1,0.00417,-0.00417,0.137,-0.137,0.00748,-0.00748
+0.25,0.2,0.3,0.41,0.00904,-0.00904,0.00708,-0.00708,0.013,-0.013,0.0316,-0.0316,0.00507,-0.00507,0.0247,-0.0247,0.00615,-0.00615
+

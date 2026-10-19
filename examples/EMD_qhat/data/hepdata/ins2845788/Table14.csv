@@ -1,0 +1,26 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t14
+#: name: Table 14
+#: description: Groomed jet angularity $\lambda_{\alpha,g}$ for $\alpha = 1.5$.
+$60<p_{\mathrm{T}}^{\mathrm{ch jet}}<80$ GeV/$c$, Soft Drop $z_{\mathrm{cut}}=0.2, \beta=0$.
+
+Note: The first bin corresponds to the Soft Drop untagged fraction.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_14.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,Pb Pb --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+"$\lambda_{\alpha,g}$","$\lambda_{\alpha,g}$ LOW","$\lambda_{\alpha,g}$ HIGH","$\frac{1}{\sigma_{inc}} \frac{d\sigma}{d\lambda_{\alpha,g}}$",stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -","sys,subtraction1 +","sys,subtraction1 -","sys,thermal_closure +","sys,thermal_closure -"
+-0.05,-0.1,0.0,1.45,0.0261,-0.0261,0.00923,-0.00923,0.027,-0.027,-0.0627,0.0627,0.0111,-0.0111,0.0671,-0.0671,0.00882,-0.00882
+0.0075,0.0,0.015,9.03,0.16,-0.16,0.171,-0.171,0.398,-0.398,-0.155,0.155,0.0395,-0.0395,0.71,-0.71,0.0538,-0.0538
+0.0225,0.015,0.03,13.6,0.217,-0.217,0.0955,-0.0955,0.573,-0.573,-0.112,0.112,0.0911,-0.0911,0.288,-0.288,0.534,-0.534
+0.045,0.03,0.06,8.11,0.107,-0.107,0.0557,-0.0557,0.0293,-0.0293,0.0205,-0.0205,0.051,-0.051,0.24,-0.24,0.0546,-0.0546
+0.08,0.06,0.1,3.26,0.0488,-0.0488,0.0451,-0.0451,0.0997,-0.0997,0.05,-0.05,0.0079,-0.0079,0.0927,-0.0927,0.0734,-0.0734
+0.125,0.1,0.15,1.46,0.0247,-0.0247,0.0335,-0.0335,0.057,-0.057,0.0829,-0.0829,0.024,-0.024,0.0955,-0.0955,0.00658,-0.00658
+0.2,0.15,0.25,0.695,0.0118,-0.0118,0.00535,-0.00535,0.0354,-0.0354,0.0279,-0.0279,0.0123,-0.0123,0.0531,-0.0531,0.0265,-0.0265
+0.325,0.25,0.4,0.262,0.00767,-0.00767,0.00582,-0.00582,0.0199,-0.0199,0.0101,-0.0101,0.00678,-0.00678,0.0122,-0.0122,0.00768,-0.00768
+

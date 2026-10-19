@@ -1,0 +1,24 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t3
+#: name: Table 3
+#: description: Jet angularity $\lambda_{\alpha}$ for $\alpha = 2$.
+$40<p_{\mathrm{T}}^{\mathrm{ch jet}}<60$ GeV/$c$.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_3.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,Pb Pb --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+$\lambda_{{\alpha}}$,$\lambda_{{\alpha}}$ LOW,$\lambda_{{\alpha}}$ HIGH,$\frac{1}{\sigma} \frac{d\sigma}{d\lambda_{\alpha}}$,stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -","sys,subtraction1 +","sys,subtraction1 -","sys,thermal_closure +","sys,thermal_closure -"
+0.01,0.0,0.02,5.33,0.0803,-0.0803,0.0471,-0.0471,0.0859,-0.0859,-0.548,0.548,0.15,-0.15,0.379,-0.379,0.153,-0.153
+0.03,0.02,0.04,6.82,0.0655,-0.0655,0.0645,-0.0645,0.177,-0.177,-0.417,0.417,0.0209,-0.0209,0.121,-0.121,0.121,-0.121
+0.05500000000000001,0.04,0.07,6.93,0.0557,-0.0557,0.0253,-0.0253,0.15,-0.15,-0.0392,0.0392,0.0829,-0.0829,0.399,-0.399,0.093,-0.093
+0.085,0.07,0.1,5.84,0.0604,-0.0604,0.0214,-0.0214,0.183,-0.183,0.0562,-0.0562,0.0442,-0.0442,0.23,-0.23,0.114,-0.114
+0.115,0.1,0.13,4.37,0.0441,-0.0441,0.0139,-0.0139,0.138,-0.138,0.11,-0.11,0.0537,-0.0537,0.122,-0.122,0.0212,-0.0212
+0.14500000000000002,0.13,0.16,3.12,0.0328,-0.0328,0.00993,-0.00993,0.0167,-0.0167,0.115,-0.115,0.0101,-0.0101,0.172,-0.172,0.0811,-0.0811
+0.18,0.16,0.2,1.96,0.0338,-0.0338,0.0158,-0.0158,0.105,-0.105,0.111,-0.111,0.058,-0.058,0.102,-0.102,0.0303,-0.0303
+0.25,0.2,0.3,0.71,0.0138,-0.0138,0.0217,-0.0217,0.0108,-0.0108,0.052,-0.052,0.0102,-0.0102,0.049,-0.049,0.012,-0.012
+

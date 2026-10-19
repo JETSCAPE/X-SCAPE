@@ -20,3 +20,7 @@ brick_summary.txt
 *.fls
 *.out
 __pycache__/
+spec_data/
+jetana_data
+data_compare.txt
+pp_variants.txt

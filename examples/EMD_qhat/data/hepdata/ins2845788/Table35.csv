@@ -1,0 +1,26 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t35
+#: name: Table 35
+#: description: Jet invariant mass $m_\mathrm{jet}$ in pp data.
+$60<p_{\mathrm{T}}^{\mathrm{ch jet}}<80$ GeV/$c$.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_35.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,P P --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+$m_\textrm{jet}$,$m_\textrm{jet}$ LOW,$m_\textrm{jet}$ HIGH,$\frac{1}{\sigma} \frac{d\sigma}{d m_\textrm{jet}}$,stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -"
+0.5,0.0,1.0,0.0121,0.0025,-0.0025,0.000852,-0.000852,0.00236,-0.00236,-0.00189,0.00189,0.0,-0.0
+1.5,1.0,2.0,0.0572,0.00599,-0.00599,0.00242,-0.00242,0.00224,-0.00224,-0.00428,0.00428,0.0,-0.0
+2.5,2.0,3.0,0.184,0.0116,-0.0116,0.00301,-0.00301,0.00348,-0.00348,-0.00964,0.00964,0.0,-0.0
+3.5,3.0,4.0,0.279,0.0135,-0.0135,0.00413,-0.00413,0.00846,-0.00846,-0.00574,0.00574,0.0,-0.0
+4.5,4.0,5.0,0.237,0.0104,-0.0104,0.00319,-0.00319,0.00471,-0.00471,0.00518,-0.00518,0.0,-0.0
+5.5,5.0,6.0,0.13,0.00809,-0.00809,0.00559,-0.00559,0.00136,-0.00136,0.00885,-0.00885,0.0,-0.0
+6.5,6.0,7.0,0.066,0.00653,-0.00653,0.000473,-0.000473,0.00396,-0.00396,0.00347,-0.00347,0.0,-0.0
+7.5,7.0,8.0,0.0262,0.00417,-0.00417,0.00112,-0.00112,0.00233,-0.00233,0.00127,-0.00127,0.0,-0.0
+8.5,8.0,9.0,0.00659,0.00142,-0.00142,0.000324,-0.000324,0.000981,-0.000981,0.000436,-0.000436,0.0,-0.0
+9.5,9.0,10.0,0.000823,0.000228,-0.000228,4.73e-05,-4.73e-05,0.000137,-0.000137,0.000131,-0.000131,0.0,-0.0
+

@@ -91,6 +91,7 @@ produced the results (checked file by file).
 | `routeB` | 665 | MATTER+LBT with the EMD q̂: λ_t = 2 (all samples), 2.6 and 8 (0–10%), and extra tune runs |
 | `lamcal` | 285 | λ_t = 1, 1.5, 3 at the LHC, 0–10% and 30–50%, for the χ² calibration |
 | `bestfit` | 454 | λ_t = 2.4 (best fit) against the tune, RHIC and LHC, 0–10% and 30–50%, plus pp; run with `KEEP_EVENTS=1` |
+| `ppvar` | 160 | LHC pp with PYTHIA MPI off, colored or hybrid hadronization (8 × 25k each) and 2 × 64 short colored runs; run with `KEEP_EVENTS=1` |
 
 A hydro task is one TRENTo + free-streaming + MUSIC event reused for 2500
 p̂_T-biased Pythia hard events: about 1.5 h at the LHC and 0.5 h at RHIC on 2
@@ -120,11 +121,13 @@ latexmk -pdf brick_figures.tex     # 7 figures with captions
 ## 4. Full hydro
 
 ```bash
-python3 make_configs.py pp routeA routeB lamcal bestfit
+python3 make_configs.py pp routeA routeB lamcal bestfit ppvar
 # on a SLURM cluster, from this folder, one group at a time, e.g.
 sbatch --account=<acct> --array=1-$(wc -l < tasks/pp.txt) --export=ALL,TASKS=tasks/pp.txt slurm/array.sbatch
 sbatch --account=<acct> --array=1-$(wc -l < tasks/bestfit.txt)%80 \
        --export=ALL,TASKS=tasks/bestfit.txt,KEEP_EVENTS=1 slurm/array.sbatch
+sbatch --account=<acct> --array=1-$(wc -l < tasks/ppvar.txt)%80 \
+       --export=ALL,TASKS=tasks/ppvar.txt,KEEP_EVENTS=1 slurm/array.sbatch
 #   container: add IMAGE=<jetscape_base_v2.1.sif>,BIND=<paths> to --export
 # or locally, one task at a time:
 ./run_task.sh lhcx_lbtemd_l2p4_h16
@@ -147,7 +150,34 @@ change cuts without rerunning JETSCAPE.
   listed at the top of `jetana.cc`; they follow the measurements approximately
   and should be matched to the HEPData selections before comparing with data.
 
-## 5. Analysis → figures and tables
+## 5. Comparison with data (step 2)
+
+`jetana_data` re-analyses the kept events with the selections and the bins of
+the HEPData records in `data/hepdata/` (one CSV per table):
+
+| Measurement | HEPData | Model selection (see the top of `jetana_data.cc`) |
+|---|---|---|
+| ATLAS dijet x_J, pp and 0–10% | ins2075431 | R = 0.4, two leading jets with \|y\| < 2.1, Δφ > 7π/8, x_J ≥ 0.32, self-normalised, 11 p_T,1 bins |
+| ATLAS D(z), pp and PbPb/pp | ins1673177 | R = 0.4, \|y\| < 2.1, 126–398 GeV, tracks p_T > 1 GeV in ΔR < 0.4; UE from perpendicular cones |
+| CMS ρ(Δr), pp, 0–10%, 30–50% | ins1658057 | R = 0.4, p_T > 120 GeV, \|η\| < 1.6, tracks p_T > 0.7 GeV; UE from the 1.5 < \|Δη\| < 2.5 sideband (the CMS method) |
+| ALICE m and λ_α, pp and 0–10% | ins2845788 | charged R = 0.2, \|η\| < 0.7, 40–150 GeV; Soft Drop z_cut = 0.2, β = 0 with holes reclustered as negative constituents |
+
+```bash
+g++ -O2 -std=c++17 -I../../external_packages jetana_data.cc ../../external_packages/fjcore.cc -o jetana_data
+cat tasks/bestfit.txt tasks/ppvar.txt > tasks/data.txt
+sbatch --account=<acct> --array=1-$(wc -l < tasks/data.txt)%150 \
+       --export=ALL,TASKS=tasks/data.txt slurm/data_array.sbatch    # ~15 s per file
+python3 data_compare.py     # data_compare.txt, fig_data_{xj,ff,cms,alice_mass,alice_ang}.png
+python3 pp_variants.py      # pp_variants.txt, fig_pp_variants.png
+```
+
+`data_compare.py` uses χ² = rᵀC⁻¹r with the data and model statistical and
+systematic uncertainties. ALICE's signed "trkeff" and "generator" sources are
+treated as fully correlated across bins, as its record states. The other
+records give no correlations, so their uncertainties are taken as
+uncorrelated; ALICE is also reported that way ("diag").
+
+## 6. Analysis → figures and tables
 
 Run in the container or with `slurm/analysis.sbatch` (`--export=ALL,SCRIPT=<script>`).
 
@@ -159,6 +189,8 @@ Run in the container or with `slurm/analysis.sbatch` (`--export=ALL,SCRIPT=<scri
 | `calibrate_lambda.py` | pp, routeA, routeB, lamcal | χ²(λ_t) against ATLAS jets and CMS hadrons, both centralities: `lamcal.txt`, `fig_lamcal.png` |
 | `e2c_bestfit.py` | pp, routeA, routeB, lamcal | E2C around the best fit (λ_t = 2 and 3, 2.4 interpolated): `fig_e2c_bestfit*.png` |
 | `x_compare.py` | bestfit | λ_t = 2.4 vs the default, paired: R_AA, E2C, mass, angularities, x_J, D(z), ρ(r), charged-jet mass: `x_compare.txt`, `fig_x_raa_e2c.png`, `fig_x_newobs.png` |
+| `data_compare.py` | bestfit (`spec_data/`) | section 5 |
+| `pp_variants.py` | bestfit pp, ppvar (`spec_data/`) | section 5 |
 | `qhat_comparison/qhat_overlay.tex` | (data files here) | quark q̂/T³: JETSCAPE 2025 "Combined" band (E = 100 GeV, μ² = Q₀²), the JETSCAPE 2021 band used in Khan et al. Fig. 10, the EMD q̂ at λ_t = 1/25–1/9 and at the fitted λ_t |
 
 `data/` holds the HEPData tables used (ATLAS 30–50% is the average of the
@@ -167,7 +199,7 @@ Run in the container or with `slurm/analysis.sbatch` (`--export=ALL,SCRIPT=<scri
 the published figures (±0.1–0.2 in q̂/T³); `make_emd_curves.py` writes the
 EMD curves.
 
-## 6. Results in brief
+## 7. Results in brief
 
 | | Value |
 |---|---|
@@ -187,6 +219,21 @@ EMD curves.
   quenching.
 * Normalising to data needs λ_t about 40 times the 1/16 of Khan et al. (q̂
   about 6 times larger), toward the large-coupling regime of holography.
+* Against data (`data_compare.txt`), neither q̂ is preferred: the Δχ² between
+  EMD (λ_t = 2.4) and the default are small next to the χ² themselves and
+  change sign between observables (ATLAS x_J +13 over 110 bins, R_D(z) +9 over
+  89, CMS ρ −26 over 42, ALICE mass −75 over 40, ALICE angularities +61 over
+  116). Both share the same misses: too little enhancement at low z in
+  0–10% R_D(z) and at large Δr in the CMS PbPb/pp jet shape.
+* pp baseline (`pp_variants.txt`): the extra soft, wide-angle particles in pp
+  jets are mostly an uncorrelated underlying event: PythiaGun switches PYTHIA
+  MPI on and passes the MPI partons through MATTER. With the CMS sideband
+  subtraction, colorless hadronization comes within about 30% of CMS at
+  large Δr (χ² 258/14, against 1800 without the subtraction). Colored
+  hadronization, which follows MATTER's colour flow, describes CMS ρ
+  (χ² 27/14) and ATLAS pp D(z) better, but see the notes. No variant fixes
+  the ALICE R = 0.2 pp jet mass: every one is 0.5–0.9 GeV heavier than the
+  data.
 
 ## Notes
 
@@ -197,6 +244,17 @@ EMD curves.
   `run_task.sh` gives each task its own `/tmp` working directory for this reason.
 * The route-A recoil option (`recoil_on`) is implemented and validated in a
   brick (energy conservation exact, ⟨k_T²⟩ = 90% of q̂L) but no result uses it.
+* `ColoredHadronization` does not check the return value of `pythia.next()`.
+  After the first PYTHIA junction failure in a run ("junction topology
+  inconsistent"), it writes the unhadronized partons of every later event,
+  which in these pp runs starts anywhere from event 3 to event 2158.
+  `jetana_data` skips events with quarks or gluons in the final state and
+  reports them as "skipped". The colored samples are therefore made of
+  many short runs, and only about 12% of their events are usable. No other
+  sample contains partons.
+* PythiaGun hard-codes `PartonLevel:MPI = on`, and the MPI partons go through
+  MATTER and hadronization; `PartonLevel:MPI = off` in its `LinesToRead`
+  overrides it.
 * Reproducibility: rerunning a task with the same configuration gives
   bit-identical output; the `bestfit` default and pp runs reproduce the
   earlier production spectra exactly.

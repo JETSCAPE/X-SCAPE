@@ -1,0 +1,24 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t26
+#: name: Table 26
+#: description: Jet angularity $\lambda_{\alpha}$ for $\alpha = 1.5$.
+$100<p_{\mathrm{T}}^{\mathrm{ch jet}}<150$ GeV/$c$.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_26.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,Pb Pb --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+$\lambda_{{\alpha}}$,$\lambda_{{\alpha}}$ LOW,$\lambda_{{\alpha}}$ HIGH,$\frac{1}{\sigma} \frac{d\sigma}{d\lambda_{\alpha}}$,stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -","sys,subtraction1 +","sys,subtraction1 -","sys,thermal_closure +","sys,thermal_closure -"
+0.015,0.0,0.03,4.48,0.179,-0.179,0.0751,-0.0751,0.0446,-0.0446,-2.12,2.12,0.362,-0.362,0.254,-0.254,0.206,-0.206
+0.045,0.03,0.06,9.89,0.22,-0.22,0.114,-0.114,0.124,-0.124,-0.667,0.667,0.571,-0.571,0.674,-0.674,0.0317,-0.0317
+0.075,0.06,0.09,7.08,0.185,-0.185,0.0556,-0.0556,0.189,-0.189,0.475,-0.475,0.0607,-0.0607,0.0489,-0.0489,0.161,-0.161
+0.105,0.09,0.12,4.28,0.117,-0.117,0.072,-0.072,0.0178,-0.0178,0.491,-0.491,0.0962,-0.0962,0.229,-0.229,0.0368,-0.0368
+0.14,0.12,0.16,2.49,0.0948,-0.0948,0.0379,-0.0379,0.143,-0.143,0.324,-0.324,0.0809,-0.0809,0.112,-0.112,0.0443,-0.0443
+0.18,0.16,0.2,1.33,0.0732,-0.0732,0.0401,-0.0401,0.0348,-0.0348,0.152,-0.152,0.0256,-0.0256,0.0249,-0.0249,0.0454,-0.0454
+0.23,0.2,0.26,0.72,0.0481,-0.0481,0.017,-0.017,0.0401,-0.0401,0.0704,-0.0704,0.000643,-0.000643,0.105,-0.105,0.0484,-0.0484
+0.33,0.26,0.4,0.229,0.0161,-0.0161,0.00548,-0.00548,0.0167,-0.0167,0.023,-0.023,0.00872,-0.00872,0.028,-0.028,0.0108,-0.0108
+

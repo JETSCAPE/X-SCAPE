@@ -1,0 +1,28 @@
+#: table_doi: 10.17182/hepdata.157864.v1/t8
+#: name: Table 8
+#: description: Groomed jet angularity $\lambda_{\alpha,g}$ for $\alpha = 3$.
+$40<p_{\mathrm{T}}^{\mathrm{ch jet}}<60$ GeV/$c$, Soft Drop $z_{\mathrm{cut}}=0.2, \beta=0$.
+
+Note: The first bin corresponds to the Soft Drop untagged fraction.
+
+For the "trkeff" and "generator" systematic uncertainty sources, the signed systematic uncertainty breakdowns ($\pm$ vs. $\mp$), denote correlation across bins (both within this table, and across tables). For the remaining sources ("unfolding", "random_mass") no correlation information is specified ($\pm$ is always used).
+#: data_file: table_8.yaml
+#: keyword reactions: P P --> jet+X
+#: keyword cmenergies: 5020
+#: RE,,,Pb Pb --> jet+X
+#: SQRT(S) [TeV],,,5.02
+#: ETARAP,,,|0.9-R|
+#: jet radius,,,0.2
+#: jet method,,,Anti-$k_{T}$
+"$\lambda_{\alpha,g}$","$\lambda_{\alpha,g}$ LOW","$\lambda_{\alpha,g}$ HIGH","$\frac{1}{\sigma_{inc}} \frac{d\sigma}{d\lambda_{\alpha,g}}$",stat +,stat -,"sys,unfolding +","sys,unfolding -","sys,generator +","sys,generator -","sys,trkeff +","sys,trkeff -","sys,random_mass +","sys,random_mass -","sys,subtraction1 +","sys,subtraction1 -","sys,thermal_closure +","sys,thermal_closure -"
+-0.05,-0.1,0.0,1.55,0.014,-0.014,0.0415,-0.0415,0.0384,-0.0384,-0.0826,0.0826,0.0146,-0.0146,0.0742,-0.0742,0.00129,-0.00129
+0.0025,0.0,0.005,81.8,0.568,-0.568,0.628,-0.628,2.7,-2.7,-0.87,0.87,0.378,-0.378,1.25,-1.25,0.25,-0.25
+0.0075,0.005,0.01,24.9,0.336,-0.336,0.236,-0.236,0.716,-0.716,0.461,-0.461,0.287,-0.287,0.978,-0.978,0.491,-0.491
+0.015,0.01,0.02,11.3,0.183,-0.183,0.105,-0.105,0.229,-0.229,0.184,-0.184,0.0513,-0.0513,0.0783,-0.0783,0.0655,-0.0655
+0.025,0.02,0.03,5.74,0.102,-0.102,0.0463,-0.0463,0.127,-0.127,0.208,-0.208,0.0121,-0.0121,0.294,-0.294,0.201,-0.201
+0.04,0.03,0.05,3.12,0.0546,-0.0546,0.0543,-0.0543,0.106,-0.106,0.112,-0.112,0.123,-0.123,0.131,-0.131,0.0304,-0.0304
+0.055,0.05,0.06,2.11,0.0388,-0.0388,0.0136,-0.0136,0.172,-0.172,0.0973,-0.0973,0.0738,-0.0738,0.111,-0.111,0.0111,-0.0111
+0.07,0.06,0.08,1.65,0.0302,-0.0302,0.02,-0.02,0.129,-0.129,0.0726,-0.0726,0.00205,-0.00205,0.104,-0.104,0.00982,-0.00982
+0.09,0.08,0.1,1.24,0.0218,-0.0218,0.029,-0.029,0.0675,-0.0675,0.0442,-0.0442,0.0289,-0.0289,0.0768,-0.0768,0.0177,-0.0177
+0.125,0.1,0.15,0.806,0.0153,-0.0153,0.0419,-0.0419,0.0776,-0.0776,0.0532,-0.0532,0.0131,-0.0131,0.0596,-0.0596,0.00377,-0.00377
+
