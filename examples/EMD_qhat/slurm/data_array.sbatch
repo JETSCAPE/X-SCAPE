@@ -6,7 +6,7 @@
 #SBATCH --output=logs/%x_%A_%a.log
 # Data-matched analysis (jetana_data) of the kept event files, one file per
 # array element (about 15 s each), e.g.
-#   sbatch --account=<account> --array=1-$(wc -l < tasks/bestfit.txt)%150 \
+#   sbatch --account=<account> --array=1-$(wc -l < tasks/bestfit.txt)%50 \
 #          --export=ALL,TASKS=tasks/bestfit.txt slurm/data_array.sbatch
 # IMAGE/BIND as in array.sbatch.
 cd "$SLURM_SUBMIT_DIR" || exit 1

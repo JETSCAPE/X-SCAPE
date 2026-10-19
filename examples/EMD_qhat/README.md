@@ -124,9 +124,9 @@ latexmk -pdf brick_figures.tex     # 7 figures with captions
 python3 make_configs.py pp routeA routeB lamcal bestfit ppvar
 # on a SLURM cluster, from this folder, one group at a time, e.g.
 sbatch --account=<acct> --array=1-$(wc -l < tasks/pp.txt) --export=ALL,TASKS=tasks/pp.txt slurm/array.sbatch
-sbatch --account=<acct> --array=1-$(wc -l < tasks/bestfit.txt)%80 \
+sbatch --account=<acct> --array=1-$(wc -l < tasks/bestfit.txt)%50 \
        --export=ALL,TASKS=tasks/bestfit.txt,KEEP_EVENTS=1 slurm/array.sbatch
-sbatch --account=<acct> --array=1-$(wc -l < tasks/ppvar.txt)%80 \
+sbatch --account=<acct> --array=1-$(wc -l < tasks/ppvar.txt)%50 \
        --export=ALL,TASKS=tasks/ppvar.txt,KEEP_EVENTS=1 slurm/array.sbatch
 #   container: add IMAGE=<jetscape_base_v2.1.sif>,BIND=<paths> to --export
 # or locally, one task at a time:
@@ -165,7 +165,7 @@ the HEPData records in `data/hepdata/` (one CSV per table):
 ```bash
 g++ -O2 -std=c++17 -I../../external_packages jetana_data.cc ../../external_packages/fjcore.cc -o jetana_data
 cat tasks/bestfit.txt tasks/ppvar.txt > tasks/data.txt
-sbatch --account=<acct> --array=1-$(wc -l < tasks/data.txt)%150 \
+sbatch --account=<acct> --array=1-$(wc -l < tasks/data.txt)%50 \
        --export=ALL,TASKS=tasks/data.txt slurm/data_array.sbatch    # ~15 s per file
 python3 data_compare.py     # data_compare.txt, fig_data_{xj,ff,cms,alice_mass,alice_ang}.png
 python3 pp_variants.py      # pp_variants.txt, fig_pp_variants.png

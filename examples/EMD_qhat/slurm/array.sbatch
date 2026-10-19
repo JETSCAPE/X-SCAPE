@@ -5,7 +5,7 @@
 #SBATCH --time=04:00:00
 #SBATCH --output=logs/%x_%A_%a.log
 # One hydro task per array element. Submit from this folder, e.g.
-#   sbatch --account=<account> --array=1-$(wc -l < tasks/routeB.txt)%80 \
+#   sbatch --account=<account> --array=1-$(wc -l < tasks/routeB.txt)%50 \
 #          --export=ALL,TASKS=tasks/routeB.txt slurm/array.sbatch
 # LHC tasks take about 1.5 h, RHIC tasks about 0.5 h (2 threads).
 # Add KEEP_EVENTS=1 to --export to keep the final-state hadrons (events/).
