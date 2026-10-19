@@ -21,6 +21,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <random>
@@ -54,6 +55,7 @@ void PythiaGun::InitTask() {
 
   ReadPtHatBins();
   ReadPartonYCut();
+  ReadTrigger();
   const int nBins = GetNPtHatBins();
 
   // Window 0 keeps the seed as it is (a single window is unchanged).  The other
@@ -83,8 +85,8 @@ void PythiaGun::InitTask() {
         std::make_unique<Pythia8::Pythia>(settings, particleData, false));
 
   softQCDBin_.assign(nBins, false);
-  yTried_.assign(partonYMax_ > 0 ? nBins : 0, 0);
-  yKept_.assign(partonYMax_ > 0 ? nBins : 0, 0);
+  yTried_.assign(CutsOn() ? nBins : 0, 0);
+  yKept_.assign(CutsOn() ? nBins : 0, 0);
   for (int k = 0; k < nBins; ++k)
     ConfigurePythia(PythiaOf(k), k);
 
@@ -203,12 +205,102 @@ void PythiaGun::ReadPartonYCut() {
            << "); sigma = sigmaGen x kept/tried";
 }
 
-//! The two hardest partons to hand over (``sorted`` by pT, at least two) against
-//! |y| < partonYMax_: the hardest ("leading"), both ("both") or either ("any").
+namespace {
+
+//! An optional cut value: empty -> 0 (no cut), else a number > 0.
+double ReadOptionalCut(const std::string &text, const std::string &tag) {
+  std::stringstream in(text);
+  std::string token;
+  if (!(in >> token))
+    return 0.;
+  size_t used = 0;
+  double v = 0.;
+  try {
+    v = std::stod(token, &used);
+  } catch (const std::exception &) {
+    used = 0;
+  }
+  if (used != token.size() || !(v > 0))
+    throw std::runtime_error("PythiaGun: <" + tag +
+                             "> takes a number > 0 (empty: no cut), got '" +
+                             token + "'");
+  return v;
+}
+
+}  // namespace
+
+//! <minPartons> (default 2), <trigger> (none | Z) and the Z acceptance
+//! <triggerYMax>, <leptonPtMin>, <leptonEtaMax> (empty: no cut).
+void PythiaGun::ReadTrigger() {
+  minPartons_ = 2;
+  std::stringstream mp(
+      GetXMLElementText({"Hard", "PythiaGun", "minPartons"}, false));
+  std::string token;
+  if (mp >> token) {
+    size_t used = 0;
+    try {
+      minPartons_ = std::stoi(token, &used);
+    } catch (const std::exception &) {
+      used = 0;
+    }
+    if (used != token.size() || minPartons_ < 1)
+      throw std::runtime_error(
+          "PythiaGun: <minPartons> takes an integer >= 1, got '" + token + "'");
+  }
+  std::stringstream trig(
+      GetXMLElementText({"Hard", "PythiaGun", "trigger"}, false));
+  trigger_ = "none";
+  trig >> trigger_;
+  if (trigger_ != "none" && trigger_ != "Z")
+    throw std::runtime_error("PythiaGun: <trigger> is none or Z, got '" +
+                             trigger_ + "'");
+  triggerYMax_ = ReadOptionalCut(
+      GetXMLElementText({"Hard", "PythiaGun", "triggerYMax"}, false),
+      "triggerYMax");
+  leptonPtMin_ = ReadOptionalCut(
+      GetXMLElementText({"Hard", "PythiaGun", "leptonPtMin"}, false),
+      "leptonPtMin");
+  leptonEtaMax_ = ReadOptionalCut(
+      GetXMLElementText({"Hard", "PythiaGun", "leptonEtaMax"}, false),
+      "leptonEtaMax");
+  if (trigger_ != "Z" &&
+      (triggerYMax_ > 0 || leptonPtMin_ > 0 || leptonEtaMax_ > 0))
+    throw std::runtime_error("PythiaGun: <triggerYMax>, <leptonPtMin> and "
+                             "<leptonEtaMax> need <trigger>Z</trigger>");
+  if (minPartons_ != 2)
+    JSINFO << MAGENTA << "Pythia Gun: events need " << minPartons_
+           << " parton(s) (leptons do not count)";
+  if (trigger_ == "Z") {
+    std::ostringstream cuts;
+    if (triggerYMax_ > 0)
+      cuts << ", |y_Z| < " << triggerYMax_;
+    if (leptonPtMin_ > 0)
+      cuts << ", lepton pT > " << leptonPtMin_;
+    if (leptonEtaMax_ > 0)
+      cuts << ", lepton |eta| < " << leptonEtaMax_;
+    JSINFO << MAGENTA << "Pythia Gun: trigger Z (an e+e- or mu+mu- pair)"
+           << cuts.str() << "; sigma = sigmaGen x kept/tried";
+  }
+}
+
+//! The two hardest partons to hand over (``sorted`` by pT; leptons skipped, at
+//! least one parton) against |y| < partonYMax_: the hardest ("leading"), both
+//! ("both") or either ("any").  With one parton every mode cuts on it.
 bool PythiaGun::PassesPartonYCut(
     const std::vector<Pythia8::Particle> &sorted) const {
-  const bool in0 = std::fabs(sorted[0].y()) < partonYMax_;
-  const bool in1 = std::fabs(sorted[1].y()) < partonYMax_;
+  const Pythia8::Particle *two[2] = {nullptr, nullptr};
+  int n = 0;
+  for (const auto &p : sorted) {
+    if (Parton::isLepton(p.id()))
+      continue;
+    two[n++] = &p;
+    if (n == 2)
+      break;
+  }
+  if (n == 0)
+    return false;
+  const bool in0 = std::fabs(two[0]->y()) < partonYMax_;
+  const bool in1 = n > 1 ? std::fabs(two[1]->y()) < partonYMax_ : in0;
   if (partonYMode_ == "leading")
     return in0;
   if (partonYMode_ == "both")
@@ -216,9 +308,43 @@ bool PythiaGun::PassesPartonYCut(
   return in0 || in1;
 }
 
+//! The Z: the opposite-charge, same-flavour lepton pair with the largest
+//! invariant mass; triggerLeptons_ hardest first (``sorted`` is by pT).
+bool PythiaGun::FindTriggerPair(const std::vector<Pythia8::Particle> &sorted) {
+  triggerLeptons_.clear();
+  double best = -1.;
+  for (size_t i = 0; i < sorted.size(); ++i) {
+    if (!Parton::isLepton(sorted[i].id()))
+      continue;
+    for (size_t j = i + 1; j < sorted.size(); ++j) {
+      if (sorted[j].id() != -sorted[i].id())
+        continue;
+      const double m = (sorted[i].p() + sorted[j].p()).mCalc();
+      if (m > best) {
+        best = m;
+        triggerLeptons_ = {sorted[i], sorted[j]};
+      }
+    }
+  }
+  return !triggerLeptons_.empty();
+}
+
+bool PythiaGun::PassesTriggerCut() const {
+  const Pythia8::Vec4 z = triggerLeptons_[0].p() + triggerLeptons_[1].p();
+  if (triggerYMax_ > 0 && !(std::fabs(z.rap()) < triggerYMax_))
+    return false;
+  for (const auto &l : triggerLeptons_) {
+    if (leptonPtMin_ > 0 && !(l.pT() > leptonPtMin_))
+      return false;
+    if (leptonEtaMax_ > 0 && !(std::fabs(l.eta()) < leptonEtaMax_))
+      return false;
+  }
+  return true;
+}
+
 double PythiaGun::GetSigmaErr(int bin) {
   const double e = InfoOf(bin).sigmaErr();
-  if (!(partonYMax_ > 0))
+  if (!CutsOn())
     return e;
   const double s = InfoOf(bin).sigmaGen(), a = GetYAcceptance(bin);
   const long n = GetNYTried(bin);
@@ -374,6 +500,9 @@ void PythiaGun::ExecuteTask() {
 
   bool flag62 = false;
   vector<Pythia8::Particle> p62;
+  triggerLeptons_.clear();
+  constexpr long kMaxRejected = 100000;  //!< tries per event at the cuts
+  long nRejected = 0;
 
   // sort by pt
   struct greater_than_pt {
@@ -425,6 +554,14 @@ void PythiaGun::ExecuteTask() {
       }
 
       if (!FSR_on) {
+        // leptons (a Z's decay: final, status 23 after the resonance decay,
+        // not 62) go over as they are, like photons; not partons, so no
+        // softMomentumCutoff
+        if (Parton::isLepton(particle.id())) {
+          if (particle.isFinal())
+            p62.push_back(particle);
+          continue;
+        }
         // only accept particles after MPI
         if (particle.status() != 62)
           continue;
@@ -450,18 +587,22 @@ void PythiaGun::ExecuteTask() {
         if (!particle.isFinal())
           continue;
         // only accept gluons and quarks
-        // Also accept Gammas to put into the hadron's list
+        // Also accept Gammas and leptons to put into the hadron's list
         if (fabs(particle.id()) > 5 &&
-            (particle.id() != 21 && particle.id() != 22))
+            (particle.id() != 21 && particle.id() != 22) &&
+            !Parton::isLepton(particle.id()))
           continue;
       }
       p62.push_back(particle);
     }
 
-    // if you want at least 2
-    if (p62.size() < 2)
+    // at least <minPartons> (default 2); leptons do not count
+    const long nPartons =
+        std::count_if(p62.begin(), p62.end(), [](const Pythia8::Particle &p) {
+          return !Parton::isLepton(p.id());
+        });
+    if (nPartons < minPartons_)
       continue;
-    // if ( p62.size() < 1 ) continue;
 
     // Now have all candidates, sort them
     // sort by pt
@@ -475,10 +616,20 @@ void PythiaGun::ExecuteTask() {
       continue;
     }
 
-    // rapidity cut on what is handed over (<partonYMax>)
-    if (partonYMax_ > 0) {
+    // the cuts on what is handed over: rapidity (<partonYMax>), trigger
+    if (CutsOn()) {
       ++yTried_[activeBin_];
-      if (!PassesPartonYCut(p62))
+      // a process that never passes (e.g. <trigger>Z without a Z in
+      // <LinesToRead>) would regenerate forever
+      if (++nRejected > kMaxRejected)
+        throw std::runtime_error(
+            "PythiaGun: no event passed <partonYMax> / <trigger> in " +
+            std::to_string(kMaxRejected) +
+            " tries; with <trigger>Z, does <LinesToRead> make Z -> e+e- or "
+            "mu+mu-?");
+      if (partonYMax_ > 0 && !PassesPartonYCut(p62))
+        continue;
+      if (trigger_ == "Z" && !(FindTriggerPair(p62) && PassesTriggerCut()))
         continue;
       ++yKept_[activeBin_];
     }

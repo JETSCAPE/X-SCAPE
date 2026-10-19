@@ -415,20 +415,20 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
 
     vStart = vStartVec[i];
     if (pOutTemp.size() == 0) {
-      // no need to generate a vStart for photons and liquefied
+      // no need to generate a vStart for photons, leptons and liquefied
       // partons
       if (pInTempModule[0].pstat() != droplet_stat &&
           pInTempModule[0].pstat() != miss_stat &&
           pInTempModule[0].pstat() != neg_stat &&
-          !pInTempModule[0].isPhoton(pInTempModule[0].pid())) {
+          !pInTempModule[0].isNonParton(pInTempModule[0].pid())) {
         vStartVecTemp.push_back(vStart);
       }
     } else if (pOutTemp.size() == 1) {
-      // no need to generate a vStart for photons and liquefied
+      // no need to generate a vStart for photons, leptons and liquefied
       // partons
       if (pOutTemp[0].pstat() != droplet_stat &&
           pOutTemp[0].pstat() != miss_stat && pOutTemp[0].pstat() != neg_stat &&
-          !pOutTemp[0].isPhoton(pOutTemp[0].pid())) {
+          !pOutTemp[0].isNonParton(pOutTemp[0].pid())) {
         vStartVecTemp.push_back(vStart);
       } else if (!weak_ptr_is_uninitialized(liquefier_ptr) &&
                  pOutTemp[0].pstat() == droplet_stat) {
@@ -455,12 +455,12 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
         pOutTemp[k].set_shower(pShower);
         pOutTemp[k].set_edgeid(edgeid);
 
-        // no need to generate a vStart for photons and liquefied
+        // no need to generate a vStart for photons, leptons and liquefied
         // partons
         if (pOutTemp[k].pstat() != droplet_stat &&
             pOutTemp[k].pstat() != miss_stat &&
             pOutTemp[k].pstat() != neg_stat &&
-            !pOutTemp[k].isPhoton(pOutTemp[k].pid())) {
+            !pOutTemp[k].isNonParton(pOutTemp[k].pid())) {
           vStartVecOut.push_back(vEnd);
         }
 
@@ -500,8 +500,8 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
         if (pInTempModule[0].pstat() == neg_stat)
           continue;
       }
-      // do not push back photons
-      if (pInTempModule[0].isPhoton(pInTempModule[0].pid()))
+      // do not push back photons and leptons
+      if (pInTempModule[0].isNonParton(pInTempModule[0].pid()))
         continue;
       pInTemp.push_back(pInTempModule[0]);
     } else if (pOutTemp.size() == 1) {
@@ -515,8 +515,8 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
         if (pOutTemp[0].pstat() == neg_stat)
           continue;
       }
-      // do not push back photons
-      if (pOutTemp[0].isPhoton(pOutTemp[0].pid()))
+      // do not push back photons and leptons
+      if (pOutTemp[0].isNonParton(pOutTemp[0].pid()))
         continue;
       pInTemp.push_back(pOutTemp[0]);
     } else {
@@ -533,8 +533,8 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
         // do not push back missing (from AdSCFT)
         if (pOutTemp[k].pstat() == miss_stat)
           continue;
-        // do not push back photons
-        if (pOutTemp[k].isPhoton(pOutTemp[k].pid()))
+        // do not push back photons and leptons
+        if (pOutTemp[k].isNonParton(pOutTemp[k].pid()))
           continue;
 
         pOut.push_back(pOutTemp[k]);
