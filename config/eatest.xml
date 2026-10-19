@@ -8,7 +8,7 @@
   <vlevel> 0 </vlevel>
 
   <outputFilename>eaout_SMASH_shift</outputFilename>
-  <nEvents>1</nEvents>
+  <nEvents>500</nEvents>
   
   <JetScapeWriterAscii> on </JetScapeWriterAscii>
   <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
@@ -39,11 +39,11 @@
       <!-- hermes paper cuts -->
       <usesetQ2>0</usesetQ2>
       <usesetnu>0</usesetnu>
-      <Q2min>10</Q2min>
+      <Q2min>11</Q2min>
       <Q2max>12</Q2max>
       <!-- <W2min>4</W2min> -->
-      <numin>10</numin>
-      <numax>12</numax>
+      <numin>15</numin>
+      <numax>16</numax>
       <!-- end hermes paper -->
       <Q2>10</Q2>
       <nu>12</nu>

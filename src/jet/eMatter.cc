@@ -161,6 +161,7 @@ void eMatter::InitTask() {
   Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
     targZ = GetXMLElementDouble({"Hard", "EAGun", "targetZ"});
     targA = GetXMLElementDouble({"Hard", "EAGun", "targetA"});
+  glauberRootS = GetXMLElementDouble({"IS", "MCGlauber", "sqrts"});
 
   //from HardProcess.cc
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
@@ -242,6 +243,46 @@ void eMatter::Dump_pIn_info(int i, vector<Parton> &pIn) {
          << " form_time in fm = " << pIn[i].form_time()
          << " split time = " << pIn[i].form_time() + pIn[i].x_in().t()
          << " plabel = " << pIn[i].plabel();
+}
+
+double eMatter::get_target_density_to_remove(double t, double x, double y, double z) {
+  // PRIMARILY COPIED FROM MCGLAUBER CODE THAT GENERATES THE DENSITY
+  // roots = 27.6, dir = -1
+  // roots can be read from IS > MCGlauber > sqrts
+  // auto nuclues_rapidity = nucleus_ptr->get_beam_rapidity(parameter_list.get_roots(), direction);
+  // from Nucleus.cpp
+  // real beam_rapidity = direction*acosh(ecm/(2.*PhysConsts::MProton));
+  double nuclues_rapidity = -1*acosh(glauberRootS / (2.*0.938));
+
+  const double width_xy = 0.5;      // fm
+  const double width_z = width_xy/cosh(nuclues_rapidity);   // fm
+  const double prefactor = 1./(width_xy*width_xy*width_z)/pow(M_PI*2, 1.5);
+
+  double nucx, nucy, nucz, thisdens;
+  double dens_to_remove = 0.;
+  for (int nuci=0; nuci<targA; nuci++) {
+    if (!ini->GetNucleonUsed(nuci)) continue;
+    //this nucleon has been used, we need to remove its contribution from the density
+
+    ini->GetTargetNucleonPositionsAtt(t, nuci, nucx, nucy, nucz); //get its position
+
+    double dis_square_xy = (x - nucx)*(x - nucx) + (y - nucy)*(y - nucy);
+    if (dis_square_xy > width_xy*width_xy*200.) continue;
+
+    double z_shifted = z - tanh(nuclues_rapidity)*t;
+    double dis_square_z = (z_shifted - nucz)*(z_shifted - nucz);
+    if (dis_square_z > width_z*width_z*100.) continue;
+
+    // dens_to_remove += exp(- dis_square_xy/(2.*width_xy*width_xy)
+    //                        - dis_square_z/(2.*width_z*width_z));
+    thisdens = exp(- dis_square_xy/(2.*width_xy*width_xy)
+                   - dis_square_z/(2.*width_z*width_z));
+
+    cout << "EMATTER: REMOVED " << thisdens << " DENSITY FROM NUCLEON " << nuci << endl;
+
+    dens_to_remove += thisdens;
+  }
+  return (dens_to_remove*prefactor);
 }
 
 void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
@@ -568,30 +609,30 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
 
       //find distance to end of nucleus
-      double MINDENS = 0;
-      double xLeft[4], xRight[4];
-      for (int j=0; j<4; j++) { xLeft[j] = xStart[j]; }
+      // double MINDENS = 0;
+      // double xLeft[4], xRight[4];
+      // for (int j=0; j<4; j++) { xLeft[j] = xStart[j]; }
       // cout << "STARTING LEFT " << xLeft[0] << " " << xLeft[1] << " " << xLeft[2] << " " << xLeft[3] << endl;
-      xRight[0] = xLeft[0]+1.;
-      xRight[1] = xLeft[1]+initVx;
-      xRight[2] = xLeft[2]+initVy;
-      xRight[3] = xLeft[3]+initVz;
+      // xRight[0] = xLeft[0]+1.;
+      // xRight[1] = xLeft[1]+initVx;
+      // xRight[2] = xLeft[2]+initVy;
+      // xRight[3] = xLeft[3]+initVz;
       // cout << "VELOCITY " << initVx << " " << initVy << " " << initVz << endl;
       // cout << "STARTING RIGHT " << xRight[0] << " " << xRight[1] << " " << xRight[2] << " " << xRight[3] << endl;
 
       // cout << endl;
 
       //step forward in time by 1 until only xRight is outside
-      while (ini->Get_target_nucleon_density_lab(xRight[0], xRight[1], xRight[2], xRight[3]) > MINDENS) {
-        xLeft[0]=xRight[0]; xRight[0]+=1.;
-        xLeft[1]=xRight[1]; xRight[1]+=initVx;
-        xLeft[2]=xRight[2]; xRight[2]+=initVy;
-        xLeft[3]=xRight[3]; xRight[3]+=initVz;
+      // while (ini->Get_target_nucleon_density_lab(xRight[0], xRight[1], xRight[2], xRight[3]) > MINDENS) {
+      //   xLeft[0]=xRight[0]; xRight[0]+=1.;
+      //   xLeft[1]=xRight[1]; xRight[1]+=initVx;
+      //   xLeft[2]=xRight[2]; xRight[2]+=initVy;
+      //   xLeft[3]=xRight[3]; xRight[3]+=initVz;
 
         // cout << "\tRIGHT DENS" << ini->Get_target_nucleon_density_lab(xRight[0], xRight[1], xRight[2], xRight[3]) << endl;
         // cout << "\tLEFT " << xLeft[0] << " " << xLeft[1] << " " << xLeft[2] << " " << xLeft[3] << endl;
         // cout << "\tRIGHT " << xRight[0] << " " << xRight[1] << " " << xRight[2] << " " << xRight[3] << endl;
-      }
+      // }
 
       // cout << "just to confirm:" << endl;
       // cout << "LEFT DENS: " << ini->Get_target_nucleon_density_lab(xLeft[0], xLeft[1], xLeft[2], xLeft[3]) << endl;
@@ -649,7 +690,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
       double edge_dy = edge_dt*initVy;
       double edge_dz = edge_dt*initVz;
 
-      // double MINDENS = 0;
+      double MINDENS = 0.;
       while(ini->Get_target_nucleon_density_lab(xEdge[0], xEdge[1], xEdge[2], xEdge[3]) <= MINDENS) {
         xEdge[0] -= edge_dt;
         xEdge[1] -= edge_dx;
@@ -659,9 +700,11 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       length = 0.;
       for (int j=1; j<4; j++) { length += pow(xEdge[j]-xStart[j],2); }
+      time_to_exit = xEdge[0] + edge_dt;
       length = std::sqrt(length);
 
-      // cout << "LENGTH IS " << length << endl;
+      cout << "LENGTH IS " << length << endl;
+      cout << "TIME TO EXIT IS " << time_to_exit << endl;
 
 
 
@@ -998,25 +1041,34 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 	    double muSquare= pIn[i].t(); //Virtuality of the parent; Revist this when q-hat is virtuality dependent
       // qhatLoc= GeneralQhatFunction(QhatParametrizationType, tempLoc, sdLoc, alphas, qhat0, enerLoc, muSquare);
 
-      double nuclear_dens = ini->Get_target_nucleon_density_lab(el_time, el_rx, el_ry, el_rz);
+      double nuclear_dens = ini->Get_target_nucleon_density_lab(el_dt, el_rx, el_ry, el_rz);
 
-      //find the closest nucleon, assume that's where the density comes from... 
-      //TODO: some way to update the density and tie to nucleon idx
+      //find the closest unused nucleon, if we interact with something we assume it's this one
       int closestNucIdx = 0;
       double mindistsq = 999999.;
       double nucx, nucy, nucz, thisdistsq;
+      // cout << "time " << el_time << " pos " << el_rx << " " << el_ry << " " << el_rz << " dens " << nuclear_dens << endl;
       for (int nuci=0; nuci<targA; nuci++) {
-        ini->GetProjectileNucleonPositionsAtt(el_time, nuci, nucx, nucy, nucz);
-        thisdistsq = pow(el_rx - nucx, 2.) + pow(el_ry - nucy, 2.) + pow(el_rz - nucz, 2.);
+        if (ini->GetNucleonUsed(nuci)) continue;
+        ini->GetTargetNucleonPositionsAtt(el_dt, nuci, nucx, nucy, nucz);
+	      thisdistsq = pow(el_rx - nucx, 2.) + pow(el_ry - nucy, 2.) + pow(el_rz - nucz, 2.);
+	      // cout << "\tnuc " << nuci << " position " << nucx << " " << nucy << " " << nucz << " distsq " << thisdistsq << endl;
         if (thisdistsq < mindistsq) {
+          // cout << "\tNEW MIN " << nuci << " " << thisdistsq << endl;
           closestNucIdx = nuci;
           mindistsq = thisdistsq;
         }
       }
+      // cout << "closest unused nucleon " << closestNucIdx << " distsq " << mindistsq << endl;
 
-      if (!hasExited && nuclear_dens == 0.) { hasExited = true; cout << "EXITING, VIRT IS " << pIn[i].t() << endl; }
+      //remove the density contributions from the used nucleons
+      //yes, I did just copy and paste the function from mcglauber
+      nuclear_dens -= get_target_density_to_remove(el_dt, el_rx, el_ry, el_rz);
+
+      // if (!hasExited && nuclear_dens == 0.) { hasExited = true; cout << "EXITING, VIRT IS " << pIn[i].t() << endl; }
+      if (!hasExited && el_dt >= time_to_exit) { hasExited = true; cout << "EXITING, VIRT IS " << pIn[i].t() << endl; }
       // if (el_time < 0.1) { nuclear_dens = 0.; } //no self interaction in the first moment
-      if (ini->GetNucleonUsed(closestNucIdx)) { cout << "EMATTER: USED NUCLEON ALREADY " << closestNucIdx << endl; nuclear_dens = 0.; }
+      // if (ini->GetNucleonUsed(closestNucIdx)) { cout << "EMATTER: USED NUCLEON ALREADY " << closestNucIdx << endl; nuclear_dens = 0.; }
 
       if (pIn[i].pid()==21) {
         qhatLoc = interpolate_pdf_tables(initEner,21,2);
@@ -1047,8 +1099,9 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
             soln_alphas = solve_alphas(qhatLoc, enerLoc, tempLoc);
 
           // Read the proability of elastic scattering in time delta t in nuclear rest frame
+          // cout << "ener " << pIn[i].e() << endl;
           double rate_per_vol = interpolate_pdf_tables(pIn[i].e(), pIn[i].pid(), 1);
-          prob_el = exp(-1*nuclear_dens*rate_per_vol * dt_lrf);
+          prob_el = exp(-1*nuclear_dens*rate_per_vol * dt_lrf / pow(0.1973,3.));
 
           // muD2 = 6.0 * pi * soln_alphas * tempLoc * tempLoc;
           // prob_el = 42.0 * zeta3 * el_CR  * tempLoc / 6.0 / pi /
@@ -1842,7 +1895,7 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       } else { // not time to split yet broadening it
 
-        // cout << "\tno split" << endl;
+        //cout << "\tno split" << endl;
         if (broadening_on) {
 
           // cout << "\tbroadening!!!" << endl;

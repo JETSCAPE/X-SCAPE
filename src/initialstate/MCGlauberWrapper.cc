@@ -196,21 +196,21 @@ void MCGlauberWrapper::InitTask() {
   //keep track of p vs n
   nucleonPids = std::make_shared<std::vector<int>>();
   nucleonUsed = std::make_shared<std::vector<int>>();
+
+  //init the lists
+  for (int pidi=0; pidi<targA; pidi++) { nucleonPids->push_back(0); nucleonUsed->push_back(0); }
 }
 
 
 void MCGlauberWrapper::ResetNucTracking() {
   cout << "MCGLAUBER INITIALIZING PIDS" << endl;
 
-  nucleonPids->clear();
-  nucleonUsed->clear();
-
   int pidi=0;
-  for (; pidi<targZ; pidi++) { nucleonPids->push_back(2212); }
-  for (; pidi<targA; pidi++) { nucleonPids->push_back(2112); }
+  for (; pidi<targZ; pidi++) { (*nucleonPids)[pidi] = 2212; }
+  for (; pidi<targA; pidi++) { (*nucleonPids)[pidi] = 2112; }
   random_shuffle(nucleonPids->begin(), nucleonPids->end());
 
-  for (pidi=0; pidi<targA; pidi++) { nucleonUsed->push_back(0); }
+  for (pidi=0; pidi<targA; pidi++) { (*nucleonUsed)[pidi] = 0; }
 }
 
 void MCGlauberWrapper::ClearTask() {

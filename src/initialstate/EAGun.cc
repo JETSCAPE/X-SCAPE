@@ -633,7 +633,7 @@ void EAGun::ExecuteTask() {
         xLoc[0] = 0.;
         ini->GetTargetNucleonPositionsAtt(xLoc[0], nucleonIdx, xLoc[1], xLoc[2], xLoc[3]);
         ini->SetNucleonUsed(nucleonIdx, 1);
-        cout << "EAGUN: USING NUCLEON " << nucleonIdx << endl;
+        cout << "EAGUN: USING NUCLEON " << nucleonIdx << " AT T=" << xLoc[0] << " POS " << xLoc[1] << " " << xLoc[2] << " " << xLoc[3] << endl;
     }
     // cout << "INITIAL COLLISION IS AT: " << xLoc[0] << " " << xLoc[1] << " " << xLoc[2] << " " << xLoc[3] << endl;
 
@@ -705,11 +705,11 @@ void EAGun::ExecuteTask() {
         remnant = p63.at(np);
 
         pRmn = remnant.p();
-        cout << "PREBOOSTREMN E " << pRmn.e() << " MOM " << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
+        // cout << "PREBOOSTREMN E " << pRmn.e() << " MOM " << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
         
         pRmn.rotbst(fixedtargBoost);
 
-        cout << "POSTBOOSTREMN E " << pRmn.e() << " MOM " << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
+        // cout << "POSTBOOSTREMN E " << pRmn.e() << " MOM " << pRmn.px() << " " << pRmn.py() << " " << pRmn.pz() << endl;
 
         // ofstream fout4;
         // fout4.open("fullrot-remnout1-v4-19.txt", std::ios_base::app);

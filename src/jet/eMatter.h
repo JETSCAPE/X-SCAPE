@@ -196,6 +196,11 @@ public:
   void collHQ22(int CT, double temp, double qhat0ud, double v0[4], double p0[4],
                 double p2[4], double p3[4], double p4[4], double &qt);
 
+  double get_target_density_to_remove(double t, double x, double y, double z);
+  double glauberRootS;
+
+  double time_to_exit;
+
 protected:
   uniform_real_distribution<double> ZeroOneDistribution;
 

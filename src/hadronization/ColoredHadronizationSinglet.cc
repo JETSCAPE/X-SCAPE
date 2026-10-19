@@ -757,7 +757,7 @@ void ColoredHadronizationSinglet::DoHadronization(
   double thisnuc_m, thisnuc_pid;
   for (int nuci=0; nuci<targA; nuci++) {
     thisnuc_pid = ini->GetNucleonPid(nuci);
-    cout << nuci << " PID " << ini->GetNucleonPid(nuci) << " USED " << ini->GetNucleonUsed(nuci) << endl;
+    // cout << nuci << " PID " << ini->GetNucleonPid(nuci) << " USED " << ini->GetNucleonUsed(nuci) << endl;
     if (thisnuc_pid == 2212) { thisnuc_m = 0.938; } //p
     else { thisnuc_m = 0.939; } //n
     if (!ini->GetNucleonUsed(nuci)) {
@@ -766,7 +766,7 @@ void ColoredHadronizationSinglet::DoHadronization(
           FourVector(nucleonPositions[nuci][1], nucleonPositions[nuci][2], nucleonPositions[nuci][3], 0.), 
           thisnuc_m));
       ip++;
-      cout << "ADDED GLAUBER NUCLEON " << thisnuc_pid << endl;
+      // cout << "ADDED GLAUBER NUCLEON " << thisnuc_pid << endl;
     }
     else { cout << "SMASH: NOT ADDING USED NUCLEON " << nuci << endl; }
   }
