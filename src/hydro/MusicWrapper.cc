@@ -633,6 +633,12 @@ void MpiMusic::EvolveHydro() {
     }
 #endif
     music_hydro_ptr->run_hydro();
+    // The fluid starts at MUSIC's tau0 of this run (with 3dMCGlauber strings set
+    // per event by the earliest string). Matter and LBT read it as their tStart
+    // (GetHydroTau0Signal) and start the medium interaction there, i.e. when the
+    // stored evolution begins. FluidDynamics' setter: MpiMusic::SetHydroStartTime
+    // would also reset MUSIC's Initial_time_tau_0.
+    FluidDynamics::SetHydroStartTime(music_hydro_ptr->get_hydro_tau0());
 #if defined(USE_CUDA) || defined(USE_METAL)
     if (restart_from_ != nullptr) {
       if (restart_status_.empty()) {
