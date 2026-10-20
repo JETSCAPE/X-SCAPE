@@ -101,6 +101,10 @@ if(NOT "${USE_3DGlauber}")
   list(REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/jet/iMatter.cc)
 endif()
 
+if(NOT "${USE_JEWEL}")
+  list(REMOVE_ITEM SOURCES ${CMAKE_SOURCE_DIR}/src/jet/Jewel.cc)
+endif()
+
 # hadronization
 file(GLOB hadrosources hadronization/*.cc)
 set(SOURCES ${SOURCES} ${hadrosources})
@@ -164,6 +168,10 @@ endif()
 
 if(USE_MUSIC)
   target_link_libraries(JetScape music)
+endif()
+
+if(USE_JEWEL)
+  target_link_libraries(JetScape jewel_jetscape)
 endif()
 
 if(USE_ISS)

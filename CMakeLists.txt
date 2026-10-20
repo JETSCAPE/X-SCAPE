@@ -87,6 +87,10 @@ if(USE_MUSIC)
   include_directories(./external_packages/music ./external_packages/music/src)
 endif(USE_MUSIC)
 
+# JEWEL final-state shower (C++ port in external_packages/jewel). Turn on with
+# 'cmake -DUSE_JEWEL=ON'.
+option(USE_JEWEL "Build the JEWEL final-state shower module" OFF)
+
 # Soft Particlization. Turn on with 'cmake -DUSE_MUSIC=ON -DUSE_ISS=ON'.
 option(USE_ISS "Build tests for iSS" OFF)
 if(USE_ISS)
@@ -397,6 +401,10 @@ endif(USE_ROOT)
 # Some additional settings for subdirectories ###
 # ##############################################################################
 add_subdirectory(./external_packages)
+if(USE_JEWEL)
+  message("Building JEWEL ...")
+  add_subdirectory(./external_packages/jewel)
+endif(USE_JEWEL)
 add_subdirectory(./external_packages/gtl)
 add_subdirectory(./src)
 

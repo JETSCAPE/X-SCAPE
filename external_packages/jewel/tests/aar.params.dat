@@ -1,0 +1,11 @@
+# regression test: PbPb 0-10 %, 5.02 TeV, recoils + constituent subtraction
+NEVENT 20
+NJOB 7
+LOGFILE test.log
+HEPMCFILE test.hepmc
+SQRTS 5020
+PTMIN 20.
+PTMAX -1.
+KEEPRECOILS T
+DOSUBTRACTION T
+MEDIUMPARAMS medium.params.dat

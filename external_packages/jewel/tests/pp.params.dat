@@ -1,0 +1,10 @@
+# regression test: pp, 5.02 TeV, vacuum
+NEVENT 50
+NJOB 7
+LOGFILE test.log
+HEPMCFILE test.hepmc
+SQRTS 5020
+PTMIN 20.
+PTMAX -1.
+MASS 1
+NPROTON 1

@@ -1,0 +1,77 @@
+# JEWEL 2.6.0 -- C++23 port of the JEWEL core, linked against the modified
+# PYTHIA 6.4.25 (Fortran) that is distributed with JEWEL.
+cmake_minimum_required(VERSION 3.25)
+project(jewel VERSION 2.6.0 LANGUAGES CXX Fortran)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# Results are reproducible against the Fortran original only without FMA
+# contraction (gfortran contracts by default on arm64).
+option(JEWEL_NO_FP_CONTRACT "Disable FMA contraction (bit-exact comparison with Fortran)" ON)
+option(JEWEL_BOUNDS_CHECK "Enable FArray bounds checks" OFF)
+
+find_library(LHAPDF_LIB LHAPDF HINTS ENV LHAPDF_DIR ENV CONDA_PREFIX PATH_SUFFIXES lib REQUIRED)
+
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+set(CMAKE_Fortran_FLAGS_RELEASE "-O2")
+
+add_library(pythia6jewel STATIC fortran/pythia6425mod-lhapdf6.f fortran/fio.f90)
+set_source_files_properties(fortran/pythia6425mod-lhapdf6.f PROPERTIES COMPILE_OPTIONS "-w")
+
+add_library(jewelcore STATIC
+  src/io.cpp
+  src/pythia6.cpp
+  src/main_init.cpp
+  src/event_setup.cpp
+  src/cascade.cpp
+  src/scattering.cpp
+  src/kinematics.cpp
+  src/sudakov_tables.cpp
+  src/utilities_hepmc.cpp
+  src/eix.cpp
+  src/subtraction.cpp
+  src/medium.cpp
+  src/medium_simple.cpp
+  src/medium_vac.cpp
+  src/hfdiffusion.cpp)
+target_include_directories(jewelcore PUBLIC include)
+target_compile_options(jewelcore PRIVATE -Wall -Wextra)
+# gfortran calls sin() and cos() separately; clang would fuse sin/cos pairs
+# into __sincos_stret, which can differ in the last bit on macOS.
+target_compile_options(jewelcore PRIVATE -fno-builtin-sin -fno-builtin-cos)
+if(JEWEL_NO_FP_CONTRACT)
+  target_compile_options(jewelcore PRIVATE -ffp-contract=off)
+  target_compile_options(pythia6jewel PRIVATE -ffp-contract=off)
+endif()
+if(JEWEL_BOUNDS_CHECK)
+  target_compile_definitions(jewelcore PUBLIC JEWEL_BOUNDS_CHECK)
+endif()
+target_link_libraries(jewelcore PUBLIC pythia6jewel ${LHAPDF_LIB})
+set_target_properties(jewelcore PROPERTIES LINKER_LANGUAGE CXX)
+
+# Same executable names as the Fortran distribution.
+add_executable(jewel-2.6.0-simple src/main_simple.cpp)
+add_executable(jewel-2.6.0-vac src/main_vac.cpp)
+foreach(t jewel-2.6.0-simple jewel-2.6.0-vac)
+  target_link_libraries(${t} PRIVATE jewelcore)
+  set_target_properties(${t} PROPERTIES LINKER_LANGUAGE CXX)
+endforeach()
+
+# Heavy flavour: emission density of the massive Q -> Q g veto algorithm (compare with
+# tests/hfkernel_expect.py, an exact numerical integral of the same kernel and phase space)
+add_executable(test_hfkernel tests/test_hfkernel.cpp)
+target_link_libraries(test_hfkernel PRIVATE jewelcore)
+set_target_properties(test_hfkernel PROPERTIES LINKER_LANGUAGE CXX)
+
+# Byte-for-byte regression against the original Fortran output (needs LHAPDF
+# with CT14nlo; the lookup tables are computed on the fly).
+enable_testing()
+add_test(NAME regression_pp
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/run_regression.sh $<TARGET_FILE:jewel-2.6.0-vac> pp ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_test(NAME regression_PbPb_recoils
+  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/run_regression.sh $<TARGET_FILE:jewel-2.6.0-simple> aar ${CMAKE_CURRENT_SOURCE_DIR}/tests)

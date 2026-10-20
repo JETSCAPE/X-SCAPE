@@ -25,3 +25,4 @@ external_packages/ipglasma
 external_packages/Cornelius/lib/*
 external_packages/Cornelius/libCornelius.*
 sftp-config.json
+external_packages/jewel/lib/

@@ -687,6 +687,19 @@ void JetScape::DetermineTaskListFromXML() {
                       "Eloss list.";
           }
         }
+        //   - JEWEL (needs cmake -DUSE_JEWEL=ON; the whole final-state shower,
+        //     not to be combined with other modules)
+        else if (childElementName == "Jewel") {
+          auto jewel = JetScapeModuleFactory::createInstance(childElementName);
+          if (jewel) {
+            jloss->Add(jewel);
+            JSINFO << "JetScape::DetermineTaskList() -- Eloss: Added JEWEL to "
+                      "Eloss list.";
+          } else {
+            JSWARN << "JetScape::DetermineTaskList() -- Eloss: JEWEL is not "
+                      "available (build with -DUSE_JEWEL=ON)";
+          }
+        }
         //   - Martini
         else if (childElementName == "Martini") {
           auto martini =

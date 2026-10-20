@@ -333,6 +333,29 @@
       <run_alphas>1</run_alphas>   <!-- 0 for fixed alpha_s and 1 for running alpha_s -->
     </Lbt>
 
+    <!-- JEWEL 2.6.0 (C++ port), needs cmake -DUSE_JEWEL=ON. Generates the whole medium-modified
+         shower of a hard parton at once; use it alone, not together with Matter or Lbt.
+         Other JEWEL parameters (Q0, LPS, LQCD, ANGORD, RECMODE, SCATRECOIL, HEAVYFLAVOUR, ...)
+         go into param_file, which has the format of the JEWEL parameter file. -->
+    <Jewel>
+      <name> Jewel </name>
+      <param_file></param_file>                     <!-- JEWEL parameter file (empty: JEWEL defaults) -->
+      <run_param_file>jewel_params.dat</run_param_file> <!-- effective parameter file written by the module -->
+      <log_file>jewel.log</log_file>
+      <in_vac> 0 </in_vac>
+      <keep_recoils> 1 </keep_recoils>              <!-- 1: medium recoils (stat 1) and holes (stat -1) -->
+      <qmax_factor> 1.0 </qmax_factor>              <!-- maximum virtuality = qmax_factor * pT -->
+      <Tmax> 0.6 </Tmax>                            <!-- upper bound of the medium temperature [GeV] -->
+      <Tc> 0.17 </Tc>                               <!-- no scattering centres below Tc [GeV] -->
+      <nf> 3 </nf>
+      <mdfactor> 0.45 </mdfactor>                   <!-- minimum Debye mass [GeV] -->
+      <mdscalefac> 1.0 </mdscalefac>                <!-- m_D = 3 mdscalefac T -->
+      <lifetime> -1 </lifetime>                     <!-- end of medium interactions [fm], <=0: Eloss maxT -->
+      <pre_tau0> 0 </pre_tau0>                      <!-- before tStart: 0 no medium (LBT), 1 T(tau0) tau/tau0 -->
+      <fluxmax> 6.0 </fluxmax>                      <!-- bound of gamma(1-v.beta) in the rate veto -->
+      <etamax> 3.1 </etamax>                        <!-- no medium at |eta_s| > etamax -->
+    </Jewel>
+
     <Martini>
       <name > Martini </name>
       <Q0> 2.0 </Q0>
