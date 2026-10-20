@@ -24,3 +24,7 @@ spec_data/
 jetana_data
 data_compare.txt
 pp_variants.txt
+spec_data_pimass/
+pythia_pp
+pp_shower.txt
+pp_pythia.txt

@@ -11,6 +11,7 @@ event files with jetana_data (spec_data/), binned as the HEPData records:
 Shape observables are normalised as the data (unit area over the data bins,
 or per jet for D(z)).  The underlying event is subtracted from the model as in
 the measurements: CMS rho with the 1.5 < |deta| < 2.5 sideband (pp and PbPb),
+ALICE observables with the pion mass for all charged particles (spec_data_pimass),
 ATLAS D(z) with perpendicular cones; ALICE subtracts nothing in pp, and the
 Pb-Pb background is the thermal medium, absent from the model events.
 Groomed ALICE observables use Soft Drop with the holes (signed reclustering).
@@ -34,6 +35,10 @@ from spec_tools import combine
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEC = os.path.join(HERE, "spec_data")
+# ALICE builds jets from tracks with the pion mass: its observables use the
+# jetana_data analysis with JETANA_PIONMASS=1 (true hadron masses make R = 0.2
+# jets 0.6-1.2 GeV heavier in pp)
+SPEC_PI = os.path.join(HERE, "spec_data_pimass")
 HEP = next((p for p in (os.path.join(HERE, "data", "hepdata"), os.path.join(HERE, "data", "hepdata_raw"))
             if os.path.isdir(p)), os.path.join(HERE, "data", "hepdata"))
 SAMPLES = {"lhc0010": ("lhcx", list(range(16, 46)) + list(range(331, 361))),
@@ -107,14 +112,14 @@ def unit(b):
 
 
 # ---------------------------------------------------------------- model
-def load():
+def load(spec=SPEC):
     D = {"pp": {}}
     for m in MODELS:
-        D["pp"][m] = combine(sorted(glob.glob(os.path.join(SPEC, "ppx_s*.spec"))))
+        D["pp"][m] = combine(sorted(glob.glob(os.path.join(spec, "ppx_s*.spec"))))
     for s, (pre, seeds) in SAMPLES.items():
         D[s] = {}
         for m in MODELS:
-            fl = [os.path.join(SPEC, f"{pre}_{m}_h{i}.spec") for i in seeds]
+            fl = [os.path.join(spec, f"{pre}_{m}_h{i}.spec") for i in seeds]
             fl = [f for f in fl if os.path.exists(f)]
             D[s][m] = combine(fl)
             D[s][m]["nfiles"] = len(fl)
@@ -193,6 +198,7 @@ def draw_model(ax, e, y, ey, m, label=True):
 # ---------------------------------------------------------------- main
 def main():
     D = load()
+    DA = load(SPEC_PI)  # ALICE
     report = []
     tot = {}  # group -> model -> [chi2, n]
 
@@ -365,7 +371,7 @@ def main():
     plt.close(fig)
 
     # ---------------- ALICE mass
-    report.append("ALICE R = 0.2 charged-jet mass (unit area over data bins)")
+    report.append("ALICE R = 0.2 charged-jet mass (unit area over data bins; pion mass for tracks)")
     fig, axs = plt.subplots(3, 4, figsize=(13, 9))
     rows = [("pp m", "pp", lambda k: 33 + 2 * k if k < 3 else None, "ali_m"),
             ("PbPb m", "lhc0010", lambda k: 39 + 2 * k, "ali_m"),
@@ -379,7 +385,7 @@ def main():
             b = unit(hep_table("ins2845788", f"Table {tab(k)}")[0])
             res, resd = {}, {}
             for m in MODELS:
-                e, y, ey = shape(D[s][m], f"{key}{k}")
+                e, y, ey = shape(DA[s][m], f"{key}{k}")
                 res[m] = chi2(e, y, ey, b)
                 resd[m] = chi2(e, y, ey, b, diag=True)
                 draw_model(ax, e, y, ey, m, label=(row == 0 and k == 0))
@@ -394,7 +400,7 @@ def main():
     plt.close(fig)
 
     # ---------------- ALICE angularities (Pb-Pb)
-    report.append("ALICE R = 0.2 angularities, Pb-Pb (unit area over data bins)")
+    report.append("ALICE R = 0.2 angularities, Pb-Pb (unit area over data bins; pion mass for tracks)")
     fig, axs = plt.subplots(4, 8, figsize=(22, 10.5))
     for k, ptl in enumerate(ALIPT):
         for g in range(2):
@@ -405,7 +411,7 @@ def main():
                 ax = axs[k, 4 * g + a]
                 res, resd = {}, {}
                 for m in MODELS:
-                    e, y, ey = shape(D["lhc0010"][m], key)
+                    e, y, ey = shape(DA["lhc0010"][m], key)
                     res[m] = chi2(e, y, ey, b)
                     resd[m] = chi2(e, y, ey, b, diag=True)
                     draw_model(ax, e, y, ey, m, label=(k == 0 and g == 0 and a == 0))

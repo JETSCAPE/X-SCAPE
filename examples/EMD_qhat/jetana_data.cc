@@ -41,6 +41,8 @@
 // counted ("skipped" in the output): ColoredHadronization does not check
 // pythia.next(), and after its first junction failure in a run it writes the
 // unhadronized partons of every later event.  No other sample has any.
+// With JETANA_PIONMASS=1 in the environment, every charged particle gets the
+// pion mass (E recomputed from its momentum), as in ALICE's track-based jets.
 #include "fjcore.hh"
 
 #include <cmath>
@@ -248,6 +250,8 @@ int main(int argc, char **argv) {
   }
   double sumw = 0.;
   long nev = 0, nskip = 0;
+  const char *pm = std::getenv("JETANA_PIONMASS");
+  const bool pionMass = pm && std::string(pm) == "1";
 
   auto process = [&](const std::vector<Particle> &parts, double w) {
     std::vector<PseudoJet> in, holes, ch, chholes;
@@ -495,7 +499,10 @@ int main(int argc, char **argv) {
         partons = true;
       if (E <= 0.)
         continue;
-      parts.push_back({PseudoJet(px, py, pz, E), kCharged.count(std::abs(pid)) > 0, st < 0});
+      bool charged = kCharged.count(std::abs(pid)) > 0;
+      if (pionMass && charged)
+        E = std::sqrt(px * px + py * py + pz * pz + 0.13957 * 0.13957);
+      parts.push_back({PseudoJet(px, py, pz, E), charged, st < 0});
     }
     if (w >= 0.)
       partons ? (void)nskip++ : process(parts, w);

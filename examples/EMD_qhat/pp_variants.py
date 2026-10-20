@@ -17,6 +17,25 @@ the pp data used in step 2, with the measurements' UE treatment applied to the
 model (data_compare.py).
 
 Writes pp_variants.txt and fig_pp_variants.png.
+
+    python3 pp_variants.py shower
+
+compares instead the parton shower (colorless hadronization, MPI on):
+  ppx             MATTER vacuum shower, Q0 = 1 GeV, vir_factor = 0.25 (production)
+  ppm_pyfsr       PYTHIA's own final-state shower (FSR_on = 1); MATTER passes the
+                  partons through (vir_factor = 2e-6 keeps their virtuality below QS)
+  ppm_q02         MATTER stops at Q0 = 2 GeV
+  ppm_vir0p1      MATTER starting virtuality vir_factor = 0.1
+and writes pp_shower.txt and fig_pp_shower.png.
+
+    python3 pp_variants.py pythia
+
+compares the JETSCAPE production pp with standalone PYTHIA 8 (pythia_pp.cc:
+default Monash tune, full event, the same pTHat bias and decays), with MPI on
+and off, and both with the pion mass for charged particles as in ALICE's
+track-based jets (spec_data_pimass/, jetana_data with JETANA_PIONMASS=1);
+writes pp_pythia.txt and fig_pp_pythia.png.  In the other modes the ALICE
+rows always use the pion mass.
 """
 import glob
 import os
@@ -26,7 +45,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from data_compare import HERE, SPEC, chi2, draw_data, hep_table, per_jet, shape, shape_sub, unit
+from data_compare import HERE, SPEC, SPEC_PI, chi2, draw_data, hep_table, per_jet, shape, shape_sub, unit
 from spec_tools import combine
 
 VARIANTS = {"ppx": ("colorless, MPI on (production)", "#1F5FA8", "-"),
@@ -57,8 +76,29 @@ def step(ax, e, y, v):
     ax.step(e, np.append(y, y[-1]), where="post", color=col, ls=ls, lw=1.5, label=lab)
 
 
+OUT = ("fig_pp_variants.png", "pp_variants.txt")
+SHOWER_VARIANTS = {"ppx": ("MATTER, Q0 = 1, vir_factor 0.25 (production)", "#1F5FA8", "-"),
+                   "ppm_pyfsr": ("PYTHIA shower (FSR_on = 1)", "#C2410C", "-"),
+                   "ppm_q02": ("MATTER, Q0 = 2 GeV", "#15803D", "-"),
+                   "ppm_vir0p1": ("MATTER, vir_factor 0.1", "#7C3AED", "--")}
+for _v in SHOWER_VARIANTS:
+    FILES.setdefault(_v, ["%s_s%d" % (_v, i) for i in range(1, 9)])
+PYTHIA_VARIANTS = {"ppx": ("JETSCAPE pp (production)", "#1F5FA8", "-"),
+                   "pyth": ("PYTHIA 8 standalone, MPI on", "#C2410C", "-"),
+                   "pyth_nompi": ("PYTHIA 8 standalone, MPI off", "#C2410C", ":"),
+                   "ppx_pimass": ("JETSCAPE pp, pion mass", "#1F5FA8", "--"),
+                   "pyth_pimass": ("PYTHIA 8, MPI on, pion mass", "#C2410C", "--")}
+FILES.update({"pyth": ["pyth_s%d" % i for i in range(1, 9)],
+              "pyth_nompi": ["pyth_nompi_s%d" % i for i in range(1, 9)],
+              "ppx_pimass": ["../spec_data_pimass/ppx_s%d" % i for i in range(1, 9)],
+              "pyth_pimass": ["../spec_data_pimass/pyth_s%d" % i for i in range(1, 9)]})
+
+
+ALICE_PION_MASS = True  # ALICE rows from spec_data_pimass, as ALICE assigns tracks the pion mass
+
+
 def main():
-    D = {}
+    D, DA = {}, {}
     for v in VARIANTS:
         fl = [os.path.join(SPEC, f"{n}.spec") for n in FILES[v]]
         fl = [f for f in fl if os.path.exists(f)]
@@ -66,6 +106,8 @@ def main():
             D[v] = combine(fl)
             D[v]["nfiles"] = len(fl)
             D[v]["nused"], D[v]["nskip"] = counts(fl)
+            fa = [os.path.join(SPEC_PI, os.path.basename(f)) for f in fl] if ALICE_PION_MASS else fl
+            DA[v] = combine(fa)
     V = list(D)
     rows = []  # (observable, {variant: (chi2, n)})
 
@@ -113,7 +155,7 @@ def main():
             ax = axs[1 + g, k]
             res = {}
             for v in V:
-                e, y, ey = shape(D[v], (f"ali_mg{k}" if g else f"ali_m{k}"))
+                e, y, ey = shape(DA[v], (f"ali_mg{k}" if g else f"ali_m{k}"))
                 res[v] = chi2(e, y, ey, b)
                 step(ax, e, y, v)
             lab = f"ALICE pp {'groomed ' if g else ''}mass {['40-60', '60-80', '80-100'][k]}"
@@ -134,10 +176,11 @@ def main():
     rows.append(("ATLAS xJ pp (11 pT1 bins)", {v: tuple(res[v]) for v in V}))
     # mean jet-mass shift table
     ax = axs[1, 3]
+    means = {}
     for v in V:
-        mm = []
+        mm = means[v] = []
         for k in range(3):
-            e, y, _ = shape(D[v], f"ali_m{k}")
+            e, y, _ = shape(DA[v], f"ali_m{k}")
             mm.append(np.sum(0.5 * (e[:-1] + e[1:]) * y * np.diff(e)))
         ax.plot([50, 70, 90], mm, marker="o", color=VARIANTS[v][1], ls=VARIANTS[v][2], label=VARIANTS[v][0])
     md = []
@@ -151,7 +194,7 @@ def main():
     ax.legend(fontsize=6, frameon=False)
     axs[2, 3].axis("off")
     fig.tight_layout()
-    fig.savefig(os.path.join(HERE, "fig_pp_variants.png"), dpi=140)
+    fig.savefig(os.path.join(HERE, OUT[0]), dpi=140)
     plt.close(fig)
 
     out = ["pp variants vs data: chi2 / n_bins",
@@ -160,8 +203,11 @@ def main():
            f"  {'observable':<42s}" + "".join(f"{v:>20s}" for v in V)]
     for lab, res in rows:
         out.append(f"  {lab:<42s}" + "".join(f"{res[v][0]:12.1f} /{res[v][1]:<4d}  " for v in V))
-    out += ["", "ALICE pp <m> (GeV) at 40-60, 60-80, 80-100: data " + " ".join(f"{x:.2f}" for x in md)]
-    open(os.path.join(HERE, "pp_variants.txt"), "w").write("\n".join(out) + "\n")
+    out += ["", "ALICE pp <m> (GeV) at 40-60, 60-80, 80-100 (HEPData bins):",
+            f"  {'ALICE':<20s}" + " ".join(f"{x:6.2f}" for x in md)]
+    out += [f"  {v:<20s}" + " ".join(f"{x:6.2f}" for x in means[v])
+            + "   (model - data: " + " ".join(f"{x - y:+.2f}" for x, y in zip(means[v], md)) + ")" for v in V]
+    open(os.path.join(HERE, OUT[1]), "w").write("\n".join(out) + "\n")
     print("\n".join(out))
 
 
@@ -176,4 +222,14 @@ def chi2_ratio(e, y, b):
 
 
 if __name__ == "__main__":
+    import sys
+    if sys.argv[1:] == ["shower"]:
+        VARIANTS.clear()
+        VARIANTS.update(SHOWER_VARIANTS)
+        OUT = ("fig_pp_shower.png", "pp_shower.txt")
+    elif sys.argv[1:] == ["pythia"]:
+        ALICE_PION_MASS = False  # this mode shows both conventions explicitly
+        VARIANTS.clear()
+        VARIANTS.update(PYTHIA_VARIANTS)
+        OUT = ("fig_pp_pythia.png", "pp_pythia.txt")
     main()

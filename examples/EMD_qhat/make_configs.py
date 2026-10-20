@@ -19,7 +19,8 @@ configs/<name>.xml):
            and, through jetana_data, of data_compare.py)
   ppvar    pp hadronization study (pp_variants.py): the LHC pp of bestfit, seeds 1-8,
            with PYTHIA MPI off, colored or hybrid hadronization, plus 2 x 64 short
-           colored runs (see group_ppvar); run with KEEP_EVENTS=1
+           colored runs, and the parton-shower variants ppm_* (PYTHIA shower,
+           MATTER Q0 = 2 GeV, vir_factor 0.1); run with KEEP_EVENTS=1
 
 Hydro tasks write their final-state hadrons to the named pipe
 /tmp/fifo/<name>, which run_task.sh reads with jetana; bricks write
@@ -186,6 +187,20 @@ def group_ppvar():
             if v == "colorednompir":
                 x = x.replace("PhaseSpace:bias2SelectionRef = 10.0\n",
                               "PhaseSpace:bias2SelectionRef = 10.0\n      PartonLevel:MPI = off\n")
+            out[n] = x
+    # parton-shower variants (pp_variants.py shower): PYTHIA's own shower, with
+    # MATTER passing the partons through (vir_factor 2e-6 keeps their starting
+    # virtuality below QS), MATTER stopping at Q0 = 2 GeV, and vir_factor 0.1
+    for s in range(1, 9):
+        base = mkcfg.collision("vac", "/tmp/fifo/NAME", (10, 500), 25000, 100 + s)
+        mat = "<recoil_on> 0 </recoil_on>"
+        for v, old, new in (("pyfsr", "<FSR_on>0</FSR_on>", "<FSR_on>1</FSR_on>"),
+                            ("q02", "<Q0> 1.0 </Q0>", "<Q0> 2.0 </Q0>"),
+                            ("vir0p1", mat, mat + " <vir_factor> 0.1 </vir_factor>")):
+            n = f"ppm_{v}_s{s}"
+            x = base.replace("/tmp/fifo/NAME", f"/tmp/fifo/{n}").replace(old, new)
+            if v == "pyfsr":
+                x = x.replace(mat, mat + " <vir_factor> 0.000002 </vir_factor>")
             out[n] = x
     return out
 

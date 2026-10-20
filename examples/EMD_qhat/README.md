@@ -160,15 +160,22 @@ the HEPData records in `data/hepdata/` (one CSV per table):
 | ATLAS dijet x_J, pp and 0–10% | ins2075431 | R = 0.4, two leading jets with \|y\| < 2.1, Δφ > 7π/8, x_J ≥ 0.32, self-normalised, 11 p_T,1 bins |
 | ATLAS D(z), pp and PbPb/pp | ins1673177 | R = 0.4, \|y\| < 2.1, 126–398 GeV, tracks p_T > 1 GeV in ΔR < 0.4; UE from perpendicular cones |
 | CMS ρ(Δr), pp, 0–10%, 30–50% | ins1658057 | R = 0.4, p_T > 120 GeV, \|η\| < 1.6, tracks p_T > 0.7 GeV; UE from the 1.5 < \|Δη\| < 2.5 sideband (the CMS method) |
-| ALICE m and λ_α, pp and 0–10% | ins2845788 | charged R = 0.2, \|η\| < 0.7, 40–150 GeV; Soft Drop z_cut = 0.2, β = 0 with holes reclustered as negative constituents |
+| ALICE m and λ_α, pp and 0–10% | ins2845788 | charged R = 0.2, \|η\| < 0.7, 40–150 GeV, every charged particle with the pion mass (as ALICE's tracks); Soft Drop z_cut = 0.2, β = 0 with holes reclustered as negative constituents |
 
 ```bash
 g++ -O2 -std=c++17 -I../../external_packages jetana_data.cc ../../external_packages/fjcore.cc -o jetana_data
 cat tasks/bestfit.txt tasks/ppvar.txt > tasks/data.txt
 sbatch --account=<acct> --array=1-$(wc -l < tasks/data.txt)%50 \
        --export=ALL,TASKS=tasks/data.txt slurm/data_array.sbatch    # ~15 s per file
-python3 data_compare.py     # data_compare.txt, fig_data_{xj,ff,cms,alice_mass,alice_ang}.png
-python3 pp_variants.py      # pp_variants.txt, fig_pp_variants.png
+sbatch --account=<acct> --array=1-$(wc -l < tasks/data.txt)%50 \
+       --export=ALL,TASKS=tasks/data.txt,PIONMASS=1 slurm/data_array.sbatch   # for ALICE
+# standalone PYTHIA 8 pp reference (needs pythia8-config, e.g. in the JETSCAPE image)
+g++ -O2 -std=c++17 $(pythia8-config --cxxflags) pythia_pp.cc -o pythia_pp $(pythia8-config --libs)
+sbatch --account=<acct> --array=1-16%50 slurm/pythia_array.sbatch
+python3 data_compare.py         # data_compare.txt, fig_data_{xj,ff,cms,alice_mass,alice_ang}.png
+python3 pp_variants.py          # hadronization and MPI: pp_variants.txt, fig_pp_variants.png
+python3 pp_variants.py shower   # parton shower: pp_shower.txt, fig_pp_shower.png
+python3 pp_variants.py pythia   # vs standalone PYTHIA, true vs pion mass: pp_pythia.txt, fig_pp_pythia.png
 ```
 
 `data_compare.py` uses χ² = rᵀC⁻¹r with the data and model statistical and
@@ -190,7 +197,7 @@ Run in the container or with `slurm/analysis.sbatch` (`--export=ALL,SCRIPT=<scri
 | `e2c_bestfit.py` | pp, routeA, routeB, lamcal | E2C around the best fit (λ_t = 2 and 3, 2.4 interpolated): `fig_e2c_bestfit*.png` |
 | `x_compare.py` | bestfit | λ_t = 2.4 vs the default, paired: R_AA, E2C, mass, angularities, x_J, D(z), ρ(r), charged-jet mass: `x_compare.txt`, `fig_x_raa_e2c.png`, `fig_x_newobs.png` |
 | `data_compare.py` | bestfit (`spec_data/`) | section 5 |
-| `pp_variants.py` | bestfit pp, ppvar (`spec_data/`) | section 5 |
+| `pp_variants.py` | bestfit pp, ppvar, PYTHIA (`spec_data/`, `spec_data_pimass/`) | section 5 |
 | `qhat_comparison/qhat_overlay.tex` | (data files here) | quark q̂/T³: JETSCAPE 2025 "Combined" band (E = 100 GeV, μ² = Q₀²), the JETSCAPE 2021 band used in Khan et al. Fig. 10, the EMD q̂ at λ_t = 1/25–1/9 and at the fitted λ_t |
 
 `data/` holds the HEPData tables used (ATLAS 30–50% is the average of the
@@ -222,18 +229,26 @@ EMD curves.
 * Against data (`data_compare.txt`), neither q̂ is preferred: the Δχ² between
   EMD (λ_t = 2.4) and the default are small next to the χ² themselves and
   change sign between observables (ATLAS x_J +13 over 110 bins, R_D(z) +9 over
-  89, CMS ρ −26 over 42, ALICE mass −75 over 40, ALICE angularities +61 over
-  116). Both share the same misses: too little enhancement at low z in
-  0–10% R_D(z) and at large Δr in the CMS PbPb/pp jet shape.
+  89, CMS ρ −26 over 42, ALICE mass −9 over 40 and groomed mass +9 over 47,
+  ALICE angularities +56 over 116). Both describe the ALICE jet mass in pp
+  and Pb–Pb (χ² 25/28 in pp, 47–56/40 in Pb–Pb) and share the same misses:
+  too little enhancement at low z in 0–10% R_D(z) and at large Δr in the CMS
+  PbPb/pp jet shape.
 * pp baseline (`pp_variants.txt`): the extra soft, wide-angle particles in pp
   jets are mostly an uncorrelated underlying event: PythiaGun switches PYTHIA
   MPI on and passes the MPI partons through MATTER. With the CMS sideband
   subtraction, colorless hadronization comes within about 30% of CMS at
   large Δr (χ² 258/14, against 1800 without the subtraction). Colored
   hadronization, which follows MATTER's colour flow, describes CMS ρ
-  (χ² 27/14) and ATLAS pp D(z) better, but see the notes. No variant fixes
-  the ALICE R = 0.2 pp jet mass: every one is 0.5–0.9 GeV heavier than the
-  data.
+  (χ² 27/14) and ATLAS pp D(z) better, but see the notes. Standalone PYTHIA 8
+  also describes CMS ρ (χ² 31/14), so the remaining wide-angle excess comes
+  from the colorless strings and remnants of the JETSCAPE chain. The parton
+  shower is not the problem (`pp_shower.txt`): PYTHIA's own shower, MATTER
+  with Q0 = 2 GeV or vir_factor 0.1 change the ALICE jet mass by ≤ 0.2 GeV.
+* ALICE jet mass (`pp_pythia.txt`): ALICE gives every track the pion mass.
+  With true hadron masses, protons and kaons make R = 0.2 jets 0.6–1.2 GeV
+  heavier; with the pion mass the JETSCAPE pp mean mass is 3.16/4.10/5.02
+  GeV against ALICE's 3.17/4.00/4.72 at 40–60/60–80/80–100 GeV.
 
 ## Notes
 
