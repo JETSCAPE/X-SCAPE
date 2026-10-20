@@ -297,6 +297,13 @@
       <in_vac> 0 </in_vac>
     </AdSCFT>
 
+    <iMatter>
+      <name>iMatter</name>
+      <Q0> 2.0 </Q0>
+      <initial_virtuality_pT> 1 </initial_virtuality_pT>
+      <vir_factor> 0.25 </vir_factor>
+    </iMatter>
+
   </Eloss>
 
   <PartonPrinter>
