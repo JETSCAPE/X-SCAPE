@@ -315,8 +315,8 @@ void ColoredHadronization::DoHadronization(
   ++nEventsSeen;
   if (!pythia.next()) {
     ++nFailed;
-    JSWARN << "ColoredHadronization: PYTHIA hadronization failed ("
-           << nFailed << " of " << nEventsSeen
+    JSWARN << "ColoredHadronization: PYTHIA hadronization failed (" << nFailed
+           << " of " << nEventsSeen
            << " events so far); no hadrons are added for this event.";
     shower.clear();
     return;
@@ -348,8 +348,8 @@ void ColoredHadronization::DoHadronization(
 
 void ColoredHadronization::FinishTask() {
   if (nFailed > 0)
-    JSWARN << "ColoredHadronization: PYTHIA hadronization failed in "
-           << nFailed << " of " << nEventsSeen
+    JSWARN << "ColoredHadronization: PYTHIA hadronization failed in " << nFailed
+           << " of " << nEventsSeen
            << " events; these events have no hadrons from this module.";
   else
     JSINFO << "ColoredHadronization: no hadronization failures in "
