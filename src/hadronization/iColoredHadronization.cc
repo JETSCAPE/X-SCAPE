@@ -20,6 +20,8 @@
 #include "JetScapeLogger.h"
 #include "tinyxml2.h"
 #include "MCGlauberGenStringWrapper.h"
+#include <algorithm>
+#include <map>
 #include <memory>
 
 using namespace Jetscape;
@@ -103,6 +105,19 @@ void iColoredHadronization::InitTask() {
   }
   store_input_ =
       GetXMLElementInt({"JetHadronization", "store_input"}, false) == 1;
+  // <colour_duplicates>: fail (default; the event throws) or relabel
+  std::string dup =
+      GetXMLElementText({"JetHadronization", "colour_duplicates"}, false);
+  dup.erase(0, dup.find_first_not_of(" \t\n"));
+  dup.erase(dup.find_last_not_of(" \t\n") + 1);
+  if (dup == "relabel")
+    relabel_duplicates_ = true;
+  else if (!dup.empty() && dup != "fail")
+    throw std::runtime_error(
+        "iColoredHadronization: <colour_duplicates> takes fail or relabel, "
+        "not '" + dup + "'");
+  if (relabel_duplicates_)
+    JSINFO << "iColoredHadronization: duplicate colour tags are relabelled";
 
   pythia.init();
 }
@@ -137,6 +152,7 @@ void iColoredHadronization::DoHadronization(
   ReseedForEvent();
   Event &event = pythia.event;
   event.reset();
+  audit_ = ColourAudit();
   double pz = p_fake;
   // auto Particles = shower->GetFinalPartons();
   VERBOSE(2) << BOLDYELLOW << "iColored Hadronization partons ";
@@ -144,7 +160,20 @@ void iColoredHadronization::DoHadronization(
     JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
             << " partons in the shower number " << ishower;
     for (unsigned int ipart = 0; ipart < shower.at(ishower).size(); ++ipart) {
-      // if(shower.at(ishower).at(ipart)->pstat() < 0 ) continue;
+      // Holes (pstat -1: the thermal partons a scattering took out of the
+      // medium) and the liquefier's partons (-11, -13, -17) are not string
+      // partons. The holes' energy is dropped and recorded.
+      const int pstat = shower.at(ishower).at(ipart)->pstat();
+      if (pstat == -1) {
+        ++audit_.holes;
+        audit_.hole_energy += shower.at(ishower).at(ipart)->e();
+        continue;
+      }
+      if (pstat < 0) {
+        ++audit_.skipped;
+        continue;
+      }
+      ++audit_.partons;
 
       double onshellE = pow(pow(shower.at(ishower).at(ipart)->px(), 2) +
                                 pow(shower.at(ishower).at(ipart)->py(), 2) +
@@ -210,50 +239,41 @@ void iColoredHadronization::DoHadronization(
         pow(pow(Rem.px() + Px, 2) + pow(Rem.py() + Py, 2) + pow(Pz, 2), 0.5);
     event.append(Rem.pid(), 23, Rem.color(), Rem.anti_color(), Rem.px() + Px,
                  Rem.py() + Py, Pz, onshellE);
+    ++audit_.remnants;
     VERBOSE(2) << BOLDYELLOW << " pid = " << Rem.pid()
                << " plabel = " << Rem.plabel() << " pstat = " << Rem.pstat()
                << " col = " << Rem.color() << " acol = " << Rem.anti_color();
   }
 
-  // first, find unpaired color and anticolor tags.
+  // Pair the colour tags by counting: every tag must occur exactly once as a
+  // colour and once as an anticolour. cols/acols get one entry per missing
+  // partner.
   std::vector<int> cols;
   std::vector<int> acols;
-  for (unsigned int ipart = 0; ipart < event.size(); ++ipart) {
-    if (event[ipart].id() == 22) {
-      continue;
-    }
-    if (event[ipart].col() != 0) {
-      cols.push_back(event[ipart].col());
-    }
-    if (event[ipart].acol() != 0) {
-      acols.push_back(event[ipart].acol());
-    }
+  audit_.duplicate_tags = CountColourTags(event, cols, acols);
+  if (audit_.duplicate_tags > 0) {
+    if (!relabel_duplicates_)
+      throw std::runtime_error(
+          "iColoredHadronization: " + std::to_string(audit_.duplicate_tags) +
+          " duplicate colour tags (a tag used more than once as a colour or "
+          "as an anticolour); <colour_duplicates>relabel</colour_duplicates> "
+          "relabels them");
+    audit_.relabelled_tags = RelabelDuplicateTags(event);
+    cols.clear();
+    acols.clear();
+    CountColourTags(event, cols, acols);
   }
+  audit_.unpaired_col = cols.size();
+  audit_.unpaired_acol = acols.size();
 
   // the outcomes are: 1-unpaired color tag, 2-unpaired anticolor tag, 3-both an
   // unpaired color & anticolor tag, 4-no unpaired tags 1-add an antiquark,
   // 2-add a quark, 3-add a gluon, 4-add nothing (possibly photon only event)
-  int icol = 0;
-  while (icol < cols.size()) {
-    bool foundpair = false;
-    for (int iacol = 0; iacol < acols.size(); ++iacol) {
-      if (cols[icol] == acols[iacol]) {
-        cols.erase(cols.begin() + icol);
-        acols.erase(acols.begin() + iacol);
-        foundpair = true;
-        continue;
-      }
-    }
-    if (!foundpair) {
-      ++icol;
-    }
-  }
-
   if (cols.size() > 0 || acols.size() > 0) {
     for (auto col : cols)
       JSWARN << " col = " << col;
     for (auto col : acols)
-      JSWARN << " col = " << col;
+      JSWARN << " acol = " << col;
     throw std::runtime_error("Unpaired colors sent to Pythia");
   }
 
@@ -293,7 +313,12 @@ void iColoredHadronization::DoHadronization(
     }
   }
 
-  pythia.next();
+  // A failed fragmentation leaves the input partons in the record as final
+  // particles: never hand them on as hadrons.
+  if (!pythia.next())
+    throw std::runtime_error(
+        "iColoredHadronization: Pythia could not hadronize the event (" +
+        std::to_string(event.size() - 1) + " partons in the record)");
   // event.list();
 
   CollectHadrons(hOut);
@@ -308,8 +333,70 @@ void iColoredHadronization::HadronizeInput(
   for (const auto &q : input) {
     event.append(q.id, 23, q.col, q.acol, q.px, q.py, q.pz, q.e, q.m);
   }
-  pythia.next();
+  if (!pythia.next())
+    throw std::runtime_error(
+        "iColoredHadronization: Pythia could not hadronize the stored input (" +
+        std::to_string(input.size()) + " partons)");
   CollectHadrons(hOut);
+}
+
+int iColoredHadronization::CountColourTags(const Event &event,
+                                           std::vector<int> &cols,
+                                           std::vector<int> &acols) {
+  std::map<int, int> ncol, nacol;
+  for (int i = 1; i < event.size(); ++i) {  // entry 0 is the system line
+    if (event[i].col() != 0)
+      ++ncol[event[i].col()];
+    if (event[i].acol() != 0)
+      ++nacol[event[i].acol()];
+  }
+  int duplicates = 0;
+  for (const auto &t : ncol) {
+    auto a = nacol.find(t.first);
+    const int na = a == nacol.end() ? 0 : a->second;
+    duplicates += std::max(0, t.second - 1);
+    for (int k = na; k < t.second; ++k)
+      cols.push_back(t.first);
+  }
+  for (const auto &t : nacol) {
+    auto c = ncol.find(t.first);
+    const int nc = c == ncol.end() ? 0 : c->second;
+    duplicates += std::max(0, t.second - 1);
+    for (int k = nc; k < t.second; ++k)
+      acols.push_back(t.first);
+  }
+  return duplicates;
+}
+
+int iColoredHadronization::RelabelDuplicateTags(Event &event) {
+  // The k-th colour and the k-th anticolour (in record order) with the same
+  // tag become a pair with a new tag, for k >= 2. Which colour belongs to which
+  // anticolour is not known here, so this is a repair, counted in the audit.
+  int max_tag = 0;
+  for (int i = 1; i < event.size(); ++i)
+    max_tag = std::max(max_tag, std::max(event[i].col(), event[i].acol()));
+  std::map<int, int> seen_col, seen_acol;  // occurrences so far, per tag
+  std::map<std::pair<int, int>, int> new_tag;  // (tag, k) -> new tag
+  int relabelled = 0;
+  for (int i = 1; i < event.size(); ++i) {
+    const int c = event[i].col();
+    if (c != 0 && ++seen_col[c] > 1) {
+      auto key = std::make_pair(c, seen_col[c]);
+      if (!new_tag.count(key))
+        new_tag[key] = ++max_tag;
+      event[i].col(new_tag[key]);
+      ++relabelled;
+    }
+    const int a = event[i].acol();
+    if (a != 0 && ++seen_acol[a] > 1) {
+      auto key = std::make_pair(a, seen_acol[a]);
+      if (!new_tag.count(key))
+        new_tag[key] = ++max_tag;
+      event[i].acol(new_tag[key]);
+      ++relabelled;
+    }
+  }
+  return relabelled;
 }
 
 void iColoredHadronization::CollectHadrons(vector<shared_ptr<Hadron>> &hOut) {

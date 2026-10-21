@@ -812,6 +812,8 @@
        <reseed_per_event>0</reseed_per_event>
        <!-- iColored only: 1 = keep the parton list handed to Pythia every event (beam remnants and colour-balancing parton included), so the event can be hadronized again later -->
        <store_input>0</store_input>
+       <!-- iColored only: duplicated colour tags in the parton list (a tag used more than once as a colour or as an anticolour): fail = the event throws (default), relabel = the extra uses get new tags (a repair, counted in the colour audit) -->
+       <colour_duplicates>fail</colour_duplicates>
        <!-- You can add any number of additional lines to initialize pythia hadronization here -->
        <!-- Note that if the tag exists it cannot be empty (tinyxml produces a segfault) -->
        <LinesToRead>

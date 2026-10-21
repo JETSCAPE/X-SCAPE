@@ -24,7 +24,9 @@
 #include <iostream>
 
 #include "FluidDynamics.h"
+#include "HardProcess.h"
 #include "JetScapeDataPath.h"
+#include "JetScapeSignalManager.h"
 #include <GTL/dfs.h>
 
 #define MAGENTA "\033[35m"
@@ -228,6 +230,17 @@ void Matter::Dump_pIn_info(int i, vector<Parton> &pIn) {
          << " form_time in fm = " << pIn[i].form_time()
          << " split time = " << pIn[i].form_time() + pIn[i].x_in().t()
          << " plabel = " << pIn[i].plabel();
+}
+
+unsigned int Matter::NewColorTag() {
+  // The tags of one event come from one counter, so that the showers (each
+  // has its own Matter clone) and iMATTER's ISR showers never share a tag.
+  auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+  if (hard)
+    MaxColor = hard->NextColorTag();
+  else
+    ++MaxColor;
+  return MaxColor;
 }
 
 void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
@@ -1173,7 +1186,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
           max_color = pIn[i].max_color();
           // if (pIn[i].anti_color()>maxcolor) color = pIn[i].anti_color();
           JSDEBUG << " old max color = " << max_color;
-          max_color = ++MaxColor;
+          max_color = NewColorTag();
           color = max_color;
           anti_color = max_color;
           pIn[i].set_max_color(max_color);
