@@ -253,6 +253,11 @@ void Jewel::DoEnergyLoss(double deltaT, double time, double Q2,
       np.set_form_time(0.0);
     }
     for (auto &np : pOut) np.set_max_color(maxcol);
+    // a single returned parton (e.g. a heavy quark that only scattered elastically or diffused):
+    // JetEnergyLoss treats a 1 -> 1 output as free streaming and puts the input parton into the
+    // shower graph, so the module has to update the input in place (as MARTINI/LBT do); otherwise
+    // the medium modification of this parton would be missing in the final state
+    if (out.size() == 1) pIn[i] = pOut.back();
   }
 }
 

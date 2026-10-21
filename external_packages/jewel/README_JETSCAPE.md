@@ -53,6 +53,32 @@ copy the tables in) before starting many jobs in one directory, so that no job
 reads a table that another one is still writing; or give each job its own
 directory.
 
+## Heavy flavour
+
+The JEWEL copy here contains the heavy-flavour extension of the port (branch `heavy-flavour` of
+VandyHENP/jewel_cpp_port; physics and validation in its HEAVYFLAVOUR.md and VALIDATION.md): massive c and b in
+the shower and the medium interactions (`HEAVYFLAVOUR T`), and optional Langevin transport of heavy quarks
+(`HQDS` = 2πT·D_s, `HQP0` for a fall-off with momentum). Set them in `param_file`. In the module:
+
+* the incoming heavy quark gets a mass-aware virtuality and z limits;
+* the diffusion takes T and the full fluid velocity from `GetHydroCellSignal`; each step is in the local fluid
+  rest frame, until T < T_c;
+* a diffused heavy quark is handed to the framework at the point where it leaves the QGP (not at its last
+  interaction), so that HybridHadronization can recombine it with thermal partons from the hypersurface;
+* JEWEL's own recombination (`HQRECO`, through its strings) is switched off in library mode: hadronisation is
+  the framework's.
+
+Brick check (PGun b quark at y = 0, T = 0.3 GeV, 0 < t < 4 fm), energy lost by the b quark, JETSCAPE vs
+stand-alone JEWEL: 1.02 vs 1.00 GeV (E = 10 GeV), 2.38 vs 2.18 GeV (20 GeV); with `HQDS 4`: 2.36 vs 2.22 and
+4.40 vs 4.38 GeV. Pb+Pb 0–10 % with TRENTo + free streaming + MUSIC + JEWEL (`HQDS 4`) + HybridHadronization runs
+and produces D and B mesons.
+
+**Single returned parton.** `JetEnergyLoss` treats a module output of exactly one parton as free streaming and
+puts the *input* parton into the shower graph. The module therefore copies a single returned parton into its
+input (`pIn[i] = pOut.back()`), as MARTINI and LBT update the parton in place. Without this, a parton that JEWEL
+returns alone lost its medium modification in the output: rare for light partons, about half of the b quarks
+(dead cone).
+
 ## How it works
 
 * **One-shot shower.** JEWEL does not evolve in time steps. On the first call

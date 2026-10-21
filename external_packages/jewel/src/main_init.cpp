@@ -504,6 +504,12 @@ void init() {
         read_list(value, cb::hf::stable);
       } else if (label == "HQDS") {
         read_list(value, cb::hf::hqds);
+      } else if (label == "HQRECO") {
+        read_list(value, cb::hf::hqreco);
+      } else if (label == "HQRECOR2") {
+        read_list(value, cb::hf::hqrecor2);
+      } else if (label == "HQP0") {
+        read_list(value, cb::hf::hqp0);
       } else if (label == "NF") {
         read_list(value, nf);
       } else if (label == "LAMBDAQCD") {
@@ -653,6 +659,8 @@ void init() {
     io::log(" hard process restricted to flavour creation: PP{} (run as PPJJ)", cb::hf::hardproc);
   io::log(" HFSTABLE      = {}", flog(cb::hf::stable));
   if (cb::hf::hqds > 0.0) io::log(" HQDS          = {}", cb::hf::hqds);
+  if (cb::hf::hqp0 > 0.0) io::log(" HQP0          = {}", cb::hf::hqp0);
+  if (cb::hf::hqreco > 0.0) io::log(" HQRECO        = {}  (<r^2> = {} fm^2)", cb::hf::hqreco, cb::hf::hqrecor2);
   io::log(" LAMBDAQCDPS   = {}", lps);
   io::log(" LAMBDAQCD     = {}", lqcd);
   io::log(" Q0            = {}", q0);
@@ -1250,7 +1258,7 @@ void genevent(const int& j, const std::string& b1, const std::string& b2) {
     goto l102;
   }
   // heavy flavour: Langevin transport of final-state heavy quarks
-  if (cb::hf::on && (cb::hf::hqds > 0.0)) hfdiffuse();
+  if (cb::hf::on && ((cb::hf::hqds > 0.0) || (cb::hf::hqreco > 0.0))) hfdiffuse();
 
   if (!allhad) {
     for (int i = 1, i_end = N; i <= i_end; ++i) {
@@ -1267,6 +1275,8 @@ void genevent(const int& j, const std::string& b1, const std::string& b2) {
       goto l102;
     }
     py::pyexec();
+    // heavy flavour: coalesced D/B mesons (HQRECO), decayed by PYTHIA
+    if (cb::hf::on && (cb::hf::hqreco > 0.0) && (MSTU(30) == errcount)) hfrecoadd();
     if (MSTU(30) != errcount) {
       io::log(" PYTHIA discards event {}  (error number {})", j, MSTU(30));
       errcount = MSTU(30);

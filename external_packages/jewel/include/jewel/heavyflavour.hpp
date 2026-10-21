@@ -36,6 +36,9 @@ namespace cb::hf {
 inline bool on = false;           // HEAVYFLAVOUR
 inline bool stable = false;       // HFSTABLE: weakly decaying c and b hadrons are not decayed
 inline double hqds = 0.0;         // HQDS: 2 pi T D_s of the heavy-quark Langevin transport (0 = off)
+inline double hqreco = 0.0;       // HQRECO: normalisation N of the heavy-quark coalescence probability (0 = off)
+inline double hqrecor2 = 0.18;    // HQRECOR2: mean-square radius <r^2> [fm^2] of the coalescing D/B mesons
+inline double hqp0 = 0.0;         // HQP0: momentum scale p0 [GeV] of kappa(p) = kappa / (1 + (p/p0)^2) (0 = constant)
 inline double mc = 0.0, mb = 0.0; // charm and bottom masses = PYTHIA PMAS(4,1), PMAS(5,1)
 // flavour of a g -> q qbar splitting decided in getmass (1, 2, 3: d, u, s; 4: c cbar; 5: b bbar;
 // 0: not decided by getmass, e.g. HEAVYFLAVOUR F or g -> g g, then g -> q qbar gives d dbar as in JEWEL)
@@ -140,6 +143,8 @@ inline bool hfzout(double q, double m, double e, double z, double eps, int fl = 
 void hfcheck(const char* stage);
 // Langevin transport of final-state c and b quarks (HQDS > 0), hfdiffusion.cpp
 void hfdiffuse();
+// add the coalesced heavy-flavour mesons after the string fragmentation (HQRECO > 0), hfdiffusion.cpp
+void hfrecoadd();
 
 // transverse momentum squared of a splitting with virtuality t, z = energy fraction of daughter 1:
 //   Q -> Q g:      kt^2 = z(1-z) t - (1-z)^2 m^2
