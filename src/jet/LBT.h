@@ -269,6 +269,14 @@ class LBT
   int NR[dimParList] = {0};      // scattering rank
   int KATT1[dimParList] = {0};   // parton flavor
   int KATT10[dimParList] = {0};  // negative parton flavor
+  // colour tags (large-Nc flow) of the positive and the negative partons;
+  // a hole carries the tags of the incoming thermal parton, as in Matter
+  unsigned int COL[dimParList] = {0};
+  unsigned int ACOL[dimParList] = {0};
+  unsigned int COL0[dimParList] = {0};
+  unsigned int ACOL0[dimParList] = {0};
+  // largest tag seen; the counter when there is no hard process
+  unsigned int MaxColor = 0;
 
   double PGm[4] = {0.0};
   double tjp[dimParList] = {0.0};
@@ -403,6 +411,14 @@ class LBT
   bool AttachTableBlock();
   void PublishTableBlock();
   void jetClean();
+  // A new colour tag: from the event's HardProcess::NextColorTag (unique in
+  // the event), or ++MaxColor without a hard process.
+  unsigned int NewColorTag();
+  // The colour flow of the elastic scattering of slot i (jet-in flavour kin)
+  // into slot i (jet-out), slot j (recoil) and the hole j, after flavor().
+  void scatterColors(int CT, int kin, int i, int j);
+  // A gluon radiated from slot i into slot g: one new tag.
+  void radiateColors(int i, int g);
   void setParameter(string fileName);
   int checkParameter(int nArg);
 
