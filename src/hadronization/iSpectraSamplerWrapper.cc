@@ -121,7 +121,8 @@ int iSpectraSamplerWrapper::getSurfCellVector() {
   GetHydroHyperSurface(surfVec);
   int nCells = surfVec.size();
   JSINFO << "surface cell size: " << nCells;
-  for (const auto surf_i : surfVec) {
+  FOsurf_array.reserve(nCells);
+  for (const auto &surf_i : surfVec) {
     FO_surf iSS_surf_cell;
     iSS_surf_cell.tau = surf_i.tau;
     iSS_surf_cell.xpt = surf_i.x;
@@ -277,12 +278,14 @@ void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
   }
   for (unsigned int iev = 0; iev < nev; iev++) {
     std::vector<shared_ptr<Hadron>> hadrons;
-    unsigned int nparticles =
-        (iSpectraSampler_ptr_->get_number_of_particles(iev));
+    // the whole sample at once: iSS::get_hadron looks up a parameter by name
+    // on every call, which cost seconds for millions of hadrons
+    const std::vector<iSS_Hadron> &sample =
+        *(iSpectraSampler_ptr_->get_hadron_list_iev(iev));
+    unsigned int nparticles = sample.size();
     VERBOSE(4) << "event " << iev << ": number of particles = " << nparticles;
     for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
-      iSS_Hadron current_hadron =
-          (iSpectraSampler_ptr_->get_hadron(iev, ipart));
+      const iSS_Hadron &current_hadron = sample[ipart];
       int hadron_label = 0;
       int hadron_status = 11;
       int hadron_id = current_hadron.pid;
@@ -330,12 +333,14 @@ void iSpectraSamplerWrapper::PassHadronListToJetscape() {
   VERBOSE(4) << "number of events to pass : " << nev;
   for (unsigned int iev = 0; iev < nev; iev++) {
     std::vector<shared_ptr<Hadron>> hadrons;
-    unsigned int nparticles =
-        (iSpectraSampler_ptr_->get_number_of_particles(iev));
+    // the whole sample at once: iSS::get_hadron looks up a parameter by name
+    // on every call, which cost seconds for millions of hadrons
+    const std::vector<iSS_Hadron> &sample =
+        *(iSpectraSampler_ptr_->get_hadron_list_iev(iev));
+    unsigned int nparticles = sample.size();
     VERBOSE(4) << "event " << iev << ": number of particles = " << nparticles;
     for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
-      iSS_Hadron current_hadron =
-          (iSpectraSampler_ptr_->get_hadron(iev, ipart));
+      const iSS_Hadron &current_hadron = sample[ipart];
       int hadron_label = 0;
       int hadron_status = 11;
       int hadron_id = current_hadron.pid;
