@@ -309,6 +309,11 @@ class JetEnergyLoss : public JetScapeModuleBase,
   void DoInitPerEvent();
   void DoFinishPerEvent();
 
+  /** Set droplet_stat on the shower edge of parton p, the edge ending at
+   * vertex v (holes also end there and are skipped).
+   */
+  void MarkLiquefiedEdge(node v, const Parton &p);
+
   shared_ptr<PartonShowerGenerator> psGen;
 
   node vStart;
