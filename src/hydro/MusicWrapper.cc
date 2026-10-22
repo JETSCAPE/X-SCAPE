@@ -512,6 +512,13 @@ void MpiMusic::EvolveHydro() {
     music_hydro_ptr->setReRunHydro(false);
     hit_grid_boundary_ = false;
     music_hydro_ptr->run_hydro();
+    // The fluid starts at MUSIC's tau0 of this run (with 3dMCGlauber strings
+    // set per event by the earliest string). Matter, LBT and AdSCFT read it as
+    // their tStart (GetHydroTau0Signal) and start the medium interaction there;
+    // with a pre-equilibrium evolution kept in memory the stored history begins
+    // earlier. FluidDynamics' setter: MpiMusic::SetHydroStartTime would also
+    // reset MUSIC's Initial_time_tau_0.
+    FluidDynamics::SetHydroStartTime(music_hydro_ptr->get_hydro_tau0());
     hydro_status = FINISHED;
     WarnIfGridBoundaryHit();
   }
