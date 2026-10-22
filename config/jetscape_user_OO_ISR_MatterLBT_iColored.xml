@@ -1,0 +1,297 @@
+<?xml version="1.0"?>
+
+<!-- Copyright (c) The JETSCAPE Collaboration, 2018 -->
+<!-- Modular, task-based framework for simulating all aspects of heavy-ion collisions -->
+<!-- For the list of contributors see AUTHORS. -->
+<!-- Report issues at https://github.com/JETSCAPE/JETSCAPE/issues -->
+<!-- or via email to bugs.jetscape@gmail.com -->
+<!-- Distributed under the GNU General Public License 3.0 (GPLv3 or later). -->
+<!-- See COPYING for details. -->
+
+<!--
+  O+O 200 GeV with initial-state radiation and Matter + LBT jet energy loss in one MUSIC
+  medium per event, the jets hadronized with iColoredHadronization (Pythia strings through
+  the ISR colour flow and the beam remnants).  For runJetscape:
+
+    ./examples/run_in_workdir.sh -d <build> -w <run dir> \
+        -u config/jetscape_user_OO_ISR_MatterLBT_iColored.xml -m config/jetscape_main.xml
+
+  from the X-SCAPE source directory (a working directory of its own: the modules read
+  mcglauber.input, music_input, the LBT tables from the build tree and write their files and
+  test_out_OO_ISR_MatterLBT_final_state_{partons,hadrons}.dat there).
+
+    IS (3dMCGlauber, O16, positions only)
+      -> Hard: PythiaIsrGun -> iMATTER (ISR, 0 -> -maxT) -> 3dMCGlauber strings from what
+               the hard scattering left (MCGlauberGenString)
+      -> NullPreDynamics -> MUSIC (music4gpu)            the medium, from those strings
+      -> Eloss: Matter (recoil_on 1) + LBT, from -maxT   the final-state shower
+      -> JetHadronization: iColored                      final partons + beam remnants
+
+  X-SCAPE builds this chain from <Hard><ISR> (JetScape::DetermineTaskListFromXML).  The
+  order of the blocks matters: <IS> before <Hard>.  No hydro reuse: with ISR the medium is
+  made from what each event's hard scattering left.
+
+  Colour (README_ColourFlow.md): LBT and Matter's recoils carry the large-Nc colour flow of
+  every scattering; each scattering off the medium leaves one colour line that ends in the
+  medium (the hole took the thermal parton's colour with it), and iColoredHadronization
+  closes those lines as <JetHadronization><colour_closure> says (default reconnect).  The
+  holes are not hadronized.  The run ends with an "iColoredHadronization: colour summary"
+  in the log.
+
+  The 3dMCGlauber and MUSIC settings are the tuned O+O set of config/BulkFastTest/
+  OO_one_event.xml (200 GeV, O16 from nucleusConfigs, tau_form_mean 0.5, EOS 91), except
+  Subtract_hard_momentum 1 and generateOnlyPositions 1 for the ISR and b <= 3 fm.  The same
+  set, Matter only, drives js-contrib's PyJetscape O+O production
+  (contribs/PyJetscape/example/config/OO_MCGlauber_MUSIC_isr.xml, prod_OO_isr/).
+-->
+
+<jetscape>
+
+  <!-- General settings -->
+  <nEvents> 5 </nEvents>
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 1 </nReuseHydro>
+
+  <!-- Technical settings -->
+  <debug> off </debug>
+  <remark> off </remark>
+  <vlevel> 0 </vlevel>
+  <nEvents_printout> 10 </nEvents_printout>
+  <enableAutomaticTaskListDetermination> true </enableAutomaticTaskListDetermination>
+
+  <!--  JetScape Writer Settings: the final partons and hadrons (the jet hadrons; add
+        <SoftParticlization><iSS> for the bulk) -->
+  <outputFilename>test_out_OO_ISR_MatterLBT</outputFilename>
+  <JetScapeWriterAscii> off </JetScapeWriterAscii>
+  <JetScapeWriterAsciiGZ> off </JetScapeWriterAsciiGZ>
+  <JetScapeWriterHepMC> off </JetScapeWriterHepMC>
+  <JetScapeWriterRootHepMC> off </JetScapeWriterRootHepMC>
+  <JetScapeWriterFinalStatePartonsAscii> on </JetScapeWriterFinalStatePartonsAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+  <JetScapeWriterQnVectorAscii>off</JetScapeWriterQnVectorAscii>
+  <write_centrality> 0 </write_centrality>
+  <write_pthat> 0 </write_pthat>
+
+  <Random>
+    <seed>1</seed>
+  </Random>
+
+  <!-- Initial State Module: must come before <Hard> -->
+  <IS>
+    <MCGlauber>
+      <!--0: generates full event with binary collisions and strings-->
+      <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
+      <generateOnlyPositions>1</generateOnlyPositions>
+      <!--Collision system definitions-->
+      <projectile>O</projectile> <!--Projectile name-->
+      <target>O</target> <!--Target name-->
+      <sqrts>200</sqrts> <!--Center of mass energy in GeV-->
+      <!--b selects the centrality inside X-SCAPE (cenMin/cenMax act only in the standalone
+          3dMCGlauber). b <= 3 fm is about 0-20% of the O+O cross section (~1.4 b). With ISR
+          the nucleon pair of the hard scattering makes no string, so an event whose only
+          collision is the hard one may have no medium: keep b small enough.-->
+      <b_min>0.0</b_min> <!--Minimum impact parameter in fm-->
+      <b_max>3.0</b_max> <!--Maximum impact parameter in fm-->
+      <cenMin>0.0</cenMin> <!--Minimum centrality in %  (ignored inside X-SCAPE, see above)-->
+      <cenMax>80</cenMax> <!--Maximum centrality in % (ignored inside X-SCAPE, see above)-->
+      <nucleon_configuration_from_file>1</nucleon_configuration_from_file> <!--1: O16 configurations from nucleusConfigs (PGCM, with alpha clustering)-->
+      <useQuarks>1</useQuarks> <!--Switch to use valence quarks-->
+      <Q2>1.0</Q2> <!--Scale when evaluating the PDF-->
+      <shadowing_factor>0.0</shadowing_factor> <!--Shadowing factor for producing strings from multiple scatterings-->
+      <baryon_junctions>0</baryon_junctions> <!--0: baryon number assumed to be at string end, 1: baryon number transported assuming baryon junctions (at smaller x) see arXiv:nucl-th/9602027-->
+      <N_sea_partons>1</N_sea_partons> <!--Number of allowed soft partons-->
+      <d_min>0.9</d_min> <!--Minimum distance between two nucleons in fm-->
+      <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
+      <BG>3.960</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
+      <!--1 with ISR: the hard partons' momentum is taken from the colliding nucleons
+          (valence quark; their remnants go to the jet hadronization, not to strings).
+          0 (config/BulkFastTest, no ISR) would count that energy twice.-->
+      <Subtract_hard_momentum>1</Subtract_hard_momentum>
+      <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
+      <baryonInStringProb>0.0</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
+      <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> <!--Fluctuate number of strings produced per NN collision-->
+      <QCD_string_production_mode>1</QCD_string_production_mode> <!--1: strings are produced randomly in the binary collision list, 2: strings are produced at the last binary collision-->
+      <!--Rapidity loss parameters (only mode 4 supported in XML, other modes have to be set in mcglauber.input)-->
+      <rapidity_loss_method>4</rapidity_loss_method>
+      <ylossParam4At2>1.610</ylossParam4At2>
+      <ylossParam4At4>1.685</ylossParam4At4>
+      <ylossParam4At6>1.685</ylossParam4At6>
+      <ylossParam4At10>2.95</ylossParam4At10>
+      <ylossParam4var>0.682</ylossParam4var>
+      <remnant_energy_loss_fraction>0.536</remnant_energy_loss_fraction> <!--Nucleon remnant's energy loss fraction (fraction of string's y_loss) [0, 1]-->
+      <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
+      <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
+      <!--string evolution mode, tau_form = tau_form_mean [fm]-->
+      <!--1: deceleration with fixed (90%) rapidity loss (m/sigma = 1 fm, dtau = tau_form)-->
+      <!--2: deceleration with LEXUS/parameterized rapidity loss (both dtau and sigma fluctuate)-->
+      <!--3: deceleration with LEXUS/parameterized rapidity loss (m/sigma = 1 fm, dtau fluctuates)-->
+      <!--4: deceleration with LEXUS/parameterized rapidity loss (dtau = tau_form, m/sigma fluctuates)-->
+      <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
+      <tau_form_mean>0.5</tau_form_mean> <!--Mean value for tau_form [fm]-->
+      <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> <!--Fluctuation parameter for the gamma distribution-->
+    </MCGlauber>
+
+    <!-- MUSIC's grid: +-10.5 fm x +-6 (70 x 70 x 60 cells); the O+O fireball at b <= 3 fm
+         stays within |x|, |y| < 7 fm.  Widen it for larger b or another system. -->
+    <grid_max_x> 10.5 </grid_max_x>
+    <grid_max_y> 10.5 </grid_max_y>
+    <grid_max_z> 6  </grid_max_z>
+    <grid_step_x> 0.3 </grid_step_x>
+    <grid_step_y> 0.3 </grid_step_y>
+    <grid_step_z> 0.2 </grid_step_z>
+  </IS>
+
+  <!-- Hard process.  PythiaIsrGun reads the PythiaGun block; <ISR> switches the ISR
+       chain on (maxT/deltaT: 0 = the <Eloss> values).  PythiaIsrGun puts the hard
+       scattering at a 3dMCGlauber binary collision. -->
+  <Hard>
+    <PythiaGun>
+      <name>PythiaGun</name>
+      <FSR_on>0</FSR_on>
+      <pTHatMin>20</pTHatMin>
+      <pTHatMax>40</pTHatMax>
+      <eCM>200</eCM>
+      <LinesToRead>
+        HardQCD:all = on
+      </LinesToRead>
+    </PythiaGun>
+    <ISR>
+      <maxT>0</maxT>
+      <deltaT>0</deltaT>
+    </ISR>
+  </Hard>
+
+  <!--Preequilibrium Dynamics Module: MUSIC builds its string source (InitialProfile 131)
+      only with one -->
+  <Preequilibrium>
+    <tau0>0.0</tau0>
+    <taus>0.5</taus>
+    <evolutionInMemory>0</evolutionInMemory>
+    <NullPreDynamics> </NullPreDynamics>
+  </Preequilibrium>
+
+  <!-- Hydro Module -->
+  <Hydro>
+    <MUSIC>
+      <name>MUSIC</name>
+      <MUSIC_input_file>music_input</MUSIC_input_file>
+      <!--EOS used for the hydro evolution: 91 hotQCD EOS (SMASH list), 9 hotQCD EOS (UrQMD list), 20 NEOS-4D-->
+      <!--91, the tuned set's EOS (config/BulkFastTest/OO_one_event.xml); an iSS for the bulk
+          then takes the SMASH hadron list (<decay_smash_list> 1)-->
+      <EOS>91</EOS>
+      <!--InitialProfile = 42 for Trento + Pre-equilibrium or IPGlasma, 13 for the 3D Glauber initial condition-->
+      <InitialProfile>131</InitialProfile>
+      <!--beastMode = 0: double precision, constant time step-->
+      <!--beastMode = 1: float precision, constant time step-->
+      <!--beastMode = 2: float precision, increased time step after 4 fm/ (can be used for soft sector only runs, otherwise the change in stepsize will lead to errors)-->
+      <beastMode>1</beastMode>
+      <!--A larger time step from late_tau_switch on: 0.02 -> 0.05 fm/c from 3 fm/c, the
+          freeze-out checks and the stored frames kept at 0.1 fm/c. 0: a constant step.-->
+      <late_delta_tau>0.05</late_delta_tau>
+      <late_tau_switch>3.0</late_tau_switch>
+      <!--starting time of the hydrodynamic evolution after the pre-equilibrium phase-->
+      <Initial_time_tau_0>0.424</Initial_time_tau_0>
+
+      <!--evolution output/storage parameters-->
+      <output_evolution_to_file>0</output_evolution_to_file>
+      <output_evolution_to_memory>1</output_evolution_to_memory>
+      <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
+      <!--5 x Delta_Tau (0.02, music_input) = 0.1 fm/c between stored frames-->
+      <output_evolution_every_N_timesteps>5</output_evolution_every_N_timesteps>
+      <!-- MUSIC's momentum anisotropy / eccentricity .dat files (four serial passes over
+           every cell per run); nothing reads them in production. -->
+      <output_momentum_anisotropy_vs_etas>0</output_momentum_anisotropy_vs_etas>
+      <surface_in_memory>1</surface_in_memory>
+      <!--0: MUSIC fills the framework medium Matter reads (and the hydro file is written from)-->
+      <dump_hydro_only>0</dump_hydro_only>
+      <!--1: that framework copy keeps e, s, T, vx, vy, vz only (what Matter and LBT read)-->
+      <slim_bulk_info>1</slim_bulk_info>
+      <!--hand the freeze-out surface to the framework (for an iSS)-->
+      <skip_surface>0</skip_surface>
+      <freeze_out_surface>1</freeze_out_surface>
+
+      <!--shear viscosity settings-->
+      <shear_viscosity_eta_over_s>0.108</shear_viscosity_eta_over_s>
+      <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
+      <!-- Parameters for parametrization 3, the names for these parameters are different compared to JETSCAPE-->
+      <shear_viscosity_3_T_kink_in_GeV>0.206</shear_viscosity_3_T_kink_in_GeV>
+      <shear_viscosity_3_at_kink>0.108</shear_viscosity_3_at_kink>
+      <shear_viscosity_3_low_T_slope_in_GeV>-1.999</shear_viscosity_3_low_T_slope_in_GeV>
+      <shear_viscosity_3_high_T_slope_in_GeV>1.999</shear_viscosity_3_high_T_slope_in_GeV>
+      <!--mu_B dependent shear viscosity settings-->
+      <muB_dependent_Shear_to_S_ratio>0</muB_dependent_Shear_to_S_ratio>
+      <!--bulk viscosity settings-->
+      <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
+      <!-- Parameters for parametrization 3, the names for these parameters are different compared to JETSCAPE-->
+      <bulk_viscosity_3_max>0.092</bulk_viscosity_3_max>
+      <bulk_viscosity_3_T_peak_in_GeV>0.180</bulk_viscosity_3_T_peak_in_GeV>
+      <bulk_viscosity_3_width_in_GeV>0.067</bulk_viscosity_3_width_in_GeV>
+      <bulk_viscosity_3_lambda_asymm>-0.8</bulk_viscosity_3_lambda_asymm>
+      <!--higher order transport coefficients-->
+      <Include_second_order_terms>1</Include_second_order_terms>
+      <!--Conserved charge settings-->
+      <Include_Rhob>0</Include_Rhob>
+      <Include_QS>0</Include_QS>
+      <!--freeze-out parameters-->
+      <!--0: freeze out at freezeout_temperature; eps_switch is then ignored-->
+      <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
+      <freezeout_temperature>0.15</freezeout_temperature>
+      <eps_switch>0.12</eps_switch>
+      <Do_FreezeOut_lowtemp>1</Do_FreezeOut_lowtemp>
+      <average_surface_over_this_many_time_steps>5</average_surface_over_this_many_time_steps>
+      <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
+      <!--source term parameters for InitialProfile 13-->
+      <string_source_sigma_x>0.207</string_source_sigma_x>
+      <string_source_sigma_eta>0.458</string_source_sigma_eta>
+      <stringPreEqFlowFactor>0.0</stringPreEqFlowFactor>
+    </MUSIC>
+  </Hydro>
+
+  <!-- Energy loss in MUSIC's medium.  maxT is also the ISR range: iMATTER showers back
+       to -maxT and the final-state shower starts there (as in PythiaIsrMUSIC). -->
+  <Eloss>
+    <deltaT> 0.1 </deltaT>
+    <maxT> 50 </maxT>
+    <!-- With a hydro (MUSIC) Matter and LBT replace tStart by the hydro's start time,
+         MUSIC's tau0 of the run (X-SCAPE tstart_hydro_tau0): the medium interaction begins
+         with the stored evolution, before it the lookup is vacuum.  This value applies only
+         without a hydro. -->
+    <tStart> 0.5 </tStart>
+    <Matter>
+      <name> Matter </name>
+      <matter_on> 1 </matter_on>
+      <Q0> 2.0 </Q0>
+      <in_vac> 0 </in_vac>
+      <vir_factor> 0.25 </vir_factor>
+      <recoil_on> 1 </recoil_on>  <!-- recoils and holes, with their colour -->
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <qhat0> -2.0 </qhat0>
+      <alphas> 0.25 </alphas>
+      <QhatParametrizationType> 1 </QhatParametrizationType>
+    </Matter>
+    <!-- LBT below Q0 (as in the Au+Au jet productions); its partons carry colour -->
+    <Lbt>
+      <name> Lbt </name>
+      <Q0> 2.0 </Q0>
+      <in_vac> 0 </in_vac>
+      <only_leading> 0 </only_leading>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <alphas> 0.25 </alphas>
+      <run_alphas> 1 </run_alphas>
+    </Lbt>
+  </Eloss>
+
+  <!-- Jet hadronization: the final partons and the beam remnants through the ISR colour
+       flow (the remnants come from 3dMCGlauber in the event).  <colour_closure>: how the
+       colour lines that end in the medium are closed (reconnect, reconnect_global,
+       thermal, fake, none; README_ColourFlow.md). -->
+  <JetHadronization>
+    <name>iColored</name>
+    <eCMforHadronization>200</eCMforHadronization>
+    <colour_closure>reconnect</colour_closure>
+  </JetHadronization>
+
+</jetscape>

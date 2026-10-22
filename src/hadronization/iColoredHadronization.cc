@@ -277,6 +277,51 @@ void iColoredHadronization::HadronizePartons(
 void iColoredHadronization::HadronizeList(
     const std::vector<ShowerParton> &partons,
     vector<shared_ptr<Hadron>> &hOut) {
+  try {
+    HadronizeEvent(partons, hOut);
+  } catch (...) {
+    ++totals_.failed;
+    throw;
+  }
+  // the run's totals, for the summary at the end (FinishTask)
+  ++totals_.events;
+  if (audit_.unpaired_col + audit_.unpaired_acol > 0)
+    ++totals_.events_open;
+  totals_.holes += audit_.holes;
+  totals_.hole_energy += audit_.hole_energy;
+  totals_.skipped += audit_.skipped;
+  totals_.open_ends += audit_.unpaired_col + audit_.unpaired_acol;
+  totals_.duplicate_tags += audit_.duplicate_tags;
+  totals_.reconnected += audit_.reconnected;
+  totals_.reconnected_cross += audit_.reconnected_cross;
+  totals_.partners += audit_.partners;
+  totals_.partner_energy += audit_.partner_energy;
+  totals_.fakes += audit_.fakes;
+  totals_.fake_energy += audit_.fake_energy;
+  totals_.retries += audit_.retries;
+}
+
+void iColoredHadronization::FinishTask() {
+  const ColourTotals &t = totals_;
+  if (t.events + t.failed == 0)
+    return;
+  JSINFO << "iColoredHadronization: colour summary (closure "
+         << GetColourClosure() << "): " << t.events << " events hadronized, "
+         << t.failed << " failed (thrown); " << t.events_open
+         << " with open colour lines";
+  JSINFO << "iColoredHadronization:   holes " << t.holes << " ("
+         << t.hole_energy << " GeV, not hadronized), open ends "
+         << t.open_ends << ", joined pairs " << t.reconnected
+         << " (across showers as a fallback " << t.reconnected_cross
+         << "), medium partners " << t.partners << " (" << t.partner_energy
+         << " GeV), soft end partons " << t.fakes << " (" << t.fake_energy
+         << " GeV), retries " << t.retries << ", duplicate tags "
+         << t.duplicate_tags << ", liquefier partons skipped " << t.skipped;
+}
+
+void iColoredHadronization::HadronizeEvent(
+    const std::vector<ShowerParton> &partons,
+    vector<shared_ptr<Hadron>> &hOut) {
   Event &event = pythia.event;
   event.reset();
   audit_ = ColourAudit();

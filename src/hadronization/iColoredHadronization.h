@@ -46,6 +46,8 @@ class iColoredHadronization
                        vector<shared_ptr<Hadron>> &hOut,
                        vector<shared_ptr<Parton>> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
+  /// The run's colour summary in the log (what the audits added up to).
+  void FinishTask();
 
   /// One entry of the parton list handed to Pythia (status 23): the final
   /// partons, the beam remnants and the colour-balancing parton, as appended.
@@ -117,6 +119,18 @@ class iColoredHadronization
   };
   const ColourAudit &GetLastColourAudit() const { return audit_; }
 
+  /// The audits added up over the run (DoHadronization and HadronizePartons).
+  struct ColourTotals {
+    long events = 0;       ///< hadronized
+    long failed = 0;       ///< thrown (duplicates, open lines, Pythia)
+    long events_open = 0;  ///< with open colour lines before the closure
+    long holes = 0, open_ends = 0, skipped = 0, duplicate_tags = 0;
+    long reconnected = 0, reconnected_cross = 0, partners = 0, fakes = 0;
+    long retries = 0;
+    double hole_energy = 0., partner_energy = 0., fake_energy = 0.;
+  };
+  const ColourTotals &GetColourTotals() const { return totals_; }
+
   /// The closure of open colour lines, as <colour_closure> (reconnect,
   /// reconnect_global, thermal, fake, none); InitTask sets it from the XML.
   void SetColourClosure(const std::string &mode);
@@ -140,6 +154,7 @@ class iColoredHadronization
   // ones (a counted repair) instead of failing the event (fail, default)
   bool relabel_duplicates_ = false;
   ColourAudit audit_;
+  ColourTotals totals_;
   // <JetHadronization><colour_closure>: reconnect (default), reconnect_global,
   // thermal, fake, none (PLAN_lbt_colour_tags.md, B)
   enum class Closure { Reconnect, ReconnectGlobal, Thermal, Fake, None };
@@ -156,9 +171,11 @@ class iColoredHadronization
   // of colour fields changed.
   static int RelabelDuplicateTags(Pythia8::Event &event);
   // everything after collecting the partons: pstat policy, duplicates,
-  // closure, Pythia, the hadrons
+  // closure, Pythia, the hadrons (HadronizeEvent), and the run's totals
   void HadronizeList(const std::vector<ShowerParton> &partons,
                      vector<shared_ptr<Hadron>> &hOut);
+  void HadronizeEvent(const std::vector<ShowerParton> &partons,
+                      vector<shared_ptr<Hadron>> &hOut);
   // with <store_input> 1: keep the record as it goes to Pythia
   void RecordInput();
   // The record entries of the open colour (anticolour) tags, by tag.
