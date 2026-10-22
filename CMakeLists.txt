@@ -109,9 +109,30 @@ endif(USE_SMASH)
 
 # Compile with OpenMP support
 if(APPLE)
+  # Locate Homebrew libomp dynamically so the same CMakeLists.txt works on both
+  # Intel (/usr/local) and Apple Silicon (/opt/homebrew) Macs.
+  if(NOT DEFINED OpenMP_libomp_PREFIX)
+    find_program(_brew brew)
+    if(_brew)
+      execute_process(
+        COMMAND "${_brew}" --prefix libomp
+        OUTPUT_VARIABLE OpenMP_libomp_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE _brew_result)
+      if(NOT _brew_result EQUAL 0)
+        # Fall back to the Intel default if brew query failed
+        set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
+      endif()
+    else()
+      set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
+    endif()
+  endif()
+  message(STATUS "Homebrew libomp prefix: ${OpenMP_libomp_PREFIX}")
   set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
   set(OpenMP_CXX_LIB_NAMES "libomp")
-  set(OpenMP_libomp_LIBRARY "/usr/local/opt/libomp/lib")
+  set(OpenMP_libomp_LIBRARY "${OpenMP_libomp_PREFIX}/lib/libomp.dylib")
+  # Make omp.h findable for all targets (avoids 'omp.h file not found')
+  include_directories("${OpenMP_libomp_PREFIX}/include")
 endif()
 find_package(OpenMP)
 # Decide per language. OPENMP_FOUND needs every enabled language, and on macOS
