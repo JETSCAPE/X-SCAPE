@@ -200,6 +200,9 @@ class MpiMusic : public FluidDynamics {
 
   int initialProfile_;
 
+  bool hit_grid_boundary_ = false;
+  void WarnIfGridBoundaryHit();
+
   // Allows the registration of the module so that it is available to be
   // used by the Jetscape framework.
   static RegisterJetScapeModule<MpiMusic> reg;
@@ -253,6 +256,11 @@ class MpiMusic : public FluidDynamics {
 
   bool update_music_input_parameter(const std::string &filename,
                                     const std::string &key, int new_value);
+
+  // True if the last evolution stopped because the freeze-out surface
+  // reached the transverse grid boundary (MUSIC's reRunHydro): the stored
+  // evolution is then truncated. Reset at the start of every evolution.
+  bool get_hit_grid_boundary() const { return hit_grid_boundary_; }
 
   // Override the SetHydroStartTime function to set the initial time for MUSIC
   void SetHydroStartTime(double tau0) {
