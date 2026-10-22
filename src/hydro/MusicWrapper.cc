@@ -358,8 +358,6 @@ int MpiMusic::InitializeHydroEnergyProfile() {
   if (pre_eq_ptr == nullptr) {
     JSINFO << "Setting up the hydro without pre-equilibrium module ...";
     music_hydro_ptr->initialize_hydro_xscape(nx, ny, nz, dx, dy, dz);
-    hydro_source_terms_ptr->set_hydro_dtau(
-        music_hydro_ptr->get_hydro_dtau_grid());
   } else if (initialProfile_ == 13 || initialProfile_ == 131) {
     auto QCDStringList = ini->GetQCDStringList();
     if (QCDStringList.size() == 0) {
@@ -380,6 +378,14 @@ int MpiMusic::InitializeHydroEnergyProfile() {
         pre_eq_ptr->pi13_, pre_eq_ptr->pi22_, pre_eq_ptr->pi23_,
         pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
   }
+  // The source needs the hydro time step whatever the initial condition: the
+  // hadronic liquefier deposits a droplet only in the step
+  // [tau - dtau/2, tau + dtau/2) that contains it, and with dtau unset (-1) it
+  // skips that window and deposits every droplet at every step.  It used to
+  // be set only without a pre-equilibrium module, so string (13 / 131) and
+  // pre-equilibrium initial conditions never set it.
+  hydro_source_terms_ptr->set_hydro_dtau(
+      music_hydro_ptr->get_hydro_dtau_grid());
 
   if (pre_eq_ptr == nullptr &&
       (initialProfile_ != 13 && initialProfile_ != 131 &&
