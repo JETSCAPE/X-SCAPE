@@ -115,6 +115,22 @@ partons with iColored. js-contrib's O+O production (`contribs/PyJetscape/example
 prod_OO_isr/`, `config/OO_MCGlauber_MUSIC_isr.xml`) runs Matter + LBT with iColored by
 default (`--matter-only`: Matter alone, as before).
 
+## Related work
+
+| here | closest counterpart elsewhere | reference |
+|---|---|---|
+| colour of the scatterings off the medium (the holes' open lines) | colour-differential energy loss: colour flows from the leading parton to the medium in most medium-modified branchings, giving heavier singlets and softer hadrons | Beraudo, Milhano, Wiedemann, Phys. Rev. C 85 (2012) 031901, arXiv:1109.5025; JHEP 07 (2012) 144, arXiv:1204.4342 |
+| `reconnect` | JEWEL: recoils turned into gluons and inserted into the jet's string next to the parton they scattered with | Kunnawalkam Elayavalli, Zapp, JHEP 07 (2017) 141, arXiv:1707.01539 |
+| joining by the shortest string | colour reconnection in Pythia (string length λ) and Herwig (cluster masses) | Andersson, Gustafson, Söderberg, Nucl. Phys. B 264 (1986) 29; Sjöstrand, Khoze, Z. Phys. C 62 (1994) 281, hep-ph/9310242; Christiansen, Skands, JHEP 08 (2015) 003, arXiv:1505.01681; Gieseke, Röhr, Siódmok, Eur. Phys. J. C 72 (2012) 2225, arXiv:1206.0041 |
+| `reconnect_global` | Pythia/Angantyr global colour reconnection in heavy-ion events | Bierlich, Gustafson, Lönnblad, Shah, JHEP 10 (2018) 134, arXiv:1806.10820; Eur. Phys. J. C 84 (2024) 231, arXiv:2309.12452 |
+| `thermal` | Hybrid Hadronization: open lines completed with thermal partons from the hydro hypersurface, with recombination; POWLANG: heavy quarks string to thermal light partons | Han, Fries, Ko, Phys. Rev. C 93 (2016) 045207, arXiv:1601.00708; JETSCAPE (Sengupta et al.), arXiv:2501.16482; Beraudo et al., Eur. Phys. J. C 82 (2022) 607, arXiv:2202.08732 |
+| `fake` | ColoredHadronization's fake beam partons | JETSCAPE (Kumar et al.), Phys. Rev. C 102 (2020) 054906, arXiv:1910.05481; Putschke et al., arXiv:1903.07706 |
+| holes not hadronized | LBT's negative partons; JEWEL's thermal-momentum subtraction | He, Luo, Wang, Zhu, Phys. Rev. C 91 (2015) 054908, arXiv:1503.03313; Milhano, Wiedemann, Zapp, Phys. Lett. B 779 (2018) 409, arXiv:1707.04142 |
+
+The ISR chain these hadronize is that of Soudi, Zhao, Majumder et al. (JETSCAPE), Phys. Rev. C
+112 (2025) 014905, arXiv:2407.17443. Differences to the counterparts and the full reference
+list: js-contrib `docs/Plans/PLAN_lbt_colour_tags.md`, "Related work and references".
+
 ## Validation (GB10, 2026-10-21)
 
 Two 75-event O+O jobs per setting: Matter only (identical partons, no duplicate tag any
