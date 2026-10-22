@@ -258,6 +258,8 @@
          with the stored evolution, before it the lookup is vacuum.  This value applies only
          without a hydro. -->
     <tStart> 0.5 </tStart>
+    <!-- Matter before Lbt: <mutex> arbitrates the handover at Q0 -->
+    <mutex> ON </mutex>
     <Matter>
       <name> Matter </name>
       <matter_on> 1 </matter_on>

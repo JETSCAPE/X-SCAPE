@@ -111,8 +111,9 @@ are not, the colour flow is broken somewhere.
 
 js-contrib `contribs/PyJetscape/README.md`, "Jet hadronization with colour
 (iColoredHadronization)": the per-event audit, choosing the closure, hadronizing stored
-partons with iColored; the O+O production with Matter + LBT in
-`contribs/PyJetscape/example/prod_OO_isr/README.md`.
+partons with iColored. js-contrib's O+O production (`contribs/PyJetscape/example/
+prod_OO_isr/`, `config/OO_MCGlauber_MUSIC_isr.xml`) runs Matter + LBT with iColored by
+default (`--matter-only`: Matter alone, as before).
 
 ## Validation (GB10, 2026-10-21)
 
