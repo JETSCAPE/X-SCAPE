@@ -11,9 +11,15 @@ validation in js-contrib `docs/Plans/PLAN_lbt_colour_tags.md`.
 * **One colour-tag counter per event.** `HardProcess::NextColorTag()` hands out tags from
   a counter that is reset every event and starts above every tag the hard process and
   iMATTER use (Pythia's own tags, the per-parton blocks of 1000, iMATTER's ISR blocks).
-  Matter and LBT draw their new tags from it. Before, Matter took its tags from the
-  per-parton blocks, which overlap iMATTER's as soon as there are MPI scatterings: in O+O
-  most events had a tag used more than once, which Pythia strings without a message.
+  Matter and LBT draw their new tags from it. Before, Matter's counter was a member of the
+  Matter object: the energy-loss task of the first shower lives for the whole run, its
+  counter only grows, and the other showers' Matter objects are copies of it made each
+  event. Once that counter was above the per-parton blocks, every shower numbered its tags
+  from the same value. It got there through the ISR siblings' bases (which grow over the
+  job) and through the uninitialized `max_color` Matter wrote into the daughters of a photon
+  emission. In O+O 131 of 150 events had a tag used more than once, and so did 83 % of
+  the events of a pp Z+jet run (PythiaGun + Matter); Pythia strings them without a
+  message. Details in the plan, "Where the duplicates came from".
 * **Matter's recoils** (`recoil_on` 1) keep the large-Nc colour flow `Matter::flavor`
   computes: the recoil its outgoing tags, the continuing jet parton its outgoing tags, the
   hole (pstat −1) the tags of the incoming thermal parton. Before, recoil and hole were set
