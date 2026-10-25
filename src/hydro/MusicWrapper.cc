@@ -22,6 +22,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 #include <memory>
 #include <regex>
 
@@ -49,9 +50,23 @@ MpiMusic::MpiMusic() {
   hydro_source_terms_ptr->set_source_tau_max(1000.0);
 }
 
-MpiMusic::~MpiMusic() {}
+namespace {
+// The MUSIC instances by module id, for <restart_from> (an instance names the
+// one whose checkpoint it starts from).
+std::map<std::string, MpiMusic *> &MusicInstances() {
+  static std::map<std::string, MpiMusic *> instances;
+  return instances;
+}
+}  // namespace
+
+MpiMusic::~MpiMusic() {
+  auto &instances = MusicInstances();
+  auto it = instances.find(GetId());
+  if (it != instances.end() && it->second == this) instances.erase(it);
+}
 
 void MpiMusic::InitializeHydro(Parameter parameter_list) {
+  MusicInstances()[GetId()] = this;
   int suppress_logo = GetXMLElementInt({"Hydro", "MUSIC", "suppress_logo"}, false);
   if (!suppress_logo) MUSIC_LOGO::display_logo(0);
   JSINFO << "Initialize MUSIC ...";
@@ -113,11 +128,18 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   flag_ensure_MusicWrapper_output = (bool) GetXMLElementInt(
           {"RootBulkWriter", "ensure_MusicWrapper_output"});
 
+  // dump_hydro_only, skip_surface and store_evolution: the first
+  // <Hydro><MUSIC> block sets them for every instance, the same tag in the
+  // instance's own block overrides it (as freeze_out_surface below), e.g. a
+  // two-stage jet leg that hands nothing to the framework and stores nothing.
+
   // Fast hydro-only ROOT dump (FastRootBulkWriter): keep MUSIC's native
   // in-memory evolution store and skip the framework AoS copy. Requires
   // output_evolution_to_memory = 1.
   dump_hydro_only_ = (bool) GetXMLElementInt(
       {"Hydro", "MUSIC", "dump_hydro_only"}, false);
+  const int own_dump_hydro_only = ReadOwnMusicBlockInt("dump_hydro_only");
+  if (own_dump_hydro_only >= 0) dump_hydro_only_ = own_dump_hydro_only != 0;
   if (dump_hydro_only_ && flag_output_evo_to_memory != 1) {
     JSWARN << "MUSIC: dump_hydro_only=1 requires output_evolution_to_memory=1; "
               "the native evolution store will otherwise be empty.";
@@ -128,6 +150,21 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   // only drops the unused export in a hydro-only dump. See <skip_surface>.
   skip_surface_ = (bool) GetXMLElementInt(
       {"Hydro", "MUSIC", "skip_surface"}, false);
+  const int own_skip_surface = ReadOwnMusicBlockInt("skip_surface");
+  if (own_skip_surface >= 0) skip_surface_ = own_skip_surface != 0;
+
+  // Store the evolution frames in MUSIC's in-memory store (see
+  // set_store_evolution). Missing tag: on, as before.
+  int store_evolution = 1;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "store_evolution"}, false)) {
+    el->QueryIntText(&store_evolution);
+  }
+  const int own_store_evolution = ReadOwnMusicBlockInt("store_evolution");
+  if (own_store_evolution >= 0) store_evolution = own_store_evolution;
+  store_evolution_ = store_evolution != 0;
+
+  ReadRestartSettings();
 
   // Slim framework copy of the evolution: e, s, T, vx, vy, vz only. See
   // <slim_bulk_info> and PassHydroEvolutionHistoryToFramework.
@@ -620,6 +657,9 @@ void MpiMusic::EvolveHydro() {
     music_hydro_ptr->set_parameter("store_hydro_info_frames",
                                    store_evolution_ ? 1 : 0);
     restart_status_.clear();
+    if (restart_from_ == nullptr && !restart_from_id_.empty()) {
+      ResolveRestartFrom();
+    }
 #if defined(USE_CUDA) || defined(USE_METAL)
     music_hydro_ptr->set_checkpoint_tau(checkpoint_tau_);
     if (restart_from_ != nullptr) {
@@ -722,26 +762,123 @@ void MpiMusic::EvolveHydro() {
   }
 }
 
-// The value of `tag` inside this instance's own <Hydro><MUSIC> block of the
-// user XML (the one whose <name> is this module's id), or -1 if not set there.
-int MpiMusic::ReadOwnMusicBlockInt(const char *tag) const {
+namespace {
+// The text of `el` without surrounding white space ("" if none).
+std::string TrimmedText(const tinyxml2::XMLElement *el) {
+  if (el == nullptr || el->GetText() == nullptr) return "";
+  std::string s = el->GetText();
+  s.erase(0, s.find_first_not_of(" \t\n\r"));
+  s.erase(s.find_last_not_of(" \t\n\r") + 1);
+  return s;
+}
+
+// The <Hydro><MUSIC> blocks of the user XML.
+std::vector<tinyxml2::XMLElement *> UserMusicBlocks() {
+  std::vector<tinyxml2::XMLElement *> blocks;
   auto *root = JetScapeXML::Instance()->GetXMLRootUser();
-  if (root == nullptr) return -1;
+  if (root == nullptr) return blocks;
   for (auto *hydro = root->FirstChildElement("Hydro"); hydro != nullptr;
        hydro = hydro->NextSiblingElement("Hydro")) {
-    auto *music = hydro->FirstChildElement("MUSIC");
-    if (music == nullptr) continue;
-    auto *name = music->FirstChildElement("name");
-    if (name == nullptr || name->GetText() == nullptr) continue;
-    std::string id = name->GetText();
-    id.erase(0, id.find_first_not_of(" \t\n\r"));
-    id.erase(id.find_last_not_of(" \t\n\r") + 1);
-    if (id != GetId()) continue;
-    auto *value = music->FirstChildElement(tag);
-    if (value == nullptr || value->GetText() == nullptr) return -1;
-    return std::atoi(value->GetText());
+    if (auto *music = hydro->FirstChildElement("MUSIC")) blocks.push_back(music);
   }
-  return -1;
+  return blocks;
+}
+}  // namespace
+
+// The element `tag` inside this instance's own <Hydro><MUSIC> block of the
+// user XML (the one whose <name> is this module's id), or nullptr.
+tinyxml2::XMLElement *MpiMusic::OwnMusicBlockElement(const char *tag) const {
+  for (auto *music : UserMusicBlocks()) {
+    if (TrimmedText(music->FirstChildElement("name")) != GetId()) continue;
+    return music->FirstChildElement(tag);
+  }
+  return nullptr;
+}
+
+// The value of `tag` inside this instance's own <Hydro><MUSIC> block, or -1 if
+// not set there.
+int MpiMusic::ReadOwnMusicBlockInt(const char *tag) const {
+  auto *value = OwnMusicBlockElement(tag);
+  if (value == nullptr || value->GetText() == nullptr) return -1;
+  return std::atoi(value->GetText());
+}
+
+// <restart_from> and <checkpoint_tau>, both only in an instance's own block
+// (a first-block default would make every instance restart or keep a
+// checkpoint; the main XML's none / 0 are off). The jet leg names the
+// background in <restart_from>; the background then keeps a checkpoint at its
+// own <checkpoint_tau> if > 0, else at the liquefier's tau_delay, before which
+// no droplet deposits.
+// The setters (set_restart_from, set_checkpoint_tau) override both.
+void MpiMusic::ReadRestartSettings() {
+  restart_from_id_ = TrimmedText(OwnMusicBlockElement("restart_from"));
+  if (restart_from_id_ == "none") restart_from_id_.clear();
+  if (restart_from_id_ == GetId()) {
+    JSWARN << "MUSIC " << GetId() << ": <restart_from> names this instance "
+           << "itself; ignored.";
+    restart_from_id_.clear();
+  }
+
+  bool restart_source = false;
+  for (auto *music : UserMusicBlocks()) {
+    if (TrimmedText(music->FirstChildElement("restart_from")) == GetId() &&
+        TrimmedText(music->FirstChildElement("name")) != GetId()) {
+      restart_source = true;
+    }
+  }
+  checkpoint_tau_ = 0.;
+  if (auto *el = OwnMusicBlockElement("checkpoint_tau")) {
+    el->QueryDoubleText(&checkpoint_tau_);
+  }
+  if (checkpoint_tau_ <= 0. && restart_source) {
+    auto *el = JetScapeXML::Instance()->GetElement(
+        {"Liquefier", "CausalLiquefier", "tau_delay"}, false);
+    if (el != nullptr) {
+      el->QueryDoubleText(&checkpoint_tau_);
+    } else {
+      JSWARN << "MUSIC " << GetId() << ": an instance restarts from this one "
+             << "but there is neither <checkpoint_tau> in its block nor a "
+             << "<Liquefier><CausalLiquefier><tau_delay>: no checkpoint, every "
+             << "restart runs from tau0.";
+    }
+  }
+  if (checkpoint_tau_ > 0.) {
+    JSINFO << "MUSIC " << GetId() << ": checkpoint at tau <= "
+           << checkpoint_tau_ << " fm/c"
+           << (restart_source ? " (for <restart_from>)" : "");
+  }
+#if !defined(USE_CUDA) && !defined(USE_METAL)
+  if (!restart_from_id_.empty() || checkpoint_tau_ > 0.) {
+    JSWARN << "MUSIC " << GetId() << ": <restart_from> / <checkpoint_tau> "
+           << "need music4gpu (CUDA or Metal); CPU MUSIC ignores them.";
+  }
+#endif
+}
+
+// <restart_from>: the instance of that id, once (at the first evolution, when
+// every instance is initialized).
+void MpiMusic::ResolveRestartFrom() {
+  const std::string id = restart_from_id_;
+  restart_from_id_.clear();
+  auto &instances = MusicInstances();
+  auto it = instances.find(id);
+  if (it == instances.end() || it->second == this) {
+    JSWARN << "MUSIC " << GetId() << ": <restart_from> " << id << " is no "
+           << "other MUSIC instance; every evolution runs from tau0.";
+    return;
+  }
+  restart_from_ = it->second;
+  JSINFO << "MUSIC " << GetId() << " starts from " << id << "'s state at tau "
+         << "<= " << restart_from_->checkpoint_tau_ << " fm/c (<restart_from>)";
+  if (restart_from_->checkpoint_tau_ <= 0.) {
+    JSWARN << "MUSIC " << GetId() << ": " << id << " keeps no checkpoint "
+           << "(checkpoint_tau 0), so every evolution runs from tau0.";
+  }
+  if (freeze_out_surface_ != 0 && restart_from_->freeze_out_surface_ == 0) {
+    JSWARN << "MUSIC " << GetId() << " builds the freeze-out surface and "
+           << id << " does not, so its checkpoint lacks it: every evolution "
+           << "runs from tau0. Build the surface on both legs or on neither.";
+  }
 }
 
 // Hand the freeze-out surface setting to MUSIC at the start of every
