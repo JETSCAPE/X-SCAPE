@@ -575,9 +575,29 @@
       <!--evolution output/storage parameters-->
       <output_evolution_to_file>0</output_evolution_to_file>
       <output_evolution_to_memory>1</output_evolution_to_memory>
+      <!-- dump_hydro_only, skip_surface and store_evolution: set in the first
+           <Hydro><MUSIC> block they apply to every MUSIC instance; in an
+           instance's own <Hydro><MUSIC> block they override that for this
+           instance only (e.g. a two-stage jet leg whose evolution nobody
+           reads: dump_hydro_only 1, store_evolution 0). -->
+      <!--1: keep MUSIC's native evolution store and hand no copy to the framework (bulk_info); needs output_evolution_to_memory 1-->
       <dump_hydro_only> 0 </dump_hydro_only>
       <!--skip exporting the freeze-out surface (hand-off + surface*.dat); MUSIC still finds it internally for hydro termination. Only use in hydro-only dumps.-->
       <skip_surface> 0 </skip_surface>
+      <!-- 1: store the evolution frames in MUSIC's in-memory store; 0: keep only
+           its grid and tau bookkeeping (music4gpu; CPU MUSIC ignores it). -->
+      <store_evolution> 1 </store_evolution>
+      <!-- Two-stage hydro (music4gpu): the jet leg starts from the background's
+           state instead of recomputing the identical leading steps. In the jet
+           leg's own block: <restart_from>MUSIC_1</restart_from> (the
+           background's <name>). The background then keeps a checkpoint at
+           <checkpoint_tau> [fm/c] of its own block, by default at the
+           liquefier's <tau_delay> (checkpoint_tau 0). Same output; an event
+           that does not fit runs from tau0 and the log says why. Both are
+           read only from an instance's own block; these defaults (none, 0)
+           are off. -->
+      <restart_from> none </restart_from>
+      <checkpoint_tau> 0 </checkpoint_tau>
       <!-- 1: hand the evolution to the framework (bulk_info, for jet energy loss)
            as a slim copy: e, s, T, vx, vy, vz only, 24 instead of 112 bytes per
            cell. P, pi^{mu nu}, Pi, the mu's and qgp_fraction then read as zero,

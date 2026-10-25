@@ -393,7 +393,9 @@ class MpiMusic : public FluidDynamics {
   // bulk_info's grid) but packs and stores no cells, for an instance whose
   // evolution nobody reads (the jet leg of a particlize-only two-stage run).
   // Applies from the next evolution on; only with output_evolution_to_memory,
-  // and CPU MUSIC ignores it.
+  // and CPU MUSIC ignores it. Read from <store_evolution> like
+  // <dump_hydro_only> and <skip_surface>: the first <Hydro><MUSIC> block for
+  // every instance, overridden by the same tag in the instance's own block.
   bool get_store_evolution() const { return store_evolution_; }
   void set_store_evolution(bool v) { store_evolution_ = v; }
 
@@ -406,9 +408,16 @@ class MpiMusic : public FluidDynamics {
   // and no droplet before its step -- and from tau0 otherwise; the output is
   // the same either way.  MUSIC_RESTART_VERIFY=1 runs from tau0 and compares
   // the state with the checkpoint at its step.  CPU MUSIC: no effect.
+  // From XML: <restart_from> (an instance id) in the jet leg's own block; the
+  // instance named there keeps a checkpoint at <checkpoint_tau> of its own
+  // block, by default at <Liquefier><CausalLiquefier><tau_delay>.  The
+  // setters override the XML.
   void set_checkpoint_tau(double tau) { checkpoint_tau_ = tau; }
   double get_checkpoint_tau() const { return checkpoint_tau_; }
-  void set_restart_from(MpiMusic *bg) { restart_from_ = bg; }
+  void set_restart_from(MpiMusic *bg) {
+    restart_from_ = bg;
+    restart_from_id_.clear();
+  }
   MpiMusic *get_restart_from() const { return restart_from_; }
   // what the last evolution did with set_restart_from ("" if not set)
   const std::string &get_restart_status() const { return restart_status_; }
@@ -484,8 +493,13 @@ class MpiMusic : public FluidDynamics {
   bool store_evolution_ = true;
   double checkpoint_tau_ = 0.;
   MpiMusic *restart_from_ = nullptr;
+  // <restart_from> until it is resolved at the first evolution
+  std::string restart_from_id_;
   std::string restart_status_;
+  tinyxml2::XMLElement *OwnMusicBlockElement(const char *tag) const;
   int ReadOwnMusicBlockInt(const char *tag) const;
+  void ReadRestartSettings();
+  void ResolveRestartFrom();
   void ApplyFreezeOutSurface();
   void WarnIfGridBoundaryHit();
 };
