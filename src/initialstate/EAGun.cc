@@ -321,7 +321,7 @@ void EAGun::ExecuteTask() {
     ini->ResetNucTracking();
 
     int pythiaindex;
-    int nucleonIdx = (int)( (targA + 1) * ZeroOneDistribution(*GetMt19937Generator()) );
+    int nucleonIdx = (int)( targA * ZeroOneDistribution(*GetMt19937Generator()) );
     // if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
     //     cout << "PROTON!!!!" << endl;
     //     // readString("Beams:idA = 2212");
