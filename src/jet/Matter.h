@@ -101,6 +101,9 @@ class Matter : public JetEnergyLossModule<
   double length = 0.0;
 
   unsigned int MaxColor = 0;
+  // A new colour tag: from the event's HardProcess::NextColorTag (unique in
+  // the event), or ++MaxColor without a hard process.
+  unsigned int NewColorTag();
 
   // SC: for interface with hydro
   double fillQhatTab(double y);
