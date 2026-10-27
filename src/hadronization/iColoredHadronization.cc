@@ -20,7 +20,11 @@
 #include "JetScapeLogger.h"
 #include "tinyxml2.h"
 #include "MCGlauberGenStringWrapper.h"
+#include <algorithm>
+#include <cmath>
+#include <map>
 #include <memory>
+#include <set>
 
 using namespace Jetscape;
 using namespace Pythia8;
@@ -103,8 +107,61 @@ void iColoredHadronization::InitTask() {
   }
   store_input_ =
       GetXMLElementInt({"JetHadronization", "store_input"}, false) == 1;
+  // <colour_duplicates>: fail (default; the event throws) or relabel
+  std::string dup =
+      GetXMLElementText({"JetHadronization", "colour_duplicates"}, false);
+  dup.erase(0, dup.find_first_not_of(" \t\n"));
+  dup.erase(dup.find_last_not_of(" \t\n") + 1);
+  if (dup == "relabel")
+    relabel_duplicates_ = true;
+  else if (!dup.empty() && dup != "fail")
+    throw std::runtime_error(
+        "iColoredHadronization: <colour_duplicates> takes fail or relabel, "
+        "not '" + dup + "'");
+  if (relabel_duplicates_)
+    JSINFO << "iColoredHadronization: duplicate colour tags are relabelled";
+  // <colour_closure>: how the colour lines that end in the medium are closed
+  std::string closure =
+      GetXMLElementText({"JetHadronization", "colour_closure"}, false);
+  closure.erase(0, closure.find_first_not_of(" \t\n"));
+  closure.erase(closure.find_last_not_of(" \t\n") + 1);
+  SetColourClosure(closure.empty() ? "reconnect" : closure);
+  JSINFO << "iColoredHadronization: colour closure " << GetColourClosure();
 
   pythia.init();
+}
+
+void iColoredHadronization::SetColourClosure(const std::string &mode) {
+  if (mode == "reconnect")
+    closure_ = Closure::Reconnect;
+  else if (mode == "reconnect_global")
+    closure_ = Closure::ReconnectGlobal;
+  else if (mode == "thermal")
+    closure_ = Closure::Thermal;
+  else if (mode == "fake")
+    closure_ = Closure::Fake;
+  else if (mode == "none")
+    closure_ = Closure::None;
+  else
+    throw std::runtime_error(
+        "iColoredHadronization: <colour_closure> takes reconnect, "
+        "reconnect_global, thermal, fake or none, not '" + mode + "'");
+}
+
+std::string iColoredHadronization::GetColourClosure() const {
+  switch (closure_) {
+  case Closure::Reconnect:
+    return "reconnect";
+  case Closure::ReconnectGlobal:
+    return "reconnect_global";
+  case Closure::Thermal:
+    return "thermal";
+  case Closure::Fake:
+    return "fake";
+  case Closure::None:
+    return "none";
+  }
+  return "?";
 }
 
 void iColoredHadronization::Reseed(unsigned int seed) {
@@ -135,43 +192,31 @@ void iColoredHadronization::DoHadronization(
     vector<vector<shared_ptr<Parton>>> &shower,
     vector<shared_ptr<Hadron>> &hOut, vector<shared_ptr<Parton>> &pOut) {
   ReseedForEvent();
-  Event &event = pythia.event;
-  event.reset();
-  double pz = p_fake;
   // auto Particles = shower->GetFinalPartons();
   VERBOSE(2) << BOLDYELLOW << "iColored Hadronization partons ";
+  std::vector<ShowerParton> partons;
   for (unsigned int ishower = 0; ishower < shower.size(); ++ishower) {
     JSDEBUG << "&&&&&&&&&&&&&&&&&&& there are " << shower.at(ishower).size()
             << " partons in the shower number " << ishower;
     for (unsigned int ipart = 0; ipart < shower.at(ishower).size(); ++ipart) {
-      // if(shower.at(ishower).at(ipart)->pstat() < 0 ) continue;
+      const auto &q = shower.at(ishower).at(ipart);
+      double onshellE =
+          pow(pow(q->px(), 2) + pow(q->py(), 2) + pow(q->pz(), 2), 0.5);
 
-      double onshellE = pow(pow(shower.at(ishower).at(ipart)->px(), 2) +
-                                pow(shower.at(ishower).at(ipart)->py(), 2) +
-                                pow(shower.at(ishower).at(ipart)->pz(), 2),
-                            0.5);
-
-      if (shower.at(ishower).at(ipart)->pid() == 22) {
+      if (q->pid() == 22) {
         VERBOSE(1) << BOLDYELLOW
                    << " photon found in colored hadronization with ";
-        VERBOSE(1) << BOLDYELLOW
-                   << "px = " << shower.at(ishower).at(ipart)->px();
+        VERBOSE(1) << BOLDYELLOW << "px = " << q->px();
         // cin >> blurb;
       }
 
-      event.append(shower.at(ishower).at(ipart)->pid(), 23,
-                   shower.at(ishower).at(ipart)->color(),
-                   shower.at(ishower).at(ipart)->anti_color(),
-                   shower.at(ishower).at(ipart)->px(),
-                   shower.at(ishower).at(ipart)->py(),
-                   shower.at(ishower).at(ipart)->pz(), onshellE);
+      partons.push_back({int(ishower), q->pid(), q->pstat(), int(q->color()),
+                         int(q->anti_color()), q->px(), q->py(), q->pz(),
+                         onshellE});
 
-      VERBOSE(2) << BOLDYELLOW
-                 << " pid = " << shower.at(ishower).at(ipart)->pid()
-                 << " plabel = " << shower.at(ishower).at(ipart)->plabel()
-                 << " pstat = " << shower.at(ishower).at(ipart)->pstat()
-                 << " col = " << shower.at(ishower).at(ipart)->color()
-                 << " acol = " << shower.at(ishower).at(ipart)->anti_color();
+      VERBOSE(2) << BOLDYELLOW << " pid = " << q->pid()
+                 << " plabel = " << q->plabel() << " pstat = " << q->pstat()
+                 << " col = " << q->color() << " acol = " << q->anti_color();
     }
   }
 
@@ -208,96 +253,330 @@ void iColoredHadronization::DoHadronization(
 
     double onshellE =
         pow(pow(Rem.px() + Px, 2) + pow(Rem.py() + Py, 2) + pow(Pz, 2), 0.5);
-    event.append(Rem.pid(), 23, Rem.color(), Rem.anti_color(), Rem.px() + Px,
-                 Rem.py() + Py, Pz, onshellE);
+    partons.push_back({-1, Rem.pid(), Rem.pstat(), int(Rem.color()),
+                       int(Rem.anti_color()), Rem.px() + Px, Rem.py() + Py, Pz,
+                       onshellE});
     VERBOSE(2) << BOLDYELLOW << " pid = " << Rem.pid()
                << " plabel = " << Rem.plabel() << " pstat = " << Rem.pstat()
                << " col = " << Rem.color() << " acol = " << Rem.anti_color();
   }
 
-  // first, find unpaired color and anticolor tags.
-  std::vector<int> cols;
-  std::vector<int> acols;
-  for (unsigned int ipart = 0; ipart < event.size(); ++ipart) {
-    if (event[ipart].id() == 22) {
+  HadronizeList(partons, hOut);
+  VERBOSE(2) << "There are " << hOut.size() << " Hadrons and " << pOut.size()
+             << " partons after Hadronization";
+  shower.clear();
+}
+
+void iColoredHadronization::HadronizePartons(
+    const std::vector<ShowerParton> &partons,
+    vector<shared_ptr<Hadron>> &hOut) {
+  ReseedForEvent();
+  HadronizeList(partons, hOut);
+}
+
+void iColoredHadronization::HadronizeList(
+    const std::vector<ShowerParton> &partons,
+    vector<shared_ptr<Hadron>> &hOut) {
+  try {
+    HadronizeEvent(partons, hOut);
+  } catch (...) {
+    ++totals_.failed;
+    throw;
+  }
+  // the run's totals, for the summary at the end (FinishTask)
+  ++totals_.events;
+  if (audit_.unpaired_col + audit_.unpaired_acol > 0)
+    ++totals_.events_open;
+  totals_.holes += audit_.holes;
+  totals_.hole_energy += audit_.hole_energy;
+  totals_.skipped += audit_.skipped;
+  totals_.open_ends += audit_.unpaired_col + audit_.unpaired_acol;
+  totals_.duplicate_tags += audit_.duplicate_tags;
+  totals_.reconnected += audit_.reconnected;
+  totals_.reconnected_cross += audit_.reconnected_cross;
+  totals_.partners += audit_.partners;
+  totals_.partner_energy += audit_.partner_energy;
+  totals_.fakes += audit_.fakes;
+  totals_.fake_energy += audit_.fake_energy;
+  totals_.retries += audit_.retries;
+}
+
+void iColoredHadronization::FinishTask() {
+  const ColourTotals &t = totals_;
+  if (t.events + t.failed == 0)
+    return;
+  JSINFO << "iColoredHadronization: colour summary (closure "
+         << GetColourClosure() << "): " << t.events << " events hadronized, "
+         << t.failed << " failed (thrown); " << t.events_open
+         << " with open colour lines";
+  JSINFO << "iColoredHadronization:   holes " << t.holes << " ("
+         << t.hole_energy << " GeV, not hadronized), open ends "
+         << t.open_ends << ", joined pairs " << t.reconnected
+         << " (across showers as a fallback " << t.reconnected_cross
+         << "), medium partners " << t.partners << " (" << t.partner_energy
+         << " GeV), soft end partons " << t.fakes << " (" << t.fake_energy
+         << " GeV), retries " << t.retries << ", duplicate tags "
+         << t.duplicate_tags << ", liquefier partons skipped " << t.skipped;
+}
+
+void iColoredHadronization::HadronizeEvent(
+    const std::vector<ShowerParton> &partons,
+    vector<shared_ptr<Hadron>> &hOut) {
+  Event &event = pythia.event;
+  event.reset();
+  audit_ = ColourAudit();
+  // the shower of every record entry (entry 0 is the system line; -1: a beam
+  // remnant), for the closure
+  std::vector<int> shower_of(1, -2);
+  // Holes (pstat -1: the thermal partons a scattering took out of the medium)
+  // and the liquefier's partons (-11, -13, -17) are not string partons. The
+  // holes' colour tags tell the closure which lines end in the medium; their
+  // energy is dropped and recorded.
+  // The beam remnants (shower -1, whatever their status) always go to Pythia.
+  std::vector<ShowerParton> holes;
+  for (const auto &q : partons) {
+    if (q.shower >= 0 && q.pstat == -1) {
+      ++audit_.holes;
+      audit_.hole_energy += q.e;
+      holes.push_back(q);
       continue;
     }
-    if (event[ipart].col() != 0) {
-      cols.push_back(event[ipart].col());
+    if (q.shower >= 0 && q.pstat < 0) {
+      ++audit_.skipped;
+      continue;
     }
-    if (event[ipart].acol() != 0) {
-      acols.push_back(event[ipart].acol());
-    }
+    if (q.shower < 0)
+      ++audit_.remnants;
+    else
+      ++audit_.partons;
+    event.append(q.id, 23, q.col, q.acol, q.px, q.py, q.pz, q.e);
+    shower_of.push_back(q.shower);
   }
 
-  // the outcomes are: 1-unpaired color tag, 2-unpaired anticolor tag, 3-both an
-  // unpaired color & anticolor tag, 4-no unpaired tags 1-add an antiquark,
-  // 2-add a quark, 3-add a gluon, 4-add nothing (possibly photon only event)
-  int icol = 0;
-  while (icol < cols.size()) {
-    bool foundpair = false;
-    for (int iacol = 0; iacol < acols.size(); ++iacol) {
-      if (cols[icol] == acols[iacol]) {
-        cols.erase(cols.begin() + icol);
-        acols.erase(acols.begin() + iacol);
-        foundpair = true;
-        continue;
-      }
-    }
-    if (!foundpair) {
-      ++icol;
-    }
+  // Pair the colour tags by counting: every tag must occur exactly once as a
+  // colour and once as an anticolour. cols/acols get one entry per missing
+  // partner.
+  std::vector<int> cols;
+  std::vector<int> acols;
+  audit_.duplicate_tags = CountColourTags(event, cols, acols);
+  if (audit_.duplicate_tags > 0) {
+    if (!relabel_duplicates_)
+      throw std::runtime_error(
+          "iColoredHadronization: " + std::to_string(audit_.duplicate_tags) +
+          " duplicate colour tags (a tag used more than once as a colour or "
+          "as an anticolour); <colour_duplicates>relabel</colour_duplicates> "
+          "relabels them");
+    audit_.relabelled_tags = RelabelDuplicateTags(event);
+    cols.clear();
+    acols.clear();
+    CountColourTags(event, cols, acols);
   }
+  audit_.unpaired_col = cols.size();
+  audit_.unpaired_acol = acols.size();
 
+  // Close the lines that end in the medium (or are broken otherwise),
+  // <colour_closure>. A copy of the record before it, for the fallback.
+  const bool has_open = !cols.empty() || !acols.empty();
+  Event before;
+  std::vector<int> shower_before;
+  if (has_open) {
+    before = event;
+    shower_before = shower_of;
+    CloseColourLines(event, shower_of, holes, closure_);
+  }
+  cols.clear();
+  acols.clear();
+  CountColourTags(event, cols, acols);
   if (cols.size() > 0 || acols.size() > 0) {
     for (auto col : cols)
       JSWARN << " col = " << col;
     for (auto col : acols)
-      JSWARN << " col = " << col;
+      JSWARN << " acol = " << col;
     throw std::runtime_error("Unpaired colors sent to Pythia");
   }
 
-  int pid = 0;
-  int color = 0;
-  int anti_color = 0;
-  if ((cols.size() > 0) && (acols.size() > 0)) {
-    pid = 21;
-    color = cols[0];
-    anti_color = acols[0];
-  } else if ((cols.size() > 0) && (acols.size() == 0)) {
-    pid = -1;
-    color = cols[0];
-    anti_color = 0;
-  } else if ((cols.size() == 0) && (acols.size() > 0)) {
-    pid = 1;
-    color = 0;
-    anti_color = acols[0];
+  RecordInput();
+  // A failed fragmentation leaves the input partons in the record as final
+  // particles: never hand them on as hadrons. With a closure that added
+  // partners or joined lines, try once more with soft end partons (B3).
+  if (!pythia.next()) {
+    const bool retry =
+        has_open && closure_ != Closure::Fake && closure_ != Closure::None;
+    if (!retry)
+      throw std::runtime_error(
+          "iColoredHadronization: Pythia could not hadronize the event (" +
+          std::to_string(event.size() - 1) + " partons in the record)");
+    ++audit_.retries;
+    event = before;
+    shower_of = shower_before;
+    CloseColourLines(event, shower_of, holes, Closure::Fake);
+    RecordInput();
+    if (!pythia.next())
+      throw std::runtime_error(
+          "iColoredHadronization: Pythia could not hadronize the event, also "
+          "with soft end partons (" +
+          std::to_string(event.size() - 1) + " partons in the record)");
   }
-
-  if (pid != 0) {
-    pz = -1 * pz;
-    event.append(pid, 23, anti_color, color, 0.2, 0.2, pz,
-                 sqrt(pz * pz + 0.08));
-  }
-
-  VERBOSE(2) << "There are " << hOut.size() << " Hadrons and " << pOut.size()
-             << " partons after Hadronization";
-
-  if (store_input_) {
-    // entry 0 is the system line event.reset() adds
-    last_input_.clear();
-    for (int i = 1; i < event.size(); ++i) {
-      last_input_.push_back({event[i].id(), event[i].col(), event[i].acol(),
-                             event[i].px(), event[i].py(), event[i].pz(),
-                             event[i].e(), event[i].m()});
-    }
-  }
-
-  pythia.next();
   // event.list();
 
   CollectHadrons(hOut);
-  shower.clear();
+}
+
+void iColoredHadronization::RecordInput() {
+  if (!store_input_)
+    return;
+  // entry 0 is the system line event.reset() adds
+  Event &event = pythia.event;
+  last_input_.clear();
+  for (int i = 1; i < event.size(); ++i) {
+    last_input_.push_back({event[i].id(), event[i].col(), event[i].acol(),
+                           event[i].px(), event[i].py(), event[i].pz(),
+                           event[i].e(), event[i].m()});
+  }
+}
+
+void iColoredHadronization::OpenEnds(const Event &event,
+                                     std::map<int, int> &col_at,
+                                     std::map<int, int> &acol_at) {
+  std::map<int, int> ncol, nacol;
+  for (int i = 1; i < event.size(); ++i) {
+    if (event[i].col() != 0)
+      ++ncol[event[i].col()];
+    if (event[i].acol() != 0)
+      ++nacol[event[i].acol()];
+  }
+  col_at.clear();
+  acol_at.clear();
+  for (int i = 1; i < event.size(); ++i) {
+    const int c = event[i].col(), a = event[i].acol();
+    if (c != 0 && nacol.count(c) == 0)
+      col_at[c] = i;
+    if (a != 0 && ncol.count(a) == 0)
+      acol_at[a] = i;
+  }
+}
+
+int iColoredHadronization::Reconnect(Event &event,
+                                     const std::vector<int> &shower_of,
+                                     bool within_shower) {
+  // B2: join open colour ends with open anticolour ends, the pair with the
+  // smallest invariant mass (the shortest string) first. The anticolour end
+  // takes the colour end's tag. Never one gluon with itself.
+  std::map<int, int> col_at, acol_at;
+  OpenEnds(event, col_at, acol_at);
+  struct Candidate {
+    double m2;
+    int ic, ia, tag;
+  };
+  std::vector<Candidate> cand;
+  for (const auto &c : col_at)
+    for (const auto &a : acol_at) {
+      if (c.second == a.second)
+        continue;
+      if (within_shower && shower_of[c.second] != shower_of[a.second])
+        continue;
+      cand.push_back({(event[c.second].p() + event[a.second].p()).m2Calc(),
+                      c.second, a.second, c.first});
+    }
+  std::sort(cand.begin(), cand.end(),
+            [](const Candidate &x, const Candidate &y) {
+              if (x.m2 != y.m2)
+                return x.m2 < y.m2;
+              return x.ic != y.ic ? x.ic < y.ic : x.ia < y.ia;
+            });
+  std::set<int> used_col, used_acol;  // record entries whose end is joined
+  int joined = 0;
+  for (const auto &k : cand) {
+    if (used_col.count(k.ic) || used_acol.count(k.ia))
+      continue;
+    event[k.ia].acol(k.tag);
+    used_col.insert(k.ic);
+    used_acol.insert(k.ia);
+    ++joined;
+  }
+  return joined;
+}
+
+void iColoredHadronization::InsertPartners(
+    Event &event, std::vector<int> &shower_of,
+    const std::vector<ShowerParton> &holes) {
+  // B1: the medium partner of a hole, a parton of the conjugate colour charge
+  // with the hole's tags swapped (the hole carries the incoming thermal
+  // parton's tags) and the hole's momentum, for each hole whose lines are
+  // still open. A gluon hole with one line open gets a light (anti)quark.
+  std::map<int, int> col_at, acol_at;
+  OpenEnds(event, col_at, acol_at);
+  for (const auto &h : holes) {
+    const bool c_open = h.col != 0 && col_at.count(h.col);
+    const bool a_open = h.acol != 0 && acol_at.count(h.acol);
+    if (!c_open && !a_open)
+      continue;
+    int id;
+    if (c_open && a_open)
+      id = 21;
+    else if (h.id == 21)
+      id = c_open ? -1 : 1;
+    else
+      id = -h.id;
+    const int col = a_open ? h.acol : 0;
+    const int acol = c_open ? h.col : 0;
+    const double e = std::sqrt(h.px * h.px + h.py * h.py + h.pz * h.pz);
+    event.append(id, 23, col, acol, h.px, h.py, h.pz, e);
+    shower_of.push_back(h.shower);
+    if (c_open)
+      col_at.erase(h.col);
+    if (a_open)
+      acol_at.erase(h.acol);
+    ++audit_.partners;
+    audit_.partner_energy += e;
+  }
+}
+
+void iColoredHadronization::InsertFakes(Event &event,
+                                        std::vector<int> &shower_of) {
+  // B3: a soft (1 GeV) light antiquark (quark) along the beam, on the side of
+  // the parton with the open colour (anticolour), for every open end left.
+  std::map<int, int> col_at, acol_at;
+  OpenEnds(event, col_at, acol_at);
+  for (const auto &c : col_at) {
+    const double pz = event[c.second].pz() >= 0 ? 1. : -1.;
+    event.append(-1, 23, 0, c.first, 0., 0., pz, 1.);
+    shower_of.push_back(shower_of[c.second]);
+    ++audit_.fakes;
+    audit_.fake_energy += 1.;
+  }
+  for (const auto &a : acol_at) {
+    const double pz = event[a.second].pz() >= 0 ? 1. : -1.;
+    event.append(1, 23, a.first, 0, 0., 0., pz, 1.);
+    shower_of.push_back(shower_of[a.second]);
+    ++audit_.fakes;
+    audit_.fake_energy += 1.;
+  }
+}
+
+void iColoredHadronization::CloseColourLines(
+    Event &event, std::vector<int> &shower_of,
+    const std::vector<ShowerParton> &holes, Closure mode) {
+  switch (mode) {
+  case Closure::None:
+    return;
+  case Closure::Fake:
+    InsertFakes(event, shower_of);
+    return;
+  case Closure::Reconnect:
+    audit_.reconnected += Reconnect(event, shower_of, true);
+    break;
+  case Closure::ReconnectGlobal:
+    audit_.reconnected += Reconnect(event, shower_of, false);
+    break;
+  case Closure::Thermal:
+    break;
+  }
+  InsertPartners(event, shower_of, holes);
+  // what is still open (lines broken without a hole of their own): across
+  // showers, then soft end partons; both counted
+  audit_.reconnected_cross += Reconnect(event, shower_of, false);
+  InsertFakes(event, shower_of);
 }
 
 void iColoredHadronization::HadronizeInput(
@@ -308,8 +587,70 @@ void iColoredHadronization::HadronizeInput(
   for (const auto &q : input) {
     event.append(q.id, 23, q.col, q.acol, q.px, q.py, q.pz, q.e, q.m);
   }
-  pythia.next();
+  if (!pythia.next())
+    throw std::runtime_error(
+        "iColoredHadronization: Pythia could not hadronize the stored input (" +
+        std::to_string(input.size()) + " partons)");
   CollectHadrons(hOut);
+}
+
+int iColoredHadronization::CountColourTags(const Event &event,
+                                           std::vector<int> &cols,
+                                           std::vector<int> &acols) {
+  std::map<int, int> ncol, nacol;
+  for (int i = 1; i < event.size(); ++i) {  // entry 0 is the system line
+    if (event[i].col() != 0)
+      ++ncol[event[i].col()];
+    if (event[i].acol() != 0)
+      ++nacol[event[i].acol()];
+  }
+  int duplicates = 0;
+  for (const auto &t : ncol) {
+    auto a = nacol.find(t.first);
+    const int na = a == nacol.end() ? 0 : a->second;
+    duplicates += std::max(0, t.second - 1);
+    for (int k = na; k < t.second; ++k)
+      cols.push_back(t.first);
+  }
+  for (const auto &t : nacol) {
+    auto c = ncol.find(t.first);
+    const int nc = c == ncol.end() ? 0 : c->second;
+    duplicates += std::max(0, t.second - 1);
+    for (int k = nc; k < t.second; ++k)
+      acols.push_back(t.first);
+  }
+  return duplicates;
+}
+
+int iColoredHadronization::RelabelDuplicateTags(Event &event) {
+  // The k-th colour and the k-th anticolour (in record order) with the same
+  // tag become a pair with a new tag, for k >= 2. Which colour belongs to which
+  // anticolour is not known here, so this is a repair, counted in the audit.
+  int max_tag = 0;
+  for (int i = 1; i < event.size(); ++i)
+    max_tag = std::max(max_tag, std::max(event[i].col(), event[i].acol()));
+  std::map<int, int> seen_col, seen_acol;  // occurrences so far, per tag
+  std::map<std::pair<int, int>, int> new_tag;  // (tag, k) -> new tag
+  int relabelled = 0;
+  for (int i = 1; i < event.size(); ++i) {
+    const int c = event[i].col();
+    if (c != 0 && ++seen_col[c] > 1) {
+      auto key = std::make_pair(c, seen_col[c]);
+      if (!new_tag.count(key))
+        new_tag[key] = ++max_tag;
+      event[i].col(new_tag[key]);
+      ++relabelled;
+    }
+    const int a = event[i].acol();
+    if (a != 0 && ++seen_acol[a] > 1) {
+      auto key = std::make_pair(a, seen_acol[a]);
+      if (!new_tag.count(key))
+        new_tag[key] = ++max_tag;
+      event[i].acol(new_tag[key]);
+      ++relabelled;
+    }
+  }
+  return relabelled;
 }
 
 void iColoredHadronization::CollectHadrons(vector<shared_ptr<Hadron>> &hOut) {

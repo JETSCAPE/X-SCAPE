@@ -36,6 +36,8 @@
 #include <iomanip>
 
 #include "FluidDynamics.h"
+#include "HardProcess.h"
+#include "JetScapeSignalManager.h"
 #include "LBTMutex.h"
 #define MAGENTA "\033[35m"
 
@@ -375,6 +377,9 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
     if (par_status != -1) {  // a positive (active) particle
 
       KATT1[j] = pIn[i].pid();
+      COL[j] = pIn[i].color();
+      ACOL[j] = pIn[i].anti_color();
+      MaxColor = std::max(MaxColor, pIn[i].max_color());
       P[1][j] = pIn[i].p(1);
       P[2][j] = pIn[i].p(2);
       P[3][j] = pIn[i].p(3);
@@ -428,6 +433,9 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
               // freely in LBT
 
       KATT10[j] = pIn[i].pid();
+      COL0[j] = pIn[i].color();
+      ACOL0[j] = pIn[i].anti_color();
+      MaxColor = std::max(MaxColor, pIn[i].max_color());
       P0[1][j] = pIn[i].p(1);
       P0[2][j] = pIn[i].p(2);
       P0[3][j] = pIn[i].p(3);
@@ -578,6 +586,9 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
         pOut.push_back(Parton(0, KATT1[j], out_stat, tempP, tempX));
         // remember to put Tint_lrf infomation back to JETSCAPE
         pOut.back().set_user_info(new LBTUserInfo(Tint_lrf[j]));
+        pOut.back().set_color(COL[j]);
+        pOut.back().set_anti_color(ACOL[j]);
+        pOut.back().set_max_color(std::max(pIn[i].max_color(), MaxColor));
 
         int iout = pOut.size() - 1;
         pOut[iout].set_jet_v(velocity_jet);  // use initial jet velocity
@@ -602,6 +613,9 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
         //	      pOut.push_back(Parton(0,21,0,newPt,pIn[i].eta(),pIn[i].phi(),newPt));
         pOut.push_back(Parton(0, KATT10[j], -1, tempP, tempX));
         pOut.back().set_user_info(new LBTUserInfo(0.0));
+        pOut.back().set_color(COL0[j]);
+        pOut.back().set_anti_color(ACOL0[j]);
+        pOut.back().set_max_color(std::max(pIn[i].max_color(), MaxColor));
 
         int iout = pOut.size() - 1;
         pOut[iout].set_jet_v(velocity_jet);  // use initial jet velocity
@@ -638,6 +652,9 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
         //	      pOut.push_back(Parton(0,21,0,newPt,pIn[i].eta(),pIn[i].phi(),newPt));
         pOut.push_back(Parton(0, KATT10[j], -1, tempP, tempX));
         pOut.back().set_user_info(new LBTUserInfo(0.0));
+        pOut.back().set_color(COL0[j]);
+        pOut.back().set_anti_color(ACOL0[j]);
+        pOut.back().set_max_color(std::max(pIn[i].max_color(), MaxColor));
 
         int iout = pOut.size() - 1;
         pOut[iout].set_jet_v(velocity_jet);  // use initial jet velocity
@@ -1309,6 +1326,7 @@ void LBT::LBT0(int &n, double &ti) {
             pc0[3] = P[3][i];
             pc0[0] = P[0][i];
 
+            const int kin = KATT1[i];  // the jet parton before the scattering
             flavor(CT, KATTC0, KATT2, KATT3, RTE, PLen, T, T1, T2, E1, E2, iT1,
                    iT2, iE1, iE2);
 
@@ -1327,6 +1345,7 @@ void LBT::LBT0(int &n, double &ti) {
             KATT1[i] = KATTC0;
             KATT1[np0] = KATT2;
             KATT10[np0] = KATT3;
+            scatterColors(CT, kin, i, np0);
 
             //		  if(pc0[0]<pc2[0] && abs(KATTC0)!=4) { // for the
             // purpose of unit test
@@ -1340,6 +1359,9 @@ void LBT::LBT0(int &n, double &ti) {
               }
               KATT1[i] = KATT2;
               KATT1[np0] = KATTC0;
+              // the colour lines follow the momenta
+              std::swap(COL[i], COL[np0]);
+              std::swap(ACOL[i], ACOL[np0]);
             }
 
             for (int j = 0; j <= 3; j++) {
@@ -1439,6 +1461,7 @@ void LBT::LBT0(int &n, double &ti) {
                   ng_nrad += nrad;
                   np0 = np0 + 1;
                   KATT1[np0] = 21;
+                  radiateColors(i, np0);
 
                   for (int j = 0; j <= 3; j++) {
                     P[j][i] = pc01[j];       // heavy quark after colljet23
@@ -1504,6 +1527,7 @@ void LBT::LBT0(int &n, double &ti) {
                       np0 = np0 + 1;
                       ng_radiation += 1;
                       KATT1[np0] = 21;
+                      radiateColors(i, np0);
 
                       ctGluon++;
 
@@ -1597,6 +1621,9 @@ void LBT::LBT0(int &n, double &ti) {
               KATTy = KATT1[idlead];
               KATT1[i] = KATTy;
               KATT1[idlead] = KATTx;
+              // the colour lines follow the momenta
+              std::swap(COL[i], COL[idlead]);
+              std::swap(ACOL[i], ACOL[idlead]);
               for (int j = 0; j <= 3; j++) {
                 pcx[j] = P[j][i];
                 pcy[j] = P[j][idlead];
@@ -4410,6 +4437,97 @@ void LBT::read_xyMC(int &numXY) {
   fxyMC.close();
 }
 
+unsigned int LBT::NewColorTag() {
+  // The tags of one event come from one counter, shared with Matter, so that
+  // no two showers share a tag.
+  auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+  const unsigned int tag = hard ? hard->NextColorTag() : MaxColor + 1;
+  MaxColor = std::max(MaxColor, tag);
+  return tag;
+}
+
+void LBT::scatterColors(int CT, int kin, int i, int j) {
+  // Large-Nc colour flow of the elastic scattering (Matter::flavor's rules,
+  // and the channels Matter has not: 2, 6, 8). Jet-in (c, a) in slot i;
+  // jet-out into slot i, recoil into slot j, the hole into the negative slot j
+  // with the tags of the incoming thermal parton (a hole's colour pairs with
+  // an outgoing colour). Every channel leaves one line ending in the medium:
+  // iColoredHadronization's <colour_closure> closes it. n, m: new tags.
+  const unsigned int c = COL[i], a = ACOL[i];
+  const int kout = KATT1[i], kth = KATT10[j];
+  unsigned int c0 = 0, a0 = 0, c2 = 0, a2 = 0, c3 = 0, a3 = 0;
+  if (kin == 21) {
+    if (kth == 21 && kout == 21) {  // CT 1: g g -> g g
+      const unsigned int n = NewColorTag(), m = NewColorTag();
+      c0 = c, a0 = n, c2 = n, a2 = m, c3 = a, a3 = m;
+    } else if (kth == 21) {  // CT 2: g g -> q qbar, t-channel quark
+      const unsigned int n = NewColorTag();
+      if (kout > 0)
+        c0 = c, a2 = n;  // jet-out quark (c, 0), recoil antiquark (0, n)
+      else
+        a0 = n, c2 = c;  // jet-out antiquark (0, n), recoil quark (c, 0)
+      c3 = a, a3 = n;
+    } else if (kth > 0) {  // CT 3: g q -> g q
+      const unsigned int n = NewColorTag();
+      c0 = c, a0 = n, c2 = n, c3 = a;
+    } else {  // CT 3: g qbar -> g qbar
+      const unsigned int n = NewColorTag();
+      c0 = n, a0 = a, a2 = n, a3 = c;
+    }
+  } else if (kin > 0) {  // a quark (c, 0)
+    if (kth == 21) {  // CT 13, 12: q g -> q g
+      const unsigned int n = NewColorTag(), m = NewColorTag();
+      c0 = n, c2 = m, a2 = n, c3 = m, a3 = c;
+    } else if (kout == 21) {  // CT 8: q qbar -> g g
+      const unsigned int n = NewColorTag(), m = NewColorTag();
+      c0 = c, a0 = n, c2 = n, a2 = m, a3 = m;
+    } else if (kth > 0) {  // CT 4, 5, 11: q q' -> q q'
+      const unsigned int n = NewColorTag();
+      c0 = n, c2 = c, c3 = n;
+    } else if (CT == 6) {  // q qbar -> q' qbar', s-channel gluon
+      const unsigned int n = NewColorTag();
+      c0 = c, a2 = n, a3 = n;
+    } else {  // CT 4, 7, 11: q qbar' -> q qbar'
+      const unsigned int n = NewColorTag();
+      c0 = n, a2 = n, a3 = c;
+    }
+  } else {  // an antiquark (0, a)
+    if (kth == 21) {  // CT 13, 12: qbar g -> qbar g
+      const unsigned int n = NewColorTag(), m = NewColorTag();
+      a0 = n, c2 = n, a2 = m, c3 = a, a3 = m;
+    } else if (kout == 21) {  // CT 8: qbar q -> g g
+      const unsigned int n = NewColorTag(), m = NewColorTag();
+      c0 = n, a0 = a, c2 = m, a2 = n, c3 = m;
+    } else if (kth < 0) {  // CT 4, 5, 11: qbar qbar' -> qbar qbar'
+      const unsigned int n = NewColorTag();
+      a0 = n, a2 = a, a3 = n;
+    } else if (CT == 6) {  // qbar q -> qbar' q', s-channel gluon
+      const unsigned int n = NewColorTag();
+      a0 = a, c2 = n, c3 = n;
+    } else {  // CT 4, 7, 11: qbar q' -> qbar q'
+      const unsigned int n = NewColorTag();
+      a0 = n, c2 = n, c3 = a;
+    }
+  }
+  COL[i] = c0, ACOL[i] = a0;
+  COL[j] = c2, ACOL[j] = a2;
+  COL0[j] = c3, ACOL0[j] = a3;
+}
+
+void LBT::radiateColors(int i, int g) {
+  // Matter's splitting rule: q -> q g gives the quark (n, 0) and the gluon
+  // (c, n); qbar -> qbar g the antiquark (0, n) and the gluon (n, a);
+  // g -> g g the jet (c, n) and the gluon (n, a).
+  const unsigned int n = NewColorTag();
+  if (KATT1[i] != 21 && KATT1[i] > 0) {
+    COL[g] = COL[i], ACOL[g] = n;
+    COL[i] = n;
+  } else {
+    COL[g] = n, ACOL[g] = ACOL[i];
+    ACOL[i] = n;
+  }
+}
+
 void LBT::jetClean() {
   for (int i = 0; i < dimParList;
        i++) {  // clear arrays before initialization for each event
@@ -4457,6 +4575,10 @@ void LBT::jetClean() {
     //
     CAT[i] = 0;
     CAT0[i] = 0;
+    COL[i] = 0;
+    ACOL[i] = 0;
+    COL0[i] = 0;
+    ACOL0[i] = 0;
     //
     radng[i] = 0.0;
     tirad[i] = 0.0;

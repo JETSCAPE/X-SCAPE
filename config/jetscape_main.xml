@@ -832,6 +832,10 @@
        <reseed_per_event>0</reseed_per_event>
        <!-- iColored only: 1 = keep the parton list handed to Pythia every event (beam remnants and colour-balancing parton included), so the event can be hadronized again later -->
        <store_input>0</store_input>
+       <!-- iColored only: duplicated colour tags in the parton list (a tag used more than once as a colour or as an anticolour): fail = the event throws (default), relabel = the extra uses get new tags (a repair, counted in the colour audit) -->
+       <colour_duplicates>fail</colour_duplicates>
+       <!-- iColored only: how the colour lines that end in the medium (holes, pstat -1, of LBT or of Matter's recoils) or are broken otherwise are closed: reconnect = join the open ends within a shower by the shortest string, the holes' medium partners for the rest (default); reconnect_global = join across showers too; thermal = every hole's medium partner; fake = soft (anti)quarks along the beam; none = throw on an open line. See js-contrib docs/Plans/PLAN_lbt_colour_tags.md -->
+       <colour_closure>reconnect</colour_closure>
        <!-- You can add any number of additional lines to initialize pythia hadronization here -->
        <!-- Note that if the tag exists it cannot be empty (tinyxml produces a segfault) -->
        <LinesToRead>

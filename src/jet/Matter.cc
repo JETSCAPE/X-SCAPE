@@ -901,9 +901,12 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
             unsigned int el_max_color, el_color0, el_anti_color0, el_color2,
                 el_anti_color2, el_color3, el_anti_color3;
 
-            el_max_color = pIn[i].max_color();
             el_color0 = pIn[i].color();
             el_anti_color0 = pIn[i].anti_color();
+            // flavor() makes at most two new tags, as ++el_max_color: reserve
+            // two consecutive tags of the event's counter for it.
+            el_max_color = NewColorTag() - 1;
+            NewColorTag();
 
             pid0 = pid;
 
@@ -933,6 +936,9 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                 pc2[k] = pc0[k];
                 pc0[k] = p0temp[k];
               }
+              // the colour lines follow the momenta
+              std::swap(el_color0, el_color2);
+              std::swap(el_anti_color0, el_anti_color2);
             }
 
             // Amit: do not add recoil parton with E=0,Px=0,Py=0,Pz=0 into pOut
@@ -968,17 +974,15 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
             pOut[iout].set_mean_form_time();
             ft = 10000.0;  /// a really large formation time.
             pOut[iout].set_form_time(ft);
-            ////pOut[iout].set_color(el_color2);
-            ////pOut[iout].set_anti_color(el_anti_color2);
-            ////pOut[iout].set_max_color(max_color);
-            ////pOut[iout].set_min_color(pIn[i].min_color());
-            ////pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
-            ////// comment out realistic color above, assume colorless for
-            /// recoiled and back-reaction parton
-            ////// for the convenience of color string fragmentation in Pythia
-            pOut[iout].set_color(0);
-            pOut[iout].set_anti_color(0);
-            pOut[iout].set_max_color(pIn[i].max_color());
+            // The large-Nc colour flow of flavor(): the recoil carries its
+            // outgoing tags; the hole (back reaction) the tags of the incoming
+            // thermal parton, so its colour pairs with an outgoing colour (it
+            // flows through) and the colour line it closes ends in the medium.
+            // iColoredHadronization closes those lines (<colour_closure>);
+            // ColorlessHadronization does not read the tags.
+            pOut[iout].set_color(el_color2);
+            pOut[iout].set_anti_color(el_anti_color2);
+            pOut[iout].set_max_color(el_max_color);
             pOut[iout].set_min_color(pIn[i].min_color());
             pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
 
@@ -989,21 +993,16 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
             pOut[iout].set_mean_form_time();
             ft = 10000.0;  /// STILL a really large formation time.
             pOut[iout].set_form_time(ft);
-            ////pOut[iout].set_color(el_color3);
-            ////pOut[iout].set_anti_color(el_anti_color3);
-            ////pOut[iout].set_max_color(max_color);
-            ////pOut[iout].set_min_color(pIn[i].min_color());
-            ////pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
-            pOut[iout].set_color(0);
-            pOut[iout].set_anti_color(0);
-            pOut[iout].set_max_color(pIn[i].max_color());
+            pOut[iout].set_color(el_color3);
+            pOut[iout].set_anti_color(el_anti_color3);
+            pOut[iout].set_max_color(el_max_color);
             pOut[iout].set_min_color(pIn[i].min_color());
             pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
 
-            ////// assumption: pIn doesn't change color in elastic scattering
-            ////pIn[i].set_color(el_color0);
-            ////pIn[i].set_anti_color(el_anti_color0);
-            ////pIn[i].set_max_color(el_max_color);
+            // the jet parton continues with its outgoing tags
+            pIn[i].set_color(el_color0);
+            pIn[i].set_anti_color(el_anti_color0);
+            pIn[i].set_max_color(el_max_color);
 
           }  // end if scattering
 
