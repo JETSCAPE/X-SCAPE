@@ -76,6 +76,29 @@ gets a soft end parton; both are counted.
 Defaults are in `config/jetscape_main.xml`. Matter (`recoil_on`) and LBT need no switch for
 their tags.
 
+### Matter alone: only the tag fix
+
+With Matter alone (`recoil_on` 0, no `<Lbt>`) there are no holes, so no colour line ends in
+the medium and `<colour_closure>` never acts. Against the code before these changes, only the
+one counter per event (no duplicate tags) and iColored's checks (a failed fragmentation is no
+longer written out as "hadrons") change the jet hadrons. This is the reference for studies of
+the closure or of LBT's tags (Matter with recoils, Matter + LBT): compare against it, not
+against runs made before the fix. `none` makes it explicit, since an open line then throws
+instead of being closed:
+
+```xml
+<Eloss>
+  <Matter> ... <recoil_on>0</recoil_on> ... </Matter>   <!-- and no <Lbt> -->
+</Eloss>
+<JetHadronization>
+  <name>iColored</name>
+  <colour_closure>none</colour_closure>
+</JetHadronization>
+```
+
+The colour summary at the end of the run then shows no holes, joins, partners or soft end
+partons. In js-contrib's O+O job this is `--matter-only --colour-closure none`.
+
 ## Running it with runJetscape
 
 `config/jetscape_user_OO_ISR_MatterLBT_iColored.xml`: O+O 200 GeV, ISR (PythiaIsrGun +
