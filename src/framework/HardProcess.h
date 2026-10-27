@@ -295,6 +295,18 @@ class HardProcess : public JetScapeModuleBase {
   void SetNISRShower(double NISR) { NISRShower = NISR; }
 
   /**
+   * @brief A new colour tag, unique in the current event.
+   *
+   * One counter per event for the modules that open new colour lines (Matter,
+   * LBT). It starts above max_colorPerShower x (hard partons + 1), i.e. above
+   * Pythia's own tags, every per-parton block of the guns (1000 x (np + 1))
+   * and every block of iMATTER's ISR showers (label x 1000), so a tag it hands
+   * out meets no other tag of the event. Reset in ClearTask.
+   * @return The new tag.
+   */
+  unsigned int NextColorTag();
+
+  /**
    * @brief Get the total momentum fraction for the positive side.
    * @return Total momentum fraction for the positive side.
    */
@@ -380,6 +392,7 @@ class HardProcess : public JetScapeModuleBase {
 
   const int max_colorPerShower = 1000;
   int max_color, NISRShower = 0;
+  unsigned int color_tag_ = 0;  ///< last tag of NextColorTag in this event
   double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
   double TotalMomentumPositive, TotalMomentumNegative;
 };

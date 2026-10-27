@@ -84,8 +84,16 @@ void HardProcess::ClearTask() {
   hd_list.clear();
   ps_list.clear();
   Remnants.clear();
+  color_tag_ = 0;
 
   VERBOSE(8) << hp_list.size();
+}
+
+unsigned int HardProcess::NextColorTag() {
+  const unsigned int floor = max_colorPerShower * (hp_list.size() + 1);
+  if (color_tag_ < floor)
+    color_tag_ = floor;
+  return ++color_tag_;
 }
 
 void HardProcess::WriteTask(weak_ptr<JetScapeWriter> w) {
