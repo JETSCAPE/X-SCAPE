@@ -7,10 +7,11 @@ pp 5.02 TeV, PYTHIA 8 hard process + MATTER vacuum shower (Q0 = 1 GeV), with
   ppv_colored     colored hadronization, MPI on
   ppv_colored_nompi  colored, MPI off
   ppv_hybrid      hybrid hadronization (recombination + strings), MPI on
-The colored samples also include 2 x 64 short runs (ppv_coloredr_*,
-ppv_colorednompir_*): ColoredHadronization does not check pythia.next(), and
-after its first PYTHIA junction failure in a run every later event comes out
-unhadronized; jetana_data skips those events.
+The colored samples are made with the fixed shared build (2026-10-26). Before
+the fix, MATTER left max_color uninitialized after photon radiation, colour
+tags overflowed, and ColoredHadronization (which ignored a failed
+pythia.next()) wrote unhadronized partons for every later event; that earlier
+sample needed 2 x 64 short runs and jetana_data's skipping of parton events.
 (PythiaGun switches MPI on and passes all status-62 partons, MPI included, to
 MATTER; "PartonLevel:MPI = off" in LinesToRead overrides it.)  Compared with
 the pp data used in step 2, with the measurements' UE treatment applied to the
@@ -55,9 +56,8 @@ VARIANTS = {"ppx": ("colorless, MPI on (production)", "#1F5FA8", "-"),
             "ppv_hybrid": ("hybrid, MPI on", "#15803D", "-")}
 FILES = {"ppx": ["ppx_s%d" % i for i in range(1, 9)],
          "ppv_nompi": ["ppv_nompi_s%d" % i for i in range(1, 9)],
-         "ppv_colored": ["ppv_colored_s%d" % i for i in range(1, 9)] + ["ppv_coloredr_s%d" % i for i in range(1, 65)],
-         "ppv_colored_nompi": ["ppv_colored_nompi_s%d" % i for i in range(1, 9)]
-                              + ["ppv_colorednompir_s%d" % i for i in range(1, 65)],
+         "ppv_colored": ["ppv_colored_s%d" % i for i in range(1, 9)],
+         "ppv_colored_nompi": ["ppv_colored_nompi_s%d" % i for i in range(1, 9)],
          "ppv_hybrid": ["ppv_hybrid_s%d" % i for i in range(1, 9)]}
 
 
