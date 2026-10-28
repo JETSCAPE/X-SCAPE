@@ -106,7 +106,7 @@ class Matter : public JetEnergyLossModule<
   unsigned int NewColorTag();
 
   // SC: for interface with hydro
-  double fillQhatTab();
+  double fillQhatTab(double y);
   double fncQhat(double zeta);
   double fncAvrQhat(double zeta, double tau);
 
@@ -123,6 +123,11 @@ class Matter : public JetEnergyLossModule<
   double qhatTab2D[dimQhatTab][dimQhatTab] = {{0.0}};
 
   double tStart;  // = 0.6;
+  // <tStart_at_point>: 0 (default) cuts the recoil steps and the qhat table at
+  // tStart cosh(y), y the spatial rapidity of the parton's current position;
+  // 1 cuts each point at its own proper time, tau < tStart (BeforeTStart).
+  bool tStart_at_point = false;
+  bool BeforeTStart(double t, double z) const;
   int iEvent;
   bool debug_flag = 0;
   long NUM1;

@@ -363,6 +363,12 @@
       <broadening_on> 0 </broadening_on>
       <brick_med> 0 </brick_med>   <!-- Set brick_med to 1 while using Brick Hydro module-->
       <brick_length> 5.0 </brick_length>
+      <!-- Where <Eloss><tStart> (with a hydro: its start time) cuts the recoil steps and the
+           qhat table along a parton's path. 0: at tStart cosh(y), y the spatial rapidity of
+           the parton's current position, for every point (Matter's original cut).
+           1: at each point's own proper time, tau < tStart; with MUSIC this is where its
+           evolution begins, i.e. the events of tStart 0 with the hydro lookup deciding. -->
+      <tStart_at_point> 0 </tStart_at_point>
       <hydro_Tc> 0.16 </hydro_Tc>
       <!-- Pick a qhat formula -->
       <!-- Type=0 : HTL Formula with both alpha_s fixed  -->
