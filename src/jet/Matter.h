@@ -106,7 +106,7 @@ class Matter : public JetEnergyLossModule<
   unsigned int NewColorTag();
 
   // SC: for interface with hydro
-  double fillQhatTab(double y);
+  double fillQhatTab();
   double fncQhat(double zeta);
   double fncAvrQhat(double zeta, double tau);
 

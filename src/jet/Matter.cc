@@ -463,7 +463,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
     initEner = pIn[i].e();  // initial Energy of parton
     if (!in_vac) {
       if (GetJetSignalConnected())
-        length = fillQhatTab(SpatialRapidity);
+        length = fillQhatTab();
       else {
         JSWARN << "Couldn't find a hydro module attached!";
         throw std::runtime_error(
@@ -736,16 +736,21 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
           if (!recoil_on)
             continue;
 
-          double boostedTStart = tStart * std::cosh(SpatialRapidity);
+          double el_rx = initRx + (el_time - initR0) * initVx;
+          double el_ry = initRy + (el_time - initR0) * initVy;
+          double el_rz = initRz + (el_time - initR0) * initVz;
+
+          // The medium starts at the proper time tStart of this step's point,
+          // not of the parton's current position (SpatialRapidity): with the
+          // latter, steps inside the fluid were skipped.
+          double el_SpatialRapidity =
+              0.5 * std::log((el_time + el_rz) / (el_time - el_rz));
+          double boostedTStart = tStart * std::cosh(el_SpatialRapidity);
           if (el_time < boostedTStart)
             continue;
 
           if (abs(pid) == 5)
             continue;  // recoil not ready for b quark yet
-
-          double el_rx = initRx + (el_time - initR0) * initVx;
-          double el_ry = initRy + (el_time - initR0) * initVy;
-          double el_rz = initRz + (el_time - initR0) * initVz;
 
           double tempLoc, sdLoc, vxLoc, vyLoc, vzLoc, qhatLoc, enerLoc;
           double betaLoc, gammaLoc, flowFactor;
@@ -3854,7 +3859,7 @@ double Matter::profile(double zeta) {
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-double Matter::fillQhatTab(double y) {
+double Matter::fillQhatTab() {
   double xLoc, yLoc, zLoc, tLoc;
   double vxLoc, vyLoc, vzLoc, gammaLoc, betaLoc;
   double edLoc, sdLoc;
@@ -3872,8 +3877,7 @@ double Matter::fillQhatTab(double y) {
 
     // if(tLoc<initR0-tStep) { // potential problem of making t^2<z^2
 
-    double boostedTStart = tStart * std::cosh(y);
-    if (tLoc < initR0 || tLoc < boostedTStart) {
+    if (tLoc < initR0) {
       qhatTab1D[i] = 0.0;
       continue;
     }
@@ -3899,6 +3903,16 @@ double Matter::fillQhatTab(double y) {
     // zero cell there (EvolutionHistory::get_tz), so qhat = 0 below anyway.
     // Partons made at negative times (initial-state radiation) start out there.
     if (std::isfinite(tLoc) && std::isfinite(zLoc) && std::abs(zLoc) > tLoc) {
+      qhatTab1D[i] = 0.0;
+      continue;
+    }
+
+    // The medium starts at the proper time tStart of this point, not of the
+    // parton's current position: with the latter, points inside the fluid
+    // got no qhat.
+    double boostedTStart =
+        tStart * std::cosh(0.5 * std::log((tLoc + zLoc) / (tLoc - zLoc)));
+    if (tLoc < boostedTStart) {
       qhatTab1D[i] = 0.0;
       continue;
     }
