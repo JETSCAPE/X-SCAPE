@@ -222,12 +222,27 @@ void iSpectraSamplerWrapper::ExecuteTask() {
 
   int nCells = getSurfCellVector();
   if (nCells == 0) {
-    int status = iSpectraSampler_ptr_->read_in_FO_surface();
-    if (status != 0) {
-      JSWARN << "hyper-surface not read in";
-      // exit(-1);
+    // No surface in memory: read the file the hydro wrote (e.g. MUSIC with
+    // surface_in_memory 0). With a hydro attached and that file missing or
+    // empty, the event has no medium (e.g. 3dMCGlauber made no string): no
+    // hadrons, because iSS's file reader stops the run on an empty surface.
+    const std::string surface_file = working_path + "/surface.dat";
+    std::ifstream surface_in(surface_file.c_str());
+    const bool surface_file_empty =
+        !surface_in.good() ||
+        surface_in.peek() == std::ifstream::traits_type::eof();
+    surface_in.close();
+    if (GetGetHydroHyperSurfaceConnected() && surface_file_empty) {
+      JSWARN << "iSS: the hydro handed over no freeze-out surface and "
+             << surface_file << " is missing or empty; no hadrons this event";
     } else {
-      nCells = 1;
+      int status = iSpectraSampler_ptr_->read_in_FO_surface();
+      if (status != 0) {
+        JSWARN << "hyper-surface not read in";
+        // exit(-1);
+      } else {
+        nCells = 1;
+      }
     }
   }
   // int status = iSpectraSampler_ptr_->read_in_FO_surface();
