@@ -143,6 +143,8 @@ void Matter::InitTask() {
   qhatC = GetXMLElementDouble({"Eloss", "Matter", "qhatC"});
   qhatD = GetXMLElementDouble({"Eloss", "Matter", "qhatD"});
   tStart = GetXMLElementDouble({"Eloss", "tStart"});
+  tStart_at_point =
+      GetXMLElementInt({"Eloss", "Matter", "tStart_at_point"}, false);
   // run_alphas = GetXMLElementInt({"Eloss", "Matter", "run_alphas"});
   QhatParametrizationType =
       GetXMLElementInt({"Eloss", "Matter", "QhatParametrizationType"});
@@ -177,7 +179,8 @@ void Matter::InitTask() {
   JSINFO << MAGENTA << "MATTER input parameter";
   JSINFO << MAGENTA << "matter shower on: " << matter_on;
   JSINFO << MAGENTA << "in_vac: " << in_vac << "  brick_med: " << brick_med
-         << "  recoil_on: " << recoil_on << ", tStart =" << tStart;
+         << "  recoil_on: " << recoil_on << ", tStart =" << tStart
+         << " (at point: " << tStart_at_point << ")";
   JSINFO << MAGENTA << "Lambda_QCD: " << Lambda_QCD;
   JSINFO << MAGENTA << "Q0: " << Q00 << " QS: " << QS
          << " vir_factor: " << vir_factor
@@ -230,6 +233,13 @@ void Matter::Dump_pIn_info(int i, vector<Parton> &pIn) {
          << " form_time in fm = " << pIn[i].form_time()
          << " split time = " << pIn[i].form_time() + pIn[i].x_in().t()
          << " plabel = " << pIn[i].plabel();
+}
+
+bool Matter::BeforeTStart(double t, double z) const {
+  // The medium starts at the proper time tStart of the point (t, z), compared
+  // as tau^2 = t^2 - z^2 so that the light-cone tip (t = z = 0) is before it
+  // too; with tStart <= 0 only negative times are.
+  return t < tStart || (tStart > 0 && t * t - z * z < tStart * tStart);
 }
 
 unsigned int Matter::NewColorTag() {
@@ -463,7 +473,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
     initEner = pIn[i].e();  // initial Energy of parton
     if (!in_vac) {
       if (GetJetSignalConnected())
-        length = fillQhatTab();
+        length = fillQhatTab(SpatialRapidity);
       else {
         JSWARN << "Couldn't find a hydro module attached!";
         throw std::runtime_error(
@@ -740,13 +750,10 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
           double el_ry = initRy + (el_time - initR0) * initVy;
           double el_rz = initRz + (el_time - initR0) * initVz;
 
-          // The medium starts at the proper time tStart of this step's point,
-          // not of the parton's current position (SpatialRapidity): with the
-          // latter, steps inside the fluid were skipped.
-          double el_SpatialRapidity =
-              0.5 * std::log((el_time + el_rz) / (el_time - el_rz));
-          double boostedTStart = tStart * std::cosh(el_SpatialRapidity);
-          if (el_time < boostedTStart)
+          // <tStart_at_point> 1: the step's own proper time; 0: tStart
+          // boosted with the rapidity of the parton's current position
+          if (tStart_at_point ? BeforeTStart(el_time, el_rz)
+                              : el_time < tStart * std::cosh(SpatialRapidity))
             continue;
 
           if (abs(pid) == 5)
@@ -3859,7 +3866,7 @@ double Matter::profile(double zeta) {
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
-double Matter::fillQhatTab() {
+double Matter::fillQhatTab(double y) {
   double xLoc, yLoc, zLoc, tLoc;
   double vxLoc, vyLoc, vzLoc, gammaLoc, betaLoc;
   double edLoc, sdLoc;
@@ -3877,7 +3884,9 @@ double Matter::fillQhatTab() {
 
     // if(tLoc<initR0-tStep) { // potential problem of making t^2<z^2
 
-    if (tLoc < initR0) {
+    // <tStart_at_point> 0: tStart boosted with y, the rapidity of the parton's
+    // current position, for every point of the table (1: below)
+    if (tLoc < initR0 || (!tStart_at_point && tLoc < tStart * std::cosh(y))) {
       qhatTab1D[i] = 0.0;
       continue;
     }
@@ -3907,12 +3916,8 @@ double Matter::fillQhatTab() {
       continue;
     }
 
-    // The medium starts at the proper time tStart of this point, not of the
-    // parton's current position: with the latter, points inside the fluid
-    // got no qhat.
-    double boostedTStart =
-        tStart * std::cosh(0.5 * std::log((tLoc + zLoc) / (tLoc - zLoc)));
-    if (tLoc < boostedTStart) {
+    // <tStart_at_point> 1: the point's own proper time
+    if (tStart_at_point && BeforeTStart(tLoc, zLoc)) {
       qhatTab1D[i] = 0.0;
       continue;
     }
