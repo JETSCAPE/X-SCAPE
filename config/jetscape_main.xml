@@ -120,6 +120,12 @@
 
     <!-- Options to read initial conditions from saved file -->
     <initial_profile_path>../examples/test_hydro_files</initial_profile_path>
+    <!-- Hard-scattering vertices from a binary-collision histogram "x y N_coll" (NCOLLHISTO format of the
+         JEWEL (2+1)D interface, github.com/isobelkolbe/jewel-2.4.0-2D): bin ~ N_coll, uniform within the bin -->
+    <CustomModuleNcollHisto>
+      <file>ncoll_histo.dat</file>
+    </CustomModuleNcollHisto>
+
     <initial_Ncoll_list>../examples/test_hydro_files</initial_Ncoll_list>
 
     <MCGlauber>
@@ -353,8 +359,19 @@
       <lifetime> -1 </lifetime>                     <!-- end of medium interactions [fm], <=0: Eloss maxT -->
       <pre_tau0> 0 </pre_tau0>                      <!-- before tStart: 0 no medium (LBT), 1 T(tau0) tau/tau0 -->
       <fluxmax> 6.0 </fluxmax>                      <!-- bound of gamma(1-v.beta) in the rate veto -->
+      <flux_mode> 0 </flux_mode>                    <!-- 0: gamma(1-v.beta); 1: medium-2D.f approximation -->
       <etamax> 3.1 </etamax>                        <!-- no medium at |eta_s| > etamax -->
     </Jewel>
+
+    <!-- Writes the fluid of the first event at z = 0 as Tcontour<tau> / Vcontour<tau> files (format of the
+         JEWEL (2+1)D interface) and a binary-collision histogram ncoll_histo.dat; leaves the partons unchanged -->
+    <CustomModuleMediumDump>
+      <dir>medium_contours</dir>
+      <xmax> 20 </xmax> <dx> 0.2 </dx>
+      <tau0> -1 </tau0> <dtau> 0.2 </dtau> <taumax> 20 </taumax>   <!-- tau0 < 0: start of the fluid -->
+      <ncoll_samples> 200000 </ncoll_samples>
+      <contours> 1 </contours>                                      <!-- 0: only the N_coll histogram -->
+    </CustomModuleMediumDump>
 
     <Martini>
       <name > Martini </name>
@@ -511,6 +528,14 @@
     </hydro_from_file>
 
     <!-- MUSIC  -->
+    <!-- Boost-invariant medium from Tcontour/Vcontour files (format of the JEWEL (2+1)D interface), interpolated
+         as in its medium-2D.f, plus Bjorken flow -->
+    <CustomModuleHydroContours>
+      <dir>medium_contours</dir>
+      <Tc> 0.17 </Tc>
+      <etamax> 3.1 </etamax>
+    </CustomModuleHydroContours>
+
     <MUSIC>
       <name>MUSIC</name>
       <MUSIC_input_file>music_input</MUSIC_input_file>

@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!-- JEWEL on a boost-invariant medium given as Tcontour/Vcontour files (format of the JEWEL (2+1)D
+     interface, github.com/isobelkolbe/jewel-2.4.0-2D; e.g. written from a MUSIC event by
+     CustomModuleMediumDump), with vertices from its binary-collision histogram. Used for the comparison
+     with jewel-2.4.0-2D (Tmax and lifetime as for that medium). Needs cmake -DUSE_JEWEL=ON.
+     Parton-level output (final-state partons) is recommended: the colorless hadronisation is not
+     suitable for the many soft JEWEL recoils. -->
+<jetscape>
+  <nEvents> 100 </nEvents> <vlevel> 0 </vlevel> <nEvents_printout> 100 </nEvents_printout>
+  <outputFilename>jewel_contours</outputFilename>
+  <JetScapeWriterAscii> off </JetScapeWriterAscii>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+  <JetScapeWriterFinalStatePartonsAscii> on </JetScapeWriterFinalStatePartonsAscii>
+  <Random> <seed>1</seed> </Random>
+  <IS>
+    <CustomModuleNcollHisto> <file>medium_contours/ncoll_histo.dat</file> </CustomModuleNcollHisto>
+  </IS>
+  <Hard>
+    <PythiaGun>
+      <pTHatMin>50</pTHatMin> <pTHatMax>500</pTHatMax> <eCM>5020</eCM>
+      <LinesToRead>
+        PDF:pSet = LHAPDF6:CT14nlo
+        PartonLevel:MPI = off
+        PromptPhoton:all = off
+        PhaseSpace:bias2Selection = on
+        PhaseSpace:bias2SelectionPow = 5.
+        PhaseSpace:bias2SelectionRef = 50.
+      </LinesToRead>
+    </PythiaGun>
+  </Hard>
+  <Hydro>
+    <CustomModuleHydroContours> <dir>medium_contours</dir> <Tc> 0.17 </Tc> <etamax> 3.1 </etamax> </CustomModuleHydroContours>
+  </Hydro>
+  <Eloss>
+    <tStart> 0.0 </tStart> <maxT> 0.5 </maxT>
+    <Jewel>
+      <in_vac> 0 </in_vac>
+      <keep_recoils> 1 </keep_recoils>
+      <Tmax> 0.59 </Tmax> <Tc> 0.17 </Tc> <nf> 3 </nf>
+      <mdfactor> 0.45 </mdfactor> <mdscalefac> 0.9 </mdscalefac>
+      <lifetime> 13.4 </lifetime> <etamax> 3.1 </etamax> <fluxmax> 6.0 </fluxmax> <flux_mode> 0 </flux_mode>
+      <log_file>jewel.log</log_file>
+    </Jewel>
+  </Eloss>
+  <JetHadronization> <name>colorless</name> <take_recoil>1</take_recoil> </JetHadronization>
+</jetscape>

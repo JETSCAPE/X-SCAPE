@@ -61,6 +61,7 @@ class MediumJetscape final : public Medium {
     io::fortran_write(logfid, jfmt::format(" LIFETIME   = {} fm", s_.lifetime));
     io::fortran_write(logfid, jfmt::format(" TAU0       = {} fm (PRE_TAU0 = {})", s_.tau0, s_.pre_tau0));
     io::fortran_write(logfid, jfmt::format(" FLUXMAX    = {}", s_.fluxmax));
+    io::fortran_write(logfid, jfmt::format(" FLUX_MODE  = {}", s_.flux_mode));
     io::fortran_write(logfid, jfmt::format(" ETAMAX     = {}", s_.etamax));
     io::fortran_write(logfid, jfmt::format(" VACUUM     = {}", s_.vacuum ? "T" : "F"));
     io::fortran_write(logfid, "");
@@ -159,7 +160,18 @@ class MediumJetscape final : public Medium {
                       const double& bx, const double& by, const double& bz) override {
     const MediumCell& c = cell(x, y, z, t);
     if (c.temperature <= 0.0) return 0.0;
-    const double flux = gamma(c) * (1.0 - (c.vx * bx + c.vy * by + c.vz * bz));
+    double flux;
+    if (s_.flux_mode == 1 && t > std::fabs(z)) {
+      // medium-2D.f: transverse velocity at eta_s = 0 is v_lab,T cosh eta_s for boost-invariant flow
+      const double ch = t / std::sqrt(t * t - z * z);
+      const double ux = c.vx * ch, uy = c.vy * ch, u = std::sqrt(ux * ux + uy * uy);
+      const double pt = std::sqrt(bx * bx + by * by);
+      const double yt = u < 1.0 ? std::atanh(u) : 0.0;
+      const double cth = (u > 0.0 && pt > 0.0) ? (ux * bx + uy * by) / (u * pt) : 0.0;
+      flux = (std::cosh(yt) - std::sinh(yt) * cth) / ch;
+    } else {
+      flux = gamma(c) * (1.0 - (c.vx * bx + c.vy * by + c.vz * bz));
+    }
     if (flux > g_stats.max_flux) g_stats.max_flux = flux;
     if (flux > s_.fluxmax) ++g_stats.n_above_fluxmax;
     return density(c.temperature) * flux;

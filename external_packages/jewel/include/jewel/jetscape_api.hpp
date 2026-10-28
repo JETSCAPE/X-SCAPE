@@ -52,6 +52,10 @@ struct MediumSettings {
   // bound on the flux factor gamma (1 - v.beta) of the scattering rate (enters
   // the veto algorithm only)
   double fluxmax = 6.0;
+  // flux factor of the scattering rate: 0 = gamma (1 - v.beta) (exact), 1 = as the JEWEL (2+1)D
+  // interface medium-2D.f (I. Kolbe): (cosh y_T - sinh y_T cos theta_T) / cosh eta_s, with y_T the
+  // transverse flow rapidity at eta_s = 0 and theta_T the angle between transverse flow and parton
+  int flux_mode = 0;
   double etamax = 3.1;       // |eta_s| beyond which there is no medium
   bool vacuum = false;       // no medium at all (cell_query is not called)
 };

@@ -120,6 +120,7 @@ void Jewel::InitTask() {
   m.mdscalefac = GetXMLElementDouble({"Eloss", "Jewel", "mdscalefac"});
   m.pre_tau0 = GetXMLElementInt({"Eloss", "Jewel", "pre_tau0"});
   m.fluxmax = GetXMLElementDouble({"Eloss", "Jewel", "fluxmax"});
+  m.flux_mode = GetXMLElementInt({"Eloss", "Jewel", "flux_mode"});
   m.etamax = GetXMLElementDouble({"Eloss", "Jewel", "etamax"});
   m.tau0 = GetXMLElementDouble({"Eloss", "tStart"});
   // medium interactions end at the end of the JETSCAPE energy-loss time

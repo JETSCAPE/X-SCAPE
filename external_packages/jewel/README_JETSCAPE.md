@@ -142,3 +142,27 @@ returns alone lost its medium modification in the output: rare for light partons
     (shower / recoil) is kept separately;
   - scatterings undone by REJECTSPLITTING (status -1) give neither recoil nor
     hole.
+
+## (2+1)D contour media and the comparison with jewel-2.4.0-2D
+
+Three small modules make it possible to run on exactly the medium of the JEWEL (2+1)D interface
+(I. Kolbe, arXiv:2303.14166, github.com/isobelkolbe/jewel-2.4.0-2D):
+
+* `CustomModuleMediumDump` (Eloss, `src/jet/MediumContourDump.*`) writes the fluid of an event at
+  z = 0 as `Tcontour<tau>` ("x y T") and `Vcontour<tau>` ("x y v_x v_y") files, plus a histogram of
+  the binary-collision positions (`ncoll_histo.dat`, her NCOLLHISTO format).
+* `CustomModuleHydroContours` (Hydro, `src/hydro/HydroContours.*`) reads such files and interpolates
+  them exactly as her medium-2D.f (trilinear in tau, x, y; linear rise before the first slice;
+  T < T_c is no medium), with Bjorken flow added: v = (v_x / cosh eta_s, v_y / cosh eta_s, tanh eta_s).
+* `CustomModuleNcollHisto` (IS, `src/initialstate/NcollHisto.*`) samples the hard vertices from the
+  histogram (bin ~ N_coll, uniform within the bin).
+
+`<flux_mode> 1 </flux_mode>` replaces the exact rate factor gamma (1 - v.beta) by medium-2D's
+(cosh y_T - sinh y_T cos theta_T) / cosh eta_s. Example: `config/jetscape_user_Jewel_contours.xml`.
+
+Comparison on one TRENTo+MUSIC Pb+Pb 5.02 TeV 0-10 % event (parton level, constituent-subtracted,
+R = 0.4 jets): JETSCAPE + JEWEL agrees with stand-alone JEWEL 2.6 + medium-2D in vacuum, in the
+jet energy loss (about 14-18 GeV at 100-250 GeV) and, without recoils, in all substructure
+observables; with recoils the jet mass after subtraction grows by 1.1 +- 0.3 GeV instead of
+0.3 +- 0.2 GeV (being checked with more statistics). The flux formula changes the results by
+less than their errors. Details: /data/rke_group/kunnar1/jewel-2D-comparison/README.md.
