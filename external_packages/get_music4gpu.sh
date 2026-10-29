@@ -44,8 +44,10 @@ folderName="music4gpu"
 # resolution (-29 % GPU time per step) and the larger late time step
 # late_delta_tau / late_tau_switch (HydroSourceBase::hydro_dtau_changed, which
 # HydroSourceJETSCAPE implements); neither is bit-identical; and Cornelius
-# without per-element heap allocations, one per thread (bit-identical)
-commitHash="46dad4396eb0c574165d393d79c6ab63e820bff1"
+# without per-element heap allocations, one per thread (bit-identical);
+# (MUSIC4GPU PR #23) the Metal shaders take their minimum macOS from
+# CMAKE_OSX_DEPLOYMENT_TARGET when it is set (the macOS wheel); unchanged otherwise
+commitHash="3892302675994afce2ed777d37851e3a363f3ef3"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName

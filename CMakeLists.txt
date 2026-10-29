@@ -533,6 +533,11 @@ if(USE_3DGlauber)
     set(_3dMCGlb_rpath
       "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
       "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/LHAPDF_Lib")
+    if(APPLE)
+      # relative, so an installed tree can move (the macOS wheel)
+      set(_3dMCGlb_rpath "${CMAKE_INSTALL_RPATH}"
+                         "@loader_path/../${CMAKE_INSTALL_LIBDIR}/LHAPDF_Lib")
+    endif()
     set_target_properties(3dMCGlb 3dMCGlb.e Metropolis.e
       PROPERTIES INSTALL_RPATH "${_3dMCGlb_rpath}")
     # 3dMCGlauber exports the same unnamespaced pretty_ostream as music4gpu,
@@ -579,8 +584,12 @@ if(USE_MUSIC)
     add_subdirectory(./${MUSIC_BACKEND_DIR})
     # Override the vendored install destination (CMAKE_HOME_DIRECTORY) so that
     # the MUSIC library and executable land in the proper prefix lib/bin dirs.
-    set_target_properties(music PROPERTIES
-      INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    if(APPLE)
+      set_target_properties(music PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
+    else()
+      set_target_properties(music PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
   else()
     message(FATAL_ERROR "GSL are necessary for MUSIC")
   endif()
@@ -591,8 +600,12 @@ if(USE_ISS)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/iSS")
     add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/iSS)
     # Override the vendored install destination (CMAKE_HOME_DIRECTORY).
-    set_target_properties(iSS PROPERTIES
-      INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    if(APPLE)
+      set_target_properties(iSS PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
+    else()
+      set_target_properties(iSS PROPERTIES
+        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
     # iSS and MUSIC both export an unnamespaced class pretty_ostream, and
     # music4gpu's has extra members. With ELF's flat symbol lookup, libiSS
     # then runs libmusic's larger constructor on its own smaller objects and
@@ -854,7 +867,13 @@ configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
 # ##############################################################################
 
 # ---- Executables (always) ----
-install(TARGETS runJetscape readerTest FinalStateHadrons FinalStatePartons
+# Component xscape_runtime: what an installed X-SCAPE needs to run (runJetscape, the
+# libraries, the data without the LBT tables, which are component xscape_lbt), e.g. the
+# macOS xscape wheel: `cmake --install <build> --component xscape_runtime`.  Rules without
+# a component also go to the vendored packages' install directory, the source tree.
+install(TARGETS runJetscape
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT xscape_runtime)
+install(TARGETS readerTest FinalStateHadrons FinalStatePartons
                 PythiaBrickTest JetScapePerEventTest
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
 
@@ -873,7 +892,8 @@ if(USE_SMASH)
 endif()
 
 install(PROGRAMS "${CMAKE_SOURCE_DIR}/examples/run_in_workdir.sh"
-        DESTINATION "${CMAKE_INSTALL_BINDIR}")
+        DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        COMPONENT xscape_runtime)
 
 # ---- Standalone reader library ----
 install(TARGETS JetScapeReader
@@ -910,69 +930,89 @@ target_include_directories(JetScapeReader INTERFACE
 
 install(TARGETS ${_install_targets}
         EXPORT  XSCAPETargets
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT xscape_runtime
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT xscape_runtime)
+
+# MUSIC's Metal shaders next to libmusic.dylib, where MetalPipelines.mm looks (dladdr);
+# music4gpu's own rule puts them into the source tree.
+if(USE_MUSIC AND USE_METAL)
+  install(FILES "${CMAKE_BINARY_DIR}/${MUSIC_BACKEND_DIR}/src/music_kernels.metallib"
+          DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+          COMPONENT xscape_runtime)
+endif()
 
 # ---- Data assets → share/xscape ----
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/config/"
-        DESTINATION "${XSCAPE_DATADIR}/config")
+        DESTINATION "${XSCAPE_DATADIR}/config"
+        COMPONENT xscape_runtime)
 
 if(USE_MUSIC)
   if(EXISTS "${CMAKE_SOURCE_DIR}/${MUSIC_BACKEND_DIR}/EOS/")
     install(DIRECTORY "${CMAKE_SOURCE_DIR}/${MUSIC_BACKEND_DIR}/EOS/"
-            DESTINATION "${XSCAPE_DATADIR}/EOS")
+            DESTINATION "${XSCAPE_DATADIR}/EOS"
+            COMPONENT xscape_runtime)
   endif()
   if(EXISTS "${CMAKE_SOURCE_DIR}/examples/test_music_files/music_input")
     install(FILES "${CMAKE_SOURCE_DIR}/examples/test_music_files/music_input"
-            DESTINATION "${XSCAPE_DATADIR}")
+            DESTINATION "${XSCAPE_DATADIR}"
+            COMPONENT xscape_runtime)
   endif()
 endif()
 
 if(USE_ISS)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_tables")
     install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_tables/"
-            DESTINATION "${XSCAPE_DATADIR}/iSS_tables")
+            DESTINATION "${XSCAPE_DATADIR}/iSS_tables"
+            COMPONENT xscape_runtime)
   endif()
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_parameters.dat")
     install(FILES "${CMAKE_SOURCE_DIR}/external_packages/iSS/iSS_parameters.dat"
-            DESTINATION "${XSCAPE_DATADIR}")
+            DESTINATION "${XSCAPE_DATADIR}"
+            COMPONENT xscape_runtime)
   endif()
 endif()
 
 if(USE_3DGlauber)
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/tables/")
     install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/tables/"
-            DESTINATION "${XSCAPE_DATADIR}/tables")
+            DESTINATION "${XSCAPE_DATADIR}/tables"
+            COMPONENT xscape_runtime)
   endif()
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/eps09/")
     install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/eps09/"
-            DESTINATION "${XSCAPE_DATADIR}/eps09")
+            DESTINATION "${XSCAPE_DATADIR}/eps09"
+            COMPONENT xscape_runtime)
   endif()
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/")
     install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/LHAPDF_Lib/"
-            DESTINATION "${XSCAPE_DATADIR}/LHAPDF_Lib")
+            DESTINATION "${XSCAPE_DATADIR}/LHAPDF_Lib"
+            COMPONENT xscape_runtime)
   endif()
   if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input")
     install(FILES "${CMAKE_SOURCE_DIR}/external_packages/3dMCGlauber/input"
             DESTINATION "${XSCAPE_DATADIR}"
-            RENAME "mcglauber.input")
+            RENAME "mcglauber.input"
+            COMPONENT xscape_runtime)
   endif()
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/trento/nucleusConfigs/")
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/trento/nucleusConfigs/"
-          DESTINATION "${XSCAPE_DATADIR}/nucleusConfigs")
+          DESTINATION "${XSCAPE_DATADIR}/nucleusConfigs"
+          COMPONENT xscape_runtime)
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/src/initialstate/data_table/")
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/src/initialstate/data_table/"
-          DESTINATION "${XSCAPE_DATADIR}/data_table")
+          DESTINATION "${XSCAPE_DATADIR}/data_table"
+          COMPONENT xscape_runtime)
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/external_packages/LBT-tables/")
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/external_packages/LBT-tables/"
-          DESTINATION "${XSCAPE_DATADIR}/LBT-tables")
+          DESTINATION "${XSCAPE_DATADIR}/LBT-tables"
+          COMPONENT xscape_lbt)
 endif()
 
 # ---- Generated header (XscapeInstallPaths.h) → include ----
