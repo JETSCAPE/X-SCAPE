@@ -161,8 +161,8 @@ Three small modules make it possible to run on exactly the medium of the JEWEL (
 (cosh y_T - sinh y_T cos theta_T) / cosh eta_s. Example: `config/jetscape_user_Jewel_contours.xml`.
 
 Comparison on one TRENTo+MUSIC Pb+Pb 5.02 TeV 0-10 % event (parton level, constituent-subtracted,
-R = 0.4 jets): JETSCAPE + JEWEL agrees with stand-alone JEWEL 2.6 + medium-2D in vacuum, in the
-jet energy loss (about 14-18 GeV at 100-250 GeV) and, without recoils, in all substructure
-observables; with recoils the jet mass after subtraction grows by 1.1 +- 0.3 GeV instead of
-0.3 +- 0.2 GeV (being checked with more statistics). The flux formula changes the results by
-less than their errors. Details: /data/rke_group/kunnar1/jewel-2D-comparison/README.md.
+R = 0.4 jets, 25k/16k events): JETSCAPE + JEWEL agrees with stand-alone JEWEL 2.6 + medium-2D in
+vacuum and, without recoils, in energy loss and all substructure observables. With recoils it loses
+1-1.5 GeV more at 100-150 GeV (about 10 %) and its jet mass after subtraction grows by 0.9 +- 0.2
+instead of 0.5 +- 0.1 GeV, both below 2 sigma. The flux formula changes the results by less than
+their errors. Details: /data/rke_group/kunnar1/jewel-2D-comparison/README.md.
