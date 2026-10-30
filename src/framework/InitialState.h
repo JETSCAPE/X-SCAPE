@@ -17,6 +17,7 @@
 #ifndef INITIALSTATE_H
 #define INITIALSTATE_H
 
+#include <random>
 #include <tuple>
 #include <memory>
 #include "JetScapeModuleBase.h"
@@ -186,6 +187,15 @@ class InitialState : public JetScapeModuleBase {
   std::tuple<double, double, double> CoordFromIdx(int idx);
   virtual void SampleABinaryCollisionPoint(double &t, double &x, double &y,
                                            double &z);
+
+  /**
+   * @brief As SampleABinaryCollisionPoint, with random numbers from ``rng``
+   * instead of the module's engine (PythiaGun's additional scatterings, which
+   * must not change the module's random stream).
+   */
+  virtual void SampleABinaryCollisionPointWith(std::mt19937 &rng, double &t,
+                                               double &x, double &y,
+                                               double &z);
 
   virtual double Get_total_nucleon_density_lab(double t, double x, double y,
                                                double z) {

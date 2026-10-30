@@ -21,6 +21,7 @@
 #define PYTHIAGUN_H
 
 #include <memory>
+#include <random>
 #include <string>
 #include <utility>
 #include <vector>
@@ -39,6 +40,9 @@
 //! understands <minPartons> and <trigger>Z (with <triggerYMax>, <leptonPtMin>,
 //! <leptonEtaMax>: the Z acceptance on its decay leptons).
 #define PYTHIAGUN_HAS_Z_TRIGGER 1
+//! Set when PythiaGun understands <extraHard>: additional hard scatterings at
+//! other binary collisions of the event (and <extraHard><noTrigger>).
+#define PYTHIAGUN_HAS_EXTRA_HARD 1
 
 using namespace Jetscape;
 
@@ -86,6 +90,24 @@ using namespace Jetscape;
     acceptance of both.  GetTriggerLeptons() gives the current event's pair.
     After 100000 rejected tries in one event PythiaGun throws (a process that
     never passes, e.g. <trigger>Z without a Z in <LinesToRead>).
+
+    Optional: <extraHard><on>1</on> adds the event's other hard scatterings
+    (js-contrib docs/Plans/PLAN_multi_hard.md).  After the triggering
+    scattering (scattering 0, everything above unchanged) come N ~
+    Poisson(N_coll sigma/sigma_NN) more, N_coll from the initial state, sigma
+    the cross section above <pTHatMin> of a Pythia instance of their own
+    (HardQCD:all, ISR on, MPI off, FSR as <FSR_on>, + <extraHard><LinesToRead>)
+    from <warmup> events at Init, sigma_NN <sigmaNN> (empty: 3dMCGlauber's
+    parametrization at <eCM>); <fixedN> >= 0 fixes N.  Each sits at its own
+    binary collision, drawn uniformly (InitialState::
+    SampleABinaryCollisionPointWith), and hands over its partons as the
+    trigger does, after the trigger's, with plabel = its index (1, 2, ...) and
+    colour tags offset by 100000 x index.  Their Pythia, the Poisson draw and
+    the vertices use random streams of their own, and JetEnergyLossManager
+    showers their partons with engines of their own (GetHardPartonScatter), so
+    the trigger's partons and showers are the same with and without them.
+    <noTrigger>1: no triggering scattering at all, only the extras (N may be
+    0); the windows, <partonYMax> and <trigger> are then refused.
 */
 class PythiaGun : public HardProcess, public Pythia8::Pythia {
  private:
@@ -117,6 +139,46 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   double triggerYMax_ = 0., leptonPtMin_ = 0., leptonEtaMax_ = 0.;
   //! this event's trigger leptons, hardest first (two with trigger Z)
   std::vector<Pythia8::Particle> triggerLeptons_;
+
+ public:
+  //! one hard scattering of the current event (0: the trigger)
+  struct ScatterRecord {
+    int scatter;     //!< 0 the trigger, 1, 2, ... the extras
+    double pthat;    //!< Pythia's pTHat
+    int code;        //!< Pythia's process code
+    double x, y;     //!< the vertex [fm]
+    int n_partons;   //!< partons (and leptons) handed over
+    double e, pt;    //!< their summed energy and scalar pT [GeV]
+  };
+
+ private:
+  // <extraHard>
+  bool extraOn_ = false;
+  bool extraNoTrigger_ = false;
+  double extraPtHatMin_ = 15.;
+  double extraSigmaNN_ = 0.;  //!< [mb]
+  long extraWarmup_ = 20000;
+  int extraFixedN_ = -1;      //!< < 0: Poisson
+  unsigned int extraPythiaSeed_ = 0, extraRngSeed_ = 0;
+  double extraSigma_ = 0., extraSigmaErr_ = 0.;  //!< from the warm-up [mb]
+  std::unique_ptr<Pythia8::Pythia> extraHardPythia_;
+  std::mt19937 extraRng_;  //!< the Poisson draw and the vertices
+  // the current event
+  int nExtra_ = 0;
+  double extraMu_ = 0.;
+  std::vector<int> partonScatter_;      //!< per hard parton
+  std::vector<ScatterRecord> scatters_;
+
+  void ReadExtraHard(unsigned int seed);
+  void ConfigureExtraPythia();
+  //! the particles of ``py``'s event to hand over (status 62 partons above
+  //! softMomentumCutoff, leptons, or the final partons with FSR_on)
+  void SelectPartons(Pythia8::Pythia &py, std::vector<Pythia8::Particle> &out);
+  //! hands ``sorted`` over at (x, y) as scattering ``scatter`` and records it
+  void AddScatterPartons(const std::vector<Pythia8::Particle> &sorted,
+                         double x, double y, int scatter, double pthat,
+                         int code);
+  void AddExtraScatterings();
 
   void ReadPtHatBins();
   void ReadPartonYCut();
@@ -213,6 +275,32 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   //! else none)
   const std::vector<Pythia8::Particle> &GetTriggerLeptons() const {
     return triggerLeptons_;
+  }
+
+  // <extraHard>: the settings, the warm-up cross section and this event's
+  // scatterings.
+  bool GetExtraHardOn() const { return extraOn_; }
+  bool GetExtraNoTrigger() const { return extraNoTrigger_; }
+  double GetExtraPtHatMin() const { return extraPtHatMin_; }
+  double GetExtraSigma() const { return extraSigma_; }
+  double GetExtraSigmaErr() const { return extraSigmaErr_; }
+  double GetExtraSigmaNN() const { return extraSigmaNN_; }
+  long GetExtraWarmup() const { return extraWarmup_; }
+  int GetExtraFixedN() const { return extraFixedN_; }
+  unsigned int GetExtraPythiaSeed() const { return extraPythiaSeed_; }
+  unsigned int GetExtraRngSeed() const { return extraRngSeed_; }
+  //! the current event's number of extras and its Poisson mean
+  int GetNExtra() const { return nExtra_; }
+  double GetExtraMu() const { return extraMu_; }
+  //! the current event's scatterings, the trigger's first (none with
+  //! <noTrigger>)
+  const std::vector<ScatterRecord> &GetScatterRecords() const {
+    return scatters_;
+  }
+  int GetHardPartonScatter(int i) const override {
+    return i >= 0 && i < static_cast<int>(partonScatter_.size())
+               ? partonScatter_[i]
+               : 0;
   }
 };
 

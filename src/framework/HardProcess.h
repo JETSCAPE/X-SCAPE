@@ -20,6 +20,7 @@
 #include "InitialState.h"
 #include "JetScapeModuleBase.h"
 #include "JetClass.h"
+#include <map>
 #include <vector>
 
 namespace Jetscape {
@@ -146,6 +147,14 @@ class HardProcess : public JetScapeModuleBase {
    * @param plist A output vector of Parton class.
    */
   void GetHardPartonList(vector<shared_ptr<Parton>> &plist) { plist = hp_list; }
+
+  /**
+   * @brief The hard scattering hard parton i comes from: 0 the event's
+   * (triggering) one, 1, 2, ... additional ones (PythiaGun's <extraHard>).
+   * JetEnergyLossManager gives the showers of partons with an index > 0 random
+   * engines of their own, so they do not change the trigger's showers.
+   */
+  virtual int GetHardPartonScatter(int i) const { return 0; }
 
   /**
    * @brief Get the number of parton showers.
@@ -301,10 +310,14 @@ class HardProcess : public JetScapeModuleBase {
    * LBT). It starts above max_colorPerShower x (hard partons + 1), i.e. above
    * Pythia's own tags, every per-parton block of the guns (1000 x (np + 1))
    * and every block of iMATTER's ISR showers (label x 1000), so a tag it hands
-   * out meets no other tag of the event. Reset in ClearTask.
+   * out meets no other tag of the event. Reset in ClearTask.  Hard partons of
+   * additional scatterings (GetHardPartonScatter > 0) do not count, and their
+   * showers (``scatter`` > 0) draw from a counter of their own, starting at
+   * 100000 x scatter + 50000 (PythiaGun offsets their tags by 100000 x
+   * scatter), so the triggering scattering's tags are those without them.
    * @return The new tag.
    */
-  unsigned int NextColorTag();
+  unsigned int NextColorTag(int scatter = 0);
 
   /**
    * @brief Get the total momentum fraction for the positive side.
@@ -393,6 +406,8 @@ class HardProcess : public JetScapeModuleBase {
   const int max_colorPerShower = 1000;
   int max_color, NISRShower = 0;
   unsigned int color_tag_ = 0;  ///< last tag of NextColorTag in this event
+  /// last tag per additional scattering in this event
+  std::map<int, unsigned int> extra_color_tag_;
   double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
   double TotalMomentumPositive, TotalMomentumNegative;
 };

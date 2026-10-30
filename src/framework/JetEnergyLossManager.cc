@@ -18,6 +18,10 @@
 #include "JetScapeLogger.h"
 #include "JetScapeSignalManager.h"
 #include "MakeUniqueHelper.h"
+#include "HardProcess.h"
+#include "JetScapeTaskSupport.h"
+#include <cstdint>
+#include <random>
 #include <string>
 
 #include <iostream>
@@ -52,6 +56,10 @@ void JetEnergyLossManager::ClearTask() {
   int n = GetNumberOfTasks();
   for (int i = 1; i < n; i++)
     EraseTaskLast();
+
+  if (noPartons_ && GetNumberOfTasks() > 0)
+    GetTaskAt(0)->SetActive(true);
+  noPartons_ = false;
 
   // Clean Up not really working with iterators (see also above!!!) Some logic
   // not clear for me.
@@ -109,7 +117,20 @@ void JetEnergyLossManager::MakeCopies() {
 
       if (!useShower) {
         VERBOSE(3) << " Number of Hard Partons = " << hp.size();
+        // Every copy (and its modules' clones) registers a task number, and a
+        // module seeds its engine from it.  The copies of additional
+        // scatterings' partons (after the trigger's) take numbers from a range
+        // of their own, and the counter is put back, so the later tasks get
+        // the numbers, and the seeds, they would get without them.
+        auto hard =
+            JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+        auto *support = JetScapeTaskSupport::Instance();
+        int resume = -1;
         for (int i = 1; i < hp.size(); i++) {
+          if (resume < 0 && hard && hard->GetHardPartonScatter(i) > 0) {
+            resume = support->GetNextTaskNumber();
+            support->SetNextTaskNumber(extra_task_number_);
+          }
           JSDEBUG << "Create the " << i
                   << " th copy because number of intital hard partons = "
                   << hp.size();
@@ -124,6 +145,10 @@ void JetEnergyLossManager::MakeCopies() {
             jloss_copy->add_a_liquefier(jloss_org->get_liquefier().lock());
           }
           Add(jloss_copy);
+        }
+        if (resume >= 0) {
+          extra_task_number_ = support->GetNextTaskNumber();
+          support->SetNextTaskNumber(resume);
         }
       } else {
         VERBOSE(3) << " Number of of Parton Showers = " << ps.size();
@@ -165,6 +190,13 @@ void JetEnergyLossManager::MakeCopies() {
               hp.at(n));
           n++;
         }
+        SeparateExtraEngines();
+      } else if (GetGetHardPartonListConnected()) {
+        // nothing to shower: the task would stop the run for want of a parton
+        noPartons_ = true;
+        if (GetNumberOfTasks() > 0)
+          GetTaskAt(0)->SetActive(false);
+        VERBOSE(3) << " No hard partons in this event: no energy loss";
       }
     } else {
       if (GetGetHardPartonListConnected() && ps.size() > 0) {
@@ -184,8 +216,42 @@ void JetEnergyLossManager::MakeCopies() {
   }
 }
 
+int JetEnergyLossManager::extra_task_number_ = 1 << 28;
+
+void JetEnergyLossManager::SeparateExtraEngines() {
+  auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+  if (!hard)
+    return;
+  auto mix = [](uint64_t z) {  // splitmix64
+    z += 0x9e3779b97f4a7c15ULL;
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+    return z ^ (z >> 31);
+  };
+  const uint64_t base =
+      mix(mix(0x65787472615f7368ULL ^ JetScapeTaskSupport::GetRandomSeed()) ^
+          static_cast<uint64_t>(GetCurrentEvent()));
+  int n = 0;
+  for (auto it : GetTaskList()) {
+    const int scatter = hard->GetHardPartonScatter(n);
+    if (scatter > 0) {
+      uint64_t k = 0;
+      for (auto sub : it->GetTaskList()) {
+        auto m = dynamic_pointer_cast<JetScapeModuleBase>(sub);
+        if (m)
+          m->UseOwnStreams(scatter, static_cast<unsigned int>(
+                                        mix(mix(base ^ static_cast<uint64_t>(n)) ^ k)));
+        ++k;
+      }
+    }
+    ++n;
+  }
+}
+
 void JetEnergyLossManager::GetFinalStatePartons(
     vector<vector<shared_ptr<Parton>>> &fPartons) {
+  if (noPartons_)
+    return;
   for (auto it : GetTaskList()) {
     fPartons.push_back(dynamic_pointer_cast<JetEnergyLoss>(it)
                            ->GetShower()
@@ -276,7 +342,8 @@ void JetEnergyLossManager::CalculateTime() {
       << GetModuleCurrentTime();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
 
-  JetScapeModuleBase::CalculateTimeTasks();
+  if (!noPartons_)
+    JetScapeModuleBase::CalculateTimeTasks();
 }
 
 void JetEnergyLossManager::ExecTime() {
@@ -285,7 +352,8 @@ void JetEnergyLossManager::ExecTime() {
              << " Thread Id = " << this_thread::get_id();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
 
-  JetScapeModuleBase::ExecTimeTasks();
+  if (!noPartons_)
+    JetScapeModuleBase::ExecTimeTasks();
 }
 
 void JetEnergyLossManager::InitPerEvent() {
@@ -294,7 +362,8 @@ void JetEnergyLossManager::InitPerEvent() {
 
   MakeCopies();
 
-  JetScapeModuleBase::InitPerEventTasks();
+  if (!noPartons_)
+    JetScapeModuleBase::InitPerEventTasks();
 }
 
 void JetEnergyLossManager::FinishPerEvent() {
@@ -302,7 +371,8 @@ void JetEnergyLossManager::FinishPerEvent() {
       << "FinishPerEvent JetEnergyLoss Manager when used per timestep ...";
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
 
-  JetScapeModuleBase::FinishPerEventTasks();
+  if (!noPartons_)
+    JetScapeModuleBase::FinishPerEventTasks();
 
   // JP: Quick fix, to be discussed, similar to writer, clear is only called for
   // active tasks, so call here directly ...
