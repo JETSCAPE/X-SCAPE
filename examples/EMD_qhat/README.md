@@ -295,8 +295,11 @@ EMD curves.
   jets than the default, which lies slightly above the ATLAS data in this
   setup; the few 2–3σ substructure differences follow the same stronger
   quenching.
-* Normalising to data needs λ_t about 40 times the 1/16 of Khan et al. (q̂
-  about 6 times larger), toward the large-coupling regime of holography.
+* Normalising to data needs λ_t ≈ 2.4 > 1, as the holographic dictionary
+  assumes. The much smaller λ_t ≈ 1/16 of Khan et al. came from comparing the
+  adjoint EMD q̂ with the quark q̂ without C_F/C_A = 4/9; the EMD authors agree
+  (October 2026), so the normalisation puzzle is resolved. Open: 4/9 (Casimir)
+  or 1/2 (large N_c), a 12% difference in q̂.
 * Against data (`data_compare.txt`), neither q̂ is preferred: the Δχ² between
   EMD (λ_t = 2.4) and the default are small next to the χ² themselves and
   change sign between observables (ATLAS x_J +13 over 110 bins, R_D(z) +9 over
