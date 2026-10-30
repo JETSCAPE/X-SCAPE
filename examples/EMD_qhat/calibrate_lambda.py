@@ -2,7 +2,7 @@
 """chi^2 calibration of lambda_t for the default chain with the EMD qhat
 (MATTER Type 9 + LBT qhat_model=1, model 'lbtemd') against LHC data.
 
-Grid: lambda_t = 1.0, 1.5, 2.0, 3.0; the JETSCAPE tune as a reference.
+Grid: lambda_t = 1.0, 1.5, 2.0, 3.0, 4.5, 6.0; the JETSCAPE tune as a reference.
 Samples (paired hydro seeds): Pb-Pb 5.02 TeV 0-10% (seeds 16-45, 331-360) and
 30-50% (116-150). Data: ATLAS R=0.4 jet R_AA and CMS charged-hadron R_AA at
 both centralities.
@@ -12,8 +12,10 @@ data point inside the model's range. Two chi^2 definitions:
   uncorr: data stat and sys added in quadrature, point by point (conservative)
   corr:   data sys fully correlated within a dataset, one nuisance parameter
           s per dataset (shift d + s * sigma_sys), profiled analytically, +s^2
-chi^2(lambda_t) is fitted with a parabola in ln lambda_t; the minimum gives
-the best value and Delta chi^2 = 1 its 1-sigma range.
+chi^2(lambda_t) is fitted with a parabola in ln lambda_t through the lowest
+grid point and its two neighbours; the minimum gives the best value and
+Delta chi^2 = 1 its 1-sigma range. A minimum at the edge of the grid is
+reported as a bound.
 Writes lamcal.txt and fig_lamcal.png.
 """
 import csv
@@ -31,7 +33,7 @@ from spec_tools import combine
 HERE = os.path.dirname(os.path.abspath(__file__))
 SPEC = os.path.join(HERE, "spec")
 DATA = os.path.join(HERE, "data")
-LAMS = [(1.0, "l1"), (1.5, "l1p5"), (2.0, "l2"), (3.0, "l3")]
+LAMS = [(1.0, "l1"), (1.5, "l1p5"), (2.0, "l2"), (3.0, "l3"), (4.5, "l4p5"), (6.0, "l6")]
 SAMPLES = {"0010": ("lhc", list(range(16, 46)) + list(range(331, 361))),
            "3050": ("lhc_c3050", list(range(116, 151)))}
 DATASETS = {  # (observable, label, file, columns x, y, stat, sys+, sys-, pT range)
@@ -135,14 +137,19 @@ for name, keys in COMBOS.items():
     RES[name] = rows
     if len(rows) >= 3:
         for lab, i in (("uncorr", 1), ("corr", 2)):
-            b, lo, hi, cmin = parabola_min([r[0] for r in rows], [r[i] for r in rows])
+            k = int(np.argmin([r[i] for r in rows]))
+            if k in (0, len(rows) - 1):
+                p(f"  best ({lab}): at the grid edge, lambda_t {'<=' if k == 0 else '>='} {rows[k][0]:g}, chi2 = {rows[k][i]:.1f} / {rows[0][3]}")
+                continue
+            near = rows[k - 1:k + 2]
+            b, lo, hi, cmin = parabola_min([r[0] for r in near], [r[i] for r in near])
             p(f"  best ({lab}): lambda_t = {b:.2f}  (1 sigma {lo:.2f}-{hi:.2f}), chi2_min = {cmin:.1f} / {rows[0][3]}")
 
 open(os.path.join(HERE, "lamcal.txt"), "w").write("\n".join(out) + "\n")
 
 # ---------------------------------------------------------------- figure
 fig, ax = plt.subplots(2, 3, figsize=(17, 9))
-cols = {1.0: "#F2A066", 1.5: "#E06A1F", 2.0: "#C2410C", 3.0: "#8A2E06"}
+cols = {1.0: "#F2A066", 1.5: "#E06A1F", 2.0: "#C2410C", 3.0: "#8A2E06", 4.5: "#5B1F04", 6.0: "#2E1002"}
 for row, cent in enumerate(SAMPLES):
     for col, kind in enumerate(("atlas", "cms")):
         a = ax[row, col]; key = (cent, kind)

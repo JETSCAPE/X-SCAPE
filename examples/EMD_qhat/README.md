@@ -45,6 +45,75 @@ The reference ("tune", "default") is JETSCAPE MATTER+LBT: Type-5 HTL q̂ with
 virtuality factor A = 10, B = 100, α_s = 0.3, Q₀ = 2 GeV, as in the JETSCAPE
 Bayesian analyses (PRC 104, 024905 (2021); PRC 111, 054913 (2025)).
 
+## 0. Start here (for students)
+
+Work through the steps in this order. Each one checks the previous one before
+you spend more compute.
+
+| Step | What you run | Time | You should get |
+|---|---|---|---|
+| a | the environment and the build (sections 0.1 and 1) | ~30 min | `build/runJetscape` |
+| b | the two quick bricks (end of section 1) | 2 min | runs without errors |
+| c | all bricks and `brick_figures.pdf` (section 3) | ~15 min on 6 cores | the 7 brick figures |
+| d | one hydro task, e.g. `./run_task.sh lhc_lbtemd_l2_h16` (section 4) | ~1.5 h | `spec/lhc_lbtemd_l2_h16.spec` |
+| e | a few seeds of `pp` and one model group on the cluster | a few hours | a first R_AA from `calibrate_lambda.py` (it skips incomplete λ_t) |
+| f | the full groups (section 4), then sections 5 and 6 | ~1 week of cluster time | every table and figure of the write-up |
+
+### 0.1 Environment
+
+Everything runs in the JETSCAPE container `jetscape/base:v2.1`, which has
+ROOT, HepMC, Pythia 8, HDF5, GSL, Python with numpy and matplotlib, and the
+compilers.
+
+```bash
+# laptop / workstation (Docker): keep the repository in ~/jetscape-docker
+mkdir -p ~/jetscape-docker && cd ~/jetscape-docker
+git clone https://github.com/JETSCAPE/X-SCAPE.git && cd X-SCAPE && git checkout EMD_qhat && cd ..
+docker run -it -v ~/jetscape-docker:/home/jetscape-user --name xscape jetscape/base:v2.1
+# cluster (Apptainer / Singularity): pull the image once and share it
+apptainer pull jetscape_base_v2.1.sif docker://jetscape/base:v2.1
+apptainer shell -B <your jetscape-docker dir>:/home/jetscape-user jetscape_base_v2.1.sif
+```
+
+Inside the container the repository is `/home/jetscape-user/X-SCAPE`; build
+and run from there (section 1).
+
+### 0.2 Compute budget and cluster etiquette
+
+* A hydro task is about 1.5 h at the LHC and 0.5 h at RHIC on 2 threads; the
+  full study is about 2100 tasks (a few thousand core-hours).
+* Run the big groups on a cluster with `slurm/array.sbatch`, and **cap the
+  array** (`--array=1-N%50`) when the allocation is shared.
+* Never rebuild a build that running tasks use (they die with SIGBUS). Use one
+  build per study, and rebuild only when your queue is empty.
+* With `KEEP_EVENTS=1` the `bestfit` group needs about 17 GB of disk.
+* A failed task is rerun with the same `sbatch` line: finished tasks are
+  skipped (`done/<task>`), and a rerun gives bit-identical output.
+
+### 0.3 Which step makes which result
+
+| Result | Groups | Script |
+|---|---|---|
+| brick figures (validation, EMD vs HTL, path length, route B) | `bricks` | `brick_qhat_compare.py`, `brick_figures.tex` |
+| route A at RHIC and the LHC (EMD and HTL alike) | `pp`, `routeA` | `final_analysis.py`, `paired_analysis.py` |
+| route B, double ratios (no temperature-shape effect) | `pp`, `routeA`, `routeB` | `option1_analysis.py` |
+| λ_t calibration (λ_t ≈ 2.4 from ATLAS jets) | `pp`, `routeA` (tune), `routeB`, `lamcal`, `lamext` | `calibrate_lambda.py` |
+| EMD at λ_t = 2.4 vs the default, many observables | `bestfit` | `x_compare.py` |
+| χ² against ATLAS, CMS and ALICE jet data | `bestfit`, then `jetana_data` | `data_compare.py` |
+| pp baseline (MPI, hadronization, shower, PYTHIA) | `bestfit`, `ppvar`, PYTHIA | `pp_variants.py` |
+
+### 0.4 Troubleshooting
+
+* `Illegal instruction` from numpy on a cluster login node: run Python with
+  `FLEXIBLAS=NETLIB` (e.g. `apptainer exec --env FLEXIBLAS=NETLIB ...`), or use
+  `slurm/analysis.sbatch`.
+* A hydro run that differs from the published numbers: check that the build
+  includes the bug-fix commit (uninitialized `hydro_tau_0`).
+* Colored hadronization writing partons or failing every event: the build
+  lacks the colored-hadronization fix of this branch.
+* Two tasks sharing a working directory corrupt MUSIC's `music_input`; always
+  start tasks with `run_task.sh`, which gives each its own `/tmp` directory.
+
 ## 1. Build
 
 ```bash
@@ -91,6 +160,7 @@ produced the results (checked file by file).
 | `routeA` | 435 | MATTER+MyEloss: EMD (λ_t = 256), HTL (K = 16.4) and the tune; RHIC and LHC, 0–10% and 30–50% |
 | `routeB` | 665 | MATTER+LBT with the EMD q̂: λ_t = 2 (all samples), 2.6 and 8 (0–10%), and extra tune runs |
 | `lamcal` | 285 | λ_t = 1, 1.5, 3 at the LHC, 0–10% and 30–50%, for the χ² calibration |
+| `lamext` | 190 | λ_t = 4.5, 6 at the LHC, 0–10% and 30–50%: extends the calibration grid |
 | `bestfit` | 454 | λ_t = 2.4 (best fit) against the tune, RHIC and LHC, 0–10% and 30–50%, plus pp; run with `KEEP_EVENTS=1` |
 | `ppvar` | 56 | LHC pp with PYTHIA MPI off, colored or hybrid hadronization, and parton-shower variants (8 × 25k each); run with `KEEP_EVENTS=1` |
 
@@ -122,7 +192,7 @@ latexmk -pdf brick_figures.tex     # 7 figures with captions
 ## 4. Full hydro
 
 ```bash
-python3 make_configs.py pp routeA routeB lamcal bestfit ppvar
+python3 make_configs.py pp routeA routeB lamcal lamext bestfit ppvar
 # on a SLURM cluster, from this folder, one group at a time, e.g.
 sbatch --account=<acct> --array=1-$(wc -l < tasks/pp.txt) --export=ALL,TASKS=tasks/pp.txt slurm/array.sbatch
 sbatch --account=<acct> --array=1-$(wc -l < tasks/bestfit.txt)%50 \
@@ -194,7 +264,7 @@ Run in the container or with `slurm/analysis.sbatch` (`--export=ALL,SCRIPT=<scri
 | `final_analysis.py` | pp, routeA | route A vs CMS, ATLAS, ALICE: `fig_data_0010.png`, `fig_data_3050.png`; `fig_rhic.png`, `fig_centrality.png`, `fig_radius.png`, `fig_sub_<sample>.png`; EMD-vs-HTL significance table |
 | `paired_analysis.py` | routeA | paired ln(EMD/HTL) per hydro event |
 | `option1_analysis.py` | pp, routeA (tune), routeB | route B: `option1.png`; paired EMD/tune differences and RHIC-vs-LHC double ratios |
-| `calibrate_lambda.py` | pp, routeA, routeB, lamcal | χ²(λ_t) against ATLAS jets and CMS hadrons, both centralities: `lamcal.txt`, `fig_lamcal.png` |
+| `calibrate_lambda.py` | pp, routeA, routeB, lamcal, lamext | χ²(λ_t) against ATLAS jets and CMS hadrons, both centralities: `lamcal.txt`, `fig_lamcal.png` |
 | `e2c_bestfit.py` | pp, routeA, routeB, lamcal | E2C around the best fit (λ_t = 2 and 3, 2.4 interpolated): `fig_e2c_bestfit*.png` |
 | `x_compare.py` | bestfit | λ_t = 2.4 vs the default, paired: R_AA, E2C, mass, angularities, x_J, D(z), ρ(r), charged-jet mass: `x_compare.txt`, `fig_x_raa_e2c.png`, `fig_x_newobs.png` |
 | `data_compare.py` | bestfit (`spec_data/`) | section 5 |

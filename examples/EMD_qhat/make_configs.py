@@ -13,6 +13,7 @@ configs/<name>.xml):
   routeB   MATTER Type 9 + LBT with the EMD radiative qhat (lambda_t = 2, 2.6, 8)
            and the extra tune runs it is paired with
   lamcal   lambda_t = 1, 1.5, 3 at the LHC, 0-10% and 30-50% (chi^2 calibration)
+  lamext   lambda_t = 4.5, 6 at the LHC, 0-10% and 30-50% (grid extension)
   bestfit  the best fit lambda_t = 2.4 against the default MATTER+LBT, RHIC and LHC,
            0-10% and 30-50%, plus pp; run with KEEP_EVENTS=1 to keep the events
            (these are the inputs of x_compare.py: x_J, D(z), rho(r), jet mass, ...,
@@ -99,6 +100,15 @@ def group_routeB():
 def group_lamcal():
     out = {}
     for lam, tag in ((1.0, "lbtemd_l1"), (1.5, "lbtemd_l1p5"), (3.0, "lbtemd_l3")):
+        out.update(hydro("LHC", "lhc", "lbtemd", tag, LHC010 + LHC010_EXTRA, (0, 10), lam=lam))
+        out.update(hydro("LHC", "lhc_c3050", "lbtemd", tag, LHC3050, (30, 50), lam=lam))
+    return out
+
+
+def group_lamext():
+    """lambda_t = 4.5 and 6: extends the lamcal grid above the charged-hadron minimum."""
+    out = {}
+    for lam, tag in ((4.5, "lbtemd_l4p5"), (6.0, "lbtemd_l6")):
         out.update(hydro("LHC", "lhc", "lbtemd", tag, LHC010 + LHC010_EXTRA, (0, 10), lam=lam))
         out.update(hydro("LHC", "lhc_c3050", "lbtemd", tag, LHC3050, (30, 50), lam=lam))
     return out
@@ -195,7 +205,7 @@ def group_ppvar():
 
 def main(groups, work=HERE):
     gens = {"bricks": lambda: group_bricks(work), "pp": group_pp, "routeA": group_routeA,
-            "routeB": group_routeB, "lamcal": group_lamcal, "bestfit": group_bestfit,
+            "routeB": group_routeB, "lamcal": group_lamcal, "lamext": group_lamext, "bestfit": group_bestfit,
             "ppvar": group_ppvar}
     os.makedirs(os.path.join(work, "configs"), exist_ok=True)
     os.makedirs(os.path.join(work, "tasks"), exist_ok=True)
