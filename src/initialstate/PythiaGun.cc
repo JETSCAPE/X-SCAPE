@@ -56,6 +56,7 @@ void PythiaGun::InitTask() {
   ReadPtHatBins();
   ReadPartonYCut();
   ReadTrigger();
+  ReadExtraHard(seed);
   const int nBins = GetNPtHatBins();
 
   // Window 0 keeps the seed as it is (a single window is unchanged).  The other
@@ -83,6 +84,10 @@ void PythiaGun::InitTask() {
   for (int k = 1; k < nBins; ++k)
     extraPythia_.emplace_back(
         std::make_unique<Pythia8::Pythia>(settings, particleData, false));
+  extraHardPythia_.reset();
+  if (extraOn_)
+    extraHardPythia_ =
+        std::make_unique<Pythia8::Pythia>(settings, particleData, false);
 
   softQCDBin_.assign(nBins, false);
   yTried_.assign(CutsOn() ? nBins : 0, 0);
@@ -94,6 +99,8 @@ void PythiaGun::InitTask() {
   pTHatMin = pTHatBins_[0].first;
   pTHatMax = pTHatBins_[0].second;
   softQCD = softQCDBin_[0];
+  if (extraOn_)
+    ConfigureExtraPythia();  // after window 0: FSR_on, eCM, the cutoffs
 
   std::ofstream sigma_printer;
   sigma_printer.open(printer, std::ios::trunc);
@@ -281,6 +288,141 @@ void PythiaGun::ReadTrigger() {
     JSINFO << MAGENTA << "Pythia Gun: trigger Z (an e+e- or mu+mu- pair)"
            << cuts.str() << "; sigma = sigmaGen x kept/tried";
   }
+}
+
+namespace {
+
+//! A seed from the job seed and a salt (splitmix64), as the windows' seeds.
+uint64_t MixSeed(unsigned int seed, uint64_t salt) {
+  uint64_t z = (static_cast<uint64_t>(seed) << 16) + salt;
+  z += 0x9e3779b97f4a7c15ULL;
+  z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+  z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+  return z ^ (z >> 31);
+}
+
+//! An optional number: empty -> ``fallback``.
+double ReadNumber(const std::string &text, const std::string &tag,
+                  double fallback) {
+  std::stringstream in(text);
+  std::string token;
+  if (!(in >> token))
+    return fallback;
+  size_t used = 0;
+  double v = 0.;
+  try {
+    v = std::stod(token, &used);
+  } catch (const std::exception &) {
+    used = 0;
+  }
+  if (used != token.size())
+    throw std::runtime_error("PythiaGun: <extraHard><" + tag +
+                             "> takes a number, got '" + token + "'");
+  return v;
+}
+
+//! 3dMCGlauber's sigma_NN^inel(sqrt s) [mb] (Glauber::
+//! compute_NN_inelastic_cross_section), which its N_coll is made with.
+double GlauberSigmaNN(double ecm) {
+  const double ls = std::log(ecm * ecm);
+  return (44.4 - 2.9 * ls + 0.33 * ls * ls) -
+         (11.4 - 1.52 * ls + 0.13 * ls * ls);
+}
+
+}  // namespace
+
+//! <extraHard>: <on>, <noTrigger>, <pTHatMin>, <sigmaNN>, <warmup>, <fixedN>,
+//! <LinesToRead> (empty values: the defaults).
+void PythiaGun::ReadExtraHard(unsigned int seed) {
+  auto text = [this](const char *tag) {
+    return GetXMLElementText({"Hard", "PythiaGun", "extraHard", tag}, false);
+  };
+  extraOn_ = ReadNumber(text("on"), "on", 0.) != 0.;
+  extraNoTrigger_ = ReadNumber(text("noTrigger"), "noTrigger", 0.) != 0.;
+  extraPtHatMin_ = ReadNumber(text("pTHatMin"), "pTHatMin", 15.);
+  extraWarmup_ = static_cast<long>(ReadNumber(text("warmup"), "warmup", 20000.));
+  extraFixedN_ = static_cast<int>(ReadNumber(text("fixedN"), "fixedN", -1.));
+  const double ecm = GetXMLElementDouble({"Hard", "PythiaGun", "eCM"});
+  extraSigmaNN_ = ReadNumber(text("sigmaNN"), "sigmaNN", 0.);
+  if (!(extraSigmaNN_ > 0))
+    extraSigmaNN_ = GlauberSigmaNN(ecm);
+  nExtra_ = 0;
+  extraMu_ = 0.;
+  if (!extraOn_) {
+    if (extraNoTrigger_)
+      throw std::runtime_error(
+          "PythiaGun: <extraHard><noTrigger> needs <extraHard><on>1");
+    return;
+  }
+  if (!(extraPtHatMin_ > 0) || extraWarmup_ < 1)
+    throw std::runtime_error("PythiaGun: <extraHard> needs <pTHatMin> > 0 and "
+                             "<warmup> >= 1");
+  if (extraNoTrigger_ &&
+      (GetNPtHatBins() > 1 || partonYMax_ > 0 || trigger_ != "none"))
+    throw std::runtime_error(
+        "PythiaGun: <extraHard><noTrigger> makes no triggering scattering, so "
+        "<pTHatBins>, <partonYMax> and <trigger> do not apply");
+  // their own streams: the trigger's Pythia and the framework's engines are
+  // untouched
+  if (seed == 0) {
+    std::random_device entropy;
+    extraPythiaSeed_ = 1 + entropy() % 900000000u;
+    extraRngSeed_ = entropy();
+  } else {
+    extraPythiaSeed_ =
+        1 + static_cast<unsigned int>(MixSeed(seed, 0xE1A0) % 900000000ULL);
+    extraRngSeed_ = static_cast<unsigned int>(MixSeed(seed, 0xE1A1));
+  }
+  extraRng_.seed(extraRngSeed_);
+  JSINFO << MAGENTA << "Pythia Gun: extra hard scatterings above pTHat "
+         << extraPtHatMin_ << " GeV, N ~ "
+         << (extraFixedN_ >= 0 ? "fixed " + std::to_string(extraFixedN_)
+                               : std::string("Poisson(N_coll sigma/sigma_NN)"))
+         << ", sigma_NN " << extraSigmaNN_ << " mb"
+         << (extraNoTrigger_ ? "; no triggering scattering" : "");
+}
+
+//! The extras' Pythia: HardQCD above <extraHard><pTHatMin>, ISR on, MPI off,
+//! FSR as <FSR_on>; then <warmup> events for their cross section.
+void PythiaGun::ConfigureExtraPythia() {
+  Pythia8::Pythia &py = *extraHardPythia_;
+  for (const char *s :
+       {"Init:showProcesses = off", "Init:showChangedSettings = off",
+        "Init:showMultipartonInteractions = off",
+        "Init:showChangedParticleData = off", "Next:numberShowInfo = 0",
+        "Next:numberShowProcess = 0", "Next:numberShowEvent = 0",
+        "HadronLevel:Decay = off", "HadronLevel:all = off",
+        "PartonLevel:ISR = on", "PartonLevel:MPI = off", "HardQCD:all = on",
+        "Beams:idA = 2212", "Beams:idB = 2212", "Random:setSeed = on"})
+    py.readString(s);
+  py.readString(FSR_on ? "PartonLevel:FSR = on" : "PartonLevel:FSR = off");
+  std::ostringstream v;
+  v.precision(17);
+  v << "PhaseSpace:pTHatMin = " << extraPtHatMin_;
+  py.readString(v.str());
+  py.readString("Random:seed = " + std::to_string(extraPythiaSeed_));
+  v.str("");
+  v << "Beams:eCM = " << eCM;
+  py.readString(v.str());
+  std::stringstream lines;
+  lines << GetXMLElementText({"Hard", "PythiaGun", "extraHard", "LinesToRead"},
+                             false);
+  std::string s;
+  while (std::getline(lines, s, '\n')) {
+    if (s.find_first_not_of(" \t\v\f\r") == s.npos)
+      continue;
+    py.readString(s);
+  }
+  if (!py.init())
+    throw std::runtime_error("PythiaGun: the <extraHard> Pythia init() failed");
+  for (long i = 0; i < extraWarmup_; ++i)
+    py.next();
+  extraSigma_ = py.info.sigmaGen();
+  extraSigmaErr_ = py.info.sigmaErr();
+  JSINFO << MAGENTA << "Pythia Gun: extra scatterings' sigma(pTHat > "
+         << extraPtHatMin_ << " GeV) = " << extraSigma_ << " +- "
+         << extraSigmaErr_ << " mb from " << extraWarmup_
+         << " events (Pythia seed " << extraPythiaSeed_ << ")";
 }
 
 //! The two hardest partons to hand over (``sorted`` by pT; leptons skipped, at
@@ -487,6 +629,16 @@ void PythiaGun::ExecuteTask() {
   VERBOSE(1) << "Run Hard Process : " << GetId() << " ...";
   VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
+  partonScatter_.clear();
+  scatters_.clear();
+  nExtra_ = 0;
+  extraMu_ = 0.;
+  if (extraNoTrigger_) {  // only the extras (ReadExtraHard: no windows, cuts)
+    AddExtraScatterings();
+    VERBOSE(8) << GetNHardPartons();
+    return;
+  }
+
   // This event's pTHat window: event i uses window i mod K.
   const int nBins = GetNPtHatBins();
   activeBin_ = nBins > 1 ? GetCurrentEvent() % nBins : 0;
@@ -534,67 +686,7 @@ void PythiaGun::ExecuteTask() {
     // pTarr[0]=0.0; pTarr[1]=0.0;
     // pindexarr[0]=0; pindexarr[1]=0;
 
-    for (int parid = 0; parid < py.event.size(); parid++) {
-      if (parid < 3)
-        continue;  // 0, 1, 2: total event and beams
-      Pythia8::Particle &particle = py.event[parid];
-
-      // replacing diquarks with antiquarks (and anti-dq's with quarks)
-      // the id is set to the heaviest quark in the diquark (except down quark)
-      // this technically violates baryon number conservation over the entire
-      // event also can violate electric charge conservation
-      if ((std::abs(particle.id()) > 1100) &&
-          (std::abs(particle.id()) < 6000) &&
-          ((std::abs(particle.id()) / 10) % 10 == 0)) {
-        if (particle.id() > 0) {
-          particle.id(-1 * particle.id() / 1000);
-        } else {
-          particle.id(particle.id() / 1000);
-        }
-      }
-
-      if (!FSR_on) {
-        // leptons (a Z's decay: final, status 23 after the resonance decay,
-        // not 62) go over as they are, like photons; not partons, so no
-        // softMomentumCutoff
-        if (Parton::isLepton(particle.id())) {
-          if (particle.isFinal())
-            p62.push_back(particle);
-          continue;
-        }
-        // only accept particles after MPI
-        if (particle.status() != 62)
-          continue;
-        // only accept gluons and quarks
-        // Also accept Gammas to put into the hadron's list
-        if (fabs(particle.id()) > 5 &&
-            (particle.id() != 21 && particle.id() != 22))
-          continue;
-
-        // reject rare cases of very soft particles that don't have enough e to
-        // get reasonable virtuality
-        if (initial_virtuality_pT && (particle.pT() < softMomentumCutoff)) {
-          // this cutoff was 1.0/sqrt(vir_factor) in versions < 3.6
-          continue;
-        } else if (!initial_virtuality_pT &&
-                   (particle.pAbs() < softMomentumCutoff)) {
-          continue;
-        }
-
-        // if(particle.id()==22) cout<<"########this is a photon!######" <<endl;
-        //  accept
-      } else {  // FSR_on true: use Pythia vacuum shower instead of MATTER
-        if (!particle.isFinal())
-          continue;
-        // only accept gluons and quarks
-        // Also accept Gammas and leptons to put into the hadron's list
-        if (fabs(particle.id()) > 5 &&
-            (particle.id() != 21 && particle.id() != 22) &&
-            !Parton::isLepton(particle.id()))
-          continue;
-      }
-      p62.push_back(particle);
-    }
+    SelectPartons(py, p62);
 
     // at least <minPartons> (default 2); leptons do not count
     const long nPartons =
@@ -638,18 +730,7 @@ void PythiaGun::ExecuteTask() {
 
   } while (!flag62);
 
-  double p[4], xLoc[4];
-
-  // This location should come from an initial state
-  for (int i = 0; i <= 3; i++) {
-    xLoc[i] = 0.0;
-  };
-
-  // // Roll for a starting point
-  // // See:
-  // https://stackoverflow.com/questions/15039688/random-generator-from-vector-with-probability-distribution-in-c
-  // std::random_device device;
-  // std::mt19937 engine(device()); // Seed the random number engine
+  double xLoc[4] = {0.0, 0.0, 0.0, 0.0};
 
   if (!ini) {
     VERBOSE(1) << "No initial state module, setting the starting location to "
@@ -661,34 +742,156 @@ void PythiaGun::ExecuteTask() {
     xLoc[2] = y;
   }
 
-  // Loop through particles
-
-  // Only top two
-  // for(int np = 0; np<2; ++np){
-
   // Accept them all
+  AddScatterPartons(p62, xLoc[1], xLoc[2], 0, py.info.pTHat(), py.info.code());
 
-  int hCounter = 0;
-  for (int np = 0; np < p62.size(); ++np) {
-    Pythia8::Particle &particle = p62.at(np);
+  if (extraOn_)
+    AddExtraScatterings();
 
-    VERBOSE(7) << "Adding particle with pid = " << particle.id()
-               << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
+  VERBOSE(8) << GetNHardPartons();
+}
+
+//! The particles of ``py``'s event to hand over, in event order.
+void PythiaGun::SelectPartons(Pythia8::Pythia &py,
+                              std::vector<Pythia8::Particle> &p62) {
+  for (int parid = 0; parid < py.event.size(); parid++) {
+    if (parid < 3)
+      continue;  // 0, 1, 2: total event and beams
+    Pythia8::Particle &particle = py.event[parid];
+
+    // replacing diquarks with antiquarks (and anti-dq's with quarks)
+    // the id is set to the heaviest quark in the diquark (except down quark)
+    // this technically violates baryon number conservation over the entire
+    // event also can violate electric charge conservation
+    if ((std::abs(particle.id()) > 1100) &&
+        (std::abs(particle.id()) < 6000) &&
+        ((std::abs(particle.id()) / 10) % 10 == 0)) {
+      if (particle.id() > 0) {
+        particle.id(-1 * particle.id() / 1000);
+      } else {
+        particle.id(particle.id() / 1000);
+      }
+    }
+
+    if (!FSR_on) {
+      // leptons (a Z's decay: final, status 23 after the resonance decay,
+      // not 62) go over as they are, like photons; not partons, so no
+      // softMomentumCutoff
+      if (Parton::isLepton(particle.id())) {
+        if (particle.isFinal())
+          p62.push_back(particle);
+        continue;
+      }
+      // only accept particles after MPI
+      if (particle.status() != 62)
+        continue;
+      // only accept gluons and quarks
+      // Also accept Gammas to put into the hadron's list
+      if (fabs(particle.id()) > 5 &&
+          (particle.id() != 21 && particle.id() != 22))
+        continue;
+
+      // reject rare cases of very soft particles that don't have enough e to
+      // get reasonable virtuality
+      if (initial_virtuality_pT && (particle.pT() < softMomentumCutoff)) {
+        // this cutoff was 1.0/sqrt(vir_factor) in versions < 3.6
+        continue;
+      } else if (!initial_virtuality_pT &&
+                 (particle.pAbs() < softMomentumCutoff)) {
+        continue;
+      }
+
+      // if(particle.id()==22) cout<<"########this is a photon!######" <<endl;
+      //  accept
+    } else {  // FSR_on true: use Pythia vacuum shower instead of MATTER
+      if (!particle.isFinal())
+        continue;
+      // only accept gluons and quarks
+      // Also accept Gammas and leptons to put into the hadron's list
+      if (fabs(particle.id()) > 5 &&
+          (particle.id() != 21 && particle.id() != 22) &&
+          !Parton::isLepton(particle.id()))
+        continue;
+    }
+    p62.push_back(particle);
+  }
+}
+
+//! Hands ``sorted`` (by pT) over at (x, y), z = t = 0, as scattering
+//! ``scatter``: label ``scatter``, colour tags offset by 100000 x scatter (none
+//! for the trigger), and records it.
+void PythiaGun::AddScatterPartons(const std::vector<Pythia8::Particle> &sorted,
+                                  double x, double y, int scatter,
+                                  double pthat, int code) {
+  double xLoc[4] = {0.0, x, y, 0.0};
+  const int offset = 100000 * scatter;
+  ScatterRecord rec{scatter, pthat, code, x, y,
+                    static_cast<int>(sorted.size()), 0., 0.};
+  for (int np = 0; np < static_cast<int>(sorted.size()); ++np) {
+    const Pythia8::Particle &particle = sorted.at(np);
 
     VERBOSE(7) << "Adding particle with pid = " << particle.id()
                << ", pT = " << particle.pT() << ", y = " << particle.y()
-               << ", phi = " << particle.phi() << ", e = " << particle.e();
+               << ", phi = " << particle.phi() << ", e = " << particle.e()
+               << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3]
+               << " (scattering " << scatter << ")";
 
-    VERBOSE(7) << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3];
-
-    auto ptn =
-        make_shared<Parton>(0, particle.id(), 0, particle.pT(), particle.eta(),
-                            particle.phi(), particle.e(), xLoc);
-    ptn->set_color(particle.col());
-    ptn->set_anti_color(particle.acol());
-    ptn->set_max_color(1000 * (np + 1));
+    auto ptn = make_shared<Parton>(scatter, particle.id(), 0, particle.pT(),
+                                   particle.eta(), particle.phi(), particle.e(),
+                                   xLoc);
+    ptn->set_color(particle.col() > 0 ? particle.col() + offset : particle.col());
+    ptn->set_anti_color(particle.acol() > 0 ? particle.acol() + offset
+                                            : particle.acol());
+    ptn->set_max_color(offset + 1000 * (np + 1));
     AddParton(ptn);
+    partonScatter_.push_back(scatter);
+    rec.e += particle.e();
+    rec.pt += particle.pT();
   }
+  scatters_.push_back(rec);
+}
 
-  VERBOSE(8) << GetNHardPartons();
+//! The extras: N ~ Poisson(N_coll sigma/sigma_NN) (or <fixedN>), each at its
+//! own binary collision, from their own Pythia and random stream.
+void PythiaGun::AddExtraScatterings() {
+  if (!ini)
+    throw std::runtime_error(
+        "PythiaGun: <extraHard> needs an initial state (3dMCGlauber) for "
+        "N_coll and the binary collisions");
+  const double ncoll = ini->GetNcoll();
+  if (!(ncoll >= 0))
+    throw std::runtime_error(
+        "PythiaGun: <extraHard> needs an initial state that knows N_coll "
+        "(3dMCGlauber), got " + std::to_string(ncoll));
+  extraMu_ = ncoll * extraSigma_ / extraSigmaNN_;
+  if (extraFixedN_ >= 0)
+    nExtra_ = extraFixedN_;
+  else if (extraMu_ > 0)
+    nExtra_ = std::poisson_distribution<int>(extraMu_)(extraRng_);
+  else
+    nExtra_ = 0;
+
+  struct greater_than_pt {
+    inline bool operator()(const Pythia8::Particle &p1,
+                           const Pythia8::Particle &p2) {
+      return (p1.pT() > p2.pT());
+    }
+  };
+  Pythia8::Pythia &py = *extraHardPythia_;
+  std::vector<Pythia8::Particle> sel;
+  for (int s = 1; s <= nExtra_; ++s) {
+    int tries = 0;
+    while (!py.next())
+      if (++tries > 1000)
+        throw std::runtime_error("PythiaGun: the <extraHard> Pythia failed "
+                                 "1000 times in a row");
+    sel.clear();
+    SelectPartons(py, sel);
+    std::sort(sel.begin(), sel.end(), greater_than_pt());
+    double t, x, y, z;
+    ini->SampleABinaryCollisionPointWith(extraRng_, t, x, y, z);
+    AddScatterPartons(sel, x, y, s, py.info.pTHat(), py.info.code());
+  }
+  VERBOSE(3) << "Pythia Gun: " << nExtra_ << " extra scattering(s), mu = "
+             << extraMu_ << " (N_coll " << ncoll << ")";
 }

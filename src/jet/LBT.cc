@@ -4441,7 +4441,7 @@ unsigned int LBT::NewColorTag() {
   // The tags of one event come from one counter, shared with Matter, so that
   // no two showers share a tag.
   auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
-  const unsigned int tag = hard ? hard->NextColorTag() : MaxColor + 1;
+  const unsigned int tag = hard ? hard->NextColorTag(GetHardScatter()) : MaxColor + 1;
   MaxColor = std::max(MaxColor, tag);
   return tag;
 }

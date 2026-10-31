@@ -96,6 +96,24 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x, double &y,
   }
 }
 
+void InitialState::SampleABinaryCollisionPointWith(std::mt19937 &rng,
+                                                   double &t, double &x,
+                                                   double &y, double &z) {
+  if (num_of_binary_collisions_.size() == 0) {
+    JSWARN << "num_of_binary_collisions is empty, setting the starting "
+              "location to 0. Make sure to add e.g. trento before PythiaGun.";
+    t = x = y = z = 0.0;
+  } else {
+    std::discrete_distribution<> dist(begin(num_of_binary_collisions_),
+                                      end(num_of_binary_collisions_));
+    auto coord = CoordFromIdx(dist(rng));
+    t = 0.0;
+    x = std::get<0>(coord);
+    y = std::get<1>(coord);
+    z = 0.0;
+  }
+}
+
 void InitialState::OutputHardCollisionPosition(double t, double x, double y,
                                                double z) {}
 
