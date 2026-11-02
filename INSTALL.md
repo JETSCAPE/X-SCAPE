@@ -412,7 +412,7 @@ The build directory contains symlinks / copies of all required data assets place
 ### Usage
 
 ```
-run_in_workdir.sh -w RUN_DIR -u USER_XML [-d DATA_DIR] [-b RUNJETSCAPE] [-m MAIN_XML]
+run_in_workdir.sh -w RUN_DIR -u USER_XML [-d DATA_DIR] [-b RUNJETSCAPE] [-m MAIN_XML] [-f]
 
   -w RUN_DIR      Per-run working directory (created if absent).  REQUIRED.
   -u USER_XML     User XML configuration file.                    REQUIRED.
@@ -420,13 +420,28 @@ run_in_workdir.sh -w RUN_DIR -u USER_XML [-d DATA_DIR] [-b RUNJETSCAPE] [-m MAIN
                   Default: $XSCAPE_DATA_DIR, or the directory of runJetscape.
   -b RUNJETSCAPE  Path to runJetscape executable. Default: DATA_DIR/runJetscape.
   -m MAIN_XML     Main XML file. Default: DATA_DIR/config/jetscape_main.xml.
+  -f              Run even if a check fails (see below).
 ```
 
 ### What the launcher does
 
 1. Creates `RUN_DIR`.
 2. Sets `XSCAPE_DATA_DIR`, `HYDROPROGRAMPATH`, `LBT_TABLES_PATH` to point at `DATA_DIR`.
-3. Writes `RUN_DIR/jetscape_main.xml` with iSS table paths rewritten to absolute.
+3. Writes copies of both XMLs, `RUN_DIR/jetscape_main.xml` and `RUN_DIR/<user XML stem>.run.xml`,
+   with every `../` path made absolute (`run_xml.py`, installed next to the script; the user's
+   file is not changed). `../` paths are relative to the build directory. One with no file
+   there is looked up in `DATA_DIR` by its trailing parts: an install prefix keeps
+   `iSS_tables/`, `iSS_parameters.dat` and `config/` directly in `share/xscape`, so
+   `../external_packages/iSS/iSS_tables` and `../config/HH_LightExcitedMesons.xml` resolve
+   there. Any XML of the source tree or of the installed `config/` thus runs as it is.
+   Without Python 3 only the main XML's iSS paths are rewritten, as before.
+   Before running it stops (exit status 3) and lists every problem:
+   - user XML tags the main XML lacks. `runJetscape` stops at the first one with `User XML tag
+     <...> is unrecognized` (exit 255); the usual cause is an XML newer than the X-SCAPE.
+   - inputs the run uses with no file behind them: a `../` path in the user XML, or one in a
+     block of the main XML that the user XML switches on (e.g. SMASH's configs when
+     `<Afterburner><SMASH>` is there). Not checked for XMLs with automatic module setup
+     off, whose program decides which modules run.
 4. Copies `DATA_DIR/music_input` → `RUN_DIR/music_input` (MUSIC rewrites it in-place; the shared copy stays read-only).
 5. Symlinks CWD-relative read-only asset dirs (`tables/`, `eps09/`, `LHAPDF_Lib/`, `nucleusConfigs/`, `data_table/`) into `RUN_DIR`.
 6. Runs `runJetscape` from `RUN_DIR`; all outputs land there.
