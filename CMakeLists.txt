@@ -892,6 +892,7 @@ if(USE_SMASH)
 endif()
 
 install(PROGRAMS "${CMAKE_SOURCE_DIR}/examples/run_in_workdir.sh"
+                 "${CMAKE_SOURCE_DIR}/examples/run_xml.py"
         DESTINATION "${CMAKE_INSTALL_BINDIR}"
         COMPONENT xscape_runtime)
 
