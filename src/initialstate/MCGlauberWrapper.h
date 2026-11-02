@@ -65,6 +65,8 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   double GetNcoll() { return (static_cast<double>(ncoll_)); }
 
   void SampleABinaryCollisionPoint(double &t, double &x, double &y, double &z);
+  void SampleABinaryCollisionPointWith(std::mt19937 &rng, double &t, double &x,
+                                       double &y, double &z) override;
   double Get_total_nucleon_density_lab(double t, double x, double y, double z);
   double Get_target_nucleon_density_lab(double t, double x, double y, double z);
   double Get_projectile_nucleon_density_lab(double t, double x, double y,

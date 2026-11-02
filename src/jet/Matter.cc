@@ -242,12 +242,23 @@ bool Matter::BeforeTStart(double t, double z) const {
   return t < tStart || (tStart > 0 && t * t - z * z < tStart * tStart);
 }
 
+std::shared_ptr<Matter::Ran2State> Matter::SharedRan2State() {
+  static auto shared = std::make_shared<Ran2State>();
+  return shared;
+}
+
+void Matter::UseOwnStreams(int scatter, unsigned int seed) {
+  JetScapeModuleBase::UseOwnStreams(scatter, seed);
+  ran2_ = std::make_shared<Ran2State>();
+  NUM1 = -static_cast<long>(1 + seed % 2147483000u);  // < 0: ran0 starts anew
+}
+
 unsigned int Matter::NewColorTag() {
   // The tags of one event come from one counter, so that the showers (each
   // has its own Matter clone) and iMATTER's ISR showers never share a tag.
   auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
   if (hard)
-    MaxColor = hard->NextColorTag();
+    MaxColor = hard->NextColorTag(GetHardScatter());
   else
     ++MaxColor;
   return MaxColor;
@@ -5398,9 +5409,10 @@ float Matter::ran0(long *idum)
 
   int j;
   long k;
-  static long idum2 = 123456789;
-  static long iy = 0;
-  static long iv[NTAB];
+  long &idum2 = ran2_->idum2;
+  long &iy = ran2_->iy;
+  long *iv = ran2_->iv;
+  static_assert(NTAB == sizeof(Ran2State::iv) / sizeof(long), "ran0 table size");
   float temp;
 
   if (*idum <= 0) {

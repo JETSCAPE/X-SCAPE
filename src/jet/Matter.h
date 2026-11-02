@@ -183,6 +183,20 @@ class Matter : public JetEnergyLossModule<
   void transback(double v[4], double p[4]);
   void rotate(double px, double py, double pz, double pr[4], int icc);
   float ran0(long *idum);
+
+  //! ran0's state (Numerical Recipes' ran2): one for every Matter instance of
+  //! the process, as the function statics it replaces, unless UseOwnStreams
+  //! gave this instance (an additional scattering's clone) its own
+  struct Ran2State {
+    long idum2 = 123456789;
+    long iy = 0;
+    long iv[32] = {};
+  };
+  static std::shared_ptr<Ran2State> SharedRan2State();
+  std::shared_ptr<Ran2State> ran2_ = SharedRan2State();
+
+  void UseOwnStreams(int scatter, unsigned int seed) override;
+
   double solve_alphas(double var_qhat, double var_ener, double var_temp);
   double fnc0_alphas(double var_alphas, double var_qhat, double var_ener,
                      double var_temp);

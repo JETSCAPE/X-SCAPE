@@ -185,6 +185,26 @@ class JetEnergyLossManager
   bool copiesMade;
 
   /**
+   * @brief The showers of hard partons from additional scatterings
+   * (HardProcess::GetHardPartonScatter > 0) get random streams of their own,
+   * seeded from (run seed, event, parton, module), and their scattering's
+   * colour tags (JetScapeModuleBase::UseOwnStreams), so they change nothing the
+   * triggering scattering's showers draw.  The first task persists over
+   * events: its modules are reset only when its parton is an additional
+   * scattering's, i.e. without a trigger, where every parton is.
+   */
+  void SeparateExtraEngines();
+  //! the next task number of the additional scatterings' copies (a range of
+  //! their own, above the framework's)
+  static int extra_task_number_;
+
+  /**
+   * @brief No hard partons in this event (e.g. PythiaGun's <extraHard> without
+   * a trigger and no additional scattering): the energy loss does nothing.
+   */
+  bool noPartons_ = false;
+
+  /**
    * @brief Flag indicating whether to use the initial parton shower
    */
   bool useShower = false;

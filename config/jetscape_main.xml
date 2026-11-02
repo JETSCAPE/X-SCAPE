@@ -278,6 +278,25 @@
       <LinesToRead>
       	HardQCD:all = on
       </LinesToRead>
+      <!-- Optional: the event's other hard scatterings (js-contrib
+           docs/Plans/PLAN_multi_hard.md). on 1: after the triggering scattering,
+           N ~ Poisson(N_coll sigma/sigmaNN) more, each at its own binary collision
+           (N_coll and the collisions from the initial state, 3dMCGlauber), from a
+           Pythia instance of their own: HardQCD:all above pTHatMin, ISR on, MPI off,
+           FSR as FSR_on, plus LinesToRead; sigma from warmup events at Init. sigmaNN
+           empty: 3dMCGlauber's parametrization at eCM [mb]. fixedN >= 0 fixes N
+           (tests). noTrigger 1: no triggering scattering, the extras alone (N may
+           be 0). Their random numbers and their showers' engines are their own, so
+           the trigger's partons and showers do not change. -->
+      <extraHard>
+        <on>0</on>
+        <noTrigger>0</noTrigger>
+        <pTHatMin>15</pTHatMin>
+        <sigmaNN></sigmaNN>
+        <warmup>20000</warmup>
+        <fixedN>-1</fixedN>
+        <LinesToRead></LinesToRead>
+      </extraHard>
     </PythiaGun>
 
     <epemGun>

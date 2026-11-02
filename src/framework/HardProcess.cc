@@ -85,12 +85,23 @@ void HardProcess::ClearTask() {
   ps_list.clear();
   Remnants.clear();
   color_tag_ = 0;
+  extra_color_tag_.clear();
 
   VERBOSE(8) << hp_list.size();
 }
 
-unsigned int HardProcess::NextColorTag() {
-  const unsigned int floor = max_colorPerShower * (hp_list.size() + 1);
+unsigned int HardProcess::NextColorTag(int scatter) {
+  if (scatter > 0) {
+    unsigned int &tag = extra_color_tag_[scatter];
+    const unsigned int floor = 100000u * scatter + 50000u;
+    if (tag < floor)
+      tag = floor;
+    return ++tag;
+  }
+  unsigned int n = 0;  // the triggering scattering's hard partons
+  for (int i = 0; i < static_cast<int>(hp_list.size()); ++i)
+    n += GetHardPartonScatter(i) == 0;
+  const unsigned int floor = max_colorPerShower * (n + 1);
   if (color_tag_ < floor)
     color_tag_ = floor;
   return ++color_tag_;

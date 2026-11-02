@@ -14,6 +14,8 @@
  * See COPYING for details.
  ******************************************************************************/
 
+#include <random>
+#include <stdexcept>
 #include <string>
 #include <fstream>
 #include <stdio.h>
@@ -273,6 +275,21 @@ void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x,
   x = binary_collision_x_[rand_idx];
   y = binary_collision_y_[rand_idx];
   z = binary_collision_z_[rand_idx];
+}
+
+void MCGlauberWrapper::SampleABinaryCollisionPointWith(std::mt19937 &rng,
+                                                       double &t, double &x,
+                                                       double &y, double &z) {
+  if (binary_collision_t_.empty())
+    throw std::runtime_error(
+        "MCGlauberWrapper: no binary collisions to sample a point from");
+  std::uniform_int_distribution<int> pick(
+      0, static_cast<int>(binary_collision_t_.size()) - 1);
+  const int idx = pick(rng);
+  t = binary_collision_t_[idx];
+  x = binary_collision_x_[idx];
+  y = binary_collision_y_[idx];
+  z = binary_collision_z_[idx];
 }
 
 double MCGlauberWrapper::Get_total_nucleon_density_lab(double t, double x,
