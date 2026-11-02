@@ -22,7 +22,8 @@ Checks, before anything runs (exit status 3 when one fails, unless --no-check):
   the first unknown tag with exit status 255; here every unknown tag is listed.
 * every '../' path that the run uses has a file behind it. A path is used when the user XML
   has the module block it belongs to: <Stage><Module>, or the element itself for a
-  <Stage><element> such as <IS><initial_profile_path>.
+  <Stage><element> such as <IS><initial_profile_path>. Not checked for an XML that turns
+  automatic module setup off: the program that reads it decides which modules run.
 
 Only the standard library: X-SCAPE's build already needs Python 3.
 """
@@ -132,7 +133,11 @@ def prepare(data_dir: str, main_xml: str, user_xml: str, run_dir: str,
             + "\n    ".join(unknown))
     missing = absolutize(user, data_dir, None)
     missing += absolutize(main, data_dir, _tag_paths(user.getroot()))
-    if missing:
+    # with automatic module setup off a program builds the pipeline, and the XML's blocks
+    # say nothing about which modules run: only the tags are checked
+    auto = (user.getroot().findtext("enableAutomaticTaskListDetermination") or
+            main.getroot().findtext("enableAutomaticTaskListDetermination") or "true")
+    if missing and "false" not in auto:
         problems.append(
             f"inputs with no file behind them, neither relative to {data_dir} nor in it. "
             "This X-SCAPE does not have them (a module or test data not built or not "
