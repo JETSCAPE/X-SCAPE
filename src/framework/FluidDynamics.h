@@ -94,8 +94,14 @@ class FluidDynamics : public JetScapeModuleBase {
    *
    * @var Jetscape::real hydro_tau_0
    * @var Jetscape::real hydro_tau_max
+   *
+   * Set by the hydro modules (MpiMusic: MUSIC's tau0 after each run). The jet
+   * energy-loss modules (Matter, LBT, AdSCFT) take hydro_tau_0 as the start of
+   * their medium interaction (GetHydroTau0Signal), so it must never be left
+   * uninitialised: 0 until a module sets it (no cut; outside the stored
+   * evolution the medium lookup returns a zero cell anyway).
    */
-  Jetscape::real hydro_tau_0, hydro_tau_max;
+  Jetscape::real hydro_tau_0 = 0, hydro_tau_max = 0;
 
   /**
    * @brief Record the hydro freeze out temperature.

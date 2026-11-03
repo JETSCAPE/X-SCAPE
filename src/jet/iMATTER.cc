@@ -91,23 +91,29 @@ void iMATTER::InitTask() {
   ZeroOneDistribution = uniform_real_distribution<double>{0.0, 1.0};
 
   Pythia8::Info info;
-  // Get Pythia data directory //
+  // Get Pythia data directory: $PYTHIA8DIR/share/{Pythia8,pythia8}/pdfdata,
+  // else the pdfdata next to $PYTHIA8DATA (which points to xmldoc, and is
+  // what e.g. a conda Pythia sets on activation).
   std::stringstream pdfpath;
-  pdfpath << getenv("PYTHIA8DIR")
-          << "/share/Pythia8/pdfdata";  // usually PYTHIA8DATA leads to xmldoc
-                                        // but need pdfdata
-  // boost::filesystem::exists();
-  if (getenv("PYTHIA8DIR") == NULL) {
+  const char *pythia8dir = getenv("PYTHIA8DIR");
+  const char *pythia8data = getenv("PYTHIA8DATA");
+  if (pythia8dir != NULL && *pythia8dir) {
+    pdfpath << pythia8dir << "/share/Pythia8/pdfdata";
+    if (!boost::filesystem::exists(pdfpath.str().c_str())) {
+      pdfpath.str("");
+      pdfpath << pythia8dir << "/share/pythia8/pdfdata";
+    }
+  } else if (pythia8data != NULL && *pythia8data) {
+    std::string xmldoc = pythia8data;
+    while (xmldoc.size() > 1 && xmldoc.back() == '/')
+      xmldoc.pop_back();
+    pdfpath << boost::filesystem::path(xmldoc).parent_path().string()
+            << "/pdfdata";
+  } else {
     throw std::runtime_error(
-        "$PYTHIA8DIR environment variable not set, please make sure the "
-        "variable points to the pythia8 installation folder found using "
+        "Neither $PYTHIA8DIR nor $PYTHIA8DATA is set, please make sure "
+        "PYTHIA8DIR points to the pythia8 installation folder found using "
         "(export PYTHIA8DIR=`pythia8-config --prefix`).");
-  }
-  if (!boost::filesystem::exists(pdfpath.str().c_str())) {
-    pdfpath.str("");
-    pdfpath << getenv("PYTHIA8DIR")
-            << "/share/pythia8/pdfdata";  // usually PYTHIA8DATA leads to xmldoc
-                                          // but need pdfdata
   }
   if (!boost::filesystem::exists(pdfpath.str().c_str())) {
     throw std::runtime_error(

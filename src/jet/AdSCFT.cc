@@ -82,6 +82,9 @@ void AdSCFT::DoEnergyLoss(double deltaT, double time, double Q2,
   VERBOSESHOWER(8) << MAGENTA << "SentInPartons Signal received : " << deltaT
                    << " " << Q2 << " " << &pIn;
 
+  // With a hydro, tStart is the fluid's start time (FluidDynamics::
+  // GetHydroStartTime, MUSIC: its tau0 of the run), not <Eloss><tStart>: the
+  // medium interaction begins where the stored evolution does.
   GetHydroTau0Signal(tStart);
 
   for (int i = 0; i < pIn.size(); i++) {

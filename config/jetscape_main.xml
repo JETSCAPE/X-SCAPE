@@ -289,7 +289,9 @@
     <deltaT>0.1</deltaT>
     <formTime> -0.1</formTime>
     <maxT>20</maxT>
-    <tStart> 0.6 </tStart> <!-- Start time of jet quenching, proper time, fm/c   -->
+    <tStart> 0.6 </tStart> <!-- Start time of jet quenching, proper time, fm/c; with a hydro
+                                Matter, LBT and AdSCFT use the hydro's start time instead
+                                (FluidDynamics::GetHydroStartTime; MUSIC: its tau0)   -->
     <mutex>ON</mutex>
     <AddLiquefier> false </AddLiquefier>
     <ModificationFactor> -1 </ModificationFactor> <!-- Modification factor for the energy loss, used in the Lbt module -->

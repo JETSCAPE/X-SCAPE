@@ -57,6 +57,19 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   doCooperFrye =
       GetXMLElementInt({"Hydro", "MUSIC", "Perform_CooperFrye_Freezeout"});
 
+  // Write the EOS into the music input file BEFORE constructing MUSIC: MUSIC
+  // builds its EOS tables from EOS_to_use in the constructor, and
+  // set_parameter("EOS") afterwards only changes DATA.whichEOS. Updating the
+  // file later made the first instance in a process use whatever EOS the
+  // previous run (or a CMake re-configure, which restores the EOS 91 template)
+  // left there. The file is also read by iSS.
+  int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
+  try {
+    update_music_input_parameter(input_file, "EOS_to_use", EOS);
+  } catch (const std::exception &e) {
+    JSWARN << "Error updating EOS_to_use in MUSIC input file: " << e.what();
+  }
+
   music_hydro_ptr = std::unique_ptr<MUSIC>(new MUSIC(input_file));
 
   // overwrite input options
@@ -93,16 +106,7 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     music_hydro_ptr->set_parameter("surface_in_memory", 0);
   }
 
-  int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
   music_hydro_ptr->set_parameter("EOS", EOS);
-  // Try to reset the EOS in the music input file
-  // This is needed for iSS, which reads this parameter from the music input
-  // file
-  try {
-    update_music_input_parameter(input_file, "EOS_to_use", EOS);
-  } catch (const std::exception &e) {
-    JSWARN << "Error updating EOS_to_use in MUSIC input file: " << e.what();
-  }
 
   int beastMode = (GetXMLElementInt({"Hydro", "MUSIC", "beastMode"}));
   music_hydro_ptr->set_parameter("beastMode", beastMode);
@@ -354,8 +358,6 @@ int MpiMusic::InitializeHydroEnergyProfile() {
   if (pre_eq_ptr == nullptr) {
     JSINFO << "Setting up the hydro without pre-equilibrium module ...";
     music_hydro_ptr->initialize_hydro_xscape(nx, ny, nz, dx, dy, dz);
-    hydro_source_terms_ptr->set_hydro_dtau(
-        music_hydro_ptr->get_hydro_dtau_grid());
   } else if (initialProfile_ == 13 || initialProfile_ == 131) {
     auto QCDStringList = ini->GetQCDStringList();
     if (QCDStringList.size() == 0) {
@@ -376,6 +378,14 @@ int MpiMusic::InitializeHydroEnergyProfile() {
         pre_eq_ptr->pi13_, pre_eq_ptr->pi22_, pre_eq_ptr->pi23_,
         pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
   }
+  // The source needs the hydro time step whatever the initial condition: the
+  // hadronic liquefier deposits a droplet only in the step
+  // [tau - dtau/2, tau + dtau/2) that contains it, and with dtau unset (-1) it
+  // skips that window and deposits every droplet at every step.  It used to
+  // be set only without a pre-equilibrium module, so string (13 / 131) and
+  // pre-equilibrium initial conditions never set it.
+  hydro_source_terms_ptr->set_hydro_dtau(
+      music_hydro_ptr->get_hydro_dtau_grid());
 
   if (pre_eq_ptr == nullptr &&
       (initialProfile_ != 13 && initialProfile_ != 131 &&
@@ -416,12 +426,16 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
     }
     music_hydro_ptr->prepare_run_hydro_one_time_step();
     hydro_source_terms_ptr->set_source_tau_max(GetSourceTermTauMax());
+    // see EvolveHydro(): MUSIC never clears this flag itself
+    music_hydro_ptr->setReRunHydro(false);
+    hit_grid_boundary_ = false;
   }
 
   if (hydro_status != FINISHED) {
     int status = music_hydro_ptr->run_hydro_upto(tauEnd);
     if (status != 0) {
       hydro_status = FINISHED;
+      WarnIfGridBoundaryHit();
     }
   }
   // PassHydroSurfaceToFramework();
@@ -490,8 +504,23 @@ void MpiMusic::EvolveHydro() {
 
   if (hydro_status == INITIALIZED) {
     JSINFO << "running MUSIC ...";
+    // MUSIC stops when its freeze-out surface reaches the transverse grid
+    // edge and sets reRunHydro, expecting its driver to re-run on a larger
+    // grid (MUSIC's own main.cpp does). X-SCAPE does not re-run, and MUSIC
+    // clears the flag only in its constructor, so without this reset every
+    // later event of this instance would stop at its first freeze-out check.
+    music_hydro_ptr->setReRunHydro(false);
+    hit_grid_boundary_ = false;
     music_hydro_ptr->run_hydro();
+    // The fluid starts at MUSIC's tau0 of this run (with 3dMCGlauber strings
+    // set per event by the earliest string). Matter, LBT and AdSCFT read it as
+    // their tStart (GetHydroTau0Signal) and start the medium interaction there;
+    // with a pre-equilibrium evolution kept in memory the stored history begins
+    // earlier. FluidDynamics' setter: MpiMusic::SetHydroStartTime would also
+    // reset MUSIC's Initial_time_tau_0.
+    FluidDynamics::SetHydroStartTime(music_hydro_ptr->get_hydro_tau0());
     hydro_status = FINISHED;
+    WarnIfGridBoundaryHit();
   }
 
   if (flag_output_evo_to_memory == 1) {
@@ -524,6 +553,17 @@ void MpiMusic::EvolveHydro() {
 
   if (hydro_status == FINISHED && doCooperFrye == 1) {
     music_hydro_ptr->run_Cooper_Frye();
+  }
+}
+
+void MpiMusic::WarnIfGridBoundaryHit() {
+  hit_grid_boundary_ = music_hydro_ptr->getReRunHydro();
+  if (hit_grid_boundary_) {
+    JSWARN << "MUSIC " << GetId() << ": the freeze-out surface reached the "
+           << "transverse grid boundary, so MUSIC stopped this event's "
+           << "evolution there (it expects a re-run on a larger grid, which "
+           << "X-SCAPE does not do). The stored evolution is truncated; "
+           << "enlarge <IS><grid_max_x>/<grid_max_y>.";
   }
 }
 
