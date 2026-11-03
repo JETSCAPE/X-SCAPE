@@ -109,16 +109,49 @@ endif(USE_SMASH)
 
 # Compile with OpenMP support
 if(APPLE)
+  # Locate Homebrew libomp dynamically so the same CMakeLists.txt works on both
+  # Intel (/usr/local) and Apple Silicon (/opt/homebrew) Macs.
+  if(NOT DEFINED OpenMP_libomp_PREFIX)
+    find_program(_brew brew)
+    if(_brew)
+      execute_process(
+        COMMAND "${_brew}" --prefix libomp
+        OUTPUT_VARIABLE OpenMP_libomp_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE _brew_result)
+      if(NOT _brew_result EQUAL 0)
+        # Fall back to the Intel default if brew query failed
+        set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
+      endif()
+    else()
+      set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
+    endif()
+  endif()
+  message(STATUS "Homebrew libomp prefix: ${OpenMP_libomp_PREFIX}")
   set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp")
   set(OpenMP_CXX_LIB_NAMES "libomp")
-  set(OpenMP_libomp_LIBRARY "/usr/local/opt/libomp/lib")
+  set(OpenMP_libomp_LIBRARY "${OpenMP_libomp_PREFIX}/lib/libomp.dylib")
+  # Make omp.h findable for all targets (avoids 'omp.h file not found')
+  include_directories("${OpenMP_libomp_PREFIX}/include")
 endif()
 find_package(OpenMP)
-if(OPENMP_FOUND)
+# Decide per language. OPENMP_FOUND needs every enabled language, and on macOS
+# only the C++ hints are set above, so the C component fails and OPENMP_FOUND is
+# false. Keyed on it, the framework (SurfaceFinder's omp loops, ...) was
+# silently compiled without -fopenmp and ran single-threaded.
+if(OpenMP_C_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+endif()
+if(OpenMP_CXX_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+  # Every target now compiles its omp pragmas, so every target -- shared
+  # libraries included, e.g. libiSS -- must also link the runtime.
+  link_libraries(OpenMP::OpenMP_CXX)
+else()
+  message(WARNING "OpenMP for C++ not found: OpenMP loops in the framework "
+                  "(e.g. SurfaceFinder) will run single-threaded")
 endif()
 
 # ##############################################################################

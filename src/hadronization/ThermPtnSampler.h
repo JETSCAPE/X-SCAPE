@@ -2,6 +2,7 @@
 #define THERMPTNSAMPLER_H
 
 #include <omp.h>
+#include <unordered_map>
 #include <vector>
 
 #include "JetScapeLogger.h"
