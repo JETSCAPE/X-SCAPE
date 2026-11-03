@@ -1164,9 +1164,10 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
         // std::uniform_int_distribution<short> uni(101,103);
         // color = pIn[i].color();
 
+        // also needed for photon radiation, where the daughters inherit it
+        max_color = pIn[i].max_color();
         if (iSplit != 3)  // not photon radiation, generate new colors
         {
-          max_color = pIn[i].max_color();
           // if (pIn[i].anti_color()>maxcolor) color = pIn[i].anti_color();
           JSDEBUG << " old max color = " << max_color;
           max_color = ++MaxColor;

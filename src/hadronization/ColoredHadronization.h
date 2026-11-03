@@ -32,9 +32,12 @@ class ColoredHadronization : public HadronizationModule<ColoredHadronization> {
                        vector<shared_ptr<Hadron>> &hOut,
                        vector<shared_ptr<Parton>> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
+  void FinishTask();
 
  private:
   double p_fake;
+  long nEventsSeen = 0;  // events passed to DoHadronization
+  long nFailed = 0;      // events where pythia.next() failed
 
   // Allows the registration of the module so that it is available to be used by
   // the Jetscape framework.
