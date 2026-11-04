@@ -1237,6 +1237,21 @@ void PDFElasticCollision::rotate(double px, double py, double pz, double pr[4], 
 
 
 
+// 5-D VEGAS integral of one process of the PDFscat.cc integrands (same setup as
+// PDFScat::Integrator_LQ / Integrator_LQ_QHat), without needing a PDFScat object.
+static double PDFTableIntegral(double (*fn)(double *, double *), double E, int proc, long calls) {
+    TF1 f1("myfunc", fn, 0, 1, 2);
+    double xmin[] = {0.0, 0.0, 0.0, 0.0, 0.0};
+    double xmax[] = {M_PI, M_PI, 2.0 * M_PI, E * 2.0, 2.0 * M_PI};
+    double par0[] = {E, (double)proc};
+    f1.SetParameters(par0);
+    ROOT::Math::IntegratorMultiDim ig(ROOT::Math::IntegrationMultiDim::kVEGAS, 1.E-10, 1.E-10, calls);
+    ig.SetFunction(f1, 5);
+    return ig.Integral(xmin, xmax);
+}
+
+// Writes eA_{q,g}_MC_{rate,qhat}.dat in the format eMatter reads: header "EMAX EMIN DE",
+// then one value per line for E = EMIN..EMAX. Quark = processes 0-5, gluon = processes 6-8; rate = sigma per nucleon [GeV^-2], qhat = dimensionless.
 int PDFElasticCollision::GenerateCollisionTables(const std::string &output_dir) {
     std::error_code ec;
     std::filesystem::create_directories(output_dir, ec);
@@ -1258,32 +1273,31 @@ int PDFElasticCollision::GenerateCollisionTables(const std::string &output_dir) 
         return 1;
     }
 
-    const double low_eng = 10.0;
-    const double high_eng = 100.0;
-    const double eng_grid = 10.0;
+    const double low_eng = 1.0;
+    const double high_eng = 60.0;
+    const double eng_grid = 1.0;
+    const long calls = 4000000;
 
-    file_g_rate << std::setprecision(10) << high_eng << " " << low_eng << " " << eng_grid << std::endl;
-    file_g_qhat << std::setprecision(10) << high_eng << " " << low_eng << " " << eng_grid << std::endl;
-    file_q_rate << std::setprecision(10) << high_eng << " " << low_eng << " " << eng_grid << std::endl;
-    file_q_qhat << std::setprecision(10) << high_eng << " " << low_eng << " " << eng_grid << std::endl;
+    for (std::ofstream *f : {&file_g_rate, &file_g_qhat, &file_q_rate, &file_q_qhat})
+        *f << high_eng << " " << low_eng << " " << eng_grid << "\n" << std::setprecision(6);
 
-    for (double e = low_eng; e <= high_eng + 1e-12; e += eng_grid) {
-        const double scaled = std::max(e / low_eng, 1e-6);
-        const double rate_q = 1.0e-2 * std::pow(scaled, -0.5);
-        const double rate_g = 1.5 * rate_q;
-        const double qhat_q = 5.0e-2 * std::pow(scaled, 0.75);
-        const double qhat_g = 1.8 * qhat_q;
-
-        file_g_rate << std::setprecision(10) << rate_g << std::endl;
-        file_g_qhat << std::setprecision(10) << qhat_g << std::endl;
-        file_q_rate << std::setprecision(10) << rate_q << std::endl;
-        file_q_qhat << std::setprecision(10) << qhat_q << std::endl;
+    const int n_energy = (int)((high_eng - low_eng) / eng_grid + 1e-9) + 1;
+    for (int i = 0; i < n_energy; i++) {
+        const double e = low_eng + i * eng_grid;
+        double rate_q = 0, qhat_q = 0, rate_g = 0, qhat_g = 0;
+        for (int p = 0; p <= 5; ++p) {
+            rate_q += PDFTableIntegral(functionToIntegrate_LQ, e, p, calls);
+            qhat_q += PDFTableIntegral(functionToIntegrate_LQ_QHat, e, p, calls);
+        }
+        for (int p = 6; p <= 8; ++p) {
+            rate_g += PDFTableIntegral(functionToIntegrate_LQ, e, p, calls);
+            qhat_g += PDFTableIntegral(functionToIntegrate_LQ_QHat, e, p, calls);
+        }
+        file_g_rate << rate_g << std::endl;
+        file_g_qhat << qhat_g << std::endl;
+        file_q_rate << rate_q << std::endl;
+        file_q_qhat << qhat_q << std::endl;
     }
-
-    file_g_rate.close();
-    file_g_qhat.close();
-    file_q_rate.close();
-    file_q_qhat.close();
 
     return 0;
 }
