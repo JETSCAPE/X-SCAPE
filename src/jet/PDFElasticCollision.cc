@@ -1297,7 +1297,11 @@ int PDFElasticCollision::GenerateCollisionTables(const std::string &output_dir) 
         file_g_qhat << qhat_g << std::endl;
         file_q_rate << rate_q << std::endl;
         file_q_qhat << qhat_q << std::endl;
+
+        JSINFO << "Done generating index " << i << " of " << n_energy;
     }
+
+    for (std::ofstream *f : {&file_g_rate, &file_g_qhat, &file_q_rate, &file_q_qhat}) *f.close();
 
     return 0;
 }
