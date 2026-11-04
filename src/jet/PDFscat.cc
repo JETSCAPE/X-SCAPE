@@ -174,7 +174,7 @@ double PDFScat::Integrator_LQ(double E, int pi){
     double par0[] = {E, (double)pi}; 
 
     f1.SetParameters(par0);
-    ROOT::Math::IntegratorMultiDim ig(ROOT::Math::IntegrationMultiDim::kVEGAS , 1.E-10, 1.E-10, 1000000); //abs error, rel error, #runs
+    ROOT::Math::IntegratorMultiDim ig(ROOT::Math::IntegrationMultiDim::kVEGAS , 1.E-10, 1.E-10, 4000000); //abs error, rel error, #runs
     ig.SetFunction(f1 , 5); //arg is num dims
     double int_result = ig.Integral(xmin, xmax);
     return int_result;
@@ -189,7 +189,7 @@ double PDFScat::Integrator_LQ_QHat(double E, int pi){
     double par0[] = {E, (double)pi}; 
 
     f1.SetParameters(par0);
-    ROOT::Math::IntegratorMultiDim ig(ROOT::Math::IntegrationMultiDim::kVEGAS , 1.E-10, 1.E-10, 100); //abs error, rel error, #runs
+    ROOT::Math::IntegratorMultiDim ig(ROOT::Math::IntegrationMultiDim::kVEGAS , 1.E-10, 1.E-10, 4000000); //abs error, rel error, #runs
     ig.SetFunction(f1 , 5); //arg is num dims
     double int_result = ig.Integral(xmin, xmax);
 	return int_result;
@@ -508,7 +508,7 @@ double functionToIntegrate_LQ(double *x, double *params) {
             break;
             
         case 6:
-            matrix_element = gg_to_q1q1b(s,t,u);            //correct 
+            matrix_element = 3.0 * gg_to_q1q1b(s,t,u);            //correct 
             //stat = 1.;
             g_b = 16;
             break;
@@ -789,7 +789,7 @@ double functionToIntegrate_LQ_QHat(double *x, double *params) {
             break;
             
         case 6:
-            matrix_element = gg_to_q1q1b(s,t,u);            //correct 
+            matrix_element = 3.0 * gg_to_q1q1b(s,t,u);            //correct 
             //stat = 1.;
             g_b = 16;
             break;
