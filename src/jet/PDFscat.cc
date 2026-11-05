@@ -1,11 +1,16 @@
 #include "PDFscat.h"
+#include <cstdlib>
+#include <string>
 
 Pythia8::PDFPtr pythiaPDF;
 //======================================================================== constructor/destructor/setters
 PDFScat::PDFScat() {
     //Pythia8::Logger* logger = pythia.loggerPtr();
     //pythiaPDF = Pythia8::make_shared<Pythia8::LHAGrid1>(2212, "20", "/home/eric/Documents/pythiainst/pythia8315/share/Pythia8/pdfdata", &logger);
-    pythiaPDF = Pythia8::make_shared<Pythia8::LHAGrid1>(2212, "20", "/usr/local/pythia8309/share/Pythia8/pdfdata/", nullptr);
+    // PDF data dir: override with env var PYTHIA8_PDFDATA, else the previous default path
+    const char* pdfDirEnv = std::getenv("PYTHIA8_PDFDATA");
+    std::string pdfDir = pdfDirEnv ? std::string(pdfDirEnv) : std::string("/usr/local/pythia8309/share/Pythia8/pdfdata/");
+    pythiaPDF = Pythia8::make_shared<Pythia8::LHAGrid1>(2212, "20", pdfDir, nullptr);
 }
 
 
@@ -83,7 +88,7 @@ do {
         std::cout << "Warning: get_sample stuck in loop!" << std::endl;
         break;
     }
-} while (s < 2.0 * lambdaQCD2 || abs(t) < lambdaQCD2 || abs(t) > s - lambdaQCD2 || E2 > EO || E2 < 0.0 );
+} while (s < 2.0 * lambdaQCD2 || std::abs(t) < lambdaQCD2 || std::abs(t) > s - lambdaQCD2 || E2 > EO || E2 < 0.0 );
 */
 } 
 
@@ -415,7 +420,7 @@ double functionToIntegrate_LQ(double *x, double *params) {
     //double p3z = -x[3]*c23;
     //std::cout<<"p2z is "<<p3z<<std::endl;
     //double pzNucleon = sqrt(eNucleon*eNucleon - NucleonMass*NucleonMass);
-    //double x_ = abs(t) /(eNucleon * (x[3] - E1) - pzNucleon * (p3z - E1))/2.0; //Breit Frame
+    //double x_ = std::abs(t) /(eNucleon * (x[3] - E1) - pzNucleon * (p3z - E1))/2.0; //Breit Frame
     double k_perp = E2 * sin(x[0]);
     double k_perpVar = 0.6; //GeV^2
     double p2z_breit = E2*cos(x[0]);
@@ -425,15 +430,15 @@ double functionToIntegrate_LQ(double *x, double *params) {
     double p3E_rest = gamma * (x[3] + beta * (x[3]*cos(x[1])));
     double p3perp = x[3] * sin(x[1]);
     double x_P = (p2E_rest + p2z_rest) / NucleonMass; //Nucleon rest
-    double x_M = (abs(t) + k_perp*k_perp) / (p2E_rest + p2z_rest) / NucleonMass; //Nucleon rest; ignoring k_perp^2 for a moment as it is making it tough code wise
+    double x_M = (std::abs(t) + k_perp*k_perp) / (p2E_rest + p2z_rest) / NucleonMass; //Nucleon rest; ignoring k_perp^2 for a moment as it is making it tough code wise
     //double x = 0.;eNucleon * (x[3] - E1) - pzNucleon * (p3z - E1)
-    double pdfP = PDFSampler(flavor, x_P, abs(t));//forn now
-    double pdfM = PDFSampler(flavor, x_M, abs(t));//forn now
+    double pdfP = PDFSampler(flavor, x_P, std::abs(t));//forn now
+    double pdfM = PDFSampler(flavor, x_M, std::abs(t));//forn now
 
     double pdfPerp = exp(-k_perp * k_perp / k_perpVar) / k_perpVar / M_PI;//forn now
     //std::cout<<"s "<<s<<" t "<<t<<" u "<<u<<" x "<<x_<<" pdf "<<pdf<<std::endl;
     double ExtraFactor = cos(x[0]) * pow(2 * M_PI, 3.0) * (1.0 + cos(x[0])) / NucleonMass;
-    double ans = std::pow(alphaS,2.0) * pow(4*M_PI,2) / (pow(2*M_PI,4)*16.0*p1E_rest) * pdfP * pdfM * pdfPerp * ExtraFactor * matrix_element * p2E_rest * k_perp * 2 * p3perp/abs(t);
+    double ans = std::pow(alphaS,2.0) * pow(4*M_PI,2) / (pow(2*M_PI,4)*16.0*p1E_rest) * pdfP * pdfM * pdfPerp * ExtraFactor * matrix_element * p2E_rest * k_perp * 2 * p3perp/std::abs(t);
     return ans;
 }
 */
@@ -459,7 +464,7 @@ double functionToIntegrate_LQ(double *x, double *params) {
     double p2_z = E2 * cos(x[0]);
     /*Heisenbery uncertainty principle*/
     double min_modP = 0.1; //GeV
-    if (abs(p2_x) < min_modP||abs(p2_y) < min_modP || abs(p2_z) < min_modP){
+    if (std::abs(p2_x) < min_modP||std::abs(p2_y) < min_modP || std::abs(p2_z) < min_modP){
         return 0.0;
     }
 
@@ -532,7 +537,7 @@ double functionToIntegrate_LQ(double *x, double *params) {
     double p2Dist = exp(-E2*E2/2.0/var)/pow(2.0*M_PI*var,3.0/2.0) / GaussianNorm; //Gaussian distribution in momentum space
     //double p2Dist = exp(-E2/0.2);
     double ans = g_b * std::pow(alphaS, 2.0) * pow(4.0 * M_PI, 2.0) / (pow(2 * M_PI, 5) * 16.0 * E1)
-                     * p2Dist * matrix_element * E2 * p2_perp * 2 * x[3] * sin(x[1])/abs(t);
+                     * p2Dist * matrix_element * E2 * p2_perp * 2 * x[3] * sin(x[1])/std::abs(t);
     return ans;
 }
 
@@ -704,10 +709,10 @@ double functionToIntegrate_LQ_QHat(double *x, double *params) {
     double p3E_rest = gamma * (x[3] + beta * (x[3]*cos(x[1])));
     double p3perp = x[3] * sin(x[1]);
     double x_P = (p2E_rest + p2z_rest) / NucleonMass; //Nucleon rest
-    double x_M = (abs(t) + k_perp*k_perp) / (p2E_rest + p2z_rest) / NucleonMass; //Nucleon rest; ignoring k_perp^2 for a moment as it is making it tough code wise
+    double x_M = (std::abs(t) + k_perp*k_perp) / (p2E_rest + p2z_rest) / NucleonMass; //Nucleon rest; ignoring k_perp^2 for a moment as it is making it tough code wise
     //double x = 0.;eNucleon * (x[3] - E1) - pzNucleon * (p3z - E1)
-    double pdfP = PDFSampler(flavor, x_P, abs(t));//forn now
-    double pdfM = PDFSampler(flavor, x_M, abs(t));//forn now
+    double pdfP = PDFSampler(flavor, x_P, std::abs(t));//forn now
+    double pdfM = PDFSampler(flavor, x_M, std::abs(t));//forn now
 
     double pdfPerp = exp(-k_perp * k_perp / k_perpVar) / k_perpVar / M_PI;//forn now
     //std::cout<<"s "<<s<<" t "<<t<<" u "<<u<<" x "<<x_<<" pdf "<<pdf<<std::endl;
@@ -716,7 +721,7 @@ double functionToIntegrate_LQ_QHat(double *x, double *params) {
     return (std::pow(p3perp, 2.0)) * std::pow(alphaS,2.0)
                 * pow(4*M_PI,2)  / (pow(2 * M_PI,4) * 16.0 * p1E_rest)
                 * pdfP * pdfM * pdfPerp * ExtraFactor * matrix_element * p2E_rest * 2 
-                * k_perp * p3perp / abs(t);
+                * k_perp * p3perp / std::abs(t);
 }
 */
 
@@ -741,7 +746,7 @@ double functionToIntegrate_LQ_QHat(double *x, double *params) {
     double p2_z = E2 * cos(x[0]);
     /*Heisenbery uncertainty principle*/
     double min_modP = 0.1; //GeV
-    if (abs(p2_x) < min_modP||abs(p2_y) < min_modP || abs(p2_z) < min_modP){
+    if (std::abs(p2_x) < min_modP||std::abs(p2_y) < min_modP || std::abs(p2_z) < min_modP){
         return 0.0;
     }
 
@@ -826,7 +831,7 @@ double functionToIntegrate_LQ_QHat(double *x, double *params) {
         perpTransf = p4_perp * p4_perp;
     } 
     double ans = perpTransf * g_b * std::pow(alphaS, 2.0) * pow(4.0 * M_PI, 2.0) / (pow(2 * M_PI, 5) * 16.0 * E1)
-                     * p2Dist * matrix_element * E2 * p2_perp * 2 * x[3] * sin(x[1])/abs(t);
+                     * p2Dist * matrix_element * E2 * p2_perp * 2 * x[3] * sin(x[1])/std::abs(t);
     return ans;
 }
 

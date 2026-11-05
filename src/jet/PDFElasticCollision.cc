@@ -156,14 +156,14 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
         }
     }   
     
-    else if (abs(parent_pid) >= 1 and abs(parent_pid) <= 3) {
+    else if (std::abs(parent_pid) >= 1 and std::abs(parent_pid) <= 3) {
 		double r0 = 0; //PerformLinearInterpolation(EO,0,1);//s-channel not considered
 		double r1bar = PerformLinearInterpolation(EO,1,-parent_pid,1);
 		double r2 = PerformLinearInterpolation(EO,2,parent_pid,1);
 		double r3bar = PerformLinearInterpolation(EO,3,-parent_pid,1);
 		double r4 = PerformLinearInterpolation(EO, 4, 21, 1);
-		double r5a = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 1),1);
-        double r5b = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)+1) % 3) + 1),1);
+		double r5a = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((std::abs(parent_pid)) % 3) + 1),1);
+        double r5b = PerformLinearInterpolation(EO,5,(parent_pid < 0 ? -1 : 1) * (((std::abs(parent_pid)+1) % 3) + 1),1);
         TotalRate = rho * (r0 + r1bar + r2 + r3bar + r4 + r5a + r5b);
         //std::cout<<"TotalRate quark for pid  "<<parent_pid<<" is "<<TotalRate<<std::endl;
         if (ProbailisticScattering){  
@@ -211,7 +211,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
                     break;
 
                 case 5: //q1 q2 -> q1 q2
-                    daughter2_pid = (parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)) % 3) + 1);
+                    daughter2_pid = (parent_pid < 0 ? -1 : 1) * (((std::abs(parent_pid)) % 3) + 1);
                     scattering_obj.get_sample(daughter2_pid,energy_index,5,V, EO);
                     daughter1_pid = parent_pid;
                     //do { //keep sampling until q2 != q1 or q1bar
@@ -221,7 +221,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
                     hole_pid=daughter2_pid;     
                     break;
                 case 6: //q1 q2 -> q1 q2
-                    daughter2_pid = (parent_pid < 0 ? -1 : 1) * (((abs(parent_pid)+1) % 3) + 1);
+                    daughter2_pid = (parent_pid < 0 ? -1 : 1) * (((std::abs(parent_pid)+1) % 3) + 1);
                     scattering_obj.get_sample(daughter2_pid,energy_index,5,V, EO);
                     daughter1_pid = parent_pid;
                     hole_pid=daughter2_pid;     
@@ -232,7 +232,7 @@ bool PDFElasticCollision::elastic_kinematics(bool ProbailisticScattering, double
         }
     }
      //Heavy scattering part will be added here
-    else if (abs(parent_pid)==4) {
+    else if (std::abs(parent_pid)==4) {
         
         mc_sq = 1.6129;
 
@@ -433,12 +433,12 @@ double PDFElasticCollision::GetQhat_0(double E, int pid){
     //std::cout<<"energy index is "<<energy_index<<" energy is "<<E<<std::endl;
     //int temp_index = round((T-obj_low_temp)/obj_grid_temp);
     //int temp_index = std::min(std::max(0, int(round((T - obj_low_temp) / obj_grid_temp))), int(round((obj_hig_temp - obj_low_temp) / obj_grid_temp)));
-    if (abs(pid) == 21){
+    if (std::abs(pid) == 21){
         qhat = PerformLinearInterpolation(energy_index, 6, 2)
             + PerformLinearInterpolation(energy_index, 7, 2)
             + PerformLinearInterpolation(energy_index, 8, 2);
     }
-    else if (abs(pid) < 3){
+    else if (std::abs(pid) < 3){
         qhat = 0
             + PerformLinearInterpolation(energy_index, 1, 2)
             + PerformLinearInterpolation(energy_index, 2, 2)
@@ -599,7 +599,7 @@ void PDFElasticCollision::flavor(int &CT, int &KATT0, int &KATT2, int &KATT3,
         anti_color3 = backup_color0;
       }
     }
-  } else if (abs(KATT00) == 4) { // for charm quarks
+  } else if (std::abs(KATT00) == 4) { // for charm quarks
     double R1 = 6.0 * 6 * 4 / 9; // Qq->Qq
     double R2 = 16.0;            // Qg->Qg DOF_ag
     double R00 = R1 + R2;
@@ -802,7 +802,7 @@ void PDFElasticCollision::colljet22(int CT, double LambdaQCD, double p0[4], doub
   //    p0 initial jet momentum, output to final momentum
   //    p2 final thermal momentum,p3 initial termal energy
   //
-  //    amss=sqrt(abs(p0(4)**2-p0(1)**2-p0(2)**2-p0(3)**2))
+  //    amss=sqrt(std::abs(p0(4)**2-p0(1)**2-p0(2)**2-p0(3)**2))
   //
   //************************************************************
   //p4[1] = p0[1];
@@ -914,8 +914,8 @@ void PDFElasticCollision::colljet22(int CT, double LambdaQCD, double p0[4], doub
       //		cout << tt << "  " << ss <<  "" << qhat0ud <<endl;
       //		cout << ic << endl;
 
-    } while ((tt < tmin) || (tt > (tmax)) || abs(p2[1]) < 0.1 || abs(p2[2]) < 0.1 ||
-             abs(p2[3]) < 0.1);
+    } while ((tt < tmin) || (tt > (tmax)) || std::abs(p2[1]) < 0.1 || std::abs(p2[2]) < 0.1 ||
+             std::abs(p2[3]) < 0.1);
 
     f1 = pow(p2[0], 3) * exp(-p2[0]*p2[0]/var) / 0.293;
     f2 = pow(p2[0], 3) * exp(-p2[0]*p2[0]/var) / 0.293;
