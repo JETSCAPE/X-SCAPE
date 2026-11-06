@@ -18,6 +18,9 @@
 #include "JetScapeLogger.h"
 #include "JetScapeXML.h"
 #include "JetScapeSignalManager.h"
+#include <algorithm>
+#include <limits>
+#include <stdexcept>
 #include <string>
 
 #include <iostream>
@@ -86,11 +89,25 @@ void HardProcess::ClearTask() {
   Remnants.clear();
   color_tag_ = 0;
   extra_color_tag_.clear();
+  block_color_tag_.clear();
+  block_color_base_ = 0;
 
   VERBOSE(8) << hp_list.size();
 }
 
-unsigned int HardProcess::NextColorTag(int scatter) {
+unsigned int HardProcess::NextColorTag(int scatter, int block) {
+  if (block >= 0) {
+    if (block >= static_cast<int>(block_color_tag_.size()))
+      throw std::runtime_error("HardProcess::NextColorTag: colour tag block " +
+                               std::to_string(block) +
+                               " was not reserved for this event");
+    unsigned int &tag = block_color_tag_[block];
+    if (tag + 1 >= block_color_base_ + (block + 1u) * color_block_size)
+      throw std::runtime_error(
+          "HardProcess::NextColorTag: a shower used up its " +
+          std::to_string(color_block_size) + " colour tags");
+    return ++tag;
+  }
   if (scatter > 0) {
     unsigned int &tag = extra_color_tag_[scatter];
     const unsigned int floor = 100000u * scatter + 50000u;
@@ -105,6 +122,32 @@ unsigned int HardProcess::NextColorTag(int scatter) {
   if (color_tag_ < floor)
     color_tag_ = floor;
   return ++color_tag_;
+}
+
+void HardProcess::ReserveColorTagBlocks(int n) {
+  // Above the counters of NextColorTag (and the tags they start above): the
+  // triggering scattering's, from max_colorPerShower x (hard partons + 1), and
+  // the additional scatterings', below 100000 x (scatter + 1); and above every
+  // tag the hard partons carry and every tag handed out so far.
+  unsigned int top = max_colorPerShower * (hp_list.size() + 1) + color_tag_;
+  for (int i = 0; i < static_cast<int>(hp_list.size()); ++i) {
+    top = std::max(top, 100000u * (GetHardPartonScatter(i) + 1u));
+    top = std::max({top, hp_list[i]->color(), hp_list[i]->anti_color()});
+  }
+  for (const auto &kv : extra_color_tag_)
+    top = std::max(top, kv.second);
+  const unsigned long long base =
+      (top / color_block_size + 1ull) * color_block_size;
+  const unsigned long long end =
+      base + static_cast<unsigned long long>(n) * color_block_size;
+  if (end > static_cast<unsigned long long>(std::numeric_limits<int>::max()))
+    throw std::runtime_error(
+        "HardProcess::ReserveColorTagBlocks: " + std::to_string(n) +
+        " blocks of colour tags do not fit below 2^31");
+  block_color_base_ = static_cast<unsigned int>(base);
+  block_color_tag_.resize(n);
+  for (int b = 0; b < n; ++b)
+    block_color_tag_[b] = block_color_base_ + b * color_block_size;
 }
 
 void HardProcess::WriteTask(weak_ptr<JetScapeWriter> w) {

@@ -360,6 +360,15 @@
                                 Matter, LBT and AdSCFT use the hydro's start time instead
                                 (FluidDynamics::GetHydroStartTime; MUSIC: its tau0)   -->
     <mutex>ON</mutex>
+    <!-- Showers of one event in parallel (OpenMP), one per shower-initiating parton
+         (with ISR/MPI tens per event).  0: off, serial (the default).  N > 0: N threads;
+         -1: OpenMP's default (OMP_NUM_THREADS).  When on, every shower gets random
+         streams and a block of colour tags of its own, so the results do not depend
+         on N (1 and 8 threads give identical events) but differ from those with 0,
+         where the showers share them.  Needs energy-loss modules that support it
+         (Matter, LBT), showers per event (not on the main clock) and at most one bulk
+         module; otherwise it warns once and runs serially. -->
+    <nThreads>0</nThreads>
     <AddLiquefier> false </AddLiquefier>
     <ModificationFactor> -1 </ModificationFactor> <!-- Modification factor for the energy loss, used in the Lbt module -->
     <lambdaQCD>0.2</lambdaQCD> <!-- 0.2 JETSCAPE standard value, 0.4 is the value chosen in JETSET -->
