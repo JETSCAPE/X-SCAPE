@@ -1099,9 +1099,13 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
             soln_alphas = solve_alphas(qhatLoc, enerLoc, tempLoc);
 
           // Read the proability of elastic scattering in time delta t in nuclear rest frame
+          // rate_per_vol ~ GeV^-2 from eA table
+          // nuclear_dens ~ fm^-3 
+          // dt_lrf ~ time ~ fm
+          // product is dimensionless
           // cout << "ener " << pIn[i].e() << endl;
           double rate_per_vol = interpolate_pdf_tables(pIn[i].e(), pIn[i].pid(), 1);
-          prob_el = exp(-1*nuclear_dens*rate_per_vol * dt_lrf / pow(0.1973,3.));
+          prob_el = exp(-1*nuclear_dens*rate_per_vol * dt_lrf);
 
           // muD2 = 6.0 * pi * soln_alphas * tempLoc * tempLoc;
           // prob_el = 42.0 * zeta3 * el_CR  * tempLoc / 6.0 / pi /
