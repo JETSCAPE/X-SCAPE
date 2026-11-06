@@ -366,8 +366,8 @@
          streams and a block of colour tags of its own, so the results do not depend
          on N (1 and 8 threads give identical events) but differ from those with 0,
          where the showers share them.  Needs energy-loss modules that support it
-         (Matter, LBT), showers per event (not on the main clock) and at most one bulk
-         module; otherwise it warns once and runs serially. -->
+         (Matter, LBT), showers per event (not on the main clock) and no hadronic medium
+         (SMASH) in the bulk manager; otherwise it warns once and runs serially. -->
     <nThreads>0</nThreads>
     <AddLiquefier> false </AddLiquefier>
     <ModificationFactor> -1 </ModificationFactor> <!-- Modification factor for the energy loss, used in the Lbt module -->

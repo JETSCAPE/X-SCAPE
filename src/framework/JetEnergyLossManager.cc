@@ -300,9 +300,17 @@ bool JetEnergyLossManager::UseParallelShowers() {
     if (!why.empty())
       break;
   }
+  // The bulk manager's query of its hydros only reads them; below Tc it asks
+  // the hadronic medium (SMASH initial state or afterburner), which is not
+  // checked for concurrent queries.
   auto bulk = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
-  if (why.empty() && bulk && bulk->GetNumberOfTasks() > 1)
-    why = "the bulk manager holds more than one module (hadronic media)";
+  if (why.empty() && bulk)
+    for (auto it : bulk->GetTaskList())
+      if (!dynamic_pointer_cast<FluidDynamics>(it)) {
+        why = "the bulk manager holds a module other than hydro (" +
+              it->GetId() + ")";
+        break;
+      }
   if (why.empty())
     return true;
   if (!parallelWarned_) {

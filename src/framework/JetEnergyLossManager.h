@@ -208,8 +208,8 @@ class JetEnergyLossManager
    * @brief Whether this event's showers run in parallel: <Eloss><nThreads>
    * set, every shower per event (not time stepped) and without a
    * PartonShowerGenerator, every energy-loss module declaring
-   * SupportsParallelShowers, and at most one bulk module (the hydro, whose
-   * GetHydroInfo is a read of the stored evolution).  Warns once otherwise.
+   * SupportsParallelShowers, and no bulk module but hydros (whose GetHydroInfo
+   * is a read of the stored evolution).  Warns once otherwise.
    */
   bool UseParallelShowers();
 
