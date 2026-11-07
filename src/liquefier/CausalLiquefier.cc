@@ -99,21 +99,22 @@ void CausalLiquefier::InitializeParameters() {
   JSINFO << "<CausalLiquefier> normalize_on_hydro_grid = "
          << get_normalize_on_hydro_grid();
 
-  // The frame of the causal diffusion: lab (the default, as before) or fluid.
+  // The frame of the causal diffusion: bjorken (the default; empty: an older
+  // main XML without the tag) or lab (the paper's, and X-SCAPE's before 2026-11).
   std::string frame = JetScapeXML::Instance()->GetElementText(
       {"Liquefier", "CausalLiquefier", "frame"}, false);
   frame.erase(0, frame.find_first_not_of(" \t\n\r"));
   frame.erase(frame.find_last_not_of(" \t\n\r") + 1);
-  if (frame == "fluid") {
-    fluid_frame_ = true;
-  } else if (frame.empty() || frame == "lab") {
-    fluid_frame_ = false;
+  if (frame.empty() || frame == "bjorken") {
+    bjorken_frame_ = true;
+  } else if (frame == "lab") {
+    bjorken_frame_ = false;
   } else {
     JSWARN << "<CausalLiquefier><frame> is '" << frame
-           << "': must be lab or fluid";
+           << "': must be bjorken or lab";
     exit(1);
   }
-  JSINFO << "<CausalLiquefier> frame = " << (fluid_frame_ ? "fluid" : "lab");
+  JSINFO << "<CausalLiquefier> frame = " << (bjorken_frame_ ? "bjorken" : "lab");
 
   // for debug
   //    JSINFO
@@ -140,16 +141,17 @@ void CausalLiquefier::smearing_kernel(
       drop_i.get_xmu();  // position of the droplet in the Cartesian coordinates
   double tau_drop = x_drop[0];
   double eta_drop = x_drop[3];
-  // The diffusion is solved in Cartesian coordinates: the lab frame, or with
-  // <frame>fluid</frame> the frame of the Bjorken fluid at the droplet's eta_s,
-  // reached by a longitudinal boost by eta_drop.  The boost shifts eta_s and
+  // The diffusion is solved in Cartesian coordinates: with <frame>bjorken</frame>
+  // (the default) in the frame of the Bjorken flow at the droplet's eta_s,
+  // reached by a longitudinal boost by eta_drop; with <frame>lab</frame> in the
+  // lab frame (no boost).  The boost shifts eta_s and
   // leaves tau, x and y alone, so in that frame the droplet sits at
   // (t, z) = (tau_drop, 0) and a cell at eta_s at
   // (tau cosh(eta - eta_drop), tau sinh(eta - eta_drop)).  The kernel's flux
   // through the tau = const slice is the same scalar in either frame; the
   // droplet's four-momentum below keeps its Milne components in the lab.
   const double eta_kernel_shift =
-      (fluid_frame_ && std::isfinite(eta_drop)) ? eta_drop : 0.0;
+      (bjorken_frame_ && std::isfinite(eta_drop)) ? eta_drop : 0.0;
   x_drop[0] = get_t(tau_drop, eta_drop - eta_kernel_shift);
   x_drop[3] = get_z(tau_drop, eta_drop - eta_kernel_shift);
 

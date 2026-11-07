@@ -518,14 +518,15 @@
           <time_relax>0.1</time_relax><!-- in [fm] -->
           <d_diff>0.08</d_diff><!-- in [fm] -->
           <width_delta>0.1</width_delta><!-- in [fm] -->
-          <!-- The frame the causal diffusion is solved in.  lab: the collision's
-               Cartesian frame (Tachibana, Shen, Majumder, arXiv:2001.08321, valid
-               where the medium's flow is small, i.e. at midrapidity).  fluid: the
-               frame moving with the Bjorken flow at the droplet's eta_s, where the
-               droplet sits at z = 0; every droplet then deposits as one at
-               midrapidity does, and tau_delay is a delay in that fluid's own time.
-               The two agree at eta_s = 0. -->
-          <frame>lab</frame>
+          <!-- The frame the causal diffusion is solved in.  bjorken (the default):
+               the frame of the Bjorken flow at the droplet's eta_s, where the droplet
+               sits at z = 0; every droplet then deposits as one at midrapidity does,
+               and tau_delay is a delay in that frame's own time.  lab: the collision's
+               Cartesian frame, as in the liquefier's paper (Tachibana, Shen, Majumder,
+               arXiv:2001.08321, which assumes a medium with small flow) and in X-SCAPE
+               before 2026-11; at forward eta_s it deposits displaced and far narrower
+               than a cell.  The two agree at eta_s = 0. -->
+          <frame>bjorken</frame>
       </CausalLiquefier>
 
       <!-- HadronicLiquefier-->
