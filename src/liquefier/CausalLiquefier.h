@@ -28,6 +28,9 @@
 #include <gsl/gsl_sf_bessel.h>
 #include <algorithm>
 
+// <CausalLiquefier><frame>: get_fluid_frame()/set_fluid_frame() (bindings test this)
+#define XSCAPE_CAUSAL_LIQUEFIER_FRAME 1
+
 namespace Jetscape {
 
 class CausalLiquefier : public Jetscape::LiquefierBase {
@@ -42,6 +45,9 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   //---------------------------
   double c_diff;
   double gamma_relax;
+  //! the kernel in the frame of the Bjorken fluid at the droplet's eta_s
+  //! (<frame>fluid</frame>), else in the lab frame
+  bool fluid_frame_ = false;
   double dtau0_ = -1.;     // the initial hydro step (the XML's dtau)
   double dtau_late_ = 0.;  // the step from tau_switch_ on (0: constant)
   double tau_switch_ = -1.;
@@ -102,6 +108,9 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
 
   double get_ptau(double px, double pz, double eta) const;
   double get_peta(double px, double pz, double eta) const;
+
+  bool get_fluid_frame() const { return fluid_frame_; }
+  void set_fluid_frame(bool fluid) { fluid_frame_ = fluid; }
 
   // For debug
   void set_t_delay(double new_tau_delay);

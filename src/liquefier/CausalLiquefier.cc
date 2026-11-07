@@ -21,6 +21,8 @@
 #include "JetScapeLogger.h"
 #include "JetScapeXML.h"
 #include <cfloat>
+#include <cmath>
+#include <string>
 
 namespace Jetscape {
 
@@ -97,6 +99,22 @@ void CausalLiquefier::InitializeParameters() {
   JSINFO << "<CausalLiquefier> normalize_on_hydro_grid = "
          << get_normalize_on_hydro_grid();
 
+  // The frame of the causal diffusion: lab (the default, as before) or fluid.
+  std::string frame = JetScapeXML::Instance()->GetElementText(
+      {"Liquefier", "CausalLiquefier", "frame"}, false);
+  frame.erase(0, frame.find_first_not_of(" \t\n\r"));
+  frame.erase(frame.find_last_not_of(" \t\n\r") + 1);
+  if (frame == "fluid") {
+    fluid_frame_ = true;
+  } else if (frame.empty() || frame == "lab") {
+    fluid_frame_ = false;
+  } else {
+    JSWARN << "<CausalLiquefier><frame> is '" << frame
+           << "': must be lab or fluid";
+    exit(1);
+  }
+  JSINFO << "<CausalLiquefier> frame = " << (fluid_frame_ ? "fluid" : "lab");
+
   // for debug
   //    JSINFO
   //    << "<CausalLiquefier> Fluid Time Step and Cell Size: dtau="
@@ -122,15 +140,26 @@ void CausalLiquefier::smearing_kernel(
       drop_i.get_xmu();  // position of the droplet in the Cartesian coordinates
   double tau_drop = x_drop[0];
   double eta_drop = x_drop[3];
-  x_drop[0] = get_t(tau_drop, eta_drop);
-  x_drop[3] = get_z(tau_drop, eta_drop);
+  // The diffusion is solved in Cartesian coordinates: the lab frame, or with
+  // <frame>fluid</frame> the frame of the Bjorken fluid at the droplet's eta_s,
+  // reached by a longitudinal boost by eta_drop.  The boost shifts eta_s and
+  // leaves tau, x and y alone, so in that frame the droplet sits at
+  // (t, z) = (tau_drop, 0) and a cell at eta_s at
+  // (tau cosh(eta - eta_drop), tau sinh(eta - eta_drop)).  The kernel's flux
+  // through the tau = const slice is the same scalar in either frame; the
+  // droplet's four-momentum below keeps its Milne components in the lab.
+  const double eta_kernel_shift =
+      (fluid_frame_ && std::isfinite(eta_drop)) ? eta_drop : 0.0;
+  x_drop[0] = get_t(tau_drop, eta_drop - eta_kernel_shift);
+  x_drop[3] = get_z(tau_drop, eta_drop - eta_kernel_shift);
 
   double win_lo, win_hi;
   deposit_window(tau, win_lo, win_hi);
   if (win_lo <= tau_drop + tau_delay && win_hi > tau_drop + tau_delay) {
+    const double eta_k = eta - eta_kernel_shift;  // eta in the kernel's frame
     double t =
-        get_t(tau, eta);  // position in the fluid in the Cartesian coordinates
-    double z = get_z(tau, eta);
+        get_t(tau, eta_k);  // position in the fluid in the Cartesian coordinates
+    double z = get_z(tau, eta_k);
 
     double delta_t = t - x_drop[0];
     double delta_r = sqrt((x - x_drop[1]) * (x - x_drop[1]) +
@@ -146,7 +175,7 @@ void CausalLiquefier::smearing_kernel(
       jz = ((z - x_drop[3]) / delta_r) * kernel_j(delta_t, delta_r) / dtau;
     }
     // get flux for the constant-tau surface
-    double jtau = get_ptau(jt, jz, eta);
+    double jtau = get_ptau(jt, jz, eta_k);
 
     // get source in tau-eta coordinates
     jmu[0] = jtau * get_ptau(p_drop[0], p_drop[3], eta);
