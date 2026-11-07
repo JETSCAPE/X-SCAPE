@@ -525,8 +525,16 @@
                Cartesian frame, as in the liquefier's paper (Tachibana, Shen, Majumder,
                arXiv:2001.08321, which assumes a medium with small flow) and in X-SCAPE
                before 2026-11; at forward eta_s it deposits displaced and far narrower
-               than a cell.  The two agree at eta_s = 0. -->
+               than a cell.  The two agree at eta_s = 0.  fluid: the rest frame of the
+               background fluid (the medium Matter and LBT see) where the droplet was
+               made, transverse flow included; the deposit stays on the slice
+               tau_d + tau_delay.  A droplet where the fluid's energy density is below
+               fluid_e_min (or where there is none: before the hydro starts, off its
+               grid) takes the Bjorken frame; the fluid's speed relative to the Bjorken
+               flow is capped at fluid_v_max. -->
           <frame>bjorken</frame>
+          <fluid_e_min>0.1</fluid_e_min><!-- in [GeV/fm^3], frame fluid only -->
+          <fluid_v_max>0.99</fluid_v_max><!-- frame fluid only -->
       </CausalLiquefier>
 
       <!-- HadronicLiquefier-->

@@ -27,9 +27,12 @@
 #include <cmath>
 #include <gsl/gsl_sf_bessel.h>
 #include <algorithm>
+#include <string>
 
 // <CausalLiquefier><frame>: get_bjorken_frame()/set_bjorken_frame() (bindings test this)
 #define XSCAPE_CAUSAL_LIQUEFIER_FRAME 1
+// <frame>fluid</frame>: get_frame()/set_frame(), fluid_e_min, fluid_v_max
+#define XSCAPE_CAUSAL_LIQUEFIER_FLUID_FRAME 1
 
 namespace Jetscape {
 
@@ -45,9 +48,16 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   //---------------------------
   double c_diff;
   double gamma_relax;
-  //! the kernel in the frame of the Bjorken flow at the droplet's eta_s
-  //! (<frame>bjorken</frame>, the default), else in the lab frame (<frame>lab</frame>)
-  bool bjorken_frame_ = true;
+  //! The frame the causal diffusion is solved in (<CausalLiquefier><frame>):
+  //!  - BJORKEN (bjorken, the default): the Bjorken flow's at the droplet's eta_s;
+  //!  - LAB (lab): the lab frame, as in the paper and X-SCAPE before 2026-11;
+  //!  - FLUID (fluid): the rest frame of the background fluid where the droplet
+  //!    was made (Droplet::get_vfluid()); a droplet without a usable fluid
+  //!    there (e < fluid_e_min_, or not looked up) takes the Bjorken frame.
+  enum class Frame { LAB = 0, BJORKEN = 1, FLUID = 2 };
+  Frame frame_ = Frame::BJORKEN;
+  double fluid_e_min_ = 0.1;   //!< [GeV/fm^3] below it: the Bjorken frame
+  double fluid_v_max_ = 0.99;  //!< the fluid speed is capped at it
   double dtau0_ = -1.;     // the initial hydro step (the XML's dtau)
   double dtau_late_ = 0.;  // the step from tau_switch_ on (0: constant)
   double tau_switch_ = -1.;
@@ -109,8 +119,20 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   double get_ptau(double px, double pz, double eta) const;
   double get_peta(double px, double pz, double eta) const;
 
-  bool get_bjorken_frame() const { return bjorken_frame_; }
-  void set_bjorken_frame(bool bjorken) { bjorken_frame_ = bjorken; }
+  // kept for code written for the two-frame option: true = BJORKEN, false = LAB
+  bool get_bjorken_frame() const { return frame_ == Frame::BJORKEN; }
+  void set_bjorken_frame(bool bjorken) {
+    frame_ = bjorken ? Frame::BJORKEN : Frame::LAB;
+  }
+  //! "lab", "bjorken" or "fluid"
+  std::string get_frame() const;
+  void set_frame(const std::string &name);
+  //! The velocity of drop_i's kernel frame relative to the Bjorken flow at the
+  //! droplet: the background fluid's (fluid, its speed capped at
+  //! fluid_v_max_), else 0 (lab, bjorken, fluid's fallback).
+  std::array<double, 3> kernel_frame_velocity(const Droplet &drop_i) const;
+  //! whether drop_i's kernel uses the fluid's velocity (fluid frame, usable cell)
+  bool uses_fluid_velocity(const Droplet &drop_i) const;
 
   // For debug
   void set_t_delay(double new_tau_delay);

@@ -100,21 +100,32 @@ void CausalLiquefier::InitializeParameters() {
          << get_normalize_on_hydro_grid();
 
   // The frame of the causal diffusion: bjorken (the default; empty: an older
-  // main XML without the tag) or lab (the paper's, and X-SCAPE's before 2026-11).
+  // main XML without the tag), lab (the paper's, and X-SCAPE's before 2026-11)
+  // or fluid (the background fluid's rest frame at the droplet).
   std::string frame = JetScapeXML::Instance()->GetElementText(
       {"Liquefier", "CausalLiquefier", "frame"}, false);
   frame.erase(0, frame.find_first_not_of(" \t\n\r"));
   frame.erase(frame.find_last_not_of(" \t\n\r") + 1);
-  if (frame.empty() || frame == "bjorken") {
-    bjorken_frame_ = true;
-  } else if (frame == "lab") {
-    bjorken_frame_ = false;
-  } else {
-    JSWARN << "<CausalLiquefier><frame> is '" << frame
-           << "': must be bjorken or lab";
+  set_frame(frame.empty() ? "bjorken" : frame);
+  // fluid: below this energy density [GeV/fm^3] at the droplet (also: no
+  // fluid there, e = 0) the Bjorken frame; the fluid's speed is capped
+  auto optional_double = [](const char *tag, double fallback) {
+    const std::string v = JetScapeXML::Instance()->GetElementText(
+        {"Liquefier", "CausalLiquefier", tag}, false);
+    return v.find_first_not_of(" \t\n\r") == std::string::npos ? fallback
+                                                                : std::stod(v);
+  };
+  fluid_e_min_ = optional_double("fluid_e_min", fluid_e_min_);
+  fluid_v_max_ = optional_double("fluid_v_max", fluid_v_max_);
+  if (!(fluid_v_max_ > 0.0 && fluid_v_max_ < 1.0)) {
+    JSWARN << "<CausalLiquefier><fluid_v_max> must be in (0, 1), is "
+           << fluid_v_max_;
     exit(1);
   }
-  JSINFO << "<CausalLiquefier> frame = " << (bjorken_frame_ ? "bjorken" : "lab");
+  JSINFO << "<CausalLiquefier> frame = " << get_frame();
+  if (frame_ == Frame::FLUID)
+    JSINFO << "<CausalLiquefier> fluid frame: fluid_e_min = " << fluid_e_min_
+           << " GeV/fm^3, fluid_v_max = " << fluid_v_max_;
 
   // for debug
   //    JSINFO
@@ -141,40 +152,74 @@ void CausalLiquefier::smearing_kernel(
       drop_i.get_xmu();  // position of the droplet in the Cartesian coordinates
   double tau_drop = x_drop[0];
   double eta_drop = x_drop[3];
-  // The diffusion is solved in Cartesian coordinates: with <frame>bjorken</frame>
-  // (the default) in the frame of the Bjorken flow at the droplet's eta_s,
-  // reached by a longitudinal boost by eta_drop; with <frame>lab</frame> in the
-  // lab frame (no boost).  The boost shifts eta_s and
-  // leaves tau, x and y alone, so in that frame the droplet sits at
-  // (t, z) = (tau_drop, 0) and a cell at eta_s at
-  // (tau cosh(eta - eta_drop), tau sinh(eta - eta_drop)).  The kernel's flux
-  // through the tau = const slice is the same scalar in either frame; the
-  // droplet's four-momentum below keeps its Milne components in the lab.
+  // The diffusion is solved in Cartesian coordinates, in one of three frames:
+  //  - lab: no boost;
+  //  - bjorken (the default): the frame of the Bjorken flow at the droplet's
+  //    eta_s, reached by a longitudinal boost by eta_drop.  That boost shifts
+  //    eta_s and leaves tau, x and y alone: the droplet sits at
+  //    (t, z) = (tau_drop, 0) and a cell at
+  //    (tau cosh(eta - eta_drop), tau sinh(eta - eta_drop));
+  //  - fluid: the rest frame of the background fluid where the droplet was
+  //    made, reached from the Bjorken frame by a further boost with the
+  //    fluid's velocity relative to the Bjorken flow, v (mostly transverse):
+  //    the separation of cell and droplet is boosted by v, the kernel's
+  //    density and radial current are evaluated at that rest-frame age and
+  //    distance, and the current is boosted back.
+  // The flux through the tau = const slice is n.J with n the slice's normal,
+  // (cosh, sinh) of eta - eta_drop in the Bjorken frame.  The droplet's
+  // four-momentum below keeps its Milne components in the lab.  For lab and
+  // bjorken (v = 0) the arithmetic is the one of before, bit for bit.
   const double eta_kernel_shift =
-      (bjorken_frame_ && std::isfinite(eta_drop)) ? eta_drop : 0.0;
+      (frame_ != Frame::LAB && std::isfinite(eta_drop)) ? eta_drop : 0.0;
   x_drop[0] = get_t(tau_drop, eta_drop - eta_kernel_shift);
   x_drop[3] = get_z(tau_drop, eta_drop - eta_kernel_shift);
+  const std::array<double, 3> v = kernel_frame_velocity(drop_i);
 
   double win_lo, win_hi;
   deposit_window(tau, win_lo, win_hi);
   if (win_lo <= tau_drop + tau_delay && win_hi > tau_drop + tau_delay) {
-    const double eta_k = eta - eta_kernel_shift;  // eta in the kernel's frame
+    const double eta_k = eta - eta_kernel_shift;  // eta in the Bjorken frame
     double t =
         get_t(tau, eta_k);  // position in the fluid in the Cartesian coordinates
     double z = get_z(tau, eta_k);
+    const double dt = t - x_drop[0];
+    // x - x_drop[1] and y - x_drop[2] are Jetscape::real (float), and so are
+    // their squares in delta_r below, as before the fluid frame: lab and
+    // bjorken stay bit-identical to the older builds
+    const auto dxr = x - x_drop[1];
+    const auto dyr = y - x_drop[2];
+    const double d3[3] = {dxr, dyr, z - x_drop[3]};
 
-    double delta_t = t - x_drop[0];
-    double delta_r = sqrt((x - x_drop[1]) * (x - x_drop[1]) +
-                          (y - x_drop[2]) * (y - x_drop[2]) +
-                          (z - x_drop[3]) * (z - x_drop[3]));
+    // the separation boosted by v into the kernel's frame (v = 0: unchanged)
+    const double v2 = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    const double g = 1.0 / sqrt(1.0 - v2);
+    const double gg = g * g / (1.0 + g);  // (g - 1) / v^2, also at v = 0
+    const double vd = v[0] * d3[0] + v[1] * d3[1] + v[2] * d3[2];
+    double delta_t = dt, dr[3] = {d3[0], d3[1], d3[2]};
+    if (v2 > 0.0) {
+      delta_t = g * (dt - vd);
+      for (int k = 0; k < 3; k++)
+        dr[k] = d3[k] + (gg * vd - g * dt) * v[k];
+    }
+    double delta_r =
+        v2 > 0.0 ? sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2])
+                 : sqrt(dxr * dxr + dyr * dyr + d3[2] * d3[2]);
 
-    // get solutions of the diffusion equation in the Cartesian coordinates
+    // get solutions of the diffusion equation in the kernel's frame
     double jt = kernel_rho(delta_t, delta_r) / dtau;
-    double jz;
-    if (delta_r <= DBL_MIN) {
-      jz = 0.0;
-    } else {
-      jz = ((z - x_drop[3]) / delta_r) * kernel_j(delta_t, delta_r) / dtau;
+    double jr[3] = {0.0, 0.0, 0.0};
+    if (delta_r > DBL_MIN) {
+      const double kj = kernel_j(delta_t, delta_r);
+      for (int k = 0; k < 3; k++)
+        jr[k] = (dr[k] / delta_r) * kj / dtau;
+    }
+    double jz = jr[2];
+    // the current boosted back by -v (into the Bjorken frame)
+    if (v2 > 0.0) {
+      const double vj = v[0] * jr[0] + v[1] * jr[1] + v[2] * jr[2];
+      const double rho = jt;
+      jt = g * (rho + vj);
+      jz = jr[2] + (gg * vj + g * rho) * v[2];
     }
     // get flux for the constant-tau surface
     double jtau = get_ptau(jt, jz, eta_k);
@@ -185,6 +230,61 @@ void CausalLiquefier::smearing_kernel(
     jmu[2] = jtau * p_drop[2];
     jmu[3] = jtau * get_peta(p_drop[0], p_drop[3], eta);
   }
+}
+
+std::string CausalLiquefier::get_frame() const {
+  switch (frame_) {
+  case Frame::LAB:
+    return "lab";
+  case Frame::FLUID:
+    return "fluid";
+  default:
+    return "bjorken";
+  }
+}
+
+void CausalLiquefier::set_frame(const std::string &name) {
+  if (name == "bjorken") {
+    frame_ = Frame::BJORKEN;
+  } else if (name == "lab") {
+    frame_ = Frame::LAB;
+  } else if (name == "fluid") {
+    frame_ = Frame::FLUID;
+  } else {
+    JSWARN << "<CausalLiquefier><frame> is '" << name
+           << "': must be bjorken, lab or fluid";
+    exit(1);
+  }
+}
+
+bool CausalLiquefier::uses_fluid_velocity(const Droplet &drop_i) const {
+  const double e = drop_i.get_efluid();
+  return frame_ == Frame::FLUID && e >= 0.0 && e >= fluid_e_min_ &&
+         std::isfinite(drop_i.get_xmu()[3]);
+}
+
+// The fluid's velocity relative to the Bjorken flow at the droplet: its lab
+// four-velocity boosted longitudinally by -eta_drop, the speed capped at
+// fluid_v_max_.  Zero for lab and bjorken, and for fluid without a usable
+// cell (the Bjorken frame).
+std::array<double, 3>
+CausalLiquefier::kernel_frame_velocity(const Droplet &drop_i) const {
+  std::array<double, 3> v = {0.0, 0.0, 0.0};
+  if (!uses_fluid_velocity(drop_i))
+    return v;
+  const auto vl = drop_i.get_vfluid();
+  const double eta_d = drop_i.get_xmu()[3];
+  // u ~ (1, vx, vy, vz) up to gamma, which cancels in u / u^t
+  const double ut = cosh(eta_d) - vl[2] * sinh(eta_d);
+  const double uz = vl[2] * cosh(eta_d) - sinh(eta_d);
+  if (!(ut > 0.0))
+    return v;
+  v = {vl[0] / ut, vl[1] / ut, uz / ut};
+  const double s = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  if (s > fluid_v_max_)
+    for (auto &c : v)
+      c *= fluid_v_max_ / s;
+  return v;
 }
 
 // Charge density rho in causal diffusion
