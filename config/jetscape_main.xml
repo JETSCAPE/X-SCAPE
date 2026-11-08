@@ -230,6 +230,12 @@
       <name>PGun</name>
       <pT>100</pT>
       <parID>21</parID>
+      <!-- optional: the parton's rapidity and phi (from the origin); <points> "pT y pT y ..."
+           runs several (pT, rapidity) points, event i using point i mod K (nReuseHydro a
+           multiple of K), and overrides <pT> and <rapidity> -->
+      <rapidity>0</rapidity>
+      <phi>0</phi>
+      <points></points>
     </PGun>
 
     <!-- Pythia Gun -->
