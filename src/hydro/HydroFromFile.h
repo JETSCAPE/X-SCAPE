@@ -68,6 +68,12 @@ class HydroFromFile : public FluidDynamics {
   void read_in_hydro_event(string VISH_filename, int buffer_size,
                            int load_viscous);
 
+#ifdef USE_HDF5
+  //! This function copies the loaded VISHNew lattice into bulk_info so that
+  //! framework tools (e.g. SurfaceFinder) can use the medium
+  void PassHydroEvolutionHistoryToFramework();
+#endif
+
   //! This function load a MUSIC hydro event
   void read_in_hydro_event(string input_file, string hydro_ideal_file,
                            int nskip_tau);

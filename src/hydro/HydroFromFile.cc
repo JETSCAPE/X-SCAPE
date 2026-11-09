@@ -168,6 +168,7 @@ void HydroFromFile::EvolveHydro() {
     read_in_hydro_event(filename, 500, load_viscous_);
     hydro_tau_0 = hydroinfo_h5_ptr->getHydrogridTau0();
     hydro_tau_max = hydroinfo_h5_ptr->getHydrogridTaumax();
+    PassHydroEvolutionHistoryToFramework();
 #endif
     hydro_status = FINISHED;
   } else if (hydro_type_ < 6) {
@@ -247,8 +248,62 @@ void HydroFromFile::clean_hydro_event() {
   if (hydro_type_ == 7) {
     hydroinfo_PreEq_ptr->clean_hydro_event();
   }
+  clear_up_evolution_data();
   hydro_status = NOT_START;
 }
+
+#ifdef USE_HDF5
+//! This function copies the loaded VISHNew (2+1)D lattice into bulk_info.
+//! The grid matches the one used by GetHydroInfo for hydro_type == 1.
+void HydroFromFile::PassHydroEvolutionHistoryToFramework() {
+  clear_up_evolution_data();
+
+  bulk_info.tau_min = hydroinfo_h5_ptr->getHydrogridTau0();
+  bulk_info.dtau = hydroinfo_h5_ptr->getHydrogridDTau();
+  bulk_info.ntau = hydroinfo_h5_ptr->getNumberofFrames();
+  bulk_info.x_min = hydroinfo_h5_ptr->getHydrogridX0();
+  bulk_info.dx = hydroinfo_h5_ptr->getHydrogridDX();
+  bulk_info.nx = static_cast<int>(hydroinfo_h5_ptr->getHydrogridNX());
+  bulk_info.y_min = hydroinfo_h5_ptr->getHydrogridY0();
+  bulk_info.dy = hydroinfo_h5_ptr->getHydrogridDY();
+  bulk_info.ny = static_cast<int>(hydroinfo_h5_ptr->getHydrogridNY());
+  // VISHNew output is (2+1)D: a single boost-invariant eta slice
+  bulk_info.eta_min = 0.;
+  bulk_info.deta = 1.;
+  bulk_info.neta = 1;
+  bulk_info.boost_invariant = true;
+  bulk_info.tau_eta_is_tz = false;
+
+  bulk_info.data.reserve(static_cast<size_t>(bulk_info.ntau) * bulk_info.nx *
+                         bulk_info.ny);
+  hydrofluidCell fluid_cell;
+  for (int itau = 0; itau < bulk_info.ntau; itau++) {
+    for (int ix = 0; ix < bulk_info.nx; ix++) {
+      for (int iy = 0; iy < bulk_info.ny; iy++) {
+        hydroinfo_h5_ptr->getHydroinfoOnlattice(itau, ix, iy, &fluid_cell);
+        std::unique_ptr<FluidCellInfo> fluid_cell_info_ptr(new FluidCellInfo);
+        fluid_cell_info_ptr->energy_density = fluid_cell.ed;
+        fluid_cell_info_ptr->entropy_density = fluid_cell.sd;
+        fluid_cell_info_ptr->temperature = fluid_cell.temperature;
+        fluid_cell_info_ptr->pressure = fluid_cell.pressure;
+        fluid_cell_info_ptr->vx = fluid_cell.vx;
+        fluid_cell_info_ptr->vy = fluid_cell.vy;
+        fluid_cell_info_ptr->vz = 0.0;  // eta_s = 0 slice
+        for (int i = 0; i < 4; i++) {
+          for (int j = 0; j < 4; j++) {
+            fluid_cell_info_ptr->pi[i][j] = fluid_cell.pi[i][j];
+          }
+        }
+        fluid_cell_info_ptr->bulk_Pi = fluid_cell.bulkPi;
+        StoreHydroEvolutionHistory(fluid_cell_info_ptr);
+      }
+    }
+  }
+  JSINFO << "Number of fluid cells passed to JETSCAPE: "
+         << bulk_info.data.size() << " (ntau = " << bulk_info.ntau
+         << ", nx = " << bulk_info.nx << ", ny = " << bulk_info.ny << ")";
+}
+#endif
 
 //! this function returns the thermodynamic and dynamical information at
 //! the given space-time point

@@ -555,7 +555,7 @@ void HydroinfoH5::readH5Dataset_double(hid_t id, string datasetName, double** ds
 
 void HydroinfoH5::getHydroinfoOnlattice(int frameIdx, int xIdx, int yIdx, hydrofluidCell* fluidCellptr)
 {
-   if(frameIdx < 0 || frameIdx > grid_Framenum || xIdx < 0 || xIdx > (grid_XH - grid_XL) || yIdx < 0 || yIdx > (grid_YH - grid_YL))
+   if(frameIdx < 0 || frameIdx >= grid_Framenum || xIdx < 0 || xIdx > (grid_XH - grid_XL) || yIdx < 0 || yIdx > (grid_YH - grid_YL))
    {
       cout << "Error: getHydroinfoOnlattice:: Index is wrong" << endl;
       cout << "frameIdx = " << frameIdx << " xIdx = " << xIdx 
@@ -568,23 +568,33 @@ void HydroinfoH5::getHydroinfoOnlattice(int frameIdx, int xIdx, int yIdx, hydrof
    fluidCellptr->vy = vy[frameIdx][xIdx][yIdx];
    fluidCellptr->temperature = Temperature[frameIdx][xIdx][yIdx];
    fluidCellptr->pressure = Pressure[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[0][0] = pi00[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[0][1] = pi01[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[0][2] = pi02[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[0][3] = pi03[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[1][0] = fluidCellptr->pi[0][1];
-   fluidCellptr->pi[1][1] = pi11[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[1][2] = pi12[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[1][3] = pi13[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[2][0] = fluidCellptr->pi[0][2];
-   fluidCellptr->pi[2][1] = fluidCellptr->pi[1][2];
-   fluidCellptr->pi[2][2] = pi22[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[2][3] = pi23[frameIdx][xIdx][yIdx];
-   fluidCellptr->pi[3][0] = fluidCellptr->pi[0][3];
-   fluidCellptr->pi[3][1] = fluidCellptr->pi[1][3];
-   fluidCellptr->pi[3][2] = fluidCellptr->pi[2][3];
-   fluidCellptr->pi[3][3] = pi33[frameIdx][xIdx][yIdx];
-   fluidCellptr->bulkPi = BulkPi[frameIdx][xIdx][yIdx];
+   if(Visflag == 1)
+   {
+      fluidCellptr->pi[0][0] = pi00[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[0][1] = pi01[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[0][2] = pi02[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[0][3] = pi03[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[1][0] = fluidCellptr->pi[0][1];
+      fluidCellptr->pi[1][1] = pi11[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[1][2] = pi12[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[1][3] = pi13[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[2][0] = fluidCellptr->pi[0][2];
+      fluidCellptr->pi[2][1] = fluidCellptr->pi[1][2];
+      fluidCellptr->pi[2][2] = pi22[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[2][3] = pi23[frameIdx][xIdx][yIdx];
+      fluidCellptr->pi[3][0] = fluidCellptr->pi[0][3];
+      fluidCellptr->pi[3][1] = fluidCellptr->pi[1][3];
+      fluidCellptr->pi[3][2] = fluidCellptr->pi[2][3];
+      fluidCellptr->pi[3][3] = pi33[frameIdx][xIdx][yIdx];
+      fluidCellptr->bulkPi = BulkPi[frameIdx][xIdx][yIdx];
+   }
+   else
+   {
+      for(int i=0; i<4; i++)
+         for(int j=0; j<4; j++)
+            fluidCellptr->pi[i][j] = 0.0e0;
+      fluidCellptr->bulkPi = 0.0e0;
+   }
 }
 
 

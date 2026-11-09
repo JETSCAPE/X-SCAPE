@@ -779,6 +779,13 @@ void HybridHadronization::DoHadronization(
     HH_thermal.clear();  // emptying the thermal partons if we're resampling
     std::vector<SurfaceCellInfo> surface_cells;
     GetHydroHyperSurface(hydro_Tc, surface_cells);
+    if (surface_cells.empty()) {
+      JSWARN << "HybridHadronization: no hypersurface cells at T = "
+             << hydro_Tc << " GeV; cannot sample thermal partons. "
+             << "Check that the hydro module stores its evolution in "
+             << "bulk_info.";
+      exit(1);
+    }
     /*std::cout << "\n\n     Surface Cells\n";
     for(int icel=0; icel<surface_cells.size(); ++icel){
         if(icel % int(surface_cells.size()/100) != 0){continue;}
