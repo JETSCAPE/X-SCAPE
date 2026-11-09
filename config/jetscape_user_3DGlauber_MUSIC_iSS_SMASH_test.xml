@@ -12,7 +12,7 @@
   <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
 
   <Random>
-    <seed>42</seed>
+    <seed>47</seed>
   </Random>
 
   <!-- Inital State Module  -->
@@ -112,17 +112,5 @@
       <number_of_repeated_sampling>1</number_of_repeated_sampling>
     </iSS>
   </SoftParticlization>
-
-  <!-- Hadronic Afterburner  -->
-  <Afterburner>
-    <!-- only the afterburner hadrons are written to a file -->
-    <!-- if fragmentation hadrons are not included in the afterburner they are also written  -->
-    <output_only_final_state_hadrons>1</output_only_final_state_hadrons>
-    <!-- SMASH -->
-    <SMASH>
-      <!-- time in fm/c in the computational frame, when the simulation shoud be ended -->
-      <end_time>2000.0</end_time>
-    </SMASH>
-  </Afterburner>
 
 </jetscape>

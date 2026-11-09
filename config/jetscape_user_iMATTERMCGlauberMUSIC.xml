@@ -7,12 +7,12 @@
   <setReuseHydro> false </setReuseHydro>
   <!-- <nReuseHydro> 10 </nReuseHydro> -->
 
-  <vlevel> 4 </vlevel>
+  <vlevel> 0 </vlevel>
 
   <nEvents> 10 </nEvents>
 
   <Random>
-    <seed>1</seed>
+    <seed>10</seed>
   </Random>
 
   <outputFilename>Test_Out</outputFilename>
