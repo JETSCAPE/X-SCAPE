@@ -439,6 +439,20 @@ void MCGlauberWrapper::ClearHardPartonMomentum() {
 }
 
 
+double MCGlauberWrapper::GetHardPartonEnergySubtracted() {
+    // total energy registered as going to hard partons this event, i.e.
+    // the amount subtracted from the projectile/target remnants in 3DGlauber
+    double e_subtracted = 0.0;
+    for (const auto &e : proj_parton_e_) {
+        if (e > 0.0) e_subtracted += e;
+    }
+    for (const auto &e : targ_parton_e_) {
+        if (e > 0.0) e_subtracted += e;
+    }
+    return e_subtracted;
+}
+
+
 void MCGlauberWrapper::OutputHardPartonMomentum(
         double t, double x, double y, double z,
         double E, double px, double py, double pz, int direction, double P_A) {

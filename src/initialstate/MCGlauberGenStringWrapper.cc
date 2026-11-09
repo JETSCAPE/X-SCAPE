@@ -15,6 +15,7 @@
 
 #include <string>
 #include <fstream>
+#include <iostream>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <vector>
@@ -23,6 +24,12 @@
 #include "MCGlauberGenStringWrapper.h"
 #include "JetScapeSignalManager.h"
 #include "JetScapeXML.h"
+
+// Diagnostic counters defined in src/jet/iMATTER.cc (temporary).
+extern int g_iMatter_nsplits;
+extern int g_iMatter_skip_initial_budget;
+extern int g_iMatter_skip_virtuality;
+extern int g_iMatter_skip_final_budget;
 
 // Register the module with the base class
 RegisterJetScapeModule<MCGlauberGenStringWrapper> MCGlauberGenStringWrapper::reg("MCGlauberGenString");
@@ -52,6 +59,24 @@ void MCGlauberGenStringWrapper::ExecuteTask() {
         // generate strings for MUSIC with wounded nucleons
         // for ISR setup (wound_nucleons=true) 
         ini->GenerateStrings(true, event_id_);
+
+        // Unconditional (not gated by the JSINFO/info logger flag) so this
+        // is always visible for cross-checking the average energy
+        // subtraction between different JETSCAPE-framework builds.
+        std::cout << "ENERGY_SUBTRACTED_EVENT "
+                  << ini->GetHardPartonEnergySubtracted() << " GeV"
+                  << std::endl;
+
+        std::cout << "IMATTER_SHOWER_STATS_XSCAPE"
+                  << " nsplits=" << g_iMatter_nsplits
+                  << " skip_initial_budget=" << g_iMatter_skip_initial_budget
+                  << " skip_virtuality=" << g_iMatter_skip_virtuality
+                  << " skip_final_budget=" << g_iMatter_skip_final_budget
+                  << std::endl;
+        g_iMatter_nsplits = 0;
+        g_iMatter_skip_initial_budget = 0;
+        g_iMatter_skip_virtuality = 0;
+        g_iMatter_skip_final_budget = 0;
 
         ini->ClearHardPartonMomentum();
     } catch (std::exception &err) {

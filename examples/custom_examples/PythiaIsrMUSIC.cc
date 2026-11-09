@@ -20,7 +20,7 @@
 #include <time.h>
 
 // Smash here to avoid conflicts
-#include "SmashWrapper.h"
+//#include "SmashWrapper.h"
 
 // JetScape Framework includes ...
 #include "JetScape.h"
@@ -136,7 +136,12 @@ int main(int argc, char** argv)
   double tMax = jetscape->GetXMLElementDouble({"Eloss", "maxT"});
 
   // iMatter showers negative virtuality partons from 0 => -tMax
-  isrJloss->SetDeltaT(-0.1); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax);
+  // ISR deltaT matched to C-SCAPE-COMP's <ISR><deltaT> for a fair end-to-end
+  // comparison (X-SCAPE's IsrJet does not read this from XML at all -- see
+  // IsrJet::InitTask()'s "everything set not via XML for now" -- so this is
+  // the only place it's controlled; C-SCAPE-COMP's IsrJet.cc does read
+  // {"ISR","deltaT"} from XML, so no code change is needed on that side).
+  isrJloss->SetDeltaT(-1.0); isrJloss->SetStartT(0); isrJloss->SetMaxT(-tMax);
   iMatter->SetMaxT(-tMax);
 
   auto MCGsecond = make_shared<MCGlauberGenStringWrapper>();
@@ -171,8 +176,8 @@ int main(int argc, char** argv)
   jetscape->Add(hadroMgr);
 
   // Hadronic afterburner (SMASH)
-  auto smash = make_shared<SmashWrapper>();
-  jetscape->Add(smash);
+  //auto smash = make_shared<SmashWrapper>();
+  //jetscape->Add(smash);
 
   // Output writer and filename setup from XML ...
   std::string outputFilename = jetscape->GetXMLElementText({"outputFilename"});

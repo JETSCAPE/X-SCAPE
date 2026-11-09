@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+
+<jetscape>
+
+    <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
+
+    <setReuseHydro> false </setReuseHydro>
+    <!-- <nReuseHydro> 10 </nReuseHydro> -->
+
+    <vlevel> 0 </vlevel> <!--Sets verbosity of Jetscape output-->
+
+    <nEvents>1</nEvents>
+
+    <cross_section>42</cross_section>
+    <proj_A>2</proj_A>
+    <targ_A>197</targ_A>
+    <!-- <proj_A>1</proj_A>
+    <targ_A>1</targ_A> -->
+
+    <Random>
+        <seed>162</seed>
+    </Random>
+
+    <outputFilename>Test_Out</outputFilename>
+    <!-- <outputFilename>/wsu/home/hq/hq66/hq6661/Testing_dAu_Single_Event/d-Au_3dGlauber_iMatter_MUSIC_Matter_200GeV_bin_results_1/d-Au_3dGlauber_iMatter_MUSIC_Matter_200GeV_bin_results_1</outputFilename> -->
+    <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+    <JetScapeWriterFinalStatePartonsAscii> off </JetScapeWriterFinalStatePartonsAscii>
+    <JetScapeWriterAscii> off </JetScapeWriterAscii>
+    <write_pthat> 1 </write_pthat> <!-- Write pthat event by event for reweighting procedure -->
+    
+    <!--Initial conditions using MCGlauber-->
+    <IS>
+        <!--Note that the beam information must be set in the MCGlauber configuration file after building XSCAPE-->
+        <MCGlauber>
+            <!--0: generates full event with binary collisions and strings-->
+            <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
+            <generateOnlyPositions>1</generateOnlyPositions>
+             <projectile>d</projectile>
+            <target>Au</target>
+            <sqrts>200</sqrts>
+            <b_max>20.0</b_max>
+            <ylossParam4At2> 1.62 </ylossParam4At2>
+            <ylossParam4At4> 1.98 </ylossParam4At4>
+            <ylossParam4At6> 2.201 </ylossParam4At6>
+            <ylossParam4var> 0.354 </ylossParam4var>
+            <remnant_energy_loss_fraction>0.5</remnant_energy_loss_fraction>
+            <!-- Set to 0 to run with no energy subtraction, 1 to run with -->
+            <Subtract_hard_momentum>1</Subtract_hard_momentum>
+        </MCGlauber>
+    </IS>
+
+    <!--Hard Process-->
+    <Hard>
+        <PythiaGun>
+            <pTHatMin> 5. </pTHatMin>
+            <pTHatMax> -1 </pTHatMax>
+            <multi_scatter>1</multi_scatter>
+            <eCM> 200.0 </eCM>
+            <LinesToRead>
+                HardQCD:all = on
+                PromptPhoton:all = off
+                PartonLevel:MPI = on
+                PartonLevel:FSR = off
+                PartonLevel:ISR = off
+                PhaseSpace:bias2Selection = off
+                SigmaProcess:alphaSvalue = 0.1661
+                MultipartonInteractions:alphaSvalue = 0.1661
+                MultipartonInteractions:pTmin = 4.99
+                PDF:useHardNPDFB = off
+                Print:quiet = on
+            </LinesToRead>
+        </PythiaGun>
+    </Hard>
+
+    <!--Pre-equilibrium necessary for hydro-->
+    <Preequilibrium>
+        <NullPreDynamics> </NullPreDynamics>
+        <evolutionInMemory>0</evolutionInMemory> <!-- Must be set to zero for null predynamics -->
+    </Preequilibrium>
+
+    <!--Hydro Module-->
+    <Hydro>
+        <MUSIC>
+            <InitialProfile>13</InitialProfile>
+            <Initial_time_tau_0>0.232</Initial_time_tau_0>
+            <string_source_sigma_x>0.287</string_source_sigma_x>
+            <string_source_sigma_eta>0.393</string_source_sigma_eta>
+            <stringPreEqFlowFactor>0.13</stringPreEqFlowFactor>
+            <output_evolution_to_file>0</output_evolution_to_file>
+            <output_evolution_to_memory>1</output_evolution_to_memory>
+            <surface_in_memory>1</surface_in_memory>
+            <!-- Shear Viscosity-->
+            <shear_viscosity_eta_over_s>0.08</shear_viscosity_eta_over_s>
+            <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
+            <shear_viscosity_2_curv>-0.48</shear_viscosity_2_curv>
+            <shear_viscosity_2_slope>1.11</shear_viscosity_2_slope>
+            <shear_viscosity_2_min>0.081</shear_viscosity_2_min>
+            <shear_viscosity_3_T_kink_in_GeV>0.229</shear_viscosity_3_T_kink_in_GeV>
+            <shear_viscosity_3_at_kink>0.41</shear_viscosity_3_at_kink>
+            <shear_viscosity_3_low_T_slope_in_GeV>0</shear_viscosity_3_low_T_slope_in_GeV>
+            <shear_viscosity_3_high_T_slope_in_GeV>0</shear_viscosity_3_high_T_slope_in_GeV>
+            <!-- Bulk Viscosity-->
+            <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
+            <bulk_viscosity_2_normalisation>0.052</bulk_viscosity_2_normalisation>
+            <bulk_viscosity_2_width_in_GeV>0.022</bulk_viscosity_2_width_in_GeV>
+            <bulk_viscosity_2_peak_in_GeV>0.183</bulk_viscosity_2_peak_in_GeV>
+            <bulk_viscosity_3_max>0.055</bulk_viscosity_3_max>
+            <bulk_viscosity_3_T_peak_in_GeV>0.232</bulk_viscosity_3_T_peak_in_GeV>
+            <bulk_viscosity_3_width_in_GeV>0.02</bulk_viscosity_3_width_in_GeV>
+            <bulk_viscosity_3_lambda_asymm>-0.334</bulk_viscosity_3_lambda_asymm>
+            <shear_viscosity_3_low_T_slope_in_GeV>-1.705</shear_viscosity_3_low_T_slope_in_GeV>
+            <shear_viscosity_3_high_T_slope_in_GeV>1.880</shear_viscosity_3_high_T_slope_in_GeV>
+            <freezeout_temperature>0.150</freezeout_temperature>
+            <eps_switch>0.476</eps_switch>
+            <output_evolution_every_N_timesteps>20</output_evolution_every_N_timesteps> <!--Default is one but this is expensive! Change to 20 -->
+        </MUSIC>
+    </Hydro>
+
+     <!--Eloss Modules (Matter)-->
+    <Eloss>
+        <maxT> 150 </maxT>
+        <Matter>
+            <Q0> 2.0 </Q0> <!--Set to 1.0 for pp and 2.0 for all others-->
+            <in_vac> 1 </in_vac>
+            <vir_factor> 0.25 </vir_factor>
+            <recoil_on> 0 </recoil_on>
+            <broadening_on> 0 </broadening_on>
+            <brick_med> 0 </brick_med>
+            <QhatParametrizationType> 0 </QhatParametrizationType>
+            <qhat0> 0 </qhat0>
+            <alphas> 0.25 </alphas>
+        </Matter>
+    </Eloss>
+
+    <!--Jet Hadronization-->
+    <JetHadronization>
+        <name> colorless </name> <!-- Does not matter for PythiaIsrMUSIC executable -->
+        <eCMforHadronization> 200 </eCMforHadronization>
+        <LinesToRead> 
+            HadronLevel:Decay = off
+        </LinesToRead> 
+    </JetHadronization>
+
+    <SoftParticlization>
+        <iSS>
+            <number_of_repeated_sampling>1</number_of_repeated_sampling>
+            <Perform_resonance_decays>0</Perform_resonance_decays> <!-- Decays off for now -->
+            <hydro_mode>2</hydro_mode>
+            <afterburner_type>2</afterburner_type><!--Use URQMD=1 SMASH=2-->
+        </iSS>
+    </SoftParticlization>
+
+    <Afterburner>
+    <!-- fragmentation hadrons in the afterburner only possible with hybrid hadronization -->
+    <include_fragmentation_hadrons>0</include_fragmentation_hadrons>
+    <!-- only the afterburner hadrons are written to a file -->
+    <!-- if fragmentation hadrons are not included in the afterburner they are also written  -->
+    <output_only_final_state_hadrons>1</output_only_final_state_hadrons>
+    <!-- SMASH -->
+    <SMASH>
+      <name>SMASH</name>
+      <SMASH_config_file>../external_packages/smash/smash_config.yaml</SMASH_config_file>
+      <SMASH_particles_file>../external_packages/smash/smash_code/input/particles.txt</SMASH_particles_file>
+      <SMASH_decaymodes_file>../external_packages/smash/smash_code/input/decaymodes.txt</SMASH_decaymodes_file>
+      <!-- time in fm/c in the computational frame, when the simulation shoud be ended -->
+      <end_time>1000.0</end_time>
+      <!-- 0 - run the full afterburner, 1 - only decay the resonances without even propagation -->
+      <only_decays>0</only_decays>
+    </SMASH>
+  </Afterburner>
+
+</jetscape>

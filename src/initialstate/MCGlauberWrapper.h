@@ -88,6 +88,7 @@ public:
   void ClearHardPartonMomentum();
   void GetHardPartonPosAndMomentumProj();
   void GetHardPartonPosAndMomentumTarg();
+  double GetHardPartonEnergySubtracted();
   std::vector<double> Get_projectile_nucleon_z_lab();
   std::vector<double> Get_target_nucleon_z_lab();
   std::vector<double> Get_quarks_pos_proj_lab(double t, double x,

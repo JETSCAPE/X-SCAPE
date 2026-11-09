@@ -77,6 +77,12 @@ public:
   */
   virtual double GetEventCentrality() { return -1; };
 
+  /** Total energy (GeV) subtracted from the initial-state nucleons/remnants
+      because it was allocated to hard partons this event.
+      To be overwritten by implementations that have such information.
+  */
+  virtual double GetHardPartonEnergySubtracted() { return -1; };
+
   // one can set range by hand if not read from xml file
   /** Sets the range of the coordinates (xmax, ymax, zmax).
       @param xmax Maximum value of the coordinate x in the nuclear density profile.

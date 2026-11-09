@@ -55,6 +55,14 @@ double y[] = {0.0,0.0,0.0,0.0};
 
 const Parton initial(0,21,0,0.0,0.0,0.0,0.0,y) ; // a gluon with no momentum at the origin.
 
+// Diagnostic counters (temporary): track how many backward-evolution splits
+// actually complete per event, vs. how many get skipped and why, to compare
+// against C-SCAPE-COMP's equivalent shower budget accounting.
+int g_iMatter_nsplits = 0;
+int g_iMatter_skip_initial_budget = 0;
+int g_iMatter_skip_virtuality = 0;
+int g_iMatter_skip_final_budget = 0;
+
 iMATTER::iMATTER(): Parent(initial) , Sibling(initial) , Current(initial)
 {   
   SetId("iMATTER");
@@ -110,7 +118,7 @@ void iMATTER::InitTask()
     {
         throw std::runtime_error("iMatter cannot find the pdfdata folder of pythia. Tried looking in " + pdfpath.str());
     }
-    pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str(), &info); /// Assuming its a proton
+    pdf = new Pythia8::LHAGrid1( 2212, "20", pdfpath.str().c_str()); /// Assuming its a proton
     
 
     // Setup the quadrature rules for calculating the z_distribution 
@@ -417,6 +425,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             if(TotalMomentumFraction >= 1. || TotalMomentum >= P_A) {
                 VERBOSE(2) << " Current TotalMomentumFraction = " << TotalMomentumFraction << " is larger than 1";
                 VERBOSE(2) << " P_A = " << P_A;
+                g_iMatter_skip_initial_budget++;
                 goto SkipSampling;
             }
             TotalMomentum         -= Current.e();
@@ -453,7 +462,20 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
 
             double max_t2 = zb_frac * zb_frac * max_t / z_frac;
 
+            // Diagnostic: does C-SCAPE-COMP's collapsed (event-wide scalar,
+            // vs X-SCAPE's per-scattering vector) TotalMomentumFraction
+            // inflate MomentumFractionCurrent and shrink the virtuality
+            // window enough to explain its ~2x higher skip_virtuality rate?
+            std::cout << "VIRT_CHECK_XSCAPE"
+                      << " TotalMomentumFraction=" << TotalMomentumFraction
+                      << " MomentumFractionCurrent=" << MomentumFractionCurrent
+                      << " max_t=" << max_t << " max_t2=" << max_t2
+                      << " Q0sq=" << (Q0 * Q0)
+                      << " willskip=" << ((max_t <= Q0 * Q0 || max_t2 <= Q0 * Q0) ? 1 : 0)
+                      << std::endl;
+
             if(max_t <= Q0 * Q0 || max_t2 <= Q0 * Q0){
+                g_iMatter_skip_virtuality++;
                 goto SkipSampling;
             }
 
@@ -515,6 +537,7 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             VERBOSE(2) << BOLDYELLOW << "NewTotMomFract " << NewTotMomFract << " NewTotMom " << NewTotMom << " P_A "<< P_A;
             if(NewTotMomFract >= 1. || NewTotMom >= P_A ){
                 VERBOSE(2) << BOLDYELLOW << "Skipped iMATTER split because no energy is available in the proton eCM";
+                g_iMatter_skip_final_budget++;
                 goto SkipSampling;
             }
             
@@ -595,10 +618,11 @@ void iMATTER::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>
             Sibling.set_hard_scattering(pIn[in].hard_scattering());
             Parent.set_hard_scattering(pIn[in].hard_scattering());
 
+            g_iMatter_nsplits++;
             pOut.push_back(pIn[in]);
             pOut.push_back(Sibling);
             pOut.push_back(Parent);
-            
+
             int iout = pOut.size()-1 ;
             
             // pOut[iout].set_t(t);

@@ -418,12 +418,16 @@ void PythiaIsrGun::ExecuteTask() {
     SetTotalMomentumFractionPositive(0.0, iscatt);
     SetTotalMomentumFractionNegative(0.0, iscatt);
     double TotalEnergyOfInitialStatePartons = 0.0;
+    int n_summed_status_21 = 0;
+    int n_summed_status_31 = 0;
 
     for (int np = 0; np < p62.size(); ++np) {
       Pythia8::Particle &particle = p62.at(np);
 
         if (particle.status()==-21 || particle.status()==-31 )
         {
+            if (particle.status() == -21) n_summed_status_21++;
+            else n_summed_status_31++;
             TotalEnergyOfInitialStatePartons += particle.e();
             if(particle.pz() >= 0.0) {
               JSINFO << MAGENTA << "POSITIVE particle (e, pz): " << "(" << particle.e() << ", " << particle.pz() << ")";
@@ -439,6 +443,16 @@ void PythiaIsrGun::ExecuteTask() {
               }
         }
     }
+    // Diagnostic: how many partons get counted as "hard" (status -21 = leading
+    // 2->2 process, -31 = incoming of an MPI subprocess) and their summed E,
+    // to check whether X-SCAPE is more MPI-inclusive than C-SCAPE-COMP's
+    // topologically-matched 2-in/2-out vertex selection.
+    std::cout << "PARTON_SELECT_XSCAPE iscatt=" << iscatt
+              << " n_p62=" << p62.size()
+              << " n_status21=" << n_summed_status_21
+              << " n_status31=" << n_summed_status_31
+              << " E_total=" << TotalEnergyOfInitialStatePartons << " GeV"
+              << std::endl;
 
     VERBOSE(2) << "Negative Partons Momentum "<< GetTotalMomentumNegative(iscatt)
             << " Positive Partons Momentum "<< GetTotalMomentumPositive(iscatt)
