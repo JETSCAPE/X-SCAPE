@@ -408,6 +408,28 @@ class LiquefierBase {
                   Jetscape::real eta, std::array<Jetscape::real, 4> &jmu) const;
 
   /**
+   * @brief get_source() for every cell of a grid at one query time.
+   *
+   * For a hydro that fills its whole grid at a time: instead of asking every
+   * cell about every droplet, each droplet is evaluated only on the cells
+   * inside its future light cone (a few hundred, where the grid has
+   * millions).  The values are those of get_source(tau, x[ix], y[iy],
+   * eta[ieta], .), bit for bit: the same tests and kernel calls with the
+   * same arguments, each cell adding its droplets in the same order.
+   *
+   * @param tau Query time
+   * @param x, y, eta Cell centres as the hydro computes them, ascending
+   * @param cells Out: (ix, iy, ieta) of each cell with a non-zero source,
+   * three entries per cell, each cell once; every other cell is exactly zero
+   * @param jmu Out: the source of these cells, four entries per cell
+   */
+  void get_source_on_grid(Jetscape::real tau, const std::vector<double> &x,
+                          const std::vector<double> &y,
+                          const std::vector<double> &eta,
+                          std::vector<int> &cells,
+                          std::vector<Jetscape::real> &jmu) const;
+
+  /**
    * @brief Get hadronic source term at a given space-time point.
    * @note Functions for the hadronic droplet sources, overriden in derived
    * HadronicLiquefier class.

@@ -27,6 +27,7 @@
 #include "JetScapeConstants.h"
 #include "MakeUniqueHelper.h"
 #include <string>
+#include <vector>
 
 using namespace Jetscape;
 
@@ -244,6 +245,40 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
         j_mu[i] += jmu_tmp[i] / hbarC / dtau;
       }
     }
+  }
+
+  //! The energy source of every cell of MUSIC's grid at one query time
+  //! (MUSIC4GPU HydroSourceBase::get_hydro_energy_source_on_grid; no
+  //! `override`, so this also compiles against a MUSIC without it).  Each
+  //! droplet is evaluated on the cells inside its light cone only
+  //! (LiquefierBase::get_source_on_grid), not at every cell of the grid; the
+  //! values are those of get_hydro_energy_source(), bit for bit.  cells:
+  //! (ix, iy, ieta) per cell with a non-zero source, j_mu: its four
+  //! components; all other cells are exactly zero.  Returns false -- MUSIC
+  //! then asks cell by cell -- with a hadronic liquefier, which has charge
+  //! sources and no grid version.
+  bool get_hydro_energy_source_on_grid(const double tau,
+                                       const std::vector<double> &x,
+                                       const std::vector<double> &y,
+                                       const std::vector<double> &eta_s,
+                                       std::vector<int> &cells,
+                                       std::vector<double> &j_mu) const {
+    cells.clear();
+    j_mu.clear();
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) return false;
+    if (weak_ptr_is_uninitialized(liquefier_ptr)) return true;  // no source
+    std::vector<Jetscape::real> jmu_tmp;
+    if (liquefier_step_) {
+      liquefier_step_->get_source_on_grid(tau, x, y, eta_s, cells, jmu_tmp);
+    } else {
+      liquefier_ptr.lock()->get_source_on_grid(tau, x, y, eta_s, cells,
+                                               jmu_tmp);
+    }
+    j_mu.resize(jmu_tmp.size());
+    for (std::size_t i = 0; i < jmu_tmp.size(); i++) {
+      j_mu[i] = jmu_tmp[i] / hbarC;  // from GeV/fm^4 to 1/fm^5
+    }
+    return true;
   }
 
   //! these functions return the B, Q, S density source terms at a given point

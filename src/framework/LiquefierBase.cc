@@ -303,6 +303,185 @@ void LiquefierBase::reset_normalization() {
   flux_max_ = 0.;
 }
 
+// get_source() for a whole grid.  A droplet can only be non-zero at a cell
+// that in_light_cone() accepts, i.e. within the transverse radius R,
+//   R^2 = tau^2 + tau_d^2 - 2 tau tau_d cosh(eta - eta_d),
+// of the droplet in that eta slice.  Only the cells of that disc's bounding
+// box are visited, and each of them goes through the very same
+// in_light_cone() and smearing_kernel() calls as in get_source(), so the
+// box only has to be large enough (it is padded for the float arithmetic of
+// in_light_cone()).  Slices run in parallel; within a slice the droplets are
+// visited in list order, so every cell sums them in the order of
+// get_source().  Contributions that are exactly zero are left out: adding
+// +0 changes no sum.
+void LiquefierBase::get_source_on_grid(Jetscape::real tau,
+                                       const std::vector<double> &x,
+                                       const std::vector<double> &y,
+                                       const std::vector<double> &eta,
+                                       std::vector<int> &cells,
+                                       std::vector<Jetscape::real> &jmu) const {
+  cells.clear();
+  jmu.clear();
+  const int nx = static_cast<int>(x.size());
+  const int ny = static_cast<int>(y.size());
+  const int neta = static_cast<int>(eta.size());
+  if (nx == 0 || ny == 0 || neta == 0)
+    return;
+
+  // the droplets get_source() visits at this time, in its order
+  const bool pruned = (tau >= active_tau_lo_ && tau <= active_tau_hi_);
+  const std::size_t n_loop =
+      pruned ? active_droplets_.size() : dropletlist.size();
+  std::vector<std::size_t> drops;
+  for (std::size_t k = 0; k < n_loop; k++) {
+    const std::size_t idx = pruned ? active_droplets_[k] : k;
+    if (droplet_norm_[idx] == 0.0)
+      continue;  // deposited as a point (below) or lost off the grid
+    if (!(tau >= dropletlist[idx].get_xmu()[0]))
+      continue;  // in_light_cone() is false at every cell
+    drops.push_back(idx);
+  }
+  // the point deposits due at this time (the time test of get_source())
+  std::vector<const PointDeposit *> points;
+  for (const auto &pd : point_deposits_) {
+    if (std::abs(tau - pd.tau_q) < 0.5 * pd.dtau)
+      points.push_back(&pd);
+  }
+  if (drops.empty() && points.empty())
+    return;
+
+  // Padding of the boxes: the cell coordinates reach the tests as floats.
+  const double span =
+      std::max({std::abs(x.front()), std::abs(x.back()), std::abs(y.front()),
+                std::abs(y.back()), 1.0});
+  const double pad = 1e-5 * span;
+  // [first, last] index of the coordinates within [lo, hi]
+  auto index_range = [](const std::vector<double> &v, double lo, double hi,
+                        int &i0, int &i1) {
+    i0 = static_cast<int>(std::lower_bound(v.begin(), v.end(), lo) - v.begin());
+    i1 = static_cast<int>(std::upper_bound(v.begin(), v.end(), hi) - v.begin()) -
+         1;
+  };
+
+  const auto &g = hydro_grid_;
+  const double tau_d = static_cast<double>(tau);
+  std::vector<std::vector<int>> slice_cells(neta);
+  std::vector<std::vector<Jetscape::real>> slice_jmu(neta);
+
+#pragma omp parallel
+  {
+    // this thread's (x, y) plane: the sums, and which cells have one
+    std::vector<Jetscape::real> acc;
+    std::vector<char> hit;
+    std::vector<int> touched;
+
+#pragma omp for schedule(dynamic)
+    for (int ie = 0; ie < neta; ie++) {
+      const Jetscape::real eta_r = static_cast<Jetscape::real>(eta[ie]);
+      touched.clear();
+      auto touch = [&](int ix, int iy) {
+        if (acc.empty()) {
+          acc.assign(static_cast<std::size_t>(4) * nx * ny, 0.0);
+          hit.assign(static_cast<std::size_t>(nx) * ny, 0);
+        }
+        const int c = ix * ny + iy;
+        if (!hit[c]) {
+          hit[c] = 1;
+          touched.push_back(c);
+        }
+        return c;
+      };
+
+      for (const std::size_t idx : drops) {
+        const auto &drop_i = dropletlist[idx];
+        const auto xd = drop_i.get_xmu();
+        const double t0 = xd[0];
+        const double R2 = tau_d * tau_d + t0 * t0 -
+                          2.0 * tau_d * t0 * cosh(static_cast<double>(eta_r) - xd[3]);
+        // in_light_cone() evaluates this in float: allow for its rounding
+        const double tol = 1e-4 * (tau_d * tau_d + t0 * t0 + 1.0);
+        if (!(R2 >= -tol))
+          continue;
+        const double R = std::sqrt(std::max(R2, 0.0) + tol) + pad;
+        int ix0, ix1, iy0, iy1;
+        index_range(x, xd[1] - R, xd[1] + R, ix0, ix1);
+        index_range(y, xd[2] - R, xd[2] + R, iy0, iy1);
+        const double norm = droplet_norm_[idx];
+        for (int ix = ix0; ix <= ix1; ix++) {
+          const Jetscape::real x_r = static_cast<Jetscape::real>(x[ix]);
+          for (int iy = iy0; iy <= iy1; iy++) {
+            const Jetscape::real y_r = static_cast<Jetscape::real>(y[iy]);
+            if (!in_light_cone(tau, x_r, y_r, eta_r, drop_i))
+              continue;
+            std::array<Jetscape::real, 4> jmu_i = {0.0, 0.0, 0.0, 0.0};
+            smearing_kernel(tau, x_r, y_r, eta_r, drop_i, jmu_i);
+            if (jmu_i[0] == 0.0 && jmu_i[1] == 0.0 && jmu_i[2] == 0.0 &&
+                jmu_i[3] == 0.0)
+              continue;
+            Jetscape::real *a = &acc[4 * static_cast<std::size_t>(touch(ix, iy))];
+            if (norm == 1.0) {  // not normalized: as get_source()
+              for (int i = 0; i < 4; i++)
+                a[i] += jmu_i[i];
+            } else {
+              for (int i = 0; i < 4; i++)
+                a[i] += static_cast<Jetscape::real>(norm * jmu_i[i]);
+            }
+          }
+        }
+      }
+
+      for (const PointDeposit *pd : points) {
+        if (!(std::abs(eta_r - pd->eta) < 0.5 * g.deta))
+          continue;
+        int ix0, ix1, iy0, iy1;
+        index_range(x, pd->x - 0.5 * g.dx - pad, pd->x + 0.5 * g.dx + pad, ix0,
+                    ix1);
+        index_range(y, pd->y - 0.5 * g.dy - pad, pd->y + 0.5 * g.dy + pad, iy0,
+                    iy1);
+        const auto p = dropletlist[pd->idx].get_pmu();
+        const double ch = cosh(pd->eta), sh = sinh(pd->eta);
+        const double w = 1.0 / (pd->tau_q * pd->dtau * g.dx * g.dy * g.deta);
+        for (int ix = ix0; ix <= ix1; ix++) {
+          const Jetscape::real x_r = static_cast<Jetscape::real>(x[ix]);
+          if (!(std::abs(x_r - pd->x) < 0.5 * g.dx))
+            continue;
+          for (int iy = iy0; iy <= iy1; iy++) {
+            const Jetscape::real y_r = static_cast<Jetscape::real>(y[iy]);
+            if (!(std::abs(y_r - pd->y) < 0.5 * g.dy))
+              continue;
+            Jetscape::real *a = &acc[4 * static_cast<std::size_t>(touch(ix, iy))];
+            a[0] += static_cast<Jetscape::real>(w * (p[0] * ch - p[3] * sh));
+            a[1] += static_cast<Jetscape::real>(w * p[1]);
+            a[2] += static_cast<Jetscape::real>(w * p[2]);
+            a[3] += static_cast<Jetscape::real>(w * (p[3] * ch - p[0] * sh));
+          }
+        }
+      }
+
+      // hand over this slice's cells (in a fixed order) and clear the plane
+      std::sort(touched.begin(), touched.end());
+      auto &out_c = slice_cells[ie];
+      auto &out_j = slice_jmu[ie];
+      for (const int c : touched) {
+        Jetscape::real *a = &acc[4 * static_cast<std::size_t>(c)];
+        if (a[0] != 0.0 || a[1] != 0.0 || a[2] != 0.0 || a[3] != 0.0) {
+          out_c.push_back(c / ny);
+          out_c.push_back(c % ny);
+          out_c.push_back(ie);
+          out_j.insert(out_j.end(), a, a + 4);
+        }
+        a[0] = a[1] = a[2] = a[3] = 0.0;
+        hit[c] = 0;
+      }
+    }
+  }
+
+  for (int ie = 0; ie < neta; ie++) {
+    cells.insert(cells.end(), slice_cells[ie].begin(), slice_cells[ie].end());
+    jmu.insert(jmu.end(), slice_jmu[ie].begin(), slice_jmu[ie].end());
+  }
+}
+
 void LiquefierBase::set_hydro_grid(const HydroGrid &grid) {
   if (grid == hydro_grid_)
     return;
