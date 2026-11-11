@@ -16,9 +16,12 @@
 # using a commit from the iSS repository that is compatible with the current X-SCAPE version
 # (jhputschke/iSS smash_ready: chunshen1987/iSS XSCAPE d242555 + the FSSW yield-loop
 # speed-ups + correlated sampling (iSS_optim) + decays of the SMASH hadron list and the
-# undecayed primaries (decay_smash_list, keep_primaries), until they are merged upstream)
+# undecayed primaries (decay_smash_list, keep_primaries), until they are merged upstream;
+# and, one commit on top, on its branch sampling_omp: the correlated sampling and the
+# surface preparation on OpenMP threads (OMP_NUM_THREADS), bit-identical at any thread
+# count -- 2.4 -> 0.43 s per surface at 10 threads; the uncorrelated sampling is unchanged)
 folderName="iSS"
-commitHash="6ac0333125f2a8521120eb4580e828cde428166e"
+commitHash="0be6daf4cdf6274545b4756a6c01fae8a8a2d809"
 
 git clone https://github.com/jhputschke/iSS -b smash_ready iSS
 cd $folderName
