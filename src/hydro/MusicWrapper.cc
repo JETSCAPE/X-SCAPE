@@ -28,6 +28,7 @@
 
 #include "JetScapeLogger.h"
 #include "MusicWrapper.h"
+#include "CausalLiquefier.h"
 #include "surfaceCell.h"
 #include "music_logo.h"
 
@@ -661,7 +662,7 @@ void MpiMusic::EvolveHydro() {
       ResolveRestartFrom();
     }
 #if defined(USE_CUDA) || defined(USE_METAL)
-    music_hydro_ptr->set_checkpoint_tau(checkpoint_tau_);
+    music_hydro_ptr->set_checkpoint_tau(CheckpointTauForMusic());
     if (restart_from_ != nullptr) {
       auto checkpoint = restart_from_->music_hydro_ptr->get_checkpoint();
       if (checkpoint && checkpoint->valid) {
@@ -830,11 +831,19 @@ void MpiMusic::ReadRestartSettings() {
   if (auto *el = OwnMusicBlockElement("checkpoint_tau")) {
     el->QueryDoubleText(&checkpoint_tau_);
   }
+  // the liquefier's deposit schedule, for CheckpointTauForMusic()
+  liquefier_tau_delay_ = 0.;
+  liquefier_dtau_ = 0.;
+  auto *delay_el = JetScapeXML::Instance()->GetElement(
+      {"Liquefier", "CausalLiquefier", "tau_delay"}, false);
+  if (delay_el != nullptr) delay_el->QueryDoubleText(&liquefier_tau_delay_);
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Liquefier", "CausalLiquefier", "dtau"}, false)) {
+    el->QueryDoubleText(&liquefier_dtau_);
+  }
   if (checkpoint_tau_ <= 0. && restart_source) {
-    auto *el = JetScapeXML::Instance()->GetElement(
-        {"Liquefier", "CausalLiquefier", "tau_delay"}, false);
-    if (el != nullptr) {
-      el->QueryDoubleText(&checkpoint_tau_);
+    if (delay_el != nullptr) {
+      checkpoint_tau_ = liquefier_tau_delay_;
     } else {
       JSWARN << "MUSIC " << GetId() << ": an instance restarts from this one "
              << "but there is neither <checkpoint_tau> in its block nor a "
@@ -853,6 +862,40 @@ void MpiMusic::ReadRestartSettings() {
            << "need music4gpu (CUDA or Metal); CPU MUSIC ignores them.";
   }
 #endif
+}
+
+// The checkpoint time handed to MUSIC.  A jet leg takes a checkpoint only if
+// its jet source reports nothing for every step before the checkpoint's: MUSIC
+// replays the per-step test of HydroSourceJETSCAPE, which keeps a droplet from
+// two steps plus CausalLiquefier::deposit_half_width() before its deposit time
+// on.  A droplet made at the hard vertex (tau = 0) deposits at tau_delay.  A
+// checkpoint whose step ends less than that half width before tau_delay is
+// therefore refused by every event with such a droplet -- two of six Pb+Pb
+// Z+jet events, which then ran from tau0 -- although it gains a few steps at
+// most.  So a checkpoint time in that last stretch up to tau_delay, which
+// includes the default and set_checkpoint_tau(tau_delay), is moved to the
+// start of the stretch.  An earlier time, or one after tau_delay (which only
+// events without early droplets can use), is taken as given.
+double MpiMusic::CheckpointTauForMusic() {
+  double tau = checkpoint_tau_;
+  if (tau > 0. && liquefier_tau_delay_ > 0.) {
+    // the largest step of the schedule, as the liquefier sees it
+    const double step = std::max({music_hydro_ptr->get_hydro_dtau_grid(),
+                                  late_delta_tau_, liquefier_dtau_});
+    const double safe =
+        liquefier_tau_delay_ - CausalLiquefier::half_width(step) - 1e-6;
+    if (tau > safe && tau <= liquefier_tau_delay_ + 1e-9) tau = safe;
+  }
+  if (tau != reported_checkpoint_tau_) {
+    reported_checkpoint_tau_ = tau;
+    if (tau != checkpoint_tau_) {
+      JSINFO << "MUSIC " << GetId() << ": checkpoint at tau <= " << tau
+             << " fm/c, not " << checkpoint_tau_ << ": a droplet made at the "
+             << "hard vertex is in reach of the jet source from there on "
+             << "(tau_delay " << liquefier_tau_delay_ << " fm/c).";
+    }
+  }
+  return tau;
 }
 
 // <restart_from>: the instance of that id, once (at the first evolution, when

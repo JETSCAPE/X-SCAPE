@@ -83,7 +83,13 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   }
   //! the widest window of the schedule: the exact cut is deposit_window()
   double deposit_half_width() const override {
-    return 0.5 * std::max(dtau, std::max(dtau0_, dtau_late_)) + 1e-3;
+    return half_width(std::max(dtau, std::max(dtau0_, dtau_late_)));
+  }
+  //! deposit_half_width() for a largest hydro step: half of it, and 1e-3 fm
+  //! for tau reaching get_source() as a float.  (Also MpiMusic's default
+  //! checkpoint time, which has to stay this far before tau_delay.)
+  static double half_width(double largest_step) {
+    return 0.5 * largest_step + 1e-3;
   }
 
   // The hydro's step schedule (MUSIC late_delta_tau): dtau is the step in

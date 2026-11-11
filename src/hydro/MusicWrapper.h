@@ -27,6 +27,7 @@
 #include "JetScapeConstants.h"
 #include "MakeUniqueHelper.h"
 #include <string>
+#include <vector>
 
 using namespace Jetscape;
 
@@ -246,6 +247,40 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
     }
   }
 
+  //! The energy source of every cell of MUSIC's grid at one query time
+  //! (MUSIC4GPU HydroSourceBase::get_hydro_energy_source_on_grid; no
+  //! `override`, so this also compiles against a MUSIC without it).  Each
+  //! droplet is evaluated on the cells inside its light cone only
+  //! (LiquefierBase::get_source_on_grid), not at every cell of the grid; the
+  //! values are those of get_hydro_energy_source(), bit for bit.  cells:
+  //! (ix, iy, ieta) per cell with a non-zero source, j_mu: its four
+  //! components; all other cells are exactly zero.  Returns false -- MUSIC
+  //! then asks cell by cell -- with a hadronic liquefier, which has charge
+  //! sources and no grid version.
+  bool get_hydro_energy_source_on_grid(const double tau,
+                                       const std::vector<double> &x,
+                                       const std::vector<double> &y,
+                                       const std::vector<double> &eta_s,
+                                       std::vector<int> &cells,
+                                       std::vector<double> &j_mu) const {
+    cells.clear();
+    j_mu.clear();
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) return false;
+    if (weak_ptr_is_uninitialized(liquefier_ptr)) return true;  // no source
+    std::vector<Jetscape::real> jmu_tmp;
+    if (liquefier_step_) {
+      liquefier_step_->get_source_on_grid(tau, x, y, eta_s, cells, jmu_tmp);
+    } else {
+      liquefier_ptr.lock()->get_source_on_grid(tau, x, y, eta_s, cells,
+                                               jmu_tmp);
+    }
+    j_mu.resize(jmu_tmp.size());
+    for (std::size_t i = 0; i < jmu_tmp.size(); i++) {
+      j_mu[i] = jmu_tmp[i] / hbarC;  // from GeV/fm^4 to 1/fm^5
+    }
+    return true;
+  }
+
   //! these functions return the B, Q, S density source terms at a given point
   //! (tau, x, y, eta_s)
   double get_hydro_rhob_source(const double tau, const double x, const double y,
@@ -411,7 +446,10 @@ class MpiMusic : public FluidDynamics {
   // From XML: <restart_from> (an instance id) in the jet leg's own block; the
   // instance named there keeps a checkpoint at <checkpoint_tau> of its own
   // block, by default at <Liquefier><CausalLiquefier><tau_delay>.  The
-  // setters override the XML.
+  // setters override the XML.  A time at tau_delay, or less than the jet
+  // source's deposit half width before it, is moved that half width before
+  // tau_delay (CheckpointTauForMusic), where a droplet made at the hard
+  // vertex does not refuse the checkpoint.
   void set_checkpoint_tau(double tau) { checkpoint_tau_ = tau; }
   double get_checkpoint_tau() const { return checkpoint_tau_; }
   void set_restart_from(MpiMusic *bg) {
@@ -492,6 +530,11 @@ class MpiMusic : public FluidDynamics {
   int reported_freeze_out_surface_ = -1;
   bool store_evolution_ = true;
   double checkpoint_tau_ = 0.;
+  // <Liquefier><CausalLiquefier>'s <tau_delay> and <dtau> (0 without one),
+  // and the checkpoint time last handed to MUSIC (reported when it changes)
+  double liquefier_tau_delay_ = 0.;
+  double liquefier_dtau_ = 0.;
+  double reported_checkpoint_tau_ = -1.;
   MpiMusic *restart_from_ = nullptr;
   // <restart_from> until it is resolved at the first evolution
   std::string restart_from_id_;
@@ -499,6 +542,7 @@ class MpiMusic : public FluidDynamics {
   tinyxml2::XMLElement *OwnMusicBlockElement(const char *tag) const;
   int ReadOwnMusicBlockInt(const char *tag) const;
   void ReadRestartSettings();
+  double CheckpointTauForMusic();
   void ResolveRestartFrom();
   void ApplyFreezeOutSurface();
   void WarnIfGridBoundaryHit();
