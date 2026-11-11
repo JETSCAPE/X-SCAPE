@@ -280,6 +280,19 @@ void LiquefierBase::add_hydro_sources(std::vector<Parton> &pIn,
         static_cast<Jetscape::real>(droplet_py),
         static_cast<Jetscape::real>(droplet_pz)};
     Droplet drop_i(droplet_xmu, droplet_pmu);
+    // The background fluid where the droplet is made (the medium Matter and
+    // LBT see): CausalLiquefier's <frame>fluid</frame> diffuses the droplet in
+    // its rest frame.  Outside the stored evolution (before the hydro starts,
+    // off its grid) the lookup returns an empty cell (e = 0).
+    if (GetHydroCellSignalConnected) {
+      std::unique_ptr<FluidCellInfo> cell;
+      GetHydroCellSignal(droplet_t, droplet_x, droplet_y, droplet_z, cell);
+      if (cell)
+        drop_i.set_fluid({static_cast<Jetscape::real>(cell->vx),
+                          static_cast<Jetscape::real>(cell->vy),
+                          static_cast<Jetscape::real>(cell->vz)},
+                         static_cast<Jetscape::real>(cell->energy_density));
+    }
     add_a_droplet(drop_i);
   }
 }
@@ -496,7 +509,7 @@ double LiquefierBase::sampled_flux(const Droplet &drop_i, double tau,
   const auto xd = drop_i.get_xmu();
   // unit energy at rest in the lab: smearing_kernel() then returns
   // (n.j) (cosh eta, 0, 0, -sinh eta), whose lab energy is n.j
-  const Droplet unit(xd, {1.0, 0.0, 0.0, 0.0});
+  const Droplet unit = drop_i.with_pmu({1.0, 0.0, 0.0, 0.0});
   const double dV = g.dx * g.dy * g.deta;
   // The hydro's query times near here are tau + k dtau (both Runge-Kutta
   // stages; each gets weight dtau in total).  The kernel deposits at those
