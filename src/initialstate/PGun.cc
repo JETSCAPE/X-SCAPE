@@ -19,6 +19,10 @@
 #include "JetScapeParticles.h"
 #include "Pythia8/Pythia.h"
 
+#include <sstream>
+#include <stdexcept>
+#include <string>
+
 using namespace Jetscape;
 
 // Register the module with the base class
@@ -48,6 +52,57 @@ void PGun::InitTask() {
 
   parID = GetXMLElementDouble({"Hard", "PGun", "parID"});
   JSINFO << "Parton Gun with parID = " << parID;
+
+  // Optional: the parton's rapidity and phi (both 0 before these existed).
+  if (!GetXMLElementText({"Hard", "PGun", "rapidity"}, false).empty())
+    rapidity_ = GetXMLElementDouble({"Hard", "PGun", "rapidity"});
+  if (!GetXMLElementText({"Hard", "PGun", "phi"}, false).empty())
+    phi_ = GetXMLElementDouble({"Hard", "PGun", "phi"});
+
+  // Optional: several (pT, rapidity) points, event i uses point i mod K.
+  points_.clear();
+  std::istringstream in(GetXMLElementText({"Hard", "PGun", "points"}, false));
+  std::vector<double> v;
+  std::string tok;
+  while (in >> tok) {
+    try {
+      size_t used = 0;
+      v.push_back(std::stod(tok, &used));
+      if (used != tok.size())
+        throw std::invalid_argument(tok);
+    } catch (const std::exception &) {
+      throw std::runtime_error("PGun: <points> takes numbers 'pT y pT y ...', got '" +
+                               tok + "'");
+    }
+  }
+  if (v.size() % 2)
+    throw std::runtime_error("PGun: <points> needs pairs 'pT y', got " +
+                             std::to_string(v.size()) + " numbers");
+  for (size_t j = 0; j < v.size(); j += 2) {
+    if (!(v[j] > 0))
+      throw std::runtime_error("PGun: every <points> pT must be > 0");
+    points_.emplace_back(v[j], v[j + 1]);
+  }
+  if (points_.empty()) {
+    points_.emplace_back(fixed_pT, rapidity_);
+  } else {
+    const int K = GetNPoints();
+    std::string reuse = GetXMLElementText({"setReuseHydro"}, false);
+    int nReuse = GetXMLElementInt({"nReuseHydro"}, false);
+    if (reuse.find("true") != std::string::npos && nReuse % K != 0)
+      throw std::runtime_error(
+          "PGun: nReuseHydro = " + std::to_string(nReuse) +
+          " is not a multiple of the " + std::to_string(K) +
+          " <points>, so the hydro events would not get the same number of "
+          "events per point");
+    std::ostringstream msg;
+    for (const auto &p : points_)
+      msg << " (" << p.first << ", " << p.second << ")";
+    JSINFO << "Parton Gun with " << K << " (pT, y) points (event i uses point i mod "
+           << K << "):" << msg.str();
+  }
+  JSINFO << "Parton Gun: rapidity = " << points_[0].second << ", phi = " << phi_
+         << ", from the origin";
 }
 
 void PGun::ExecuteTask() {
@@ -77,11 +132,14 @@ void PGun::ExecuteTask() {
   //     mass = 0.0;
   mass = InternalHelperPythia.particleData.m0(parID);
   // JSINFO << BOLDYELLOW << " Mass = " << mass ;
-  pT = fixed_pT;  // max_pT*(rand()/maxN);
+  // This event's (pT, rapidity): point i mod K (one point without <points>).
+  const int K = GetNPoints();
+  activePoint_ = K > 1 ? GetCurrentEvent() % K : 0;
+  pT = points_[activePoint_].first;
 
-  phi = 2.0 * PI * (rand() / maxN);
-  rapidity = 0;  // 2.0*eta_cut*(rand()/maxN)-eta_cut;
-  phi = 0.0;
+  phi = 2.0 * PI * (rand() / maxN);  // kept: the rand() sequence stays the same
+  rapidity = points_[activePoint_].second;
+  phi = phi_;
 
   p[1] = pT * cos(phi);
   p[2] = pT * sin(phi);
