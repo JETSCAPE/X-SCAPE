@@ -47,10 +47,10 @@ folderName="music4gpu"
 # without per-element heap allocations, one per thread (bit-identical);
 # (MUSIC4GPU PR #23) the Metal shaders take their minimum macOS from
 # CMAKE_OSX_DEPLOYMENT_TARGET when it is set (the macOS wheel); unchanged otherwise;
-# (branch source_fill_box) the jet source of a step is filled only in the cells
+# (MUSIC4GPU PR #24) the jet source of a step is filled only in the cells
 # the source reports (HydroSourceBase::get_hydro_energy_source_on_grid, which
 # HydroSourceJETSCAPE implements), 12 -> 1.1 ms per fill, bit-identical
-commitHash="e526350d068627386da84571d73e4a187af7b1a4"
+commitHash="1c99bee99af06030f2456e8b5bfaabc9a0eb2449"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
