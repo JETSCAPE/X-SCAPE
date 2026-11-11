@@ -29,6 +29,9 @@
 /// (set_hydro_grid(), normalize_active_droplets(), get_droplet_flux()), so
 /// code built against older headers can test for it.
 #define XSCAPE_LIQUEFIER_GRID_NORMALIZATION 1
+/// Droplet carries the background fluid at its creation point
+/// (get_vfluid()/get_efluid(), filled by LiquefierBase::add_hydro_sources).
+#define XSCAPE_DROPLET_FLUID 1
 #include "RealType.h"
 
 namespace Jetscape {
@@ -47,6 +50,11 @@ class Droplet {
  private:
   std::array<Jetscape::real, 4> xmu;  ///< Position 4-vector
   std::array<Jetscape::real, 4> pmu;  ///< Momentum 4-vector
+  /// The background fluid's velocity (lab Cartesian vx, vy, vz) where the
+  /// droplet was made, and its energy density [GeV/fm^3] there; efluid < 0:
+  /// not looked up (no hydro connected, or a droplet added by hand).
+  std::array<Jetscape::real, 3> vfluid = {0., 0., 0.};
+  Jetscape::real efluid = -1.;
 
  public:
   /**
@@ -87,6 +95,22 @@ class Droplet {
    * @return A copy of the momentum vector.
    */
   std::array<Jetscape::real, 4> get_pmu() const { return (pmu); }
+
+  /// The same droplet with another four-momentum (its fluid is kept).
+  Droplet with_pmu(std::array<Jetscape::real, 4> p_in) const {
+    Droplet d = *this;
+    d.pmu = p_in;
+    return d;
+  }
+
+  /// The background fluid at the droplet's creation point: lab Cartesian
+  /// velocity and energy density (e < 0: unknown).
+  void set_fluid(std::array<Jetscape::real, 3> v, Jetscape::real e) {
+    vfluid = v;
+    efluid = e;
+  }
+  std::array<Jetscape::real, 3> get_vfluid() const { return vfluid; }
+  Jetscape::real get_efluid() const { return efluid; }
 };
 
 /**
@@ -412,6 +436,28 @@ class LiquefierBase {
   /// point deposits of droplets whose kernel misses every cell centre.
   void get_source(Jetscape::real tau, Jetscape::real x, Jetscape::real y,
                   Jetscape::real eta, std::array<Jetscape::real, 4> &jmu) const;
+
+  /**
+   * @brief get_source() for every cell of a grid at one query time.
+   *
+   * For a hydro that fills its whole grid at a time: instead of asking every
+   * cell about every droplet, each droplet is evaluated only on the cells
+   * inside its future light cone (a few hundred, where the grid has
+   * millions).  The values are those of get_source(tau, x[ix], y[iy],
+   * eta[ieta], .), bit for bit: the same tests and kernel calls with the
+   * same arguments, each cell adding its droplets in the same order.
+   *
+   * @param tau Query time
+   * @param x, y, eta Cell centres as the hydro computes them, ascending
+   * @param cells Out: (ix, iy, ieta) of each cell with a non-zero source,
+   * three entries per cell, each cell once; every other cell is exactly zero
+   * @param jmu Out: the source of these cells, four entries per cell
+   */
+  void get_source_on_grid(Jetscape::real tau, const std::vector<double> &x,
+                          const std::vector<double> &y,
+                          const std::vector<double> &eta,
+                          std::vector<int> &cells,
+                          std::vector<Jetscape::real> &jmu) const;
 
   /**
    * @brief Get hadronic source term at a given space-time point.
