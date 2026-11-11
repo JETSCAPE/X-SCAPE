@@ -446,7 +446,10 @@ class MpiMusic : public FluidDynamics {
   // From XML: <restart_from> (an instance id) in the jet leg's own block; the
   // instance named there keeps a checkpoint at <checkpoint_tau> of its own
   // block, by default at <Liquefier><CausalLiquefier><tau_delay>.  The
-  // setters override the XML.
+  // setters override the XML.  A time at tau_delay, or less than the jet
+  // source's deposit half width before it, is moved that half width before
+  // tau_delay (CheckpointTauForMusic), where a droplet made at the hard
+  // vertex does not refuse the checkpoint.
   void set_checkpoint_tau(double tau) { checkpoint_tau_ = tau; }
   double get_checkpoint_tau() const { return checkpoint_tau_; }
   void set_restart_from(MpiMusic *bg) {
@@ -527,6 +530,11 @@ class MpiMusic : public FluidDynamics {
   int reported_freeze_out_surface_ = -1;
   bool store_evolution_ = true;
   double checkpoint_tau_ = 0.;
+  // <Liquefier><CausalLiquefier>'s <tau_delay> and <dtau> (0 without one),
+  // and the checkpoint time last handed to MUSIC (reported when it changes)
+  double liquefier_tau_delay_ = 0.;
+  double liquefier_dtau_ = 0.;
+  double reported_checkpoint_tau_ = -1.;
   MpiMusic *restart_from_ = nullptr;
   // <restart_from> until it is resolved at the first evolution
   std::string restart_from_id_;
@@ -534,6 +542,7 @@ class MpiMusic : public FluidDynamics {
   tinyxml2::XMLElement *OwnMusicBlockElement(const char *tag) const;
   int ReadOwnMusicBlockInt(const char *tag) const;
   void ReadRestartSettings();
+  double CheckpointTauForMusic();
   void ResolveRestartFrom();
   void ApplyFreezeOutSurface();
   void WarnIfGridBoundaryHit();

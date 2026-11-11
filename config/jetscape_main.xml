@@ -616,11 +616,14 @@
            state instead of recomputing the identical leading steps. In the jet
            leg's own block: <restart_from>MUSIC_1</restart_from> (the
            background's <name>). The background then keeps a checkpoint at
-           <checkpoint_tau> [fm/c] of its own block, by default at the
-           liquefier's <tau_delay> (checkpoint_tau 0). Same output; an event
-           that does not fit runs from tau0 and the log says why. Both are
-           read only from an instance's own block; these defaults (none, 0)
-           are off. -->
+           <checkpoint_tau> [fm/c] of its own block, by default just before
+           the liquefier's <tau_delay> (checkpoint_tau 0): half the largest
+           hydro step and 1e-3 fm/c before it, where a droplet made at the
+           hard vertex is not yet in reach of the jet source; a time between
+           there and tau_delay is moved there. Same output; an event that
+           does not fit runs from tau0 and the log says why. Both are read
+           only from an instance's own block; these defaults (none, 0) are
+           off. -->
       <restart_from> none </restart_from>
       <checkpoint_tau> 0 </checkpoint_tau>
       <!-- 1: hand the evolution to the framework (bulk_info, for jet energy loss)
