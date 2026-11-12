@@ -224,6 +224,34 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
            << " fm/c from tau = " << late_tau_switch_ << " fm/c on";
   }
 
+  // The GPU evolves only the region with matter (music4gpu, CUDA; opt-in):
+  // <active_region_eps> [GeV/fm^3] > 0 turns it on (absent or 0: the whole
+  // grid), <active_region_halo> [cells, default 3] and <active_region_dtau>
+  // [fm/c, default 0.1] set the margin and how often the region is rebuilt.
+  double active_region_eps = 0.;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "active_region_eps"}, false)) {
+    el->QueryDoubleText(&active_region_eps);
+  }
+  if (active_region_eps > 0.) {
+    int active_region_halo = 3;
+    double active_region_dtau = 0.1;
+    if (auto *el = JetScapeXML::Instance()->GetElement(
+            {"Hydro", "MUSIC", "active_region_halo"}, false)) {
+      el->QueryIntText(&active_region_halo);
+    }
+    if (auto *el = JetScapeXML::Instance()->GetElement(
+            {"Hydro", "MUSIC", "active_region_dtau"}, false)) {
+      el->QueryDoubleText(&active_region_dtau);
+    }
+    music_hydro_ptr->set_parameter("active_region_eps", active_region_eps);
+    music_hydro_ptr->set_parameter("active_region_halo", active_region_halo);
+    music_hydro_ptr->set_parameter("active_region_dtau", active_region_dtau);
+    JSINFO << "MUSIC active region: e > " << active_region_eps
+           << " GeV/fm^3, halo " << active_region_halo << " cells, rebuilt every "
+           << active_region_dtau << " fm/c (GPU only)";
+  }
+
   double tau_hydro =
       (GetXMLElementDouble({"Hydro", "MUSIC", "Initial_time_tau_0"}));
   music_hydro_ptr->set_parameter("Initial_time_tau_0", tau_hydro);
