@@ -1,6 +1,6 @@
 # X-SCAPE contrib: changes since 2.1
 
-Changes on the `contrib` branch ([`44cad1d0`](https://github.com/JETSCAPE/X-SCAPE/commit/44cad1d0), 2026-11-02) relative to the X-SCAPE 2.1 release (tag [`v2.1`](https://github.com/JETSCAPE/X-SCAPE/tree/v2.1), 2026-03-05). The third-party packages X-SCAPE fetches (iSS, 3dMCGlauber, MUSIC, trento, the LBT tables) are included. MUSIC4GPU's own changes are not listed here; see [jhputschke/MUSIC4GPU](https://github.com/jhputschke/MUSIC4GPU).
+Changes on the `contrib` branch ([`49c834ec`](https://github.com/JETSCAPE/X-SCAPE/commit/49c834ec), 2026-11-11) relative to the X-SCAPE 2.1 release (tag [`v2.1`](https://github.com/JETSCAPE/X-SCAPE/tree/v2.1), 2026-03-05). The third-party packages X-SCAPE fetches (iSS, 3dMCGlauber, MUSIC, trento, the LBT tables) are included. MUSIC4GPU's own changes are not listed here; see [jhputschke/MUSIC4GPU](https://github.com/jhputschke/MUSIC4GPU).
 
 Fixes to code that was added after 2.1 are folded into the feature that added it.
 
@@ -14,6 +14,7 @@ Fixes to code that was added after 2.1 are folded into the feature that added it
 | --- | --- | --- | --- |
 | Liquefier | A free-streaming parton that the liquefier absorbs is marked as absorbed (status -11). Before, it kept status 0/1. | The parton was deposited in the medium and hadronized too. In two test jobs this double-counted 3% and 13% of the initial energy (issue [#156](https://github.com/JETSCAPE/X-SCAPE/issues/156)). | [#154](https://github.com/JETSCAPE/X-SCAPE/pull/154) |
 | Liquefier | Each droplet is normalized on MUSIC's grid. Droplets at the hard vertex are deposited. | MUSIC received 0.004 to 6 times a droplet's 4-momentum. 40% of 0-10% Au+Au events were off by more than 20%. Vertex droplets got eta = 0/0 = NaN and were never deposited. On by default; `<normalize_on_hydro_grid>0` restores the old source. | [#155](https://github.com/JETSCAPE/X-SCAPE/pull/155) |
+| CausalLiquefier | The causal diffusion is solved in the frame of the Bjorken flow at the droplet's eta_s (`<frame>bjorken`, the new default), not in the lab's Cartesian frame. | Away from midrapidity the deposit landed closer to midrapidity than the droplet (by about 0.4 units at \|eta_s\| = 1 and up to 0.9 units forward) and in a fraction of a cell. MUSIC reverted such cells, so deposited energy was lost: one test event kept 25% of it at tau = 2 fm/c. In Pb+Pb Z+jet the midrapidity wake came out 19% too large. **Behaviour change:** `<frame>lab` restores the old deposit; the two agree only at eta_s = 0. | [#189](https://github.com/JETSCAPE/X-SCAPE/pull/189) |
 | Liquefier / MUSIC wrapper | The jet source's hydro dtau is set for every initial condition, not only without a pre-equilibrium module. | With string or pre-equilibrium initial conditions the droplet source was evaluated about 2.6 times too often. The hadronic liquefier's dtau stayed -1, so every droplet was deposited at every step. | [#146](https://github.com/JETSCAPE/X-SCAPE/pull/146) |
 | Energy loss / MUSIC wrapper | `FluidDynamics::hydro_tau_0` and `hydro_tau_max` are initialized. MUSIC sets the energy-loss start time to its tau0, also when pre-equilibrium is kept in memory. | Matter, LBT and AdS/CFT read the start time as 0 in practice, so `<tStart>` had no effect. **Behaviour change:** medium-modified energy loss now starts at the hydro tau0. | [#174](https://github.com/JETSCAPE/X-SCAPE/pull/174) |
 | Matter | No qhat table lookup at a negative index (ISR partons start at t < 0). | Garbage qhat values, results that changed between runs with the same seed, and segfaults (O+O with ISR). | [`8c975d37`](https://github.com/JETSCAPE/X-SCAPE/commit/8c975d37) ([#171](https://github.com/JETSCAPE/X-SCAPE/pull/171)) |
@@ -29,7 +30,7 @@ Fixes to code that was added after 2.1 are folded into the feature that added it
 
 | Component | Fix | Effect in 2.1 | PR / commit |
 | --- | --- | --- | --- |
-| 3dMCGlauber | The draws for the target's hard-quark position are capped. Pinned from the [jhputschke/3dMCGlauber](https://github.com/jhputschke/3dMCGlauber) fork; upstream PR [chunshen1987/3dMCGlauber#7](https://github.com/chunshen1987/3dMCGlauber/pull/7) is open. | Endless loop in about 1 in 500-1300 O+O events with ISR (issue [#169](https://github.com/JETSCAPE/X-SCAPE/issues/169)). | [`21a06787`](https://github.com/JETSCAPE/X-SCAPE/commit/21a06787), [3dMCGlauber `b99d680`](https://github.com/jhputschke/3dMCGlauber/commit/b99d680) |
+| 3dMCGlauber | The draws for the target's hard-quark position are capped. Pinned from the [jhputschke/3dMCGlauber](https://github.com/jhputschke/3dMCGlauber) fork; upstream PR [chunshen1987/3dMCGlauber#7](https://github.com/chunshen1987/3dMCGlauber/pull/7) was merged on 2026-11-04. | Endless loop in about 1 in 500-1300 O+O events with ISR (issue [#169](https://github.com/JETSCAPE/X-SCAPE/issues/169)). | [`21a06787`](https://github.com/JETSCAPE/X-SCAPE/commit/21a06787), [3dMCGlauber `b99d680`](https://github.com/jhputschke/3dMCGlauber/commit/b99d680) |
 | EvolutionHistory | `get` on an empty history returns a vacuum cell. | `std::out_of_range` stopped the job, in about 5% of O+O events (events without a medium). | [`be68bc85`](https://github.com/JETSCAPE/X-SCAPE/commit/be68bc85) ([#165](https://github.com/JETSCAPE/X-SCAPE/pull/165)) |
 | iSS wrapper | An event with a hydro but no freeze-out surface gives no hadrons and a warning. | `exit(1)`. | [`b8487c42`](https://github.com/JETSCAPE/X-SCAPE/commit/b8487c42) ([#164](https://github.com/JETSCAPE/X-SCAPE/pull/164)) |
 | iSS | Decay channels and sampled-hadron vectors are freed. | About 1,900 leaked blocks per event. | [iSS `98deaff`](https://github.com/jhputschke/iSS/commit/98deaff) ([#171](https://github.com/JETSCAPE/X-SCAPE/pull/171)) |
@@ -57,6 +58,7 @@ Fixes to code that was added after 2.1 are folded into the feature that added it
 | PythiaGun | `<extraHard>`: the event's other hard scatterings, each with its own stream; minimum-bias mode. | [#187](https://github.com/JETSCAPE/X-SCAPE/pull/187) |
 | ISR | `<Hard><ISR>` in the XML task list builds the PythiaIsrMUSIC chain. `<JetHadronization><name>iColored`. PythiaIsrGun gets `<pTHatBins>`. The subtracted hard momentum is reported, with a warning for `Subtract_hard_momentum` other than 1. | [#164](https://github.com/JETSCAPE/X-SCAPE/pull/164) |
 | PythiaIsrGun | `<partonYMax>` / `<partonYMode>`: rapidity cut on the two hard partons. | [#165](https://github.com/JETSCAPE/X-SCAPE/pull/165) |
+| PGun | `<rapidity>` and `<phi>` of the parton (both 0 as before); `<points>`: several (pT, y) points in one run, event i takes point i mod K. | [#189](https://github.com/JETSCAPE/X-SCAPE/pull/189) |
 
 ### Energy loss and hadronization
 
@@ -68,6 +70,7 @@ Fixes to code that was added after 2.1 are folded into the feature that added it
 | Hadronization | Reproducible re-hadronization: `SetNextRandomSeed` / `GetLastRandomSeed` for iSS and Colorless, `<reseed_per_event>` for Colorless and iColored, and iColored's `<store_input>` / `HadronizeInput`. | [#148](https://github.com/JETSCAPE/X-SCAPE/pull/148), [#172](https://github.com/JETSCAPE/X-SCAPE/pull/172) |
 | Liquefier | Only droplets that can deposit in the current step are evaluated. When none can, MUSIC skips the jet source (output unchanged). | [#141](https://github.com/JETSCAPE/X-SCAPE/pull/141), [#144](https://github.com/JETSCAPE/X-SCAPE/pull/144) |
 | Liquefier | The jet source and CausalLiquefier follow MUSIC's late time step (`<late_delta_tau>`, `<late_tau_switch>`). | [#171](https://github.com/JETSCAPE/X-SCAPE/pull/171) |
+| CausalLiquefier | `<frame>fluid`: the diffusion in the rest frame of the background fluid where the droplet was made (the droplet stores that cell's velocity and energy density). Opt-in; a droplet without a usable fluid takes the Bjorken frame. | [#189](https://github.com/JETSCAPE/X-SCAPE/pull/189) |
 
 ### Hydro (MUSIC)
 
@@ -76,19 +79,21 @@ Fixes to code that was added after 2.1 are folded into the feature that added it
 | MUSIC wrapper | `<freeze_out_surface>`: switch off the surface export, globally or per instance. | [#142](https://github.com/JETSCAPE/X-SCAPE/pull/142) |
 | MUSIC wrapper | `<slim_bulk_info>`: a 24-byte-per-cell framework copy for energy loss (peak memory 14.2 to 8.7 GiB in a 0-10% Au+Au jet job, output identical). | [#162](https://github.com/JETSCAPE/X-SCAPE/pull/162) |
 | MUSIC wrapper | The framework copy is sized once and filled in parallel. | [#143](https://github.com/JETSCAPE/X-SCAPE/pull/143) |
-| MUSIC wrapper | Two-stage runs (background, then a jet leg): `set_store_evolution`, `set_checkpoint_tau` / `set_restart_from`, per-instance XML and `<restart_from>` from `runJetscape`, `<output_momentum_anisotropy_vs_etas>`. | [#166](https://github.com/JETSCAPE/X-SCAPE/pull/166), [#168](https://github.com/JETSCAPE/X-SCAPE/pull/168), [#180](https://github.com/JETSCAPE/X-SCAPE/pull/180) |
+| MUSIC wrapper | Two-stage runs (background, then a jet leg): `set_store_evolution`, `set_checkpoint_tau` / `set_restart_from`, per-instance XML and `<restart_from>` from `runJetscape`, `<output_momentum_anisotropy_vs_etas>`. The background's checkpoint is taken a deposit half width before the liquefier's `tau_delay`, so jet legs with a droplet from the hard vertex restart from it too (output unchanged). | [#166](https://github.com/JETSCAPE/X-SCAPE/pull/166), [#168](https://github.com/JETSCAPE/X-SCAPE/pull/168), [#180](https://github.com/JETSCAPE/X-SCAPE/pull/180), [#190](https://github.com/JETSCAPE/X-SCAPE/pull/190) |
+| Liquefier / MUSIC wrapper | The jet source of a hydro step is filled from each droplet's light cone instead of asking at every cell (`LiquefierBase::get_source_on_grid`; used by MUSIC4GPU, bit-identical): 12 to 1.1 ms per fill. With the checkpoint change a Pb+Pb Z+jet job (1 background, 6 jets) takes 118 instead of 146 s. | [#190](https://github.com/JETSCAPE/X-SCAPE/pull/190) |
 | Soft particlization | Particlization from stored evolutions (SurfaceFinder on the stored history). | [`88099402`](https://github.com/JETSCAPE/X-SCAPE/commit/88099402) |
 | MUSIC (CPU) | Two source-term pointers; a flag for dynamic grid padding. Pin `cfcc264` to `cee9460`. | [#138](https://github.com/JETSCAPE/X-SCAPE/pull/138) |
 | MUSIC4GPU | Optional GPU hydro build (`get_music4gpu.sh`, `USE_CUDA` / `USE_METAL`). MUSIC4GPU's own changes are not listed here. | [`51e58ce7`](https://github.com/JETSCAPE/X-SCAPE/commit/51e58ce7) |
 
 ### Particlization (iSS)
 
-iSS is now pinned from the fork [jhputschke/iSS](https://github.com/jhputschke/iSS) (`smash_ready` [`6ac0333`](https://github.com/jhputschke/iSS/commit/6ac0333), was chunshen1987/iSS `XSCAPE` `d242555`); upstream PR [chunshen1987/iSS#4](https://github.com/chunshen1987/iSS/pull/4) is open.
+iSS is now pinned from the fork [jhputschke/iSS](https://github.com/jhputschke/iSS) (`sampling_omp` [`0be6daf`](https://github.com/jhputschke/iSS/commit/0be6daf), was chunshen1987/iSS `XSCAPE` `d242555`). The yield speed-up and the correlated sampling were merged upstream on 2026-11-04 ([chunshen1987/iSS#4](https://github.com/chunshen1987/iSS/pull/4)); the SMASH-ready hadrons and the threaded sampling are only in the fork.
 
 | Component | Change | PR |
 | --- | --- | --- |
 | iSS | Speed-ups, hadrons bit-identical: yields once per (mu, T) and delta f coefficients once per cell, 8 species per pass over packed cell arrays, a tabulated momentum CDF. About 56 to 15 s per event. | [#149](https://github.com/JETSCAPE/X-SCAPE/pull/149), [#170](https://github.com/JETSCAPE/X-SCAPE/pull/170), [#171](https://github.com/JETSCAPE/X-SCAPE/pull/171) |
 | iSS | Correlated sampling: random numbers addressed by the cell (Philox), switched in the XML. | [#151](https://github.com/JETSCAPE/X-SCAPE/pull/151) |
+| iSS | Correlated sampling and the surface preparation run on OpenMP threads (`OMP_NUM_THREADS`), hadrons bit-identical at any thread count: 2.4 to 0.43 s per surface at 10 threads (1.1 million cells, 100 oversamples). Uncorrelated sampling stays on one thread. | [`cbc992e2`](https://github.com/JETSCAPE/X-SCAPE/commit/cbc992e2), [iSS `0be6daf`](https://github.com/jhputschke/iSS/commit/0be6daf) |
 | SoftParticlization | Opt-in compact hadron output (iSS fills flat arrays); `SetNumberOfSamples`. | [#148](https://github.com/JETSCAPE/X-SCAPE/pull/148), [#150](https://github.com/JETSCAPE/X-SCAPE/pull/150) |
 | iSS | SMASH-ready hadrons: `<decay_smash_list>`, `<keep_primaries>`; `SampleCells` for hadrons-only jobs. | [#172](https://github.com/JETSCAPE/X-SCAPE/pull/172) |
 
