@@ -1,6 +1,6 @@
 # X-SCAPE contrib: changes since 2.1
 
-Changes on the `contrib` branch ([`49c834ec`](https://github.com/JETSCAPE/X-SCAPE/commit/49c834ec), 2026-11-11) relative to the X-SCAPE 2.1 release (tag [`v2.1`](https://github.com/JETSCAPE/X-SCAPE/tree/v2.1), 2026-03-05). The third-party packages X-SCAPE fetches (iSS, 3dMCGlauber, MUSIC, trento, the LBT tables) are included. MUSIC4GPU's own changes are not listed here; see [jhputschke/MUSIC4GPU](https://github.com/jhputschke/MUSIC4GPU).
+Changes on the `contrib` branch ([`ef19d7f7`](https://github.com/JETSCAPE/X-SCAPE/commit/ef19d7f7), 2026-11-12) relative to the X-SCAPE 2.1 release (tag [`v2.1`](https://github.com/JETSCAPE/X-SCAPE/tree/v2.1), 2026-03-05). The third-party packages X-SCAPE fetches (iSS, 3dMCGlauber, MUSIC, trento, the LBT tables) are included. MUSIC4GPU's own changes are not listed here; see [jhputschke/MUSIC4GPU](https://github.com/jhputschke/MUSIC4GPU).
 
 Fixes to code that was added after 2.1 are folded into the feature that added it.
 
@@ -65,6 +65,7 @@ Fixes to code that was added after 2.1 are folded into the feature that added it
 | Component | Change | PR |
 | --- | --- | --- |
 | Matter, LBT, iColoredHadronization | Colour flow: Matter's recoils and holes keep their colour flow, LBT partons carry colour tags, and iColoredHadronization closes colour lines that end in the medium (`<colour_closure>`, default `reconnect`). See `README_ColourFlow.md`. | [#182](https://github.com/JETSCAPE/X-SCAPE/pull/182) |
+| Energy loss (Matter, LBT) | `<Eloss><nThreads>`: the showers of an event run in parallel on OpenMP threads (N threads, or -1 for `OMP_NUM_THREADS`). Off by default (`0`, output unchanged). When on, every shower gets random streams and colour tags of its own and droplets are flushed in the serial order: the output does not depend on the thread count, but a seed gives other (equally valid) showers than with `0`. Runs serially, with a warning, unless all energy-loss modules declare support (Matter, LBT), showers run per event and there is no hadronic medium; ISR stays serial. O+O with ISR at 4 threads: energy loss 18 to 6.2 s per 40 events, jobs 13% faster; no gain in Au+Au jet jobs. | [#191](https://github.com/JETSCAPE/X-SCAPE/pull/191) |
 | Matter | `<tStart_at_point>`: apply the start-time cut at the point where it is used (default off). | [#183](https://github.com/JETSCAPE/X-SCAPE/pull/183), [#184](https://github.com/JETSCAPE/X-SCAPE/pull/184) |
 | LBT | `LBT_TABLES_PATH` / XML: table location configurable. `LBT_TABLE_CACHE`: tables in one block, shared read-only between jobs. | [#130](https://github.com/JETSCAPE/X-SCAPE/pull/130), [#163](https://github.com/JETSCAPE/X-SCAPE/pull/163) |
 | Hadronization | Reproducible re-hadronization: `SetNextRandomSeed` / `GetLastRandomSeed` for iSS and Colorless, `<reseed_per_event>` for Colorless and iColored, and iColored's `<store_input>` / `HadronizeInput`. | [#148](https://github.com/JETSCAPE/X-SCAPE/pull/148), [#172](https://github.com/JETSCAPE/X-SCAPE/pull/172) |
