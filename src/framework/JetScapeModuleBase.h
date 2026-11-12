@@ -245,6 +245,24 @@ class JetScapeModuleBase
    */
   int GetHardScatter() const { return hard_scatter_; }
 
+  /**
+   * @brief The block of colour tags this instance draws from (-1: none, the
+   * default, i.e. its scattering's counter; see HardProcess::NextColorTag).
+   * Set by JetEnergyLossManager when the showers run in parallel
+   * (<Eloss><nThreads>), so every shower has a counter of its own.
+   */
+  int GetColorTagBlock() const { return color_tag_block_; }
+  void SetColorTagBlock(int block) { color_tag_block_ = block; }
+
+  /**
+   * @brief Whether this energy-loss module may shower in parallel with other
+   * instances of itself (JetEnergyLossManager, <Eloss><nThreads>): no state
+   * written during the event is shared between instances, except through
+   * GetMt19937Generator, UseOwnStreams and GetColorTagBlock.  Modules that do
+   * not declare it keep the showers serial.
+   */
+  virtual bool SupportsParallelShowers() const { return false; }
+
   /** Helper functions for XML parsing, wrapping functionality in JetScapeXML:
    */
 
@@ -332,6 +350,7 @@ class JetScapeModuleBase
   static int current_event;
   shared_ptr<std::mt19937> mt19937_generator_;
   int hard_scatter_ = 0;
+  int color_tag_block_ = -1;
   // bool multiThread = false;
 
   /// Decides whether the module evolves in time steps

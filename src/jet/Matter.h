@@ -37,6 +37,10 @@ class Matter : public JetEnergyLossModule<
   void DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton> &pIn,
                     vector<Parton> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
+  //! Its random streams (GetMt19937Generator, ran0's Ran2State) and colour tags
+  //! (the instance's block) are its own once JetEnergyLossManager isolates the
+  //! showers; the static tables are only read after InitTask.
+  bool SupportsParallelShowers() const override { return true; }
   static void Dump_pIn_info(int i, vector<Parton> &pIn);
 
   double generate_L(double form_time);

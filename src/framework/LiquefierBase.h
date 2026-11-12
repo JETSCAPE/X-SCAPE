@@ -352,8 +352,14 @@ class LiquefierBase {
    * @brief Add hydrodynamic sources based on input/output partons.
    * @param pIn Input partons
    * @param pOut Output partons
+   * @param sink If given, the droplet goes there instead of into the list
+   * (parallel showers: JetEnergyLoss collects its own and hands them over with
+   * add_a_droplet after all showers are done, in the order of the showers).
+   * Nothing else of the liquefier is written then, so showers may call it
+   * concurrently.
    */
-  void add_hydro_sources(std::vector<Parton> &pIn, std::vector<Parton> &pOut);
+  void add_hydro_sources(std::vector<Parton> &pIn, std::vector<Parton> &pOut,
+                         std::vector<Droplet> *sink = nullptr);
 
   // add hydro sources for hadrons is overriden in derived HadronicLiquefier
   // class

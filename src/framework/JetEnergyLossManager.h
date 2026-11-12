@@ -180,6 +180,15 @@ class JetEnergyLossManager
    */
   void GetFinalStatePartons(vector<vector<shared_ptr<Parton>>> &fPartons);
 
+  /**
+   * @brief Runs the showers (the JetEnergyLoss copies, one per hard parton).
+   * Serially, as JetScapeModuleBase does, unless <Eloss><nThreads> is set and
+   * the event's showers can run in parallel (see UseParallelShowers): then
+   * with OpenMP, after which every shower hands its droplets and final
+   * partons on in the order of the copies (JetEnergyLoss::SetParallelShower).
+   */
+  virtual void ExecuteTasks() override;
+
  private:
   void MakeCopies();
   bool copiesMade;
@@ -193,7 +202,32 @@ class JetEnergyLossManager
    * events: its modules are reset only when its parton is an additional
    * scattering's, i.e. without a trigger, where every parton is.
    */
-  void SeparateExtraEngines();
+  void SeparateExtraEngines(bool all_showers = false);
+
+  /**
+   * @brief Whether this event's showers run in parallel: <Eloss><nThreads>
+   * set, every shower per event (not time stepped) and without a
+   * PartonShowerGenerator, every energy-loss module declaring
+   * SupportsParallelShowers, and no bulk module but hydros (whose GetHydroInfo
+   * is a read of the stored evolution).  Warns once otherwise.
+   */
+  bool UseParallelShowers();
+
+  /**
+   * @brief Makes the showers independent of each other and of the order they
+   * run in, or (``on`` false) returns them to the serial behaviour: own random
+   * streams for every shower (SeparateExtraEngines(true)), one block of
+   * colour tags per shower (HardProcess::ReserveColorTagBlocks), and their
+   * droplets and final partons kept until all showers are done.
+   */
+  void SetupParallelShowers(bool on);
+
+  //! <Eloss><nThreads>: 0 (default) serial showers; > 0 that many threads;
+  //! < 0 OpenMP's default (OMP_NUM_THREADS)
+  int nThreads_ = 0;
+  //! this event's showers run in parallel (see UseParallelShowers)
+  bool parallel_ = false;
+  bool parallelWarned_ = false;
   //! the next task number of the additional scatterings' copies (a range of
   //! their own, above the framework's)
   static int extra_task_number_;

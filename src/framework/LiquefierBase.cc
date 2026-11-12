@@ -142,14 +142,15 @@ void LiquefierBase::check_energy_momentum_conservation(
 void LiquefierBase::filter_partons(std::vector<Parton> &pOut) {
   // threshold_energy_switch = 1, use e_threshold
   // threshold_energy_switch = 0, use |e_threshold|*T
-  threshold_energy_switch = JetScapeXML::Instance()->GetElementInt(
+  // locals, not the members: showers running in parallel call this at once
+  const int threshold_energy_switch = JetScapeXML::Instance()->GetElementInt(
       {"Liquefier", "threshold_energy_switch"});
   if (threshold_energy_switch != 0 && threshold_energy_switch != 1) {
     JSWARN << "threshold_energy_switch should be 0 or 1, but it is "
            << threshold_energy_switch;
     exit(1);
   }
-  e_threshold = JetScapeXML::Instance()->GetElementDouble(
+  const double e_threshold = JetScapeXML::Instance()->GetElementDouble(
       {"Liquefier", "e_threshold"});  // GeV
 
   for (auto &iparton : pOut) {
@@ -205,7 +206,8 @@ void LiquefierBase::filter_partons(std::vector<Parton> &pOut) {
 }
 
 void LiquefierBase::add_hydro_sources(std::vector<Parton> &pIn,
-                                      std::vector<Parton> &pOut) {
+                                      std::vector<Parton> &pOut,
+                                      std::vector<Droplet> *sink) {
   if (pOut.size() == 0) {
     // the process is freestreaming, ignore
     filter_partons(pIn);
@@ -293,7 +295,10 @@ void LiquefierBase::add_hydro_sources(std::vector<Parton> &pIn,
                           static_cast<Jetscape::real>(cell->vz)},
                          static_cast<Jetscape::real>(cell->energy_density));
     }
-    add_a_droplet(drop_i);
+    if (sink)
+      sink->push_back(drop_i);
+    else
+      add_a_droplet(drop_i);
   }
 }
 

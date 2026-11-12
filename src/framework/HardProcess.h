@@ -315,9 +315,22 @@ class HardProcess : public JetScapeModuleBase {
    * showers (``scatter`` > 0) draw from a counter of their own, starting at
    * 100000 x scatter + 50000 (PythiaGun offsets their tags by 100000 x
    * scatter), so the triggering scattering's tags are those without them.
+   * With ``block`` >= 0 (parallel showers, see ReserveColorTagBlocks) the tag
+   * comes from that block's counter instead, whatever ``scatter`` is.
    * @return The new tag.
    */
-  unsigned int NextColorTag(int scatter = 0);
+  unsigned int NextColorTag(int scatter = 0, int block = -1);
+
+  /**
+   * @brief Opens ``n`` blocks of colour tags for this event, one per shower
+   * when JetEnergyLossManager runs the showers in parallel: a shower then
+   * draws its tags from its own block, so they do not depend on the order in
+   * which the showers run.  Block b holds the color_block_size tags after
+   * base + b x color_block_size, with the base above every tag the counters
+   * of NextColorTag may hand out to the event's hard partons and additional
+   * scatterings.  Call before the showers start; reset in ClearTask.
+   */
+  void ReserveColorTagBlocks(int n);
 
   /**
    * @brief Get the total momentum fraction for the positive side.
@@ -408,6 +421,10 @@ class HardProcess : public JetScapeModuleBase {
   unsigned int color_tag_ = 0;  ///< last tag of NextColorTag in this event
   /// last tag per additional scattering in this event
   std::map<int, unsigned int> extra_color_tag_;
+  /// last tag per block of ReserveColorTagBlocks in this event
+  std::vector<unsigned int> block_color_tag_;
+  unsigned int block_color_base_ = 0;
+  static constexpr unsigned int color_block_size = 100000u;
   double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
   double TotalMomentumPositive, TotalMomentumNegative;
 };

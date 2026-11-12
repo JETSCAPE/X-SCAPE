@@ -127,6 +127,7 @@ void JetEnergyLoss::ClearTask() {
 
   pIn.clear();
   vStartVec.clear();
+  pending_droplets_.clear();
 }
 
 void JetEnergyLoss::InitTask() {
@@ -328,11 +329,29 @@ void JetEnergyLoss::DoFinishPerEvent() {
   // github
   //  --> replace with a writer ... will be deprecated in upcoming releases ...
 
+  if (parallel_shower_)
+    return;  // FlushParallelOutput hands the partons to the printer
   shared_ptr<PartonPrinter> pPrinter =
       JetScapeSignalManager::Instance()->GetPartonPrinterPointer().lock();
   if (pPrinter) {
     pPrinter->GetFinalPartons(pShower);
   }
+}
+
+void JetEnergyLoss::FlushParallelOutput() {
+  if (!parallel_shower_)
+    return;
+  if (!pending_droplets_.empty()) {
+    auto liquefier = liquefier_ptr.lock();
+    if (liquefier)
+      for (const auto &drop : pending_droplets_)
+        liquefier->add_a_droplet(drop);
+    pending_droplets_.clear();
+  }
+  shared_ptr<PartonPrinter> pPrinter =
+      JetScapeSignalManager::Instance()->GetPartonPrinterPointer().lock();
+  if (pPrinter && pShower)
+    pPrinter->GetFinalPartons(pShower);
 }
 
 void JetEnergyLoss::CalculateTime() {
@@ -399,7 +418,9 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
 
     // apply liquefier
     if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
-      liquefier_ptr.lock()->add_hydro_sources(pInTempModule, pOutTemp);
+      liquefier_ptr.lock()->add_hydro_sources(
+          pInTempModule, pOutTemp,
+          parallel_shower_ ? &pending_droplets_ : nullptr);
     }
 
     // stuffs related to vertex

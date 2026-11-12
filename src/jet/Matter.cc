@@ -258,7 +258,7 @@ unsigned int Matter::NewColorTag() {
   // has its own Matter clone) and iMATTER's ISR showers never share a tag.
   auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
   if (hard)
-    MaxColor = hard->NextColorTag(GetHardScatter());
+    MaxColor = hard->NextColorTag(GetHardScatter(), GetColorTagBlock());
   else
     ++MaxColor;
   return MaxColor;
