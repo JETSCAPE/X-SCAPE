@@ -166,6 +166,8 @@
       <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
       <tau_form_mean>0.5</tau_form_mean> <!--Mean value for tau_form [fm]-->
       <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> <!--Fluctuation parameter for the gamma distribution-->
+      <!--1: depletes nuclear density after scatterings (ONLY USED IN EAGun AND eMatter)-->
+      <nucleon_tracking>1</nucleon_tracking>
     </MCGlauber>
 
     <SMASH>

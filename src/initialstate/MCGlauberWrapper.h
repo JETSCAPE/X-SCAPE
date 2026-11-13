@@ -106,6 +106,7 @@ class MCGlauberWrapper : public Jetscape::InitialState {
 
  private:
   int targZ, targA;
+  int use_nucleon_tracking;
   std::shared_ptr<std::vector<int>> nucleonPids;
   std::shared_ptr<std::vector<int>> nucleonUsed;
 

@@ -116,6 +116,7 @@ public:
   double TABLEEMAX, TABLEEMIN, TABLEDE;
 
   int targZ, targA;
+  int use_nucleon_tracking;
 
   static const int dimQhatTab = 151;
   double qhatTab1D[dimQhatTab] = {0.0};

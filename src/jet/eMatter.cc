@@ -159,9 +159,10 @@ void eMatter::InitTask() {
   vir_factor = GetXMLElementDouble({"Eloss", "eMatter", "vir_factor"});
   initial_virtuality_pT = GetXMLElementInt({"Eloss", "eMatter", "initial_virtuality_pT"});
   Lambda_QCD = GetXMLElementDouble({"Eloss","lambdaQCD"});
-    targZ = GetXMLElementDouble({"Hard", "EAGun", "targetZ"});
-    targA = GetXMLElementDouble({"Hard", "EAGun", "targetA"});
+  targZ = GetXMLElementDouble({"Hard", "EAGun", "targetZ"});
+  targA = GetXMLElementDouble({"Hard", "EAGun", "targetA"});
   glauberRootS = GetXMLElementDouble({"IS", "MCGlauber", "sqrts"});
+  is_nucleon_tracking = GetXMLElementInt({"IS", "MCGlauber", "use_nucleon_tracking"});
 
   //from HardProcess.cc
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();
@@ -1043,27 +1044,39 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
 
       double nuclear_dens = ini->Get_target_nucleon_density_lab(el_dt, el_rx, el_ry, el_rz);
 
-      //find the closest unused nucleon, if we interact with something we assume it's this one
-      int closestNucIdx = 0;
-      double mindistsq = 999999.;
-      double nucx, nucy, nucz, thisdistsq;
-      // cout << "time " << el_time << " pos " << el_rx << " " << el_ry << " " << el_rz << " dens " << nuclear_dens << endl;
-      for (int nuci=0; nuci<targA; nuci++) {
-        if (ini->GetNucleonUsed(nuci)) continue;
-        ini->GetTargetNucleonPositionsAtt(el_dt, nuci, nucx, nucy, nucz);
-	      thisdistsq = pow(el_rx - nucx, 2.) + pow(el_ry - nucy, 2.) + pow(el_rz - nucz, 2.);
-	      // cout << "\tnuc " << nuci << " position " << nucx << " " << nucy << " " << nucz << " distsq " << thisdistsq << endl;
-        if (thisdistsq < mindistsq) {
-          // cout << "\tNEW MIN " << nuci << " " << thisdistsq << endl;
-          closestNucIdx = nuci;
-          mindistsq = thisdistsq;
-        }
-      }
-      // cout << "closest unused nucleon " << closestNucIdx << " distsq " << mindistsq << endl;
 
-      //remove the density contributions from the used nucleons
-      //yes, I did just copy and paste the function from mcglauber
-      nuclear_dens -= get_target_density_to_remove(el_dt, el_rx, el_ry, el_rz);
+
+
+      int closestNucIdx = 0;
+      //if nucleon tracking is on:
+      if (use_nucleon_tracking) {
+        //find the closest unused nucleon, assume this is the one we're looking to interact with
+        double mindistsq = 999999.;
+        double nucx, nucy, nucz, thisdistsq;
+        // cout << "time " << el_time << " pos " << el_rx << " " << el_ry << " " << el_rz << " dens " << nuclear_dens << endl;
+        for (int nuci=0; nuci<targA; nuci++) {
+          if (ini->GetNucleonUsed(nuci)) continue;
+          ini->GetTargetNucleonPositionsAtt(el_dt, nuci, nucx, nucy, nucz);
+          thisdistsq = pow(el_rx - nucx, 2.) + pow(el_ry - nucy, 2.) + pow(el_rz - nucz, 2.);
+          // cout << "\tnuc " << nuci << " position " << nucx << " " << nucy << " " << nucz << " distsq " << thisdistsq << endl;
+          if (thisdistsq < mindistsq) {
+            // cout << "\tNEW MIN " << nuci << " " << thisdistsq << endl;
+            closestNucIdx = nuci;
+            mindistsq = thisdistsq;
+          }
+        }
+        // cout << "closest unused nucleon " << closestNucIdx << " distsq " << mindistsq << endl;
+
+        //remove any contributions to the nuclear density from used nucleons
+        //yes, I did just copy and paste the function from mcglauber
+        nuclear_dens -= get_target_density_to_remove(el_dt, el_rx, el_ry, el_rz);
+      }
+
+      else { //no nucleon tracking
+        //preclude the possibility of rescattering off of the nucleon we just destroyed to create this parton
+        if (el_time < 0.1) { nuclear_dens = 0.; }
+      }
+
 
       // if (!hasExited && nuclear_dens == 0.) { hasExited = true; cout << "EXITING, VIRT IS " << pIn[i].t() << endl; }
       if (!hasExited && el_dt >= time_to_exit) { hasExited = true; cout << "EXITING, VIRT IS " << pIn[i].t() << endl; }
@@ -1226,8 +1239,11 @@ void eMatter::DoEnergyLoss(double deltaT, double time, double Q2,
             FourVector premnant = FourVector(0-pc2[1],0-pc2[2],0-pc2[3],0.938-pc2[0]); //at rest
 
             int remnant_pid;
+            int is_proton;
+            if (use_nucleon_tracking) { is_proton = ( ini->GetNucleonPid(closestNucIdx) == 2212 ); } //get the pid
+            else { is_proton = ( ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA) ); } //roll one
             // if (ZeroOneDistribution(*GetMt19937Generator()) < ((double) targZ)/((double) targA)) { //hit proton
-            if (ini->GetNucleonPid(closestNucIdx) == 2212) { //hit proton
+            if (is_proton) { //hit proton
                 switch (pid2) {
                   case 21: //g
                     remnant_pid = 21; break; //need a gluon to stay color neutral with recoiled gluon
