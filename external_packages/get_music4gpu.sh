@@ -56,7 +56,13 @@ folderName="music4gpu"
 # at negative mu_B, and for the source end time of time-stepped runs whose only
 # source is X-SCAPE's (the SMASH initial condition); every other EOS bit-identical.
 # EOS 20 needs the NEOS-4D tables: cd music4gpu/EOS && bash download_Neos4D.sh
-commitHash="c835194d7c19eca732b04af9c8d8a2064479539f"
+# X-SCAPE's step-by-step entry (BulkDynamicsManager, the SMASH initial condition)
+# keeps the state on the GPU between clock ticks and starts each tick from the
+# real previous step (was a cold start, zero d/dtau terms in every second step),
+# finds the freeze-out surface with the GPU gather, and fills charge sources on
+# the grid (get_hydro_sources_on_grid); the 4D viscous kernel regulates W as the
+# CPU does (a fast, dilute cell grew to 1e32 and stopped the run)
+commitHash="c64dcbfcc2dc59c44f8e0b3e80885fda98bed29f"
 # its branch (clone -b): bqs_gpu until the B, Q, S port is merged into XSCAPE
 branch="bqs_gpu"
 

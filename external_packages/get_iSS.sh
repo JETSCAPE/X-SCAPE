@@ -20,10 +20,12 @@
 # correlated sampling and the surface preparation on OpenMP threads (OMP_NUM_THREADS),
 # bit-identical at any thread count -- 2.4 -> 0.43 s per surface at 10 threads; the
 # uncorrelated sampling is unchanged -- until they are merged upstream)
+# + (branch table_cache) the HRG4D and NEoS4D delta f tables of EOS 20 read once per
+# process, not for every surface (same tables)
 folderName="iSS"
-commitHash="0be6daf4cdf6274545b4756a6c01fae8a8a2d809"
+commitHash="aff86623fc426821c9cd0b78ee3d8200afeb42ac"
 
-git clone https://github.com/jhputschke/iSS -b sampling_omp iSS
+git clone https://github.com/jhputschke/iSS -b table_cache iSS
 cd $folderName
 git checkout $commitHash
 
