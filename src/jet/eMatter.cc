@@ -162,7 +162,7 @@ void eMatter::InitTask() {
   targZ = GetXMLElementDouble({"Hard", "EAGun", "targetZ"});
   targA = GetXMLElementDouble({"Hard", "EAGun", "targetA"});
   glauberRootS = GetXMLElementDouble({"IS", "MCGlauber", "sqrts"});
-  is_nucleon_tracking = GetXMLElementInt({"IS", "MCGlauber", "use_nucleon_tracking"});
+  use_nucleon_tracking = GetXMLElementInt({"IS", "MCGlauber", "use_nucleon_tracking"});
 
   //from HardProcess.cc
   ini = JetScapeSignalManager::Instance()->GetInitialStatePointer().lock();

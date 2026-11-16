@@ -193,7 +193,7 @@ void MCGlauberWrapper::InitTask() {
   targZ = GetXMLElementDouble({"Hard", "EAGun", "targetZ"});
   targA = GetXMLElementDouble({"Hard", "EAGun", "targetA"});
 
-  is_nucleon_tracking = GetXMLElementInt({"IS", "MCGlauber", "use_nucleon_tracking"});
+  use_nucleon_tracking = GetXMLElementInt({"IS", "MCGlauber", "use_nucleon_tracking"});
 
   //keep track of p vs n
   nucleonPids = std::make_shared<std::vector<int>>();
