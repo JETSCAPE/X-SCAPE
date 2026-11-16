@@ -49,10 +49,18 @@ folderName="music4gpu"
 # CMAKE_OSX_DEPLOYMENT_TARGET when it is set (the macOS wheel); unchanged otherwise;
 # (MUSIC4GPU PR #24) the jet source of a step is filled only in the cells
 # the source reports (HydroSourceBase::get_hydro_energy_source_on_grid, which
-# HydroSourceJETSCAPE implements), 12 -> 1.1 ms per fill, bit-identical
-commitHash="1c99bee99af06030f2456e8b5bfaabc9a0eb2449"
+# HydroSourceJETSCAPE implements), 12 -> 1.1 ms per fill, bit-identical;
+# (branch bqs_gpu) EOS 20 (NEOS-4D) with B, Q, S and baryon diffusion on the GPU
+# (CUDA; docs/BQS_GPU.md), q^mu on the in-memory surface, and CPU fixes for EOS 20
+# (pressure at all four densities, the entropy's mu_Q/mu_S slots), for eta/s mode 10
+# at negative mu_B, and for the source end time of time-stepped runs whose only
+# source is X-SCAPE's (the SMASH initial condition); every other EOS bit-identical.
+# EOS 20 needs the NEOS-4D tables: cd music4gpu/EOS && bash download_Neos4D.sh
+commitHash="c835194d7c19eca732b04af9c8d8a2064479539f"
+# its branch (clone -b): bqs_gpu until the B, Q, S port is merged into XSCAPE
+branch="bqs_gpu"
 
-git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
+git clone https://github.com/jhputschke/MUSIC4GPU.git -b $branch $folderName
 cd $folderName
 git checkout $commitHash
 cd EOS
