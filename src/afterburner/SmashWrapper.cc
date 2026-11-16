@@ -19,6 +19,7 @@
 
 #include "SmashWrapper.h"
 #include "Transport.h"
+#include "SmashTabulations.h"
 
 #include "smash/input_keys.h"
 #include "smash/particles.h"
@@ -46,8 +47,6 @@ void SmashWrapper::InitTask() {
       GetXMLElementText({"Afterburner", "SMASH", "SMASH_decaymodes_file"});
   // output path is just dummy here, because no output from SMASH is foreseen
   std::filesystem::path output_path("./");
-  // store tabulation to make use of it if SMASH is used multiple times
-  std::string tabulations_path("./smash_tabulations");
   const std::string smash_version(SMASH_VERSION);
 
   auto config = smash::setup_config_and_logging(
@@ -70,12 +69,8 @@ void SmashWrapper::InitTask() {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
 
-  // Check if the tabulations directory exists, if not initialize particles and
-  // decays
-  if (!std::filesystem::exists(tabulations_path)) {
-    smash::initialize_particles_decays_and_tabulations(config, smash_version,
-                                                       tabulations_path);
-  }
+  // particles, decays and tabulations, once per process (SmashTabulations.h)
+  InitializeSmashOnce(config, smash_version);
 
   const double delta_t_sm =
       GetXMLElementDouble({"Afterburner", "SMASH", "Delta_Time"});
