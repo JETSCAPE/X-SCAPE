@@ -32,4 +32,13 @@ cd iSS_tables/EOS_tables
 bash download_HRG4D.sh
 
 cd ../deltaf_tables/urqmd
-bash download_NEoS4D_deltafCoeffs.sh
+# not iSS's download_NEoS4D_deltafCoeffs.sh: it asks Dropbox for ?dl=0, which now
+# returns Dropbox's HTML page instead of the archive (tar fails, and EOS 20 runs
+# stop at the first iSS call: "Can not open deltaf coeffs file"); ?dl=1 is the file
+wget -q 'https://www.dropbox.com/s/c4twi65l5ediyjy/NEoS4D_deltafCoeffs.tar.gz?dl=1' \
+  -O NEoS4D_deltafCoeffs.tar.gz \
+  && tar -xzf NEoS4D_deltafCoeffs.tar.gz 2> /dev/null
+rm -f NEoS4D_deltafCoeffs.tar.gz
+if [ ! -s NEoS4D_22mom_deltafCoeff.bin ]; then
+  echo "get_iSS.sh: the NEoS4D delta f tables (iSS_tables/deltaf_tables/urqmd) did not download; EOS 20 (NEOS-4D) runs need them" >&2
+fi
