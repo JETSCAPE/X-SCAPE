@@ -123,6 +123,18 @@ class HadronicLiquefier : public LiquefierBase {
    * Set the dtau of the hydro.
    */
   void set_hydro_dtau(double val) { dtau_ = val; };
+  double get_hydro_dtau() const { return dtau_; }
+
+  //! whether a droplet lies at tau in [tau_min, tau_max]: with dtau_ > 0 a
+  //! droplet deposits only at query times within dtau_/2 of its own tau
+  //! (get_source_energy), so outside such a window the source is exactly 0
+  bool has_droplets_in(double tau_min, double tau_max) const {
+    for (const auto &d : hadron_droplets_list) {
+      const double t = d.get_xmu()[0];
+      if (t >= tau_min && t <= tau_max) return true;
+    }
+    return false;
+  }
 
   /**
    * Function to initialize all parameters from an XML file.
@@ -191,6 +203,22 @@ class HadronicLiquefier : public LiquefierBase {
    */
   double get_source_rhos(const double tau, const double x, const double y,
                          const double eta) const;
+
+  /**
+   * The sources of every cell of a grid at one query time: what
+   * get_source_energy() and get_source_rhob/rhoq/rhos() return at each cell,
+   * bit for bit, but with every droplet visiting only the cells of its box
+   * (one pass for all seven quantities) instead of every cell asking every
+   * droplet. x, y, eta: the cell centres (ascending). cells: (ix, iy, ieta) of
+   * each cell a droplet reaches, three entries per cell, each cell once;
+   * vals: its jmu[0..3], rhob, rhoq, rhos (seven entries per cell). Every
+   * other cell's sources are exactly zero.
+   */
+  void get_sources_on_grid(const double tau, const std::vector<double> &x,
+                           const std::vector<double> &y,
+                           const std::vector<double> &eta,
+                           std::vector<int> &cells,
+                           std::vector<double> &vals) const;
 
   /**
    * Function to compute the normalization factor for the smearing kernel and a

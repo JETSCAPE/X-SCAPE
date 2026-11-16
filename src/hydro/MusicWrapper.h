@@ -45,6 +45,9 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   // on the cells MUSIC samples it at (LiquefierBase::normalize_active_droplets)
   HydroGrid hydro_grid_;
   double last_tau_ = -1.0;  // the previous step's tau, to notice a new dtau
+  // the step's tau, for the hadronic liquefier's window
+  // (has_active_sources_current_tau); < 0: no step prepared yet
+  double hadronic_frame_tau_ = -1.0;
 
  public:
   HydroSourceJETSCAPE() = default;
@@ -97,6 +100,7 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   }
 
   void prepare_list_for_current_tau_frame(const double tau_local) {
+    hadronic_frame_tau_ = tau_local;
     if (weak_ptr_is_uninitialized(liquefier_ptr)) return;
     liquefier_step_ = liquefier_ptr.lock();
     if (liquefier_step_) {
@@ -136,9 +140,22 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   //! prepare_list_for_current_tau_frame(tau) keeps the droplets that can
   //! deposit at a query time in [tau - step, tau + 2 step], which holds both;
   //! with none kept, get_source() adds exactly zero there.  Anything else --
-  //! a hadronic liquefier (not pruned), no prepared window -- stays true.
+  //! The hadronic liquefier (SMASH initial state) is active while one of its
+  //! droplets lies in the same window [tau - step, tau + 2 step]: it deposits
+  //! a droplet only at query times within dtau/2 of the droplet's tau. Its
+  //! hadrons all sit on the extraction hyperbola, so after a few steps the
+  //! source is zero, and MUSIC4GPU no longer loops over every cell for it at
+  //! every step (2.7 of the 3 s per step on a 3.2 M cell grid).
+  //! No prepared window or no dtau yet -- stays true.
   bool has_active_sources_current_tau() const {
-    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) return true;
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      auto hl = hadronic_liquefier_ptr.lock();
+      if (!hl || hadronic_frame_tau_ < 0. || hl->get_hydro_dtau() <= 0.
+          || hl->has_droplets_in(hadronic_frame_tau_ - pruning_step_,
+                                 hadronic_frame_tau_ + 2. * pruning_step_)) {
+        return true;
+      }
+    }
     if (weak_ptr_is_uninitialized(liquefier_ptr)) return false;
     if (!liquefier_step_ || !liquefier_step_->active_droplets_prepared()) {
       return true;
@@ -277,6 +294,43 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
     j_mu.resize(jmu_tmp.size());
     for (std::size_t i = 0; i < jmu_tmp.size(); i++) {
       j_mu[i] = jmu_tmp[i] / hbarC;  // from GeV/fm^4 to 1/fm^5
+    }
+    return true;
+  }
+
+  //! The energy and the B, Q, S sources of every cell of MUSIC's grid at one
+  //! query time (MUSIC4GPU HydroSourceBase::get_hydro_sources_on_grid; no
+  //! `override`, so this also compiles against a MUSIC without it). rho: three
+  //! entries per cell (rho_B, rho_Q, rho_S), or none when the source has no
+  //! charges. With the hadronic liquefier alone (the SMASH initial state)
+  //! every droplet visits the cells of its box
+  //! (HadronicLiquefier::get_sources_on_grid), with the values of
+  //! get_hydro_energy_source() and get_hydro_rho*_source() bit for bit;
+  //! without it as get_hydro_energy_source_on_grid(). Returns false -- MUSIC
+  //! then asks cell by cell -- with both liquefiers.
+  bool get_hydro_sources_on_grid(const double tau, const std::vector<double> &x,
+                                 const std::vector<double> &y,
+                                 const std::vector<double> &eta_s,
+                                 std::vector<int> &cells,
+                                 std::vector<double> &j_mu,
+                                 std::vector<double> &rho) const {
+    rho.clear();
+    if (weak_ptr_is_uninitialized(hadronic_liquefier_ptr))
+      return get_hydro_energy_source_on_grid(tau, x, y, eta_s, cells, j_mu);
+    cells.clear();
+    j_mu.clear();
+    if (!weak_ptr_is_uninitialized(liquefier_ptr)) return false;
+    std::vector<double> vals;
+    hadronic_liquefier_ptr.lock()->get_sources_on_grid(tau, x, y, eta_s, cells,
+                                                       vals);
+    const std::size_t n = cells.size() / 3;
+    j_mu.resize(4 * n);
+    rho.resize(3 * n);
+    for (std::size_t k = 0; k < n; k++) {
+      const double *v = &vals[7 * k];
+      // as get_hydro_energy_source() and get_hydro_rho*_source()
+      for (int i = 0; i < 4; i++) j_mu[4 * k + i] = v[i] / hbarC / dtau;
+      for (int i = 0; i < 3; i++) rho[3 * k + i] = v[4 + i] / dtau;
     }
     return true;
   }

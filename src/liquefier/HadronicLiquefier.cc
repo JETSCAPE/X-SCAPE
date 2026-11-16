@@ -431,6 +431,187 @@ double HadronicLiquefier::get_source_rhos(const double tau, const double x,
   return get_source_quantity(tau, x, y, eta, qtype);
 }
 
+void HadronicLiquefier::get_sources_on_grid(const double tau,
+                                            const std::vector<double> &x,
+                                            const std::vector<double> &y,
+                                            const std::vector<double> &eta,
+                                            std::vector<int> &cells,
+                                            std::vector<double> &vals) const {
+  cells.clear();
+  vals.clear();
+  const int nx = static_cast<int>(x.size());
+  const int ny = static_cast<int>(y.size());
+  const int neta = static_cast<int>(eta.size());
+  if (nx == 0 || ny == 0 || neta == 0) return;
+
+  // The same box sizes as get_source_energy() and get_source_quantity().
+  const double skip_dis_x = skip_n_sigma_transverse_ * sigma_transverse_;
+  double skip_dis_eta;
+  if (covariant_smearing_) {
+    skip_dis_eta = skip_n_sigma_transverse_ * sigma_transverse_;
+  } else {
+    skip_dis_eta = skip_n_sigma_longitudinal_ * sigma_longitudinal_;
+  }
+  if (covariant_smearing_ && !hydro_Cartesian_) {
+    skip_dis_eta = skip_dis_x / tau;
+  }
+
+  // The droplets the cell-by-cell functions use at this time, in their
+  // order, with what does not depend on the cell computed once (the same
+  // expressions, so the same values).
+  struct Drop {
+    double x, y, eta_s, mass, mT, rapidity, norm, ux, uy, uz, ueta, gamma;
+    double px, py;
+    int B, Q, S;
+  };
+  std::vector<Drop> drops;
+  for (const auto &drop_i : hadron_droplets_list) {
+    auto xmu_i = drop_i.get_xmu();
+    if (dtau_ > 0 &&
+        ((xmu_i[0] < tau - 0.5 * dtau_) || (xmu_i[0] >= tau + 0.5 * dtau_))) {
+      continue;
+    }
+    auto pmu_i = drop_i.get_pmu();
+    Drop d;
+    d.mass = sqrt(pmu_i[0] * pmu_i[0] - pmu_i[1] * pmu_i[1] -
+                  pmu_i[2] * pmu_i[2] - pmu_i[3] * pmu_i[3]);
+    if (d.mass <= 1e-16) continue;  // skip massless particles
+    d.mT = sqrt(d.mass * d.mass + pmu_i[1] * pmu_i[1] + pmu_i[2] * pmu_i[2]);
+    if (d.mT >= 1e-16) {
+      d.rapidity = std::asinh(pmu_i[3] / d.mT);
+    } else {
+      d.rapidity = 0.5 * log((pmu_i[0] + pmu_i[3]) / (pmu_i[0] - pmu_i[3]));
+    }
+    d.norm = drop_i.get_normalization();
+    if (d.norm <= 0.0 || std::isnan(d.norm)) {
+      JSWARN << "Normalization is zero or NaN for a hadron droplet. Skipping.";
+      continue;
+    }
+    d.x = xmu_i[1];
+    d.y = xmu_i[2];
+    d.eta_s = xmu_i[3];  // Cartesian z, Milne eta
+    d.px = pmu_i[1];
+    d.py = pmu_i[2];
+    d.ux = pmu_i[1] / d.mass;
+    d.uy = pmu_i[2] / d.mass;
+    d.uz = pmu_i[3] / d.mass;
+    const double peta = d.mT * sinh(d.rapidity - d.eta_s);
+    d.ueta = peta / d.mass;
+    d.gamma = d.mT * cosh(d.rapidity - d.eta_s) / d.mass;
+    d.B = drop_i.get_baryon_number();
+    d.Q = drop_i.get_electric_charge();
+    d.S = drop_i.get_strangeness();
+    drops.push_back(d);
+  }
+  if (drops.empty()) return;
+
+  // [first, last] index of the coordinates within [lo, hi], padded; the
+  // exact tests of the cell-by-cell functions follow per cell
+  const double pad =
+      1e-9 * (std::max({std::abs(x.front()), std::abs(x.back()),
+                        std::abs(y.front()), std::abs(y.back()), 1.0}));
+  auto index_range = [](const std::vector<double> &v, double lo, double hi,
+                        int &i0, int &i1) {
+    i0 = static_cast<int>(std::lower_bound(v.begin(), v.end(), lo) - v.begin());
+    i1 = static_cast<int>(std::upper_bound(v.begin(), v.end(), hi) -
+                          v.begin()) - 1;
+  };
+
+  std::vector<std::vector<int>> slice_cells(neta);
+  std::vector<std::vector<double>> slice_vals(neta);
+  constexpr int NV = 7;
+
+#pragma omp parallel
+  {
+    // this thread's (x, y) plane: the sums, and which cells have one
+    std::vector<double> acc;
+    std::vector<char> hit;
+    std::vector<int> touched;
+#pragma omp for schedule(dynamic)
+    for (int ie = 0; ie < neta; ie++) {
+      const double eta_c = eta[ie];
+      touched.clear();
+      for (const Drop &d : drops) {
+        const double eta_diff = eta_c - d.eta_s;
+        if (abs(eta_diff) > skip_dis_eta) continue;
+        // per (droplet, slice): the longitudinal factors of jmu
+        const double ch = cosh(d.rapidity - eta_c);
+        const double sh = sinh(d.rapidity - eta_c);
+        int ix0, ix1, iy0, iy1;
+        index_range(x, d.x - skip_dis_x - pad, d.x + skip_dis_x + pad, ix0,
+                    ix1);
+        index_range(y, d.y - skip_dis_x - pad, d.y + skip_dis_x + pad, iy0,
+                    iy1);
+        for (int ix = ix0; ix <= ix1; ix++) {
+          const double x_diff = x[ix] - d.x;
+          if (abs(x_diff) > skip_dis_x) continue;
+          for (int iy = iy0; iy <= iy1; iy++) {
+            const double y_diff = y[iy] - d.y;
+            if (abs(y_diff) > skip_dis_x) continue;
+            double value_kernel = 0.;
+            if (covariant_smearing_ && !hydro_Cartesian_) {
+              value_kernel =
+                  smearing_kernel_covariant_Milne(x_diff, y_diff, eta_diff,
+                                                  d.ux, d.uy, d.ueta, tau,
+                                                  d.gamma) /
+                  tau;
+            } else if (!covariant_smearing_ && !hydro_Cartesian_) {
+              value_kernel =
+                  smearing_kernel_gaussian(x_diff, y_diff, eta_diff) / tau;
+            } else if (covariant_smearing_ && hydro_Cartesian_) {
+              value_kernel = smearing_kernel_covariant_Cartesian(
+                  x_diff, y_diff, eta_diff, d.ux, d.uy, d.uz, d.gamma);
+            } else {
+              value_kernel = smearing_kernel_gaussian(x_diff, y_diff, eta_diff);
+            }
+            value_kernel /= d.norm;
+
+            if (acc.empty()) {
+              acc.assign(static_cast<std::size_t>(NV) * nx * ny, 0.0);
+              hit.assign(static_cast<std::size_t>(nx) * ny, 0);
+            }
+            const int c = ix * ny + iy;
+            if (!hit[c]) {
+              hit[c] = 1;
+              touched.push_back(c);
+            }
+            double *a = &acc[static_cast<std::size_t>(NV) * c];
+            a[0] += value_kernel * d.mT * ch;
+            a[1] += value_kernel * d.px;
+            a[2] += value_kernel * d.py;
+            a[3] += value_kernel * d.mT * sh;
+            // get_source_quantity() skips the droplets without the charge
+            if (d.B != 0) a[4] += value_kernel * d.B;
+            if (d.Q != 0) a[5] += value_kernel * d.Q;
+            if (d.S != 0) a[6] += value_kernel * d.S;
+          }
+        }
+      }
+      // hand this slice's cells over and reset the plane
+      std::sort(touched.begin(), touched.end());
+      auto &sc = slice_cells[ie];
+      auto &sv = slice_vals[ie];
+      sc.reserve(3 * touched.size());
+      sv.reserve(NV * touched.size());
+      for (const int c : touched) {
+        sc.push_back(c / ny);
+        sc.push_back(c % ny);
+        sc.push_back(ie);
+        double *a = &acc[static_cast<std::size_t>(NV) * c];
+        for (int i = 0; i < NV; i++) {
+          sv.push_back(a[i]);
+          a[i] = 0.0;
+        }
+        hit[c] = 0;
+      }
+    }
+  }
+  for (int ie = 0; ie < neta; ie++) {
+    cells.insert(cells.end(), slice_cells[ie].begin(), slice_cells[ie].end());
+    vals.insert(vals.end(), slice_vals[ie].begin(), slice_vals[ie].end());
+  }
+}
+
 bool HadronicLiquefier::gamma_factor_too_large_check(
     const Hadron &hadron) const {
   auto p_init = hadron.p_in();
