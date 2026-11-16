@@ -159,6 +159,14 @@ class SurfaceCellInfo {
   Jetscape::real bulk_Pi;
 
   /**
+   * @brief Net baryon diffusion current.
+   * @details q^mu in Milne components (tau, x, y, eta) as MUSIC writes it to
+   * its surface file, in 1/fm^3. Zero unless the hydro evolves baryon
+   * diffusion.
+   */
+  Jetscape::real qmu[4] = {0., 0., 0., 0.};
+
+  /**
    * @brief Converts the SurfaceCellInfo object to a string representation.
    * @details This method formats the data contained in the SurfaceCellInfo
    * object into a human-readable string for easy output and logging.

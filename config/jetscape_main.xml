@@ -729,6 +729,10 @@
       <!--Conserved charge settings-->
       <Include_Rhob>0</Include_Rhob>
       <Include_QS>0</Include_QS>
+      <!-- net baryon diffusion (music4gpu; upstream MUSIC reads these from its
+           input file) and its kappa_B coefficient C_B -->
+      <turn_on_baryon_diffusion>0</turn_on_baryon_diffusion>
+      <kappa_coefficient>0.4</kappa_coefficient>
       <!--freeze-out parameters-->
       <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
       <freezeout_temperature>0.15</freezeout_temperature>
@@ -953,6 +957,12 @@
       <!-- N > 0: also hand over the undecayed hadrons of the first N samples
            (compact output only), for an afterburner run later -->
       <keep_primaries>0</keep_primaries>
+      <!-- delta f from the baryon diffusion current: 1 on, 0 off, -1 as the
+           hydro (on with <turn_on_baryon_diffusion>) -->
+      <include_deltaf_diffusion>-1</include_deltaf_diffusion>
+      <!-- 1: log the net B, Q, S through each surface handed to iSS and in
+           its sampled hadrons (mean over the samples), with event totals -->
+      <charge_check>0</charge_check>
       <!-- 1: random numbers addressed by the cell (blocks of quantized
            tau, x, y, eta), so two surfaces that agree in a region give the
            same hadrons there and their difference is less noisy; 0: the

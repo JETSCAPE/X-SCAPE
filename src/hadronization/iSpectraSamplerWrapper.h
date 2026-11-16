@@ -37,6 +37,15 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   // SetCompactHadronOutput: ExecuteTask fills compact_hadrons_, not Hadron_list_
   bool compact_output_ = false;
 
+  // <charge_check> 1 (optional): log the net B, Q, S through the surface and
+  // in the sampled hadrons (mean over the samples) for every surface handed
+  // over, and the totals of the event (reset in ClearTask)
+  int charge_check_ = 0;
+  double surf_bqs_[3] = {0., 0., 0.};
+  double event_surf_bqs_[3] = {0., 0., 0.};
+  double event_sample_bqs_[3] = {0., 0., 0.};
+  void LogChargeCheck();
+
   // Allows the registration of the module so that it is available to be used by
   // the Jetscape framework.
   static RegisterJetScapeModule<iSpectraSamplerWrapper> reg;

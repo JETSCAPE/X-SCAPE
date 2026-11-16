@@ -128,7 +128,7 @@ class FluidDynamics : public JetScapeModuleBase {
   double eta;
   bool boost_invariant_;
   Parameter parameter_list;
-  double source_term_tau_max;
+  double source_term_tau_max = 0.;  // set by the BulkDynamicsManager
 
   // How to store this data? In memory or hard disk?
   // 3D hydro may eat out the memory,

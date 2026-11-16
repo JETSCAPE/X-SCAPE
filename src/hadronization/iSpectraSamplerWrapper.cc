@@ -20,6 +20,7 @@
 #include "JetScapeLogger.h"
 #include "iSpectraSamplerWrapper.h"
 
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <fstream>
@@ -78,6 +79,8 @@ void iSpectraSamplerWrapper::InitTask() {
   // for runs without SMASH (0 leaves it undecayed, for an afterburner)
   int decay_smash_list = GetXMLElementInt(
       {"SoftParticlization", "iSS", "decay_smash_list"}, false);
+  charge_check_ = GetXMLElementInt(
+      {"SoftParticlization", "iSS", "charge_check"}, false);
   // optional, default 0: N > 0 also hands over the undecayed hadrons of the
   // first N samples (compact output: GetCompactPrimaries)
   int keep_primaries = GetXMLElementInt(
@@ -114,8 +117,21 @@ void iSpectraSamplerWrapper::InitTask() {
   // set default parameters
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_shear", 1);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_bulk", 0);
-  iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_rhob", 0);
-  iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_diff", 0);
+  // the charges and the diffusion current of the hydro: B, Q, S densities and
+  // chemical potentials reach iSS with every surface cell; the diffusion
+  // delta f is used when the hydro evolves baryon diffusion
+  // (<turn_on_baryon_diffusion>) unless <include_deltaf_diffusion> is 0 or 1
+  int turn_on_rhob =
+      GetXMLElementInt({"Hydro", "MUSIC", "Include_Rhob"}, false);
+  int turn_on_diff = GetXMLElementInt(
+      {"Hydro", "MUSIC", "turn_on_baryon_diffusion"}, false);
+  int include_deltaf_diffusion = GetXMLElementInt(
+      {"SoftParticlization", "iSS", "include_deltaf_diffusion"}, false);
+  if (include_deltaf_diffusion < 0) include_deltaf_diffusion = turn_on_diff;
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_rhob", turn_on_rhob);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_diff", turn_on_diff);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("include_deltaf_diffusion",
+                                            include_deltaf_diffusion);
 
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("include_deltaf_shear",
                                             include_deltaf_shear);
@@ -199,7 +215,27 @@ int iSpectraSamplerWrapper::PassSurfaceToISS(
     iSS_surf_cell.pi23 = surf_i.pi[8];
     iSS_surf_cell.pi33 = surf_i.pi[9];
     iSS_surf_cell.bulkPi = surf_i.bulk_Pi;
+    // were left uninitialised: iSS boosts them to the local rest frame for
+    // every cell, and samples with them when include_deltaf_diffusion = 1
+    iSS_surf_cell.qmu0 = surf_i.qmu[0];
+    iSS_surf_cell.qmu1 = surf_i.qmu[1];
+    iSS_surf_cell.qmu2 = surf_i.qmu[2];
+    iSS_surf_cell.qmu3 = surf_i.qmu[3];
     FOsurf_array.push_back(iSS_surf_cell);
+  }
+  if (charge_check_) {
+    // N^mu dsigma_mu = n u.dsigma (+ q.dsigma for B), in iSS's form of the
+    // contraction (iSS::computeFOSurfTmunu)
+    for (int k = 0; k < 3; k++) surf_bqs_[k] = 0.;
+    for (const auto &c : FOsurf_array) {
+      const double udsigma = c.tau * (c.u0 * c.da0 + c.u1 * c.da1
+                                      + c.u2 * c.da2 + c.u3 * c.da3 / c.tau);
+      const double qdsigma = c.tau * (c.qmu0 * c.da0 + c.qmu1 * c.da1
+                                      + c.qmu2 * c.da2 + c.qmu3 * c.da3 / c.tau);
+      surf_bqs_[0] += c.Bn * udsigma + qdsigma;
+      surf_bqs_[1] += c.Qn * udsigma;
+      surf_bqs_[2] += c.Sn * udsigma;
+    }
   }
   iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
   return (nCells);
@@ -237,10 +273,68 @@ void iSpectraSamplerWrapper::CalculateTime() {
       JSWARN << "Some errors happened in generating particle samples";
       exit(-1);
     }
+    if (charge_check_) LogChargeCheck();
     PassHadronListToJetscapeSameEvent();
   }
   // clear the surface vector
   ClearHydroHyperSurface();
+}
+
+namespace {
+// net baryon number, electric charge and strangeness of a hadron (or lepton,
+// photon) from its PDG code; false for codes this does not decode
+bool PdgCharges(int pid, int &B, int &Q, int &S) {
+  const int a = std::abs(pid);
+  const int sign = (pid > 0) ? 1 : -1;
+  B = Q = S = 0;
+  if (a == 11 || a == 13 || a == 15) { Q = -sign; return true; }
+  if (a == 12 || a == 14 || a == 16 || a == 22 || a == 130 || a == 310)
+    return true;
+  const int nq3 = (a / 10) % 10, nq2 = (a / 100) % 10, nq1 = (a / 1000) % 10;
+  // excited states (100211, 9000221, ...) carry the quark content in the same
+  // digits; nuclei (10 digits) are not decoded
+  if (a >= 1000000000 || nq2 == 0) return false;
+  auto qch3 = [](int q) { return (q % 2 == 0) ? 2 : -1; };   // in units e/3
+  if (nq1 == 0) {           // meson: q(nq2) qbar(nq3), heavier quark first
+    if (nq2 == nq3) return true;
+    int q3 = qch3(nq2) - qch3(nq3);
+    int s = (nq2 == 3 ? -1 : 0) - (nq3 == 3 ? -1 : 0);
+    if (nq2 % 2 == 1) { q3 = -q3; s = -s; }   // down-type: qbar(nq2) q(nq3)
+    Q = sign * q3 / 3;
+    S = sign * s;
+    return true;
+  }
+  B = sign;
+  Q = sign * (qch3(nq1) + qch3(nq2) + qch3(nq3)) / 3;
+  S = -sign * ((nq1 == 3) + (nq2 == 3) + (nq3 == 3));
+  return true;
+}
+}  // namespace
+
+void iSpectraSamplerWrapper::LogChargeCheck() {
+  const int nev = iSpectraSampler_ptr_->get_number_of_sampled_events();
+  double sample[3] = {0., 0., 0.};
+  long unknown = 0;
+  for (int iev = 0; iev < nev; iev++) {
+    for (const auto &h : *(iSpectraSampler_ptr_->get_hadron_list_iev(iev))) {
+      int B, Q, S;
+      if (!PdgCharges(h.pid, B, Q, S)) { unknown++; continue; }
+      sample[0] += B; sample[1] += Q; sample[2] += S;
+    }
+  }
+  for (int k = 0; k < 3; k++) {
+    if (nev > 0) sample[k] /= nev;
+    event_surf_bqs_[k] += surf_bqs_[k];
+    event_sample_bqs_[k] += sample[k];
+  }
+  JSINFO << "iSS charge check (B, Q, S): surface " << surf_bqs_[0] << " "
+         << surf_bqs_[1] << " " << surf_bqs_[2] << ", hadrons (mean of "
+         << nev << " samples) " << sample[0] << " " << sample[1] << " "
+         << sample[2] << "; event so far: surface " << event_surf_bqs_[0]
+         << " " << event_surf_bqs_[1] << " " << event_surf_bqs_[2]
+         << ", hadrons " << event_sample_bqs_[0] << " "
+         << event_sample_bqs_[1] << " " << event_sample_bqs_[2]
+         << (unknown ? " (some codes not decoded)" : "");
 }
 
 void iSpectraSamplerWrapper::ExecTime() {
@@ -359,6 +453,10 @@ void iSpectraSamplerWrapper::ClearHadronList() {
 }
 
 void iSpectraSamplerWrapper::ClearTask() {
+  for (int k = 0; k < 3; k++) {
+    event_surf_bqs_[k] = 0.;
+    event_sample_bqs_[k] = 0.;
+  }
   VERBOSE(2) << "Finish the particle sampling";
   iSpectraSampler_ptr_->clear();
   ClearHadronList();

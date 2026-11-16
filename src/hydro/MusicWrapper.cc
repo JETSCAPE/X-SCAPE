@@ -420,6 +420,21 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
   music_hydro_ptr->set_parameter("Include_Rhob", flag_include_Rhob);
   int flag_include_QS = GetXMLElementInt({"Hydro", "MUSIC", "Include_QS"});
   music_hydro_ptr->set_parameter("Include_QS", flag_include_QS);
+  // Net baryon diffusion and its kappa coefficient (C_B in kappa_B = C_B/T
+  // rho_B [coth(mu_B/T)/3 - rho_B T/(e + P)]). music4gpu only: upstream MUSIC
+  // ignores the two setters and takes them from its input file.
+  int flag_diff = GetXMLElementInt(
+      {"Hydro", "MUSIC", "turn_on_baryon_diffusion"}, false);
+#if !defined(USE_CUDA) && !defined(USE_METAL)
+  if (flag_diff == 1) {
+    JSWARN << "<turn_on_baryon_diffusion> is read by music4gpu only; set "
+           << "turn_on_baryon_diffusion in the MUSIC input file instead";
+  }
+#endif
+  music_hydro_ptr->set_parameter("turn_on_baryon_diffusion", flag_diff);
+  music_hydro_ptr->set_parameter(
+      "kappa_coefficient",
+      GetXMLElementDouble({"Hydro", "MUSIC", "kappa_coefficient"}, false));
 
   int use_eps_for_freeze_out =
       GetXMLElementInt({"Hydro", "MUSIC", "use_eps_for_freeze_out"});
@@ -1043,6 +1058,12 @@ void MpiMusic::PassHydroSurfaceToFramework() {
       surface_cell_info.pi[j] = surfaceCell_i.shear_pi[j];
     }
     surface_cell_info.bulk_Pi = surfaceCell_i.bulk_Pi;
+#if defined(USE_CUDA) || defined(USE_METAL)
+    // music4gpu's in-memory surface carries the baryon diffusion current
+    for (int j = 0; j < 4; j++) {
+      surface_cell_info.qmu[j] = surfaceCell_i.qmu[j];
+    }
+#endif
     StoreSurfaceCell(surface_cell_info);
   }
   music_hydro_ptr->clear_surface_cell_vector();
