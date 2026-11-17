@@ -35,6 +35,7 @@ add_unittest(LiquifierBase)
 add_unittest(ThermPtnSampler)
 add_unittest(hadronic_EMT)
 add_unittest(hadronic_liquefier)
+add_unittest(dynamic_fluidization)
 # if SMASH is used, include the related tests
 if(USE_SMASH)
   add_unittest(smash_nucleus)
