@@ -56,8 +56,10 @@ folderName="music4gpu"
 # quest_revert_as_cpu (the GPU shear regulator sets W to 0 for a negative
 # pi.pi, as the CPU does);
 # (MUSIC4GPU PR #26) active_region_eps > 0: the GPU evolves only the blocks
-# near matter (opt-in; 0, the default, evolves the whole grid as before)
-commitHash="3c04d0d574dee64b9ccd93ec197191c5543925f5"
+# near matter (opt-in; 0, the default, evolves the whole grid as before);
+# (MUSIC4GPU PR #27) symmetric_flux_fallback and quest_revert_as_cpu on by
+# default (X-SCAPE sets both explicitly in jetscape_main.xml as well)
+commitHash="a84e8a521e0910e1e5c340a109431b7634566294"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName

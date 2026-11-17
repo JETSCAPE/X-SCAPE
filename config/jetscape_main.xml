@@ -680,17 +680,19 @@
       <late_delta_tau>0</late_delta_tau>
       <late_tau_switch>0</late_tau_switch>
       <!-- KT fluxes (music4gpu): a half-cell state that cannot be reconstructed
-           falls back to the cell computing the flux (0, as before; the two cells
-           of an interface can then use different fluxes, so E and charges are
-           not conserved there) or to the cell on its side of the interface (1) -->
-      <symmetric_flux_fallback>0</symmetric_flux_fallback>
+           falls back to the cell on its side of the interface, so both cells
+           of an interface use the same flux (1, the default since 2026-11-17),
+           or to the cell computing the flux (0, the old rule: the two cells
+           can then use different fluxes, so E and charges are not conserved
+           there).  Set 0 only to continue a campaign begun with 0. -->
+      <symmetric_flux_fallback>1</symmetric_flux_fallback>
       <!-- GPU shear regulator (music4gpu): when pi^{mu nu} pi_{mu nu} comes out
-           negative in float (fast, dilute cells) the GPU clamps it to 0 and
-           leaves W unregulated there (0, as before), or sets W to 0 as the
-           CPU does (1) -->
-      <quest_revert_as_cpu>0</quest_revert_as_cpu>
-      <!-- the GPU evolves only the region with matter (music4gpu, CUDA; Metal
-           port not yet validated): the blocks
+           negative in float (fast, dilute cells) the GPU sets W to 0 as the
+           CPU does (1, the default since 2026-11-17), or clamps it to 0 and
+           leaves W unregulated there (0, the old rule) -->
+      <quest_revert_as_cpu>1</quest_revert_as_cpu>
+      <!-- the GPU evolves only the region with matter (opt-in, off by
+           default; music4gpu, CUDA; Metal port not yet validated): the blocks
            of 8 x 8 x 4 cells within active_region_halo cells of a cell with
            e > active_region_eps [GeV/fm^3] or a source term, rebuilt every
            active_region_dtau [fm/c]; the other cells stay frozen.  Not

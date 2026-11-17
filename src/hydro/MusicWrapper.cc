@@ -226,31 +226,34 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
 
   // <symmetric_flux_fallback> (music4gpu): a KT half-cell state that cannot be
   // reconstructed falls back to the cell on its side of the interface, so the
-  // two cells of an interface use the same flux (1). 0, the default, keeps
-  // the old fallback to the cell computing the flux (results unchanged).
-  int symmetric_flux_fallback = 0;
+  // two cells of an interface use the same flux (1, the default since
+  // 2026-11-17). 0 keeps the old fallback to the cell computing the flux
+  // (not conserving; only to continue a campaign begun with it).
+  int symmetric_flux_fallback = 1;
   if (auto *el = JetScapeXML::Instance()->GetElement(
           {"Hydro", "MUSIC", "symmetric_flux_fallback"}, false)) {
     el->QueryIntText(&symmetric_flux_fallback);
   }
   music_hydro_ptr->set_parameter("symmetric_flux_fallback",
                                  symmetric_flux_fallback);
-  if (symmetric_flux_fallback == 1) {
-    JSINFO << "MUSIC: symmetric flux fallback (<symmetric_flux_fallback>)";
-  }
+  JSINFO << "MUSIC: KT flux fallback "
+         << (symmetric_flux_fallback == 1
+                 ? "symmetric, conserving (<symmetric_flux_fallback> 1)"
+                 : "to the computing cell, the old rule (<symmetric_flux_fallback> 0)");
 
   // <quest_revert_as_cpu> (music4gpu): the GPU shear regulator sets W^{mu nu}
-  // to 0 when pi^{mu nu} pi_{mu nu} comes out negative, as the CPU does (1).
-  // 0, the default, keeps the GPU's clamp (results unchanged).
-  int quest_revert_as_cpu = 0;
+  // to 0 when pi^{mu nu} pi_{mu nu} comes out negative, as the CPU does (1,
+  // the default since 2026-11-17). 0 keeps the old GPU clamp.
+  int quest_revert_as_cpu = 1;
   if (auto *el = JetScapeXML::Instance()->GetElement(
           {"Hydro", "MUSIC", "quest_revert_as_cpu"}, false)) {
     el->QueryIntText(&quest_revert_as_cpu);
   }
   music_hydro_ptr->set_parameter("quest_revert_as_cpu", quest_revert_as_cpu);
-  if (quest_revert_as_cpu == 1) {
-    JSINFO << "MUSIC: GPU shear regulator as on the CPU (<quest_revert_as_cpu>)";
-  }
+  JSINFO << "MUSIC: GPU shear regulator "
+         << (quest_revert_as_cpu == 1
+                 ? "as on the CPU (<quest_revert_as_cpu> 1)"
+                 : "with the old clamp (<quest_revert_as_cpu> 0)");
 
   // The GPU evolves only the region with matter (music4gpu, CUDA; opt-in):
   // <active_region_eps> [GeV/fm^3] > 0 turns it on (absent or 0: the whole
