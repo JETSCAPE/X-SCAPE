@@ -57,7 +57,7 @@ folderName="music4gpu"
 # pi.pi, as the CPU does);
 # (MUSIC4GPU PR #26) active_region_eps > 0: the GPU evolves only the blocks
 # near matter (opt-in; 0, the default, evolves the whole grid as before)
-commitHash="e87ed861ba7795584732a4c8d019886758088e67"
+commitHash="3c04d0d574dee64b9ccd93ec197191c5543925f5"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
