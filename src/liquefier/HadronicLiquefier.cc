@@ -19,6 +19,8 @@
 // ------------------------------------------------------------
 
 #include "HadronicLiquefier.h"
+#include <algorithm>
+#include <cmath>
 #include "JetScapeLogger.h"
 #include "JetScapeXML.h"
 
@@ -153,9 +155,21 @@ double HadronicLiquefier::compute_drop_kernel_normalization(
   auto xmu_i = drop_i.get_xmu();
   auto pmu_i = drop_i.get_pmu();
 
-  for (int ieta = 0; ieta < Nz_; ieta++) {
-    for (int ix = 0; ix < Nx_; ix++) {
-      for (int iy = 0; iy < Ny_; iy++) {
+  // Only the cells within the skip distances can contribute (the tests
+  // below are unchanged): index ranges with one cell of margin, the same
+  // cells in the same order as the loop over the whole grid.
+  auto range = [](double c, double half, double lo, double d, int n,
+                  int &i0, int &i1) {
+    i0 = std::max(0, static_cast<int>(std::floor((c - half - lo) / d)) - 1);
+    i1 = std::min(n - 1, static_cast<int>(std::ceil((c + half - lo) / d)) + 1);
+  };
+  int ix0, ix1, iy0, iy1, ie0, ie1;
+  range(xmu_i[1], skip_dis_x, -xMax_, dx_, Nx_, ix0, ix1);
+  range(xmu_i[2], skip_dis_x, -yMax_, dy_, Ny_, iy0, iy1);
+  range(xmu_i[3], skip_dis_eta, -zMax_, dz_, Nz_, ie0, ie1);
+  for (int ieta = ie0; ieta <= ie1; ieta++) {
+    for (int ix = ix0; ix <= ix1; ix++) {
+      for (int iy = iy0; iy <= iy1; iy++) {
         double eta = -zMax_ + ieta * dz_;
         double x = -xMax_ + ix * dx_;
         double y = -yMax_ + iy * dy_;
@@ -203,7 +217,7 @@ double HadronicLiquefier::compute_drop_kernel_normalization(
           const double ux = pmu_i[1] / mass;
           const double uy = pmu_i[2] / mass;
           const double uz = pmu_i[3] / mass;
-          const double gamma = mT * cosh(rapidity - eta_s) / mass;
+          const double gamma = pmu_i[0] / mass;  // Cartesian: the lab frame
 
           normalization += smearing_kernel_covariant_Cartesian(
               x_diff, y_diff, eta_diff, ux, uy, uz, gamma);
@@ -234,7 +248,12 @@ void HadronicLiquefier::get_source_energy(const double tau, const double x,
   }
 
   double value_kernel = 0.;
-  for (const auto &drop_i : hadron_droplets_list) {
+  // the step's droplets (prepare_active_droplets) or all, in list order
+  const std::size_t n_loop =
+      active_valid_ ? active_idx_.size() : hadron_droplets_list.size();
+  for (std::size_t k_loop = 0; k_loop < n_loop; k_loop++) {
+    const auto &drop_i =
+        hadron_droplets_list[active_valid_ ? active_idx_[k_loop] : k_loop];
     auto xmu_i = drop_i.get_xmu();
     if (dtau_ > 0 &&
         ((xmu_i[0] < tau - 0.5 * dtau_) || (xmu_i[0] >= tau + 0.5 * dtau_))) {
@@ -286,7 +305,7 @@ void HadronicLiquefier::get_source_energy(const double tau, const double x,
       const double ux = pmu_i[1] / mass;
       const double uy = pmu_i[2] / mass;
       const double uz = pmu_i[3] / mass;
-      const double gamma = mT * cosh(rapidity - eta_s) / mass;
+      const double gamma = pmu_i[0] / mass;  // Cartesian: the lab frame
 
       value_kernel = smearing_kernel_covariant_Cartesian(
           x_diff, y_diff, eta_diff, ux, uy, uz, gamma);
@@ -300,10 +319,19 @@ void HadronicLiquefier::get_source_energy(const double tau, const double x,
     }
     value_kernel /= norm;
 
-    jmu[0] += value_kernel * mT * cosh(rapidity - eta);
-    jmu[1] += value_kernel * pmu_i[1];
-    jmu[2] += value_kernel * pmu_i[2];
-    jmu[3] += value_kernel * mT * sinh(rapidity - eta);
+    if (hydro_Cartesian_) {
+      // Cartesian: (t, x, y, z) components, p^mu itself
+      jmu[0] += value_kernel * pmu_i[0];
+      jmu[1] += value_kernel * pmu_i[1];
+      jmu[2] += value_kernel * pmu_i[2];
+      jmu[3] += value_kernel * pmu_i[3];
+    } else {
+      // Milne: p^tau = mT cosh(y - eta), tau p^eta = mT sinh(y - eta)
+      jmu[0] += value_kernel * mT * cosh(rapidity - eta);
+      jmu[1] += value_kernel * pmu_i[1];
+      jmu[2] += value_kernel * pmu_i[2];
+      jmu[3] += value_kernel * mT * sinh(rapidity - eta);
+    }
   }
 }
 
@@ -325,7 +353,12 @@ double HadronicLiquefier::get_source_quantity(const double tau, const double x,
   }
 
   double value_kernel = 0.;
-  for (const auto &drop_i : hadron_droplets_list) {
+  // the step's droplets (prepare_active_droplets) or all, in list order
+  const std::size_t n_loop =
+      active_valid_ ? active_idx_.size() : hadron_droplets_list.size();
+  for (std::size_t k_loop = 0; k_loop < n_loop; k_loop++) {
+    const auto &drop_i =
+        hadron_droplets_list[active_valid_ ? active_idx_[k_loop] : k_loop];
     int quantity_smear = 0;
     if (qtype == BARYON_NUMBER) {
       quantity_smear = drop_i.get_baryon_number();
@@ -392,7 +425,7 @@ double HadronicLiquefier::get_source_quantity(const double tau, const double x,
       const double ux = pmu_i[1] / mass;
       const double uy = pmu_i[2] / mass;
       const double uz = pmu_i[3] / mass;
-      const double gamma = mT * cosh(rapidity - eta_s) / mass;
+      const double gamma = pmu_i[0] / mass;  // Cartesian: the lab frame
 
       value_kernel = smearing_kernel_covariant_Cartesian(
           x_diff, y_diff, eta_diff, ux, uy, uz, gamma);
@@ -461,11 +494,16 @@ void HadronicLiquefier::get_sources_on_grid(const double tau,
   // expressions, so the same values).
   struct Drop {
     double x, y, eta_s, mass, mT, rapidity, norm, ux, uy, uz, ueta, gamma;
-    double px, py;
+    double px, py, E, pz;
     int B, Q, S;
   };
   std::vector<Drop> drops;
-  for (const auto &drop_i : hadron_droplets_list) {
+  // the step's droplets (prepare_active_droplets) or all, in list order
+  const std::size_t n_loop =
+      active_valid_ ? active_idx_.size() : hadron_droplets_list.size();
+  for (std::size_t k_loop = 0; k_loop < n_loop; k_loop++) {
+    const auto &drop_i =
+        hadron_droplets_list[active_valid_ ? active_idx_[k_loop] : k_loop];
     auto xmu_i = drop_i.get_xmu();
     if (dtau_ > 0 &&
         ((xmu_i[0] < tau - 0.5 * dtau_) || (xmu_i[0] >= tau + 0.5 * dtau_))) {
@@ -497,7 +535,10 @@ void HadronicLiquefier::get_sources_on_grid(const double tau,
     d.uz = pmu_i[3] / d.mass;
     const double peta = d.mT * sinh(d.rapidity - d.eta_s);
     d.ueta = peta / d.mass;
-    d.gamma = d.mT * cosh(d.rapidity - d.eta_s) / d.mass;
+    d.gamma = hydro_Cartesian_ ? pmu_i[0] / d.mass   // Cartesian: lab frame
+                               : d.mT * cosh(d.rapidity - d.eta_s) / d.mass;
+    d.E = pmu_i[0];
+    d.pz = pmu_i[3];
     d.B = drop_i.get_baryon_number();
     d.Q = drop_i.get_electric_charge();
     d.S = drop_i.get_strangeness();
@@ -534,9 +575,9 @@ void HadronicLiquefier::get_sources_on_grid(const double tau,
       for (const Drop &d : drops) {
         const double eta_diff = eta_c - d.eta_s;
         if (abs(eta_diff) > skip_dis_eta) continue;
-        // per (droplet, slice): the longitudinal factors of jmu
-        const double ch = cosh(d.rapidity - eta_c);
-        const double sh = sinh(d.rapidity - eta_c);
+        // per (droplet, slice): the longitudinal factors of jmu (Milne)
+        const double ch = hydro_Cartesian_ ? 0. : cosh(d.rapidity - eta_c);
+        const double sh = hydro_Cartesian_ ? 0. : sinh(d.rapidity - eta_c);
         int ix0, ix1, iy0, iy1;
         index_range(x, d.x - skip_dis_x - pad, d.x + skip_dis_x + pad, ix0,
                     ix1);
@@ -576,10 +617,17 @@ void HadronicLiquefier::get_sources_on_grid(const double tau,
               touched.push_back(c);
             }
             double *a = &acc[static_cast<std::size_t>(NV) * c];
-            a[0] += value_kernel * d.mT * ch;
-            a[1] += value_kernel * d.px;
-            a[2] += value_kernel * d.py;
-            a[3] += value_kernel * d.mT * sh;
+            if (hydro_Cartesian_) {   // as get_source_energy
+              a[0] += value_kernel * d.E;
+              a[1] += value_kernel * d.px;
+              a[2] += value_kernel * d.py;
+              a[3] += value_kernel * d.pz;
+            } else {
+              a[0] += value_kernel * d.mT * ch;
+              a[1] += value_kernel * d.px;
+              a[2] += value_kernel * d.py;
+              a[3] += value_kernel * d.mT * sh;
+            }
             // get_source_quantity() skips the droplets without the charge
             if (d.B != 0) a[4] += value_kernel * d.B;
             if (d.Q != 0) a[5] += value_kernel * d.Q;
@@ -648,7 +696,7 @@ bool HadronicLiquefier::gamma_factor_too_large_check(
     const double ux = pmu_i[1] / mass;
     const double uy = pmu_i[2] / mass;
     const double uz = pmu_i[3] / mass;
-    gamma = mT * cosh(rapidity - eta_s) / mass;
+    gamma = pmu_i[0] / mass;  // Cartesian: the lab frame
   }
 
   // Check if the gamma factor is larger than the maximum allowed value
@@ -701,6 +749,7 @@ std::vector<shared_ptr<Hadron>> HadronicLiquefier::add_hydro_sources_hadrons(
     double norm =
         compute_drop_kernel_normalization(x_hadron[0], hadron_droplet);
     hadron_droplet.set_normalization(norm);
+    active_valid_ = false;
     hadron_droplets_list.push_back(hadron_droplet);
   }
   return hadrons_not_added;
@@ -738,6 +787,9 @@ Jetscape::real HadronicLiquefier::get_dropletlist_net_strangeness() const {
   return (net_strangeness);
 }
 
-void HadronicLiquefier::ClearTask() { hadron_droplets_list.clear(); }
+void HadronicLiquefier::ClearTask() {
+  hadron_droplets_list.clear();
+  active_valid_ = false;
+}
 
 };  // namespace Jetscape

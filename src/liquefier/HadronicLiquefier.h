@@ -83,6 +83,9 @@ class HadronicLiquefier : public LiquefierBase {
 
   // this is the dtau of the hydro, set from the hydro module
   double dtau_ = -1.0;
+  //! prepare_active_droplets: indices of the droplets of the current step
+  std::vector<std::size_t> active_idx_;
+  bool active_valid_ = false;
 
   enum QuantityType { BARYON_NUMBER, ELECTRIC_CHARGE, STRANGENESS };
 
@@ -247,15 +250,43 @@ class HadronicLiquefier : public LiquefierBase {
    * Function to add a droplet to the list of droplets. If the droplet
    */
   void add_a_hadronic_droplet(HadronDroplet droplet_in) {
+    active_valid_ = false;
     hadron_droplets_list.push_back(droplet_in);
   }
 
   int get_dropletlist_size() const { return (hadron_droplets_list.size()); }
 
+  //! Per-step pruning: the droplets with a time in [t_lo, t_hi], in list
+  //! order, for the cell-by-cell queries of that step (MUSIC asks every cell;
+  //! with droplets arriving all run long, a full scan per cell was most of the
+  //! step).  The queries' own time test is unchanged, so the values are the
+  //! same as with the full list, bit for bit, while every query time lies in
+  //! [t_lo + dtau/2, t_hi - dtau/2].  Invalidated when droplets are added.
+  void prepare_active_droplets(double t_lo, double t_hi) {
+    active_idx_.clear();
+    for (std::size_t i = 0; i < hadron_droplets_list.size(); i++) {
+      const double t = hadron_droplets_list[i].get_xmu()[0];
+      if (t >= t_lo && t <= t_hi) active_idx_.push_back(i);
+    }
+    active_valid_ = true;
+  }
+
+  //! the time of the latest droplet (t in Cartesian, tau in Milne
+  //! coordinates), -1 without droplets: the hydro's source end time in
+  //! dynamic (concurrent) running, where droplets arrive during the run
+  double get_latest_droplet_time() const {
+    double t = -1.;
+    for (const auto &d : hadron_droplets_list) t = std::max(t, d.get_xmu()[0]);
+    return t;
+  }
+
   /**
    * Function to clear the list of droplets.
    */
-  void clear_hadron_droplet_list() { hadron_droplets_list.clear(); }
+  void clear_hadron_droplet_list() {
+    hadron_droplets_list.clear();
+    active_valid_ = false;
+  }
 
   /**
    * Function to get the total energy of the droplets in the list.
