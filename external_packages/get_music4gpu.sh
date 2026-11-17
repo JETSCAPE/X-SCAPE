@@ -54,8 +54,10 @@ folderName="music4gpu"
 # (bit-identical): symmetric_flux_fallback (a failed KT half-cell
 # reconstruction falls back to the cell on its side of the interface) and
 # quest_revert_as_cpu (the GPU shear regulator sets W to 0 for a negative
-# pi.pi, as the CPU does)
-commitHash="3194cd8654e9c6781ba71bbabf2d9fd33c3986df"
+# pi.pi, as the CPU does);
+# (MUSIC4GPU PR #26) active_region_eps > 0: the GPU evolves only the blocks
+# near matter (opt-in; 0, the default, evolves the whole grid as before)
+commitHash="e87ed861ba7795584732a4c8d019886758088e67"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
