@@ -239,6 +239,19 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     JSINFO << "MUSIC: symmetric flux fallback (<symmetric_flux_fallback>)";
   }
 
+  // <quest_revert_as_cpu> (music4gpu): the GPU shear regulator sets W^{mu nu}
+  // to 0 when pi^{mu nu} pi_{mu nu} comes out negative, as the CPU does (1).
+  // 0, the default, keeps the GPU's clamp (results unchanged).
+  int quest_revert_as_cpu = 0;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "quest_revert_as_cpu"}, false)) {
+    el->QueryIntText(&quest_revert_as_cpu);
+  }
+  music_hydro_ptr->set_parameter("quest_revert_as_cpu", quest_revert_as_cpu);
+  if (quest_revert_as_cpu == 1) {
+    JSINFO << "MUSIC: GPU shear regulator as on the CPU (<quest_revert_as_cpu>)";
+  }
+
   double tau_hydro =
       (GetXMLElementDouble({"Hydro", "MUSIC", "Initial_time_tau_0"}));
   music_hydro_ptr->set_parameter("Initial_time_tau_0", tau_hydro);
