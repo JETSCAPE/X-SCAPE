@@ -18,6 +18,7 @@
 // for the collider modus of SMASH to generate initial conditions
 // -----------------------------------------------------------------------------
 
+#include <chrono>
 #include "SMASHInitialStateWrapper.h"
 #include "Transport.h"
 #include "SmashTabulations.h"
@@ -306,9 +307,16 @@ void SmashInitialConditionWrapper::CalculateTimeTask() {
     VERBOSE(2) << "SMASH IC: " << remove_ids.size()
                << " fluidized hadrons to remove by id";
   }
+  const auto prof_t0 = std::chrono::steady_clock::now();
   smash_collider_experiment_->run_time_evolution(
       until_time, std::move(add_list), std::move(remove_list));
-  if (dynamic_fluidization_) DetermineFluidizingHadrons(until_time);
+  const auto prof_t1 = std::chrono::steady_clock::now();
+  prof_smash_s_ += std::chrono::duration<double>(prof_t1 - prof_t0).count();
+  if (dynamic_fluidization_) {
+    DetermineFluidizingHadrons(until_time);
+    prof_fluid_s_ += std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - prof_t1).count();
+  }
 }
 
 void SmashInitialConditionWrapper::UpdateFromFluidTags(double t) {
@@ -362,7 +370,10 @@ void SmashInitialConditionWrapper::DetermineFluidizingHadrons(double t) {
   // after their production in their rest frame.  Every particle counts in
   // the energy-momentum tensor.
   fluidize_ids_.clear();
+  const auto prof_t0 = std::chrono::steady_clock::now();
   UpdateFromFluidTags(t);
+  prof_tags_s_ += std::chrono::duration<double>(
+      std::chrono::steady_clock::now() - prof_t0).count();
   const smash::Particles *particles =
       smash_collider_experiment_->first_ensemble();
   std::vector<DynamicFluidization::Candidate> cand;
@@ -401,6 +412,12 @@ void SmashInitialConditionWrapper::DetermineFluidizingHadrons(double t) {
 
 void SmashInitialConditionWrapper::FinishPerEvent() {
   JSINFO << "Finishing SMASH initial condition event...";
+  if (dynamic_fluidization_) {
+    JSINFO << "SMASH IC, dynamic fluidization: SMASH evolution "
+           << prof_smash_s_ << " s; fluidization criterion " << prof_fluid_s_
+           << " s (of which the from-fluid tags " << prof_tags_s_ << " s)";
+  }
+  prof_smash_s_ = prof_fluid_s_ = prof_tags_s_ = 0.;
   event_number_++;
 
   // SMASH within JETSCAPE only works with one (the first) ensemble

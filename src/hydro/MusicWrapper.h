@@ -384,6 +384,9 @@ class MpiMusic : public FluidDynamics {
   bool hydro_Cartesian_ = false;
   //! dynamic running: no finish before this many liquefier droplets
   int fluidization_min_sources_ = 15;
+  //! time-stepped running: time per event in run_hydro_upto and in the
+  //! surface hand-over (log, Cartesian)
+  double prof_hydro_s_ = 0., prof_surf_s_ = 0.;
   double late_tau_switch_ = 0.;
   // int mode;            //!< records running mode
   std::unique_ptr<MUSIC> music_hydro_ptr;
@@ -569,6 +572,8 @@ class MpiMusic : public FluidDynamics {
 
   //! Overrides FluidDynamics::Clear() to honour preserve_bulk_info_.
   void Clear();
+  //! the time log of a time-stepped Cartesian run
+  void FinishPerEvent() override;
 
   bool update_music_input_parameter(const std::string &filename,
                                     const std::string &key, int new_value);

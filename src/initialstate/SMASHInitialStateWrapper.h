@@ -80,6 +80,9 @@ class SmashInitialConditionWrapper : public Transport {
   /// disappeared in the same step.
   static constexpr int32_t kFromFluid = 1000000;
   double from_fluid_match_ = 2.0;   ///< [fm]
+  /// time per event (log, dynamic fluidization): SMASH's evolution, the
+  /// fluidization criterion, the from-fluid tags within it
+  double prof_smash_s_ = 0., prof_fluid_s_ = 0., prof_tags_s_ = 0.;
   struct TaggedState {
     double t, x, y, z, vx, vy, vz;
   };

@@ -14,6 +14,7 @@
  * See COPYING for details.
  ******************************************************************************/
 
+#include <chrono>
 #include <stdio.h>
 #include <cstdlib>
 #include <sys/stat.h>
@@ -640,7 +641,10 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
     may_finish = (hl->get_dropletlist_size() >= fluidization_min_sources_);
   }
   if (hydro_status != FINISHED) {
+    const auto prof_t0 = std::chrono::steady_clock::now();
     int status = music_hydro_ptr->run_hydro_upto(tauEnd);
+    prof_hydro_s_ += std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - prof_t0).count();
     if (status != 0 && may_finish) {
       hydro_status = FINISHED;
       WarnIfGridBoundaryHit();
@@ -664,7 +668,10 @@ void MpiMusic::ExecTime() {
   // Pass the FO surface for the current time step to framework
   if (hydro_status == INITIALIZED) {
     VERBOSE(2) << "Passing hydro surface cells to JETSCAPE ... ";
+    const auto prof_t0 = std::chrono::steady_clock::now();
     PassHydroSurfaceToFramework();
+    prof_surf_s_ += std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - prof_t0).count();
   }
 }
 
@@ -1021,6 +1028,14 @@ void MpiMusic::WarnIfGridBoundaryHit() {
            << "X-SCAPE does not do). The stored evolution is truncated; "
            << "enlarge <IS><grid_max_x>/<grid_max_y>.";
   }
+}
+
+void MpiMusic::FinishPerEvent() {
+  if (hydro_Cartesian_ && prof_hydro_s_ > 0.) {
+    JSINFO << "MUSIC, time-stepped: evolution " << prof_hydro_s_
+           << " s, surface hand-over " << prof_surf_s_ << " s";
+  }
+  prof_hydro_s_ = prof_surf_s_ = 0.;
 }
 
 void MpiMusic::Clear() {

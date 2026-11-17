@@ -376,6 +376,8 @@ class BulkDynamicsManager
       S += h.strangeness();
     }
   } fluidized_totals_, particlized_totals_;
+  //! time per event in ExecTimeCartesianDynamic and in the liquefier (log)
+  double prof_exch_s_ = 0., prof_liq_s_ = 0.;
   //! one dynamic step: fluidize, collect the particlized hadrons
   void ExecTimeCartesianDynamic();
   bool SMASH_IC_attached_;

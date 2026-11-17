@@ -14,6 +14,7 @@
  * See COPYING for details.
  ******************************************************************************/
 
+#include <chrono>
 #include "BulkDynamicsManager.h"
 #include "JetScapeLogger.h"
 #include "JetScapeSignalManager.h"
@@ -574,6 +575,9 @@ void BulkDynamicsManager::FinishPerEvent() {
            << ", Q = " << particlized_totals_.Q << ", S = "
            << particlized_totals_.S << "; not yet in SMASH at the end: "
            << pending_particlized_.size();
+    JSINFO << "Dynamic fluidization, exchange: " << prof_exch_s_
+           << " s (of which the liquefier " << prof_liq_s_ << " s)";
+    prof_exch_s_ = prof_liq_s_ = 0.;
     pending_particlized_.clear();
   }
 
@@ -883,6 +887,7 @@ BulkDynamicsManager::GetHadronsToRemoveAndClear() {
  * surface piece was found at the end of this step).
  */
 void BulkDynamicsManager::ExecTimeCartesianDynamic() {
+  const auto prof_t0 = std::chrono::steady_clock::now();
   const double t_now = GetMainClock()->GetCurrentTime();
   const double dt = GetMainClock()->GetDeltaT();
 
@@ -908,7 +913,10 @@ void BulkDynamicsManager::ExecTimeCartesianDynamic() {
         to_fluid.push_back(h);
       }
       if (!to_fluid.empty()) {
+        const auto prof_l0 = std::chrono::steady_clock::now();
         auto not_added = liquefier->add_hydro_sources_hadrons(to_fluid);
+        prof_liq_s_ += std::chrono::duration<double>(
+            std::chrono::steady_clock::now() - prof_l0).count();
         // (none: they passed the same check above)
         for (const auto &h : to_fluid) {
           RemoveHadron(std::make_shared<Hadron>(h));
@@ -946,6 +954,8 @@ void BulkDynamicsManager::ExecTimeCartesianDynamic() {
     new_hadrons_for_timestep_.push_back(h);
   }
   pending_particlized_.swap(later);
+  prof_exch_s_ += std::chrono::duration<double>(
+      std::chrono::steady_clock::now() - prof_t0).count();
 }
 
 /**

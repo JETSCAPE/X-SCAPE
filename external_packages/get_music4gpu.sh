@@ -62,9 +62,13 @@ folderName="music4gpu"
 # finds the freeze-out surface with the GPU gather, and fills charge sources on
 # the grid (get_hydro_sources_on_grid); the 4D viscous kernel regulates W as the
 # CPU does (a fast, dilute cell grew to 1e32 and stopped the run)
-commitHash="c64dcbfcc2dc59c44f8e0b3e80885fda98bed29f"
-# its branch (clone -b): bqs_gpu until the B, Q, S port is merged into XSCAPE
-branch="bqs_gpu"
+# (branch trackB) + Cartesian coordinates (CoorType 1): the CPU guards
+# (cartesian_guards; docs/CARTESIAN.md), the active region (C3, opt-in,
+# <active_region_eps>) also in the NEOS-4D and diffusion kernels, and the
+# Cartesian terms in the CUDA kernels (B2); Milne bit-identical
+commitHash="745b5e3995bae53d958264226cb9713f5499f9c1"
+# its branch (clone -b): trackB until Track B is merged into bqs_gpu / XSCAPE
+branch="trackB"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b $branch $folderName
 cd $folderName

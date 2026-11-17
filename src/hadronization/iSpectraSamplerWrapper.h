@@ -46,6 +46,9 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   double surf_bqs_[3] = {0., 0., 0.};
   double surf_B_out_ = 0.;   //!< B through the cells with u.dsigma > 0
   long surf_n_in_ = 0;       //!< cells with u.dsigma <= 0
+  //! time-stepped running: time in CalculateTime per event (log, Cartesian)
+  double prof_s_ = 0.;
+  long prof_calls_ = 0, prof_sampled_ = 0;
   double event_surf_bqs_[3] = {0., 0., 0.};
   double event_sample_bqs_[3] = {0., 0., 0.};
   void LogChargeCheck();
@@ -64,6 +67,8 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   void InitTask();
   void ExecuteTask();
   void ClearTask();
+  //! the time log of a time-stepped Cartesian run
+  void FinishPerEvent() override;
   void ClearHadronList();
   void WriteTask(weak_ptr<JetScapeWriter> w);
 

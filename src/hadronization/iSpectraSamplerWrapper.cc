@@ -20,6 +20,8 @@
 #include "JetScapeLogger.h"
 #include "iSpectraSamplerWrapper.h"
 
+#include <chrono>
+
 #include <cstdlib>
 #include <memory>
 #include <string>
@@ -257,11 +259,15 @@ int iSpectraSamplerWrapper::PassSurfaceToISS(
       }
     }
   }
-  iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
+  // no cells: nothing to hand over (iSS would read its EOS and delta f
+  // tables again only to report an empty surface; every caller samples only
+  // for nCells > 0)
+  if (nCells > 0) iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
   return (nCells);
 }
 
 void iSpectraSamplerWrapper::CalculateTime() {
+  const auto prof_t0 = std::chrono::steady_clock::now();
   VERBOSE(2) << "iSS::CalculateTime() main Clock = "
              << GetMainClock()->GetCurrentTime() << " fm/c ...";
   if (statusCode_ == 0) {
@@ -298,6 +304,10 @@ void iSpectraSamplerWrapper::CalculateTime() {
   }
   // clear the surface vector
   ClearHydroHyperSurface();
+  prof_s_ += std::chrono::duration<double>(std::chrono::steady_clock::now()
+                                           - prof_t0).count();
+  prof_calls_++;
+  if (nCells > 0) prof_sampled_++;
 }
 
 namespace {
@@ -474,6 +484,15 @@ void iSpectraSamplerWrapper::ClearHadronList() {
   Hadron_list_.clear();
 }
 
+void iSpectraSamplerWrapper::FinishPerEvent() {
+  if (prof_calls_ > 0 && hydro_Cartesian_) {
+    JSINFO << "iSS, time-stepped: " << prof_s_ << " s in " << prof_calls_
+           << " calls (" << prof_sampled_ << " with a surface)";
+  }
+  prof_s_ = 0.;
+  prof_calls_ = prof_sampled_ = 0;
+}
+
 void iSpectraSamplerWrapper::ClearTask() {
   for (int k = 0; k < 3; k++) {
     event_surf_bqs_[k] = 0.;
@@ -517,15 +536,20 @@ void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
       FourVector hadron_x(current_hadron.x, current_hadron.y, current_hadron.z,
                           current_hadron.t);
 
-      // create a JETSCAPE Hadron
+      // create a JETSCAPE Hadron, with B, Q, S from its PDG code (the
+      // constructor leaves them 0; the dynamic exchange counts them)
+      auto jetscape_hadron =
+          make_shared<Hadron>(hadron_label, hadron_id, hadron_status,
+                              hadron_p, hadron_x, hadron_mass);
+      int B, Q, S;
+      if (PdgCharges(hadron_id, B, Q, S)) {
+        jetscape_hadron->set_baryon_number(B);
+        jetscape_hadron->set_charge(Q);
+        jetscape_hadron->set_strangeness(S);
+      }
       if (!hadronListExist) {
-        hadrons.push_back(make_shared<Hadron>(hadron_label, hadron_id,
-                                              hadron_status, hadron_p, hadron_x,
-                                              hadron_mass));
+        hadrons.push_back(jetscape_hadron);
       } else {
-        auto jetscape_hadron =
-            make_shared<Hadron>(hadron_label, hadron_id, hadron_status,
-                                hadron_p, hadron_x, hadron_mass);
         Hadron_list_[iev].push_back(jetscape_hadron);
       }
     }

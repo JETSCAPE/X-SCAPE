@@ -22,10 +22,14 @@
 # uncorrelated sampling is unchanged -- until they are merged upstream)
 # + (branch table_cache) the HRG4D and NEoS4D delta f tables of EOS 20 read once per
 # process, not for every surface (same tables)
+# + (branch trackB) chunshen1987/iSS XSCAPE's Cartesian sampling (hydro_Cartesian,
+# read when the surface arrives), and many small surfaces fast (X-SCAPE's
+# time-stepped particlization: the resonance list no longer grows with every
+# surface, one parallel region per surface, the 4D tables shared): same hadrons
 folderName="iSS"
-commitHash="aff86623fc426821c9cd0b78ee3d8200afeb42ac"
+commitHash="979a33574f9ecafc848b869324f152fec554bea8"
 
-git clone https://github.com/jhputschke/iSS -b table_cache iSS
+git clone https://github.com/jhputschke/iSS -b trackB iSS
 cd $folderName
 git checkout $commitHash
 
