@@ -49,8 +49,13 @@ folderName="music4gpu"
 # CMAKE_OSX_DEPLOYMENT_TARGET when it is set (the macOS wheel); unchanged otherwise;
 # (MUSIC4GPU PR #24) the jet source of a step is filled only in the cells
 # the source reports (HydroSourceBase::get_hydro_energy_source_on_grid, which
-# HydroSourceJETSCAPE implements), 12 -> 1.1 ms per fill, bit-identical
-commitHash="1c99bee99af06030f2456e8b5bfaabc9a0eb2449"
+# HydroSourceJETSCAPE implements), 12 -> 1.1 ms per fill, bit-identical;
+# (MUSIC4GPU PR #25) two optional conservation fixes, both off by default
+# (bit-identical): symmetric_flux_fallback (a failed KT half-cell
+# reconstruction falls back to the cell on its side of the interface) and
+# quest_revert_as_cpu (the GPU shear regulator sets W to 0 for a negative
+# pi.pi, as the CPU does)
+commitHash="3194cd8654e9c6781ba71bbabf2d9fd33c3986df"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName
