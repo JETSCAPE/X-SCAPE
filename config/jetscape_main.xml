@@ -772,6 +772,12 @@
       <freezeout_temperature>0.15</freezeout_temperature>
       <eps_switch>0.3</eps_switch>
       <Do_FreezeOut_lowtemp>1</Do_FreezeOut_lowtemp>
+      <!-- Cartesian (<CartesianHydro> true) only: a KT half-cell state that
+           cannot be reconstructed falls back to the cell on its side of the
+           interface, so both cells use the same flux (1, MUSIC's default);
+           0 falls back to the cell computing it, as in Milne, so the two
+           cells' fluxes differ (with SMASH sources ~10 % of E and B lost). -->
+      <symmetric_flux_fallback>1</symmetric_flux_fallback>
       <average_surface_over_this_many_time_steps>5</average_surface_over_this_many_time_steps>
       <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
       <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>

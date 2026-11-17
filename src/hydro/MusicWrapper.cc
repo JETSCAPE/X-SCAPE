@@ -232,6 +232,19 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
       JSINFO << "MUSIC, dynamic fluidization: particlized fluid "
              << (drain_particlized_ ? "drained" : "kept on the grid")
              << " (<BDM><drain_particlized_fluid>)";
+      // <Hydro><MUSIC><symmetric_flux_fallback> (MUSIC's default 1): a KT
+      // half-cell state that cannot be reconstructed falls back to the cell
+      // on its side of the interface, so both cells use the same flux.  0:
+      // to the cell computing it (as in Milne), which lost ~10 % of E and B
+      // with SMASH sources.
+      int sym = 1;
+      if (auto *el = JetScapeXML::Instance()->GetElement(
+              {"Hydro", "MUSIC", "symmetric_flux_fallback"}, false)) {
+        el->QueryIntText(&sym);
+      }
+      music_hydro_ptr->set_parameter("symmetric_flux_fallback", sym);
+      JSINFO << "MUSIC, Cartesian: symmetric flux fallback " << sym
+             << " (<Hydro><MUSIC><symmetric_flux_fallback>)";
     }
   }
 
@@ -1066,6 +1079,16 @@ void MpiMusic::FinishPerEvent() {
            << ", S = " << drained[3] << "; left on the grid: E = " << left[0]
            << " GeV, B = " << left[1] << ", Q = " << left[2]
            << ", S = " << left[3];
+  }
+  if (hydro_Cartesian_ && prof_hydro_s_ > 0.) {
+    double all[4], below[4];
+    if (music_hydro_ptr->get_source_totals(all, below)) {
+      JSINFO << "MUSIC, sources: deposited E = " << all[0] << " GeV, B = "
+             << all[1] << ", Q = " << all[2] << ", S = " << all[3]
+             << "; into cells that stay below the switching density: E = "
+             << below[0] << " GeV, B = " << below[1] << ", Q = " << below[2]
+             << ", S = " << below[3];
+    }
   }
   prof_hydro_s_ = prof_surf_s_ = 0.;
 }

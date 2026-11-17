@@ -66,7 +66,7 @@ folderName="music4gpu"
 # (cartesian_guards; docs/CARTESIAN.md), the active region (C3, opt-in,
 # <active_region_eps>) also in the NEOS-4D and diffusion kernels, and the
 # Cartesian terms in the CUDA kernels (B2); Milne bit-identical
-commitHash="5269c6f51aefb7ad15072f21170e46379022fc1d"
+commitHash="be68a4f29cc492f4d348b60aedbf8083f4046e7a"
 # its branch (clone -b): trackB until Track B is merged into bqs_gpu / XSCAPE
 branch="trackB"
 
