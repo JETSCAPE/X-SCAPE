@@ -214,6 +214,24 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
       JSINFO << "MUSIC in Cartesian coordinates (CoorType 1)";
       fluidization_min_sources_ =
           GetXMLElementInt({"BDM", "fluidization_min_sources"}, false);
+      // Dynamic fluidization: the matter iSS has particlized is taken off
+      // the grid at every freeze-out check (MUSIC drain_particlized).  Left
+      // there, the dense region, fed by sources, grows back over it and it is
+      // particlized a second time (iSS drops the surface's inflow).  0 keeps
+      // it, as before.
+      int drain = 1;
+      if (auto *el = JetScapeXML::Instance()->GetElement(
+              {"BDM", "drain_particlized_fluid"}, false)) {
+        el->QueryIntText(&drain);
+      }
+      drain_particlized_ =
+          (GetXMLElementInt({"BDM", "dynamic_fluidization"}, false) == 1)
+          && drain != 0;
+      music_hydro_ptr->set_parameter("drain_particlized",
+                                     drain_particlized_ ? 1 : 0);
+      JSINFO << "MUSIC, dynamic fluidization: particlized fluid "
+             << (drain_particlized_ ? "drained" : "kept on the grid")
+             << " (<BDM><drain_particlized_fluid>)";
     }
   }
 
@@ -1034,6 +1052,20 @@ void MpiMusic::FinishPerEvent() {
   if (hydro_Cartesian_ && prof_hydro_s_ > 0.) {
     JSINFO << "MUSIC, time-stepped: evolution " << prof_hydro_s_
            << " s, surface hand-over " << prof_surf_s_ << " s";
+  }
+  // the fluid's books: what was drained, what is left on the grid (with the
+  // source totals and iSS' surface fluxes, the conservation check of the
+  // dynamic fluidization, run_bes_smash_ic.sh)
+  if (hydro_Cartesian_ && prof_hydro_s_ > 0.) {
+    double drained[4], left[4];
+    long cells = 0;
+    music_hydro_ptr->get_drained_totals(drained, &cells);
+    music_hydro_ptr->get_fluid_totals(left);
+    JSINFO << "MUSIC, fluid: drained " << cells << " cells, E = " << drained[0]
+           << " GeV, B = " << drained[1] << ", Q = " << drained[2]
+           << ", S = " << drained[3] << "; left on the grid: E = " << left[0]
+           << " GeV, B = " << left[1] << ", Q = " << left[2]
+           << ", S = " << left[3];
   }
   prof_hydro_s_ = prof_surf_s_ = 0.;
 }

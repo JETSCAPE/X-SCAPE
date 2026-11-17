@@ -384,6 +384,9 @@ class MpiMusic : public FluidDynamics {
   bool hydro_Cartesian_ = false;
   //! dynamic running: no finish before this many liquefier droplets
   int fluidization_min_sources_ = 15;
+  // <BDM><drain_particlized_fluid> (default 1) with dynamic fluidization:
+  // MUSIC empties the particlized cells at every freeze-out check
+  bool drain_particlized_ = false;
   //! time-stepped running: time per event in run_hydro_upto and in the
   //! surface hand-over (log, Cartesian)
   double prof_hydro_s_ = 0., prof_surf_s_ = 0.;

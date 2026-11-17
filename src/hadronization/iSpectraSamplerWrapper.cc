@@ -259,6 +259,26 @@ int iSpectraSamplerWrapper::PassSurfaceToISS(
       }
     }
   }
+  if (hydro_Cartesian_) {
+    // T^{0 mu} dsigma_mu and N^{0 mu} dsigma_mu of every cell (dsigma_mu
+    // covariant, as above with J = 1): iSS samples the cells with
+    // u.dsigma > 0 and drops the others (iSS::transform_to_local_rest_frame)
+    for (const auto &c : FOsurf_array) {
+      const double udsigma =
+          c.u0 * c.da0 + c.u1 * c.da1 + c.u2 * c.da2 + c.u3 * c.da3;
+      const double qdsigma =
+          c.qmu0 * c.da0 + c.qmu1 * c.da1 + c.qmu2 * c.da2 + c.qmu3 * c.da3;
+      const double PPi = c.Pdec + c.bulkPi;
+      const double E = (c.Edec + PPi) * c.u0 * udsigma - PPi * c.da0
+                       + c.pi00 * c.da0 + c.pi01 * c.da1 + c.pi02 * c.da2
+                       + c.pi03 * c.da3;
+      const double f[4] = {E, c.Bn * udsigma + qdsigma, c.Qn * udsigma,
+                           c.Sn * udsigma};
+      double *sum = (udsigma >= 0.) ? flux_out_ : flux_in_;
+      for (int k = 0; k < 4; k++) sum[k] += f[k];
+      if (udsigma >= 0.) flux_n_out_++; else flux_n_in_++;
+    }
+  }
   // no cells: nothing to hand over (iSS would read its EOS and delta f
   // tables again only to report an empty surface; every caller samples only
   // for nCells > 0)
@@ -489,6 +509,17 @@ void iSpectraSamplerWrapper::FinishPerEvent() {
     JSINFO << "iSS, time-stepped: " << prof_s_ << " s in " << prof_calls_
            << " calls (" << prof_sampled_ << " with a surface)";
   }
+  if (hydro_Cartesian_ && flux_n_out_ + flux_n_in_ > 0) {
+    // the expected particlized totals (out) and what iSS cannot subtract (in)
+    JSINFO << "iSS, surface fluxes: out (" << flux_n_out_ << " cells) E = "
+           << flux_out_[0] << " GeV, B = " << flux_out_[1] << ", Q = "
+           << flux_out_[2] << ", S = " << flux_out_[3] << "; in ("
+           << flux_n_in_ << " cells, dropped) E = " << -flux_in_[0]
+           << " GeV, B = " << -flux_in_[1] << ", Q = " << -flux_in_[2]
+           << ", S = " << -flux_in_[3];
+  }
+  for (int k = 0; k < 4; k++) flux_out_[k] = flux_in_[k] = 0.;
+  flux_n_out_ = flux_n_in_ = 0;
   prof_s_ = 0.;
   prof_calls_ = prof_sampled_ = 0;
 }

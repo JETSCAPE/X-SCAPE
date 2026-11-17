@@ -49,6 +49,12 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   //! time-stepped running: time in CalculateTime per event (log, Cartesian)
   double prof_s_ = 0.;
   long prof_calls_ = 0, prof_sampled_ = 0;
+  // Cartesian (time-stepped) runs: the event's flux through the surfaces
+  // handed to iSS, E [GeV], B, Q, S, of the cells with u.dsigma > 0 (out,
+  // what iSS samples) and < 0 (in, which iSS drops), and their numbers
+  double flux_out_[4] = {0., 0., 0., 0.};
+  double flux_in_[4] = {0., 0., 0., 0.};
+  long flux_n_out_ = 0, flux_n_in_ = 0;
   double event_surf_bqs_[3] = {0., 0., 0.};
   double event_sample_bqs_[3] = {0., 0., 0.};
   void LogChargeCheck();

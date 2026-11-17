@@ -95,6 +95,16 @@
     <fluidization_sigma>0.7</fluidization_sigma>
     <fluidization_string_time>0.4</fluidization_string_time>
     <fluidization_min_sources>15</fluidization_min_sources>
+    <!-- drain_particlized_fluid = 1: at every freeze-out check MUSIC takes
+         the energy the surface emits (u.dsigma > 0, what iSS samples) off
+         the cells below the switching density next to it.  Left on the grid
+         (0, as before 2026-11-17) the dense region, fed by sources, grows
+         back over that matter and it is particlized a second time (Au+Au
+         7.7 GeV: outflow 5-14 % above what was fluidized, final state about
+         107 % in E).  Matter that never reached the switching density stays
+         on the grid (lost at the end, about 20 % of B).  Only with
+         dynamic_fluidization. -->
+    <drain_particlized_fluid>1</drain_particlized_fluid>
   </BDM>
 
   <!-- Inital State Module  -->
