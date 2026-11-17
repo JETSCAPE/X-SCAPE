@@ -80,6 +80,21 @@
     <ignore_spectator_hadrons>0</ignore_spectator_hadrons>
     <!-- CreateHadronicTimeEvolutionOutput: To create a movie for one event, not recommended for production runs -->
     <CreateHadronicTimeEvolutionOutput> false </CreateHadronicTimeEvolutionOutput>
+    <!-- Dynamic fluidization (needs <Hydro><CartesianHydro> true and the SMASH
+         initial state): SMASH runs the whole event; at every clock step the
+         hadrons in dense regions become hydro sources (hadronic liquefier) and
+         leave SMASH, and the particlized hadrons enter SMASH.  Criterion after
+         arXiv:2507.19389: rest-frame energy density at the hadron (covariant
+         Gaussian of width fluidization_sigma, exp(-r^2/2sigma^2)) minus its
+         own m/(2 pi sigma^2)^{3/2} >= fluidization_e_threshold [GeV/fm^3];
+         string fragments only fluidization_string_time [fm, rest frame] after
+         their production; never unscattered nucleons.  The hydro does not
+         finish before fluidization_min_sources droplets have arrived. -->
+    <dynamic_fluidization>0</dynamic_fluidization>
+    <fluidization_e_threshold>0.5</fluidization_e_threshold>
+    <fluidization_sigma>0.7</fluidization_sigma>
+    <fluidization_string_time>0.4</fluidization_string_time>
+    <fluidization_min_sources>15</fluidization_min_sources>
   </BDM>
 
   <!-- Inital State Module  -->

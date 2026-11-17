@@ -41,7 +41,11 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   // in the sampled hadrons (mean over the samples) for every surface handed
   // over, and the totals of the event (reset in ClearTask)
   int charge_check_ = 0;
+  //! <Hydro><CartesianHydro>: the surface is in (t, x, y, z)
+  bool hydro_Cartesian_ = false;
   double surf_bqs_[3] = {0., 0., 0.};
+  double surf_B_out_ = 0.;   //!< B through the cells with u.dsigma > 0
+  long surf_n_in_ = 0;       //!< cells with u.dsigma <= 0
   double event_surf_bqs_[3] = {0., 0., 0.};
   double event_sample_bqs_[3] = {0., 0., 0.};
   void LogChargeCheck();

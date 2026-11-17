@@ -385,6 +385,10 @@ void BulkDynamicsManager::ExecTime() {
     }
   }
 
+  if (SMASH_IC_attached_ && hydro_Cartesian_ && dynamic_fluidization_) {
+    ExecTimeCartesianDynamic();
+  }
+
   JetScapeModuleBase::ExecTimeTasks();
 
   VERBOSE(3)
@@ -450,6 +454,41 @@ void BulkDynamicsManager::InitPerEvent() {
     }
   }
 
+  // Cartesian hydro next to SMASH (dynamic fluidization): every module runs
+  // on the one clock; the initial-state SMASH runs the whole event and is its
+  // own afterburner, so a SMASH afterburner module stays off
+  if (hydro_Cartesian_) {
+    dynamic_fluidization_ =
+        (GetXMLElementInt({"BDM", "dynamic_fluidization"}, false) == 1);
+    pending_particlized_.clear();
+    fluidized_totals_ = ExchangeTotals();
+    particlized_totals_ = ExchangeTotals();
+    for (auto it : GetTaskList()) {
+      auto module = std::dynamic_pointer_cast<JetScapeModuleBase>(it);
+      if (module->GetId() == "SMASHInitialState") {
+        SMASH_IC_attached_ = true;
+        SMASH_IC_in_progress_ = true;
+        hydro_in_progress_ = true;
+        module->SetActive(true);
+      } else if (dynamic_pointer_cast<Afterburner>(module)) {
+        module->SetActive(false);
+      } else {
+        module->SetActive(true);
+      }
+      if (auto fluid = dynamic_pointer_cast<FluidDynamics>(module)) {
+        fluid->SetSourceTermTauMax(0.);
+      }
+    }
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr_)) {
+      hadronic_liquefier_ptr_.lock()->clear_hadron_droplet_list();
+    }
+    if (SMASH_IC_attached_ && !dynamic_fluidization_) {
+      JSWARN << "Cartesian hydro with the SMASH initial state but "
+                "<BDM><dynamic_fluidization> 0: nothing moves hadrons into "
+                "the hydro";
+    }
+  }
+
   // JUST FOR CHECKING
   for (auto task : GetTaskList()) {
     if (auto hadronization =
@@ -507,6 +546,37 @@ void BulkDynamicsManager::FinishPerEvent() {
     }
   }
 
+  // Cartesian (dynamic fluidization): the initial-state SMASH ran the whole
+  // event; its particles are the final state
+  if (SMASH_IC_attached_ && hydro_Cartesian_) {
+    linb::any current =
+        QueryHistory::Instance()->GetHistoryFromModule("SMASHInitialState");
+    if (!current.empty()) {
+      try {
+        std::vector<Hadron> hadrons = any_cast<std::vector<Hadron>>(current);
+        std::vector<std::shared_ptr<Hadron>> shared_hadrons;
+        for (auto &h : hadrons) {
+          h.set_stat(28);   // not "fluidizes now" (29) at the end
+          shared_hadrons.push_back(std::make_shared<Hadron>(h));
+        }
+        BDM_final_state_hadrons_.push_back(shared_hadrons);
+      } catch (const linb::bad_any_cast &e) {
+        JSWARN << "Failed to retrieve hadrons from SMASHInitialState: "
+               << e.what();
+      }
+    }
+    JSINFO << "Dynamic fluidization, event totals: fluidized "
+           << fluidized_totals_.n << " hadrons, E = " << fluidized_totals_.E
+           << " GeV, B = " << fluidized_totals_.B << ", Q = "
+           << fluidized_totals_.Q << ", S = " << fluidized_totals_.S
+           << "; particlized " << particlized_totals_.n << " hadrons, E = "
+           << particlized_totals_.E << " GeV, B = " << particlized_totals_.B
+           << ", Q = " << particlized_totals_.Q << ", S = "
+           << particlized_totals_.S << "; not yet in SMASH at the end: "
+           << pending_particlized_.size();
+    pending_particlized_.clear();
+  }
+
   CloseHadronicTimeEvolutionFileIfNecessary();
 
   // Clear some vectors
@@ -557,7 +627,7 @@ void BulkDynamicsManager::WriteTask(weak_ptr<JetScapeWriter> w) {
   if (!f) {
     return;
   }
-  if (SMASH_IC_attached_ && !hydro_Cartesian_) {
+  if (SMASH_IC_attached_ && !BDM_final_state_hadrons_.empty()) {
     // write BDM_final_state_hadrons_ hadrons for all events to file
     f->WriteComment("BDM final state hadrons");
     int i = -1;
@@ -798,6 +868,84 @@ BulkDynamicsManager::GetHadronsToRemoveAndClear() {
   // and therefore clears the vector (to be filled again at the next timestep)
   new_h_to_remove.swap(remove_hadrons_for_timestep_);
   return new_h_to_remove;
+}
+
+/**
+ * @brief One step of dynamic fluidization with a Cartesian hydro.
+ *
+ * At the end of a clock step (SMASH and the hydro are at t): the hadrons the
+ * initial-state SMASH flagged (status 29, DynamicFluidization) become
+ * droplets of the hadronic liquefier at their position at t and are removed
+ * from SMASH in its next step; the hydro deposits them in its step from t.
+ * Hadrons the liquefier rejects (gamma above <gamma_factor_max>) stay in
+ * SMASH.  The particlized hadrons (iSS) go to SMASH when their own time is
+ * within the next step; earlier ones are free-streamed to t first (their
+ * surface piece was found at the end of this step).
+ */
+void BulkDynamicsManager::ExecTimeCartesianDynamic() {
+  const double t_now = GetMainClock()->GetCurrentTime();
+  const double dt = GetMainClock()->GetDeltaT();
+
+  bool hydro_running = false;
+  for (auto it : GetTaskList()) {
+    if (auto fluid = dynamic_pointer_cast<FluidDynamics>(it)) {
+      hydro_running = (fluid->GetHydroStatus() != FINISHED);
+    }
+  }
+  hydro_in_progress_ = hydro_running;
+
+  // fluidization (only while the hydro runs: after it, all stays in SMASH)
+  if (hydro_running && !weak_ptr_is_uninitialized(hadronic_liquefier_ptr_)) {
+    auto liquefier = hadronic_liquefier_ptr_.lock();
+    linb::any current =
+        QueryHistory::Instance()->GetHistoryFromModule("SMASHInitialState");
+    if (!current.empty()) {
+      std::vector<Hadron> hadrons = any_cast<std::vector<Hadron>>(current);
+      std::vector<Hadron> to_fluid;
+      for (const auto &h : hadrons) {
+        if (h.pstat() != 29) continue;
+        if (liquefier->gamma_factor_too_large_check(h)) continue;
+        to_fluid.push_back(h);
+      }
+      if (!to_fluid.empty()) {
+        auto not_added = liquefier->add_hydro_sources_hadrons(to_fluid);
+        // (none: they passed the same check above)
+        for (const auto &h : to_fluid) {
+          RemoveHadron(std::make_shared<Hadron>(h));
+          fluidized_totals_.add(h);
+        }
+        VERBOSE(2) << "t = " << t_now << ": " << to_fluid.size()
+                   << " hadrons fluidized (" << not_added.size()
+                   << " rejected by the liquefier)";
+      }
+    }
+  }
+
+  // particlized hadrons into SMASH
+  StoreHadronsFromSoftParticlization();
+  for (const auto &h : store_hadrons_soft_particlization_) {
+    pending_particlized_.push_back(h);
+    particlized_totals_.add(*h);
+  }
+  store_hadrons_soft_particlization_.clear();
+  std::vector<shared_ptr<Hadron>> later;
+  for (auto &h : pending_particlized_) {
+    const FourVector x = h->x_in();
+    const double t_h = x.t();
+    if (t_h >= t_now + dt) {
+      later.push_back(h);
+      continue;
+    }
+    if (t_h < t_now) {
+      const FourVector p = h->p_in();
+      const double s = (t_now - t_h) / p.t();
+      double x_now[4] = {t_now, x.x() + p.x() * s, x.y() + p.y() * s,
+                         x.z() + p.z() * s};
+      h->set_x(x_now);
+    }
+    new_hadrons_for_timestep_.push_back(h);
+  }
+  pending_particlized_.swap(later);
 }
 
 /**

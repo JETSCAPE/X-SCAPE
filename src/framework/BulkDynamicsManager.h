@@ -357,6 +357,27 @@ class BulkDynamicsManager
    * run first, or if it can run concurrently with hydro.
    */
   bool hydro_Cartesian_;
+  //! <BDM><dynamic_fluidization> with a Cartesian hydro: SMASH runs the whole
+  //! event, hadrons it flags (DynamicFluidization) become hydro sources and
+  //! leave SMASH, particlized hadrons enter SMASH at their own time
+  bool dynamic_fluidization_ = false;
+  //! particlized hadrons not yet handed to SMASH (later than this step)
+  std::vector<shared_ptr<Hadron>> pending_particlized_;
+  //! totals of the exchange for the event (log): fluidized and particlized
+  //! hadrons, their energy and charges B, Q, S
+  struct ExchangeTotals {
+    long n = 0;
+    double E = 0., B = 0., Q = 0., S = 0.;
+    void add(const Hadron &h) {
+      n++;
+      E += h.p_in().t();
+      B += h.baryon_number();
+      Q += h.charge();
+      S += h.strangeness();
+    }
+  } fluidized_totals_, particlized_totals_;
+  //! one dynamic step: fluidize, collect the particlized hadrons
+  void ExecTimeCartesianDynamic();
   bool SMASH_IC_attached_;
 
   bool SMASH_IC_in_progress_;

@@ -200,6 +200,22 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
 
   music_hydro_ptr->set_parameter("EOS", EOS);
 
+  // <Hydro><CartesianHydro> true: MUSIC in (t, x, y, z) (CoorType 1); the
+  // initial-state grid's z axis is then z, not eta_s.  MUSIC4GPU runs
+  // CoorType 1 on the CPU path.  Read as BulkDynamicsManager and the
+  // hadronic liquefier read it.
+  {
+    const std::string cartesian =
+        GetXMLElementText({"Hydro", "CartesianHydro"}, false);
+    hydro_Cartesian_ = (cartesian.find("true") != std::string::npos);
+    music_hydro_ptr->set_parameter("CoorType", hydro_Cartesian_ ? 1 : 0);
+    if (hydro_Cartesian_) {
+      JSINFO << "MUSIC in Cartesian coordinates (CoorType 1)";
+      fluidization_min_sources_ =
+          GetXMLElementInt({"BDM", "fluidization_min_sources"}, false);
+    }
+  }
+
   int beastMode = (GetXMLElementInt({"Hydro", "MUSIC", "beastMode"}));
   music_hydro_ptr->set_parameter("beastMode", beastMode);
 
@@ -582,9 +598,22 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
     ApplyFreezeOutSurface();
   }
 
+  // Dynamic (concurrent) running in Cartesian coordinates: the hadronic
+  // liquefier gets droplets during the run (BulkDynamicsManager, dynamic
+  // fluidization).  The sources' end time follows the latest droplet, and the
+  // hydro does not finish before <BDM><fluidization_min_sources> droplets
+  // have arrived: an empty or nearly empty grid is "all frozen out" at once
+  // (as arXiv:2507.19389, which postpones the surface until 15 sources).
+  bool may_finish = true;
+  if (hydro_Cartesian_ && !weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+    auto hl = hadronic_liquefier_ptr.lock();
+    const double t_last = hl->get_latest_droplet_time();
+    hydro_source_terms_ptr->set_source_tau_max(std::max(0., t_last));
+    may_finish = (hl->get_dropletlist_size() >= fluidization_min_sources_);
+  }
   if (hydro_status != FINISHED) {
     int status = music_hydro_ptr->run_hydro_upto(tauEnd);
-    if (status != 0) {
+    if (status != 0 && may_finish) {
       hydro_status = FINISHED;
       WarnIfGridBoundaryHit();
     }

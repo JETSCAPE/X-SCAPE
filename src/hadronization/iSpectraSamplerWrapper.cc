@@ -115,6 +115,15 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("keep_primaries", keep_primaries);
 
   // set default parameters
+  // <Hydro><CartesianHydro> true: the surface is in (t, x, y, z); iSS reads
+  // its tau and eta fields as t and z (hydro_Cartesian, iSS XSCAPE 50dcb46)
+  {
+    const std::string cartesian =
+        GetXMLElementText({"Hydro", "CartesianHydro"}, false);
+    hydro_Cartesian_ = (cartesian.find("true") != std::string::npos);
+    iSpectraSampler_ptr_->paraRdr_ptr->setVal("hydro_Cartesian",
+                                              hydro_Cartesian_ ? 1 : 0);
+  }
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_shear", 1);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_bulk", 0);
   // the charges and the diffusion current of the hydro: B, Q, S densities and
@@ -227,14 +236,25 @@ int iSpectraSamplerWrapper::PassSurfaceToISS(
     // N^mu dsigma_mu = n u.dsigma (+ q.dsigma for B), in iSS's form of the
     // contraction (iSS::computeFOSurfTmunu)
     for (int k = 0; k < 3; k++) surf_bqs_[k] = 0.;
+    surf_B_out_ = 0.;
+    surf_n_in_ = 0;
+    // (Cartesian: no tau Jacobian, as iSS's hydro_Cartesian)
     for (const auto &c : FOsurf_array) {
-      const double udsigma = c.tau * (c.u0 * c.da0 + c.u1 * c.da1
-                                      + c.u2 * c.da2 + c.u3 * c.da3 / c.tau);
-      const double qdsigma = c.tau * (c.qmu0 * c.da0 + c.qmu1 * c.da1
-                                      + c.qmu2 * c.da2 + c.qmu3 * c.da3 / c.tau);
+      const double J = hydro_Cartesian_ ? 1. : c.tau;
+      const double udsigma = J * (c.u0 * c.da0 + c.u1 * c.da1
+                                  + c.u2 * c.da2 + c.u3 * c.da3 / J);
+      const double qdsigma = J * (c.qmu0 * c.da0 + c.qmu1 * c.da1
+                                  + c.qmu2 * c.da2 + c.qmu3 * c.da3 / J);
       surf_bqs_[0] += c.Bn * udsigma + qdsigma;
       surf_bqs_[1] += c.Qn * udsigma;
       surf_bqs_[2] += c.Sn * udsigma;
+      // the outgoing (u.dsigma > 0) part of B and the number of incoming
+      // cells (fluid forming, as with sources during the run)
+      if (udsigma > 0.) {
+        surf_B_out_ += c.Bn * udsigma + qdsigma;
+      } else {
+        surf_n_in_++;
+      }
     }
   }
   iSpectraSampler_ptr_->getSurfaceCellFromJETSCAPE(FOsurf_array);
@@ -334,7 +354,9 @@ void iSpectraSamplerWrapper::LogChargeCheck() {
          << " " << event_surf_bqs_[1] << " " << event_surf_bqs_[2]
          << ", hadrons " << event_sample_bqs_[0] << " "
          << event_sample_bqs_[1] << " " << event_sample_bqs_[2]
-         << (unknown ? " (some codes not decoded)" : "");
+         << (unknown ? " (some codes not decoded)" : "")
+         << "; this surface: B outgoing " << surf_B_out_ << ", "
+         << surf_n_in_ << " cells with u.dsigma <= 0";
 }
 
 void iSpectraSamplerWrapper::ExecTime() {

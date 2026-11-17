@@ -34,6 +34,9 @@ std::string to_string(const PdgCode &code);
 #include "smash/collidermodus.h"
 
 #include "Transport.h"
+#include "DynamicFluidization.h"
+#include <unordered_map>
+#include <unordered_set>
 #include "JetScapeWriter.h"
 
 using namespace Jetscape;
@@ -56,6 +59,33 @@ class SmashInitialConditionWrapper : public Transport {
       const std::vector<shared_ptr<Hadron>> &JS_hadrons);
 
   std::vector<shared_ptr<Hadron>> TestHadronList();
+
+  /// Dynamic fluidization (Cartesian hydro next to SMASH, arXiv:2507.19389):
+  /// <BDM><dynamic_fluidization> with <Hydro><CartesianHydro> true
+  bool dynamic_fluidization_ = false;
+  double fluidization_string_time_ = 0.4;    ///< t_f [fm], rest frame
+  std::unique_ptr<DynamicFluidization> fluidization_;
+  /// SMASH ids of the hadrons that fluidize at the current time (status 29
+  /// in GetCurrentHadronList; BulkDynamicsManager removes them from SMASH
+  /// and hands them to the hadronic liquefier)
+  std::unordered_set<int32_t> fluidize_ids_;
+  /// evaluate the criterion on the current SMASH particles at time t
+  void DetermineFluidizingHadrons(double t);
+
+  /// Particles from the fluid (particlized) never fluidize again; nor do
+  /// their products.  Particlized hadrons enter SMASH with a collision count
+  /// of kFromFluid (elastic scatterings only increase it); products of
+  /// decays and inelastic collisions inherit the tag when their production
+  /// vertex lies within from_fluid_match_ of a tagged particle that
+  /// disappeared in the same step.
+  static constexpr int32_t kFromFluid = 1000000;
+  double from_fluid_match_ = 2.0;   ///< [fm]
+  struct TaggedState {
+    double t, x, y, z, vx, vy, vz;
+  };
+  std::unordered_map<int32_t, TaggedState> from_fluid_;  ///< by SMASH id
+  std::unordered_set<int32_t> previous_ids_;
+  void UpdateFromFluidTags(double t);
 
   // Allows the registration of the module so that it is available to be used by
   // the Jetscape framework.

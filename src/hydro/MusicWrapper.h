@@ -101,6 +101,15 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
 
   void prepare_list_for_current_tau_frame(const double tau_local) {
     hadronic_frame_tau_ = tau_local;
+    // the hadronic liquefier's droplets of this step, for the cell queries
+    // (its own time test is unchanged: same values)
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
+      auto hl = hadronic_liquefier_ptr.lock();
+      if (hl && hl->get_hydro_dtau() > 0.) {
+        const double step = hl->get_hydro_dtau();
+        hl->prepare_active_droplets(tau_local - step, tau_local + 2. * step);
+      }
+    }
     if (weak_ptr_is_uninitialized(liquefier_ptr)) return;
     liquefier_step_ = liquefier_ptr.lock();
     if (liquefier_step_) {
@@ -371,6 +380,10 @@ class MpiMusic : public FluidDynamics {
  private:
   // music4gpu late_delta_tau / late_tau_switch (0: constant step)
   double late_delta_tau_ = 0.;
+  //! <Hydro><CartesianHydro>: MUSIC in (t, x, y, z) (CoorType 1)
+  bool hydro_Cartesian_ = false;
+  //! dynamic running: no finish before this many liquefier droplets
+  int fluidization_min_sources_ = 15;
   double late_tau_switch_ = 0.;
   // int mode;            //!< records running mode
   std::unique_ptr<MUSIC> music_hydro_ptr;

@@ -25,10 +25,12 @@
 #include "smash/particles.h"
 #include "smash/library.h"
 #include "smash/particledata.h"
+#include "smash/processbranch.h"
 
 #include <math.h>
 #include <string>
 #include <map>
+#include <algorithm>
 #include <filesystem>
 
 #include <boost/lexical_cast.hpp>
@@ -66,6 +68,33 @@ void SmashInitialConditionWrapper::InitTask() {
 
   auto config = smash::setup_config_and_logging(smash_config, smash_hadron_list,
                                                 smash_decays_list);
+
+  // Dynamic fluidization: with a Cartesian hydro next to SMASH, hadrons in
+  // dense regions become hydro sources during the run (DynamicFluidization;
+  // defaults after arXiv:2507.19389)
+  {
+    const std::string cartesian =
+        GetXMLElementText({"Hydro", "CartesianHydro"}, false);
+    const bool is_cartesian = cartesian.find("true") != std::string::npos;
+    const int dyn = GetXMLElementInt({"BDM", "dynamic_fluidization"}, false);
+    dynamic_fluidization_ = is_cartesian && dyn == 1;
+    if (dyn == 1 && !is_cartesian) {
+      JSWARN << "<BDM><dynamic_fluidization> needs <Hydro><CartesianHydro> "
+                "true: off";
+    }
+    if (dynamic_fluidization_) {
+      const double sigma =
+          GetXMLElementDouble({"BDM", "fluidization_sigma"}, false);
+      const double e_th =
+          GetXMLElementDouble({"BDM", "fluidization_e_threshold"}, false);
+      fluidization_string_time_ =
+          GetXMLElementDouble({"BDM", "fluidization_string_time"}, false);
+      fluidization_ = std::make_unique<DynamicFluidization>(sigma, e_th);
+      JSINFO << "SMASH: dynamic fluidization, e_th = " << e_th
+             << " GeV/fm^3, sigma = " << sigma << " fm, t_f = "
+             << fluidization_string_time_ << " fm";
+    }
+  }
 
   // Take care of the random seed. This will make SMASH results reproducible.
   auto random_seed = (*GetMt19937Generator())();
@@ -214,6 +243,9 @@ void SmashInitialConditionWrapper::ExecuteTask() {
 
 void SmashInitialConditionWrapper::InitPerEvent() {
   VERBOSE(3) << "Initializing SMASH initial condition event...";
+  fluidize_ids_.clear();
+  from_fluid_.clear();
+  previous_ids_.clear();
   smash_collider_experiment_->initialize_new_event();
 }
 
@@ -222,6 +254,18 @@ void SmashInitialConditionWrapper::CalculateTimeTask() {
       Transport::GetTimestepParticlizationHadrons();
   std::vector<shared_ptr<Hadron>> hadrons_to_remove =
       Transport::GetTimestepHadronsToRemove();
+
+  // Dynamic fluidization: the fluidized hadrons (status 29, label = SMASH
+  // id) are removed by id, not by matching position and momentum
+  std::unordered_set<int32_t> remove_ids;
+  hadrons_to_remove.erase(
+      std::remove_if(hadrons_to_remove.begin(), hadrons_to_remove.end(),
+                     [&](const std::shared_ptr<Jetscape::Hadron>& h) {
+                       if (h->pstat() != 29) return false;
+                       remove_ids.insert(h->plabel());
+                       return true;
+                     }),
+      hadrons_to_remove.end());
 
   VERBOSE(3) << "SMASH initial condition got " << hadrons_to_add.size()
              << " hadrons in this timestep.";
@@ -254,8 +298,105 @@ void SmashInitialConditionWrapper::CalculateTimeTask() {
       get_smash_plist_from_JS_hadrons(hadrons_to_add);
   smash::ParticleList remove_list =
       find_smash_hadrons_and_get_exact_hadron_list(hadrons_to_remove);
+  if (!remove_ids.empty()) {
+    for (const auto& particle :
+         *smash_collider_experiment_->first_ensemble()) {
+      if (remove_ids.count(particle.id())) remove_list.push_back(particle);
+    }
+    VERBOSE(2) << "SMASH IC: " << remove_ids.size()
+               << " fluidized hadrons to remove by id";
+  }
   smash_collider_experiment_->run_time_evolution(
       until_time, std::move(add_list), std::move(remove_list));
+  if (dynamic_fluidization_) DetermineFluidizingHadrons(until_time);
+}
+
+void SmashInitialConditionWrapper::UpdateFromFluidTags(double t) {
+  const smash::Particles *particles =
+      smash_collider_experiment_->first_ensemble();
+  // the tagged particles that disappeared in this step (decayed, collided
+  // inelastically, or were removed)
+  std::unordered_set<int32_t> present;
+  for (const auto &p : *particles) present.insert(p.id());
+  std::vector<TaggedState> gone;
+  for (const auto &kv : from_fluid_) {
+    if (!present.count(kv.first)) gone.push_back(kv.second);
+  }
+  std::unordered_map<int32_t, TaggedState> tagged;
+  const double match2 = from_fluid_match_ * from_fluid_match_;
+  for (const auto &p : *particles) {
+    const auto history = p.get_history();
+    const smash::FourVector x = p.position(), mom = p.momentum();
+    const double vx = mom.x1() / mom.x0(), vy = mom.x2() / mom.x0(),
+                 vz = mom.x3() / mom.x0();
+    bool tag = from_fluid_.count(p.id()) > 0 ||
+               history.collisions_per_particle >= kFromFluid;
+    if (!tag && !gone.empty() && !previous_ids_.count(p.id())) {
+      // a new particle: its production vertex against the vanished tagged
+      // particles, both at the time of its last collision
+      const double tv = history.time_last_collision;
+      const double xv = x.x1() - vx * (x.x0() - tv);
+      const double yv = x.x2() - vy * (x.x0() - tv);
+      const double zv = x.x3() - vz * (x.x0() - tv);
+      for (const auto &g : gone) {
+        const double dx = g.x + g.vx * (tv - g.t) - xv;
+        const double dy = g.y + g.vy * (tv - g.t) - yv;
+        const double dz = g.z + g.vz * (tv - g.t) - zv;
+        if (dx * dx + dy * dy + dz * dz < match2) {
+          tag = true;
+          break;
+        }
+      }
+    }
+    if (tag) tagged[p.id()] = {x.x0(), x.x1(), x.x2(), x.x3(), vx, vy, vz};
+  }
+  from_fluid_.swap(tagged);
+  previous_ids_.swap(present);
+  (void)t;
+}
+
+void SmashInitialConditionWrapper::DetermineFluidizingHadrons(double t) {
+  // The criterion of arXiv:2507.19389 (DynamicFluidization), with its
+  // eligibility rules from the SMASH history: not unscattered nucleons (no
+  // collision, or one elastic one), and string fragments only a time t_f
+  // after their production in their rest frame.  Every particle counts in
+  // the energy-momentum tensor.
+  fluidize_ids_.clear();
+  UpdateFromFluidTags(t);
+  const smash::Particles *particles =
+      smash_collider_experiment_->first_ensemble();
+  std::vector<DynamicFluidization::Candidate> cand;
+  std::vector<int32_t> ids;
+  cand.reserve(particles->size());
+  ids.reserve(particles->size());
+  for (const auto &p : *particles) {
+    const smash::FourVector mom = p.momentum(), pos = p.position();
+    const double m = mom.abs();
+    const auto history = p.get_history();
+    bool eligible = p.type().is_hadron() && m > 0.;
+    if (history.collisions_per_particle == 0 ||
+        (history.collisions_per_particle == 1 &&
+         history.process_type == smash::ProcessType::Elastic)) {
+      eligible = false;
+    }
+    if (from_fluid_.count(p.id())) eligible = false;   // from the fluid
+    if (eligible && (smash::is_string_soft_process(history.process_type) ||
+                     history.process_type == smash::ProcessType::StringHard)) {
+      const double gamma = mom.x0() / m;
+      eligible = ((t - history.time_last_collision) / gamma >=
+                  fluidization_string_time_);
+    }
+    cand.push_back({pos.x0(), pos.x1(), pos.x2(), pos.x3(), mom.x0(), mom.x1(),
+                    mom.x2(), mom.x3(), m, eligible});
+    ids.push_back(p.id());
+  }
+  const std::vector<bool> flags = fluidization_->Evaluate(cand);
+  for (std::size_t i = 0; i < flags.size(); i++) {
+    if (flags[i]) fluidize_ids_.insert(ids[i]);
+  }
+  VERBOSE(2) << "SMASH IC at t = " << t << ": " << fluidize_ids_.size()
+             << " of " << cand.size() << " hadrons fluidize ("
+             << from_fluid_.size() << " from the fluid)";
 }
 
 void SmashInitialConditionWrapper::FinishPerEvent() {
@@ -306,8 +447,11 @@ std::vector<Hadron> SmashInitialConditionWrapper::GetCurrentHadronList() const {
       smash_collider_experiment_->first_ensemble();
 
   for (const auto& particle : *smash_particles) {
-    const int hadron_label = 0;
-    const int hadron_status = 28;
+    // 29: fluidizes now (dynamic fluidization; the label is then the SMASH
+    // id, by which CalculateTimeTask removes it), else 28
+    const bool fluidizes = fluidize_ids_.count(particle.id()) > 0;
+    const int hadron_label = fluidizes ? particle.id() : 0;
+    const int hadron_status = fluidizes ? 29 : 28;
     const int hadron_id = particle.pdgcode().get_decimal();
     smash::FourVector p = particle.momentum(), r = particle.position();
     const FourVector hadron_p(p.x1(), p.x2(), p.x3(), p.x0()),
@@ -339,6 +483,10 @@ SmashInitialConditionWrapper::get_smash_plist_from_JS_hadrons(
         smash::ParticleType::find(smash::PdgCode::from_decimal(JS_had->pid()))};
     new_p.set_4position(smash::FourVector(r.t(), r.x(), r.y(), r.z()));
     new_p.set_4momentum(smash::FourVector(p.t(), p.x(), p.y(), p.z()));
+    if (dynamic_fluidization_) {
+      // from the fluid: never fluidizes again (UpdateFromFluidTags)
+      new_p.set_history(kFromFluid, 0, smash::ProcessType::None, r.t(), {});
+    }
     new_particles.push_back(new_p);
   }
   return new_particles;
