@@ -62,7 +62,7 @@ folderName="music4gpu"
 # finds the freeze-out surface with the GPU gather, and fills charge sources on
 # the grid (get_hydro_sources_on_grid); the 4D viscous kernel regulates W as the
 # CPU does (a fast, dilute cell grew to 1e32 and stopped the run)
-commitHash="c64dcbfcc2dc59c44f8e0b3e80885fda98bed29f"
+commitHash="98d5274827a13444222231564bafe16b3398fff9"
 # its branch (clone -b): bqs_gpu until the B, Q, S port is merged into XSCAPE
 branch="bqs_gpu"
 
