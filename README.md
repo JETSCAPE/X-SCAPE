@@ -13,11 +13,11 @@ For a full introduction to JETSCAPE, please see [The JETSCAPE framework](https:/
 
 Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you use this package for scientific work.
 
-> **X-SCAPE 3.0 is a release candidate** (branch `XSCAPE-3.0-RC`). What changed since 2.1,
-> including the physics bug fixes that change the output of existing setups, is in
-> [RELEASE_NOTES.md](RELEASE_NOTES.md).
-
 ## What is new in 3.0
+
+The highlights are listed below. The full list of changes since X-SCAPE 2.1, including the
+physics bug fixes that change the output of existing setups, is in
+[RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 > [!IMPORTANT]
 > **Some of the new functionality needs PyJetscape, the Python interface from
