@@ -115,21 +115,33 @@ the machine itself ([INSTALL.md](INSTALL.md), sections 3 to 7, or the
 
 ## Building from source
 
-The short version; [INSTALL.md](INSTALL.md) has every option and recipe.
+> **ℹ️ This section is mainly for the CPU build**, for example inside the JETSCAPE container
+> (`jetscape/base`, [INSTALL.md](INSTALL.md), section 2), with CPU MUSIC. **For the GPU hydro
+> (MUSIC4GPU)** use the conda environment of js-contrib's
+> [source build](https://jhputschke.github.io/js-contrib/install/source/): its install scripts
+> bring matching compilers and dependencies and pick the CUDA version (NVIDIA) or set up the
+> build for Metal (Apple Silicon, with Xcode and its Metal toolchain). To run on a GPU without
+> building, use the production container or the Mac wheel
+> ([Install](https://jhputschke.github.io/js-contrib/install/)).
+
+The short version for the CPU build; [INSTALL.md](INSTALL.md) has every option and recipe.
 
 ```bash
 cd external_packages
-./get_music4gpu.sh      # or ./get_music.sh for CPU MUSIC
+./get_music.sh
 ./get_iSS.sh
 ./get_3dglauber.sh
-./get_js_contrib.sh     # optional: js-contrib (Python interface, FNO hydro)
+./get_js_contrib.sh     # optional: js-contrib (Python interface)
 cd ..
 mkdir build && cd build
-cmake .. -DUSE_MUSIC=ON -DUSE_CUDA=ON -DUSE_ISS=ON -DUSE_3DGlauber=ON   # -DUSE_METAL=ON on a Mac
+cmake .. -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_3DGlauber=ON
 make -j$(nproc)
 ```
 
 `./configure.sh` offers the build options in a text menu (needs `dialog`).
+
+In the GPU builds `./get_music4gpu.sh` replaces `./get_music.sh`, and `-DUSE_CUDA=ON` or
+`-DUSE_METAL=ON` selects the back-end ([docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md)).
 
 ## Running X-SCAPE/JETSCAPE
 
