@@ -19,6 +19,7 @@
 // -----------------------------------------------------------------------------
 
 #include "SMASHInitialStateWrapper.h"
+#include "SmashLibraryInit.h"
 #include "Transport.h"
 
 #include "smash/particles.h"
@@ -63,10 +64,6 @@ void SmashInitialConditionWrapper::InitTask() {
   std::filesystem::path output_path("./");
   // store tabulation to make use of it if SMASH is used multiple times
   std::string tabulations_path("./smash_tabulations");
-  // if tabulations directory exists, delete it
-  if (std::filesystem::exists(tabulations_path)) {
-    std::filesystem::remove_all(tabulations_path);
-  }
   const std::string smash_version(SMASH_VERSION);
 
   auto config = smash::setup_config_and_logging(smash_config, smash_hadron_list,
@@ -155,12 +152,10 @@ void SmashInitialConditionWrapper::InitTask() {
     exit(1);
   }
 
-  // Check if the tabulations directory exists, if not initialize particles and
-  // decays
-  if (!std::filesystem::exists(tabulations_path)) {
-    smash::initialize_particles_decays_and_tabulations(config, smash_version,
-                                                       tabulations_path);
-  }
+  // Initialize particles and decays once per process (shared by all SMASH
+  // modules); stored tabulations are reused if their hash matches
+  InitializeSmashParticlesAndDecaysOnce(config, smash_version,
+                                        tabulations_path);
 
   const double delta_t_sm = GetXMLElementDouble({"IS", "SMASH", "Delta_Time"});
   config.set_value(smash::InputKeys::gen_deltaTime, delta_t_sm);
