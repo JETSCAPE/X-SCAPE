@@ -148,8 +148,8 @@ endif(USE_JS_CONTRIB)
 
 # Compile with OpenMP support
 if(APPLE)
-  # Locate Homebrew libomp dynamically so the same CMakeLists.txt works on
-  # both Intel (/usr/local) and Apple Silicon (/opt/homebrew) Macs.
+  # Locate Homebrew libomp dynamically so the same CMakeLists.txt works on both
+  # Intel (/usr/local) and Apple Silicon (/opt/homebrew) Macs.
   if(NOT DEFINED OpenMP_libomp_PREFIX)
     find_program(_brew brew)
     if(_brew)
@@ -157,8 +157,7 @@ if(APPLE)
         COMMAND "${_brew}" --prefix libomp
         OUTPUT_VARIABLE OpenMP_libomp_PREFIX
         OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE _brew_result
-      )
+        RESULT_VARIABLE _brew_result)
       if(NOT _brew_result EQUAL 0)
         # Fall back to the Intel default if brew query failed
         set(OpenMP_libomp_PREFIX "/usr/local/opt/libomp")
@@ -176,8 +175,8 @@ if(APPLE)
 endif()
 find_package(OpenMP)
 # Decide per language. OPENMP_FOUND needs every enabled language, and on macOS
-# only the C++ hints are set above, so the C component fails and OPENMP_FOUND
-# is false. Keyed on it, the framework (SurfaceFinder's omp loops, ...) was
+# only the C++ hints are set above, so the C component fails and OPENMP_FOUND is
+# false. Keyed on it, the framework (SurfaceFinder's omp loops, ...) was
 # silently compiled without -fopenmp and ran single-threaded.
 if(OpenMP_C_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
