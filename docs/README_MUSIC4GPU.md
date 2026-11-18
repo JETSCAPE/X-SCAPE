@@ -82,8 +82,7 @@ The js-contrib production drivers set these through the setters after `Init()`, 
 
 ## Example: one two-stage Au+Au event from XML
 
-> [!NOTE]
-> This example runs from the XML alone, but it gives one leg of one event. Paired legs,
+> **ℹ️ Note:** this example runs from the XML alone, but it gives one leg of one event. Paired legs,
 > background reuse, oversampling per leg, common seeds, the HDF5 production files and stage 2
 > need PyJetscape from js-contrib for now ([below](#what-needs-python-today)); the XML way of
 > running them in C++ is work in progress for future releases.

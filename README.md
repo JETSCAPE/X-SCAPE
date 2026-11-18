@@ -19,8 +19,7 @@ The highlights are listed below. The full list of changes since X-SCAPE 2.1, inc
 physics bug fixes that change the output of existing setups, is in
 [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
-> [!IMPORTANT]
-> **Some of the new functionality needs PyJetscape, the Python interface from
+> **ℹ️ Important: some of the new functionality needs PyJetscape, the Python interface from
 > [js-contrib](https://github.com/jhputschke/js-contrib).** The new physics modules and settings
 > run from the XML with `runJetscape`, and the two-stage hydro works there in part: see the
 > example [`config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml`](config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml)
