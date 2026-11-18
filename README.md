@@ -17,44 +17,6 @@ Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you us
 > including the physics bug fixes that change the output of existing setups, is in
 > [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
-## Documentation and installation
-
-The main guide to installing and using X-SCAPE is the js-contrib website,
-**<https://jhputschke.github.io/js-contrib/>**:
-
-- [Install](https://jhputschke.github.io/js-contrib/install/): the production container, the
-  xscape wheel for Apple Silicon Macs, an analysis-only environment, and the source build.
-- [Run](https://jhputschke.github.io/js-contrib/run/): a first event, Au+Au jets in two stages,
-  O+O with initial-state radiation, Z+jet, extra hard scatterings, clusters and GPUs.
-- [Analyse](https://jhputschke.github.io/js-contrib/analysis/): what a production writes, and how
-  to read hadrons, jets, hydro and bulk observables from it.
-- [Python](https://jhputschke.github.io/js-contrib/python/): the Python interface and Python
-  modules inside the event loop.
-
-In this repository:
-
-| Document | Content |
-|---|---|
-| [INSTALL.md](INSTALL.md) | Source build: prerequisites, external packages, CMake options, install prefix, launcher, environment variables |
-| [RELEASE_NOTES.md](RELEASE_NOTES.md) | Changes since X-SCAPE 2.1 |
-| [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md) | The GPU hydro: build, OpenMP defaults, settings, two-stage hydro with `runJetscape` |
-| [docs/README_ColourFlow.md](docs/README_ColourFlow.md) | Colour flow through Matter and LBT, and iColored hadronization |
-| [docs/README_Launcher.md](docs/README_Launcher.md) | Many jobs in parallel from one build or install |
-| [docs/README_BulkFast.md](docs/README_BulkFast.md) | `FastRootBulkWriter`: hydro evolution to ROOT |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
-
-### Which container is for what
-
-| | For | Hardware |
-|---|---|---|
-| JETSCAPE images ([`jetscape/base`](https://hub.docker.com/r/jetscape/base)) | Development: build X-SCAPE from source inside them ([INSTALL.md](INSTALL.md), section 2) | CPU only |
-| js-contrib production container ([`jhputschke/xscape-prod`](https://jhputschke.github.io/js-contrib/install/container/)) | Productions, your own scripts and notebooks, analysis; X-SCAPE comes compiled | NVIDIA GPU (Docker, Apptainer); CPU-only nodes for hadronization and analysis |
-| xscape wheel ([Mac install](https://jhputschke.github.io/js-contrib/install/mac/)) | The same software as the production container, installed natively | Apple Silicon Mac (Metal GPU) |
-
-GPU development containers are in progress. Until then, GPU development means a source build on
-the machine itself ([INSTALL.md](INSTALL.md), sections 3 to 7, or the
-[source build](https://jhputschke.github.io/js-contrib/install/source/) with conda).
-
 ## What is new in 3.0
 
 > [!IMPORTANT]
@@ -111,6 +73,44 @@ the machine itself ([INSTALL.md](INSTALL.md), sections 3 to 7, or the
   energy-loss start time, colour tags, MUSIC wrapper, SurfaceFinder, MUSIC4GPU fluxes):
   [release notes](RELEASE_NOTES.md#physics-bug-fixes). Do not combine files made before and
   after them.
+
+## Documentation and installation
+
+The main guide to installing and using X-SCAPE is the js-contrib website,
+**<https://jhputschke.github.io/js-contrib/>**:
+
+- [Install](https://jhputschke.github.io/js-contrib/install/): the production container, the
+  xscape wheel for Apple Silicon Macs, an analysis-only environment, and the source build.
+- [Run](https://jhputschke.github.io/js-contrib/run/): a first event, Au+Au jets in two stages,
+  O+O with initial-state radiation, Z+jet, extra hard scatterings, clusters and GPUs.
+- [Analyse](https://jhputschke.github.io/js-contrib/analysis/): what a production writes, and how
+  to read hadrons, jets, hydro and bulk observables from it.
+- [Python](https://jhputschke.github.io/js-contrib/python/): the Python interface and Python
+  modules inside the event loop.
+
+In this repository:
+
+| Document | Content |
+|---|---|
+| [INSTALL.md](INSTALL.md) | Source build: prerequisites, external packages, CMake options, install prefix, launcher, environment variables |
+| [RELEASE_NOTES.md](RELEASE_NOTES.md) | Changes since X-SCAPE 2.1 |
+| [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md) | The GPU hydro: build, OpenMP defaults, settings, two-stage hydro with `runJetscape` |
+| [docs/README_ColourFlow.md](docs/README_ColourFlow.md) | Colour flow through Matter and LBT, and iColored hadronization |
+| [docs/README_Launcher.md](docs/README_Launcher.md) | Many jobs in parallel from one build or install |
+| [docs/README_BulkFast.md](docs/README_BulkFast.md) | `FastRootBulkWriter`: hydro evolution to ROOT |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+
+### Which container is for what
+
+| | For | Hardware |
+|---|---|---|
+| JETSCAPE images ([`jetscape/base`](https://hub.docker.com/r/jetscape/base)) | Development: build X-SCAPE from source inside them ([INSTALL.md](INSTALL.md), section 2) | CPU only |
+| js-contrib production container ([`jhputschke/xscape-prod`](https://jhputschke.github.io/js-contrib/install/container/)) | Productions, your own scripts and notebooks, analysis; X-SCAPE comes compiled | NVIDIA GPU (Docker, Apptainer); CPU-only nodes for hadronization and analysis |
+| xscape wheel ([Mac install](https://jhputschke.github.io/js-contrib/install/mac/)) | The same software as the production container, installed natively | Apple Silicon Mac (Metal GPU) |
+
+GPU development containers are in progress. Until then, GPU development means a source build on
+the machine itself ([INSTALL.md](INSTALL.md), sections 3 to 7, or the
+[source build](https://jhputschke.github.io/js-contrib/install/source/) with conda).
 
 ## Building from source
 
