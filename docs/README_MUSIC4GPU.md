@@ -21,6 +21,10 @@ backend):
 
 Plain `-DUSE_MUSIC=ON` (no GPU flag) keeps the original CPU `music` package.
 
+The simplest way to get a matching toolchain (compilers, dependencies, the CUDA version, or
+Xcode's Metal toolchain on a Mac) is the conda environment of js-contrib's
+[source build](https://jhputschke.github.io/js-contrib/install/source/).
+
 ## OpenMP defaults for GPU builds
 
 The `music4gpu` backends run much of the
