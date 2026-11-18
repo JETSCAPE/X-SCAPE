@@ -15,9 +15,11 @@ Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you us
 
 ## What is new in 3.0
 
-The highlights are listed below. The full list of changes since X-SCAPE 2.1, including the
-physics bug fixes that change the output of existing setups, is in
-[RELEASE_NOTES.md](RELEASE_NOTES.md).
+The highlights below refer to X-SCAPE together with its Python interface, PyJetscape
+(`import jetscape`, from [js-contrib](https://github.com/jhputschke/js-contrib)): some of them
+are used through the Python interface, as the box below explains. The full list of changes
+since X-SCAPE 2.1, including the physics bug fixes that change the output of existing setups,
+is in [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 > **ℹ️ Important: some of the new functionality needs PyJetscape, the Python interface from
 > [js-contrib](https://github.com/jhputschke/js-contrib).** The new physics modules and settings
