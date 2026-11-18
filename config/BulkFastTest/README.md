@@ -1,8 +1,7 @@
 # BulkFastTest — example configs for FastRootBulkWriter
 
 Example/test XML configs for the hydro-only fast ROOT dump (`FastRootBulkWriter`).
-See [../../README_BulkFast.md](../../README_BulkFast.md) for the full usage guide and
-[../../BulkWriterImprovements.md](../../BulkWriterImprovements.md) for the design notes.
+See [../../docs/README_BulkFast.md](../../docs/README_BulkFast.md) for the full usage guide.
 
 ## Files
 

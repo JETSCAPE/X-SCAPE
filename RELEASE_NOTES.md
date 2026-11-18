@@ -1,6 +1,8 @@
-# X-SCAPE contrib: changes since 2.1
+# X-SCAPE 3.0: changes since 2.1
 
-Changes on the `contrib` branch ([`38679496`](https://github.com/JETSCAPE/X-SCAPE/commit/38679496), 2026-11-17) relative to the X-SCAPE 2.1 release (tag [`v2.1`](https://github.com/JETSCAPE/X-SCAPE/tree/v2.1), 2026-03-05). The third-party packages X-SCAPE fetches (iSS, 3dMCGlauber, MUSIC, trento, the LBT tables) are included. MUSIC4GPU's own changes are not listed here, except for physics bug fixes that X-SCAPE switches; see [jhputschke/MUSIC4GPU](https://github.com/jhputschke/MUSIC4GPU).
+**Release candidate.** Branch `XSCAPE-3.0-RC`, made from `contrib` ([`135d74b0`](https://github.com/JETSCAPE/X-SCAPE/commit/135d74b0), 2026-11-17). The tag `v3.0` follows the validation at hadron level and the merge into `main`.
+
+Changes in X-SCAPE 3.0 relative to the X-SCAPE 2.1 release (tag [`v2.1`](https://github.com/JETSCAPE/X-SCAPE/tree/v2.1), 2026-03-05). The third-party packages X-SCAPE fetches (iSS, 3dMCGlauber, MUSIC, trento, the LBT tables) are included. MUSIC4GPU's own changes are not listed here, except for physics bug fixes that X-SCAPE switches; see [jhputschke/MUSIC4GPU](https://github.com/jhputschke/MUSIC4GPU).
 
 Fixes to code that was added after 2.1 are folded into the feature that added it.
 
@@ -67,7 +69,7 @@ Fixes to code that was added after 2.1 are folded into the feature that added it
 
 | Component | Change | PR |
 | --- | --- | --- |
-| Matter, LBT, iColoredHadronization | Colour flow: Matter's recoils and holes keep their colour flow, LBT partons carry colour tags, and iColoredHadronization closes colour lines that end in the medium (`<colour_closure>`, default `reconnect`). See `README_ColourFlow.md`. | [#182](https://github.com/JETSCAPE/X-SCAPE/pull/182) |
+| Matter, LBT, iColoredHadronization | Colour flow: Matter's recoils and holes keep their colour flow, LBT partons carry colour tags, and iColoredHadronization closes colour lines that end in the medium (`<colour_closure>`, default `reconnect`). See [`docs/README_ColourFlow.md`](docs/README_ColourFlow.md). | [#182](https://github.com/JETSCAPE/X-SCAPE/pull/182) |
 | Energy loss (Matter, LBT) | `<Eloss><nThreads>`: the showers of an event run in parallel on OpenMP threads (N threads, or -1 for `OMP_NUM_THREADS`). Off by default (`0`, output unchanged). When on, every shower gets random streams and colour tags of its own and droplets are flushed in the serial order: the output does not depend on the thread count, but a seed gives other (equally valid) showers than with `0`. Runs serially, with a warning, unless all energy-loss modules declare support (Matter, LBT), showers run per event and there is no hadronic medium; ISR stays serial. O+O with ISR at 4 threads: energy loss 18 to 6.2 s per 40 events, jobs 13% faster; no gain in Au+Au jet jobs. | [#191](https://github.com/JETSCAPE/X-SCAPE/pull/191) |
 | Matter | `<tStart_at_point>`: apply the start-time cut at the point where it is used (default off). | [#183](https://github.com/JETSCAPE/X-SCAPE/pull/183), [#184](https://github.com/JETSCAPE/X-SCAPE/pull/184) |
 | LBT | `LBT_TABLES_PATH` / XML: table location configurable. `LBT_TABLE_CACHE`: tables in one block, shared read-only between jobs. | [#130](https://github.com/JETSCAPE/X-SCAPE/pull/130), [#163](https://github.com/JETSCAPE/X-SCAPE/pull/163) |
@@ -113,3 +115,4 @@ iSS is now pinned from the fork [jhputschke/iSS](https://github.com/jhputschke/i
 | Build | `configure.sh`: a text menu for the build options (needs `dialog`). | [`6fdccb63`](https://github.com/JETSCAPE/X-SCAPE/commit/6fdccb63) |
 | 3dMCGlauber wrapper | `mcglauber.input` location configurable (`XSCAPE_DATA_DIR` / XML). | [#130](https://github.com/JETSCAPE/X-SCAPE/pull/130) |
 | Configs | Finite-volume solver vs MUSIC comparison configs and run script. | [#136](https://github.com/JETSCAPE/X-SCAPE/pull/136) |
+| Documentation | README rewritten for 3.0, with the [js-contrib website](https://jhputschke.github.io/js-contrib/) as the main guide to installing and running. User documents moved to `docs/` (`README_MUSIC4GPU.md`, new, with the MUSIC4GPU part of the old README; `README_ColourFlow.md`, `README_Launcher.md`, `README_BulkFast.md`); the working notes `XSCAPE-CodeAnalysis.md`, `PlanInstall.md` and `BulkWriterImprovements.md` removed (they stay in the git history). Version 3.0 in `Version.h` and the Doxygen configuration. | `XSCAPE-3.0-RC` |

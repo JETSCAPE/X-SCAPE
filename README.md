@@ -1,12 +1,11 @@
-# X-SCAPE 2.1
+# X-SCAPE 3.0
 
 The X-ion collisions with a Statistically and Computationally Advanced Program Envelope (X-SCAPE) is the enhanced (and 2nd) project of the JETSCAPE
 collaboration which extends the framework to include small systems created in p-A and p-p collisions, lower energy heavy-ion collisions and electron-Ion collisions.
 The new framework allows for novel functionality such as the ability of the main simulation clock to go backwards and forwards, to deal systematically with initial
 state and final state evolution. It allows for multiple bulk event generators to run concurrently while exchanging information via a new Bulk Dynamics Manager.
 The X-SCAPE framework can be run using the new functionality or in JETSCAPE mode allowing for full backwards compatibility. New modules can also run in a hybrid fashion,
-choosing to use or not use the new clock functionality. More documentation of the new X-SCAPE framework capabilities will be provided in the near future.
-For now, test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory (for example in `PythiaBDMTest.cc` and `PythiaBrickTest.cc`).
+choosing to use or not use the new clock functionality.
 
 The [JETSCAPE](http://jetscape.org) simulation framework is an overarching computational envelope for developing complete event generators for heavy-ion collisions.
 It allows for modular incorporation of a wide variety of existing and future software that simulates different aspects of a heavy-ion collision.
@@ -14,30 +13,125 @@ For a full introduction to JETSCAPE, please see [The JETSCAPE framework](https:/
 
 Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you use this package for scientific work.
 
-## Installation
+> **X-SCAPE 3.0 is a release candidate** (branch `XSCAPE-3.0-RC`). What changed since 2.1,
+> including the physics bug fixes that change the output of existing setups, is in
+> [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
-Please see the [Installation Instructions](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Installation) here.
+## Documentation and installation
+
+The main guide to installing and using X-SCAPE is the js-contrib website,
+**<https://jhputschke.github.io/js-contrib/>**:
+
+- [Install](https://jhputschke.github.io/js-contrib/install/): the production container, the
+  xscape wheel for Apple Silicon Macs, an analysis-only environment, and the source build.
+- [Run](https://jhputschke.github.io/js-contrib/run/): a first event, Au+Au jets in two stages,
+  O+O with initial-state radiation, Z+jet, extra hard scatterings, clusters and GPUs.
+- [Analyse](https://jhputschke.github.io/js-contrib/analysis/): what a production writes, and how
+  to read hadrons, jets, hydro and bulk observables from it.
+- [Python](https://jhputschke.github.io/js-contrib/python/): the Python interface and Python
+  modules inside the event loop.
+
+In this repository:
+
+| Document | Content |
+|---|---|
+| [INSTALL.md](INSTALL.md) | Source build: prerequisites, external packages, CMake options, install prefix, launcher, environment variables |
+| [RELEASE_NOTES.md](RELEASE_NOTES.md) | Changes since X-SCAPE 2.1 |
+| [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md) | The GPU hydro: build, OpenMP defaults, settings, two-stage hydro with `runJetscape` |
+| [docs/README_ColourFlow.md](docs/README_ColourFlow.md) | Colour flow through Matter and LBT, and iColored hadronization |
+| [docs/README_Launcher.md](docs/README_Launcher.md) | Many jobs in parallel from one build or install |
+| [docs/README_BulkFast.md](docs/README_BulkFast.md) | `FastRootBulkWriter`: hydro evolution to ROOT |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+
+### Which container is for what
+
+| | For | Hardware |
+|---|---|---|
+| JETSCAPE images ([`jetscape/base`](https://hub.docker.com/r/jetscape/base)) | Development: build X-SCAPE from source inside them ([INSTALL.md](INSTALL.md), section 2) | CPU only |
+| js-contrib production container ([`jhputschke/xscape-prod`](https://jhputschke.github.io/js-contrib/install/container/)) | Productions, your own scripts and notebooks, analysis; X-SCAPE comes compiled | NVIDIA GPU (Docker, Apptainer); CPU-only nodes for hadronization and analysis |
+| xscape wheel ([Mac install](https://jhputschke.github.io/js-contrib/install/mac/)) | The same software as the production container, installed natively | Apple Silicon Mac (Metal GPU) |
+
+GPU development containers are in progress. Until then, GPU development means a source build on
+the machine itself ([INSTALL.md](INSTALL.md), sections 3 to 7, or the
+[source build](https://jhputschke.github.io/js-contrib/install/source/) with conda).
+
+## What is new in 3.0
+
+- **GPU hydro with MUSIC4GPU** (CUDA on NVIDIA, Metal on Apple Silicon), a drop-in replacement
+  for CPU MUSIC, with its conservation fixes on by default and an opt-in active region:
+  [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md),
+  [GPU acceleration](https://jhputschke.github.io/js-contrib/about/gpu/).
+- **Two-stage hydro with restart**: the background runs once, and each jet leg (with the
+  liquefier's droplets) restarts from the background's checkpoint:
+  [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md#two-stage-hydro-with-runjetscape),
+  [Au+Au jets in two stages](https://jhputschke.github.io/js-contrib/run/auau-jet/).
+- **O+O with initial-state radiation**: 3dMCGlauber, PythiaIsrGun and iMATTER, MUSIC, Matter and
+  LBT, and iColored hadronization through the jets' colour flow, all from the XML
+  (`<Hard><ISR>`): [O+O with ISR](https://jhputschke.github.io/js-contrib/run/oo-isr/),
+  [docs/README_ColourFlow.md](docs/README_ColourFlow.md).
+- **Extra hard scatterings** (`<extraHard>`, with a minimum-bias mode):
+  [Extra hard scatterings](https://jhputschke.github.io/js-contrib/run/extra-hard/).
+- **Parallel showers**: the showers of one event on OpenMP threads (`<Eloss><nThreads>`), with
+  an output that does not depend on the thread count:
+  [release notes](RELEASE_NOTES.md#energy-loss-and-hadronization).
+- **Faster iSS**: yields and delta f cached, correlated sampling, and sampling on OpenMP
+  threads, hadrons bit-identical: [release notes](RELEASE_NOTES.md#particlization-iss).
+- **HDF5 files and two-stage hadronization**: hydro surfaces and partons are stored on the GPU
+  machine and hadronized later on CPUs, with reproducible seeds:
+  [What a production writes](https://jhputschke.github.io/js-contrib/analysis/files/).
+- **Install prefix and launcher**: `make install`, `find_package(XSCAPE)`, and many jobs from
+  one build: [INSTALL.md](INSTALL.md) (sections 7 and 9),
+  [docs/README_Launcher.md](docs/README_Launcher.md).
+- **Python interface**: `import jetscape` drives X-SCAPE from Python and runs Python modules
+  in the event loop (js-contrib's PyJetscape):
+  [Python](https://jhputschke.github.io/js-contrib/python/).
+- **Physics bug fixes** that change the output of existing setups (liquefier, CausalLiquefier,
+  energy-loss start time, colour tags, MUSIC wrapper, SurfaceFinder, MUSIC4GPU fluxes):
+  [release notes](RELEASE_NOTES.md#physics-bug-fixes). Do not combine files made before and
+  after them.
+
+## Building from source
+
+The short version; [INSTALL.md](INSTALL.md) has every option and recipe.
+
+```bash
+cd external_packages
+./get_music4gpu.sh      # or ./get_music.sh for CPU MUSIC
+./get_iSS.sh
+./get_3dglauber.sh
+./get_js_contrib.sh     # optional: js-contrib (Python interface, FNO hydro)
+cd ..
+mkdir build && cd build
+cmake .. -DUSE_MUSIC=ON -DUSE_CUDA=ON -DUSE_ISS=ON -DUSE_3DGlauber=ON   # -DUSE_METAL=ON on a Mac
+make -j$(nproc)
+```
+
+`./configure.sh` offers the build options in a text menu (needs `dialog`).
 
 ## Running X-SCAPE/JETSCAPE
 
-Running the new X-SCAPE module(s) (see below) is currently not supported via the XML configuration (will be included in X-SCAPE 2.x). The small system physics (via 3d Glauber and iMatter ISR shower) provides its own executable:
-
-```bash
-./PythiaIsrTest
-```
-Similarly the SMASH initial condition module can be run via
-
-```bash
-./SMASHInitialCondition
-```
-
-More test examples showcasing the new X-SCAPE framework functionalities can be found in the `./examples/custom_examples/` directory.
-
-X-SCAPE is fully backwards compatible, so the main executable to generate JETSCAPE events is `runJetscape` located in the `build/` directory works and contains the same functionalities and features than the latest JETSCAPE release. To generate JETSCAPE events, you should pass an XML file specifying the settings with which you would like to run:
+The main executable is `runJetscape` in the build directory. X-SCAPE is fully backwards
+compatible: it contains the same functionalities and features as the latest JETSCAPE release.
+Pass it an XML file with the settings you would like to run with:
 
 ```bash
 ./runJetscape ../config/jetscape_user.xml
 ```
+
+The small-system chain with initial-state radiation runs from the XML as well (`<Hard><ISR>`),
+for example `config/jetscape_user_OO_ISR_MatterLBT_iColored.xml`. Dedicated executables remain
+for some X-SCAPE examples:
+
+```bash
+./PythiaIsrTest           # 3dMCGlauber + iMATTER initial-state shower
+./SMASHInitialCondition   # SMASH initial condition
+```
+
+More test examples showcasing the new X-SCAPE framework functionalities, such as the main clock
+and the Bulk Dynamics Manager, can be found in `./examples/custom_examples/` (for example
+`PythiaBDMTest.cc` and `PythiaBrickTest.cc`). To run several jobs at once from one build, each
+in a working directory of its own, use `examples/run_in_workdir.sh`
+([docs/README_Launcher.md](docs/README_Launcher.md)).
 
 ### The XML Configuration
 
@@ -68,11 +162,15 @@ You can pass the path to your user XML file as a command-line argument to the `r
 JETSCAPE output can be generated in Ascii, gzipped Ascii, or HepMC format,
 (for HepMC format in ROOT see `examples/custom_examples/PythiaBrickTestRoot.cc` and use cmake with `-DUSE_ROOT=ON`) and contains a full list of particles and the parton shower history.
 You must specify which format you would like to activate in your User XML file.
+With ROOT, `RootBulkWriter` and `FastRootBulkWriter` write the hydro evolution
+([docs/README_BulkFast.md](docs/README_BulkFast.md)). The js-contrib productions write HDF5
+files ([What a production writes](https://jhputschke.github.io/js-contrib/analysis/files/)).
 
 ### Analysis of JETSCAPE Output
 
 Analysis of JETSCAPE output is generally beyond the scope of the JETSCAPE framework, and is the responsibility of the user.
-The JETSCAPE docker container includes ROOT, python, fastjet, and several other tools that may be useful.
+The JETSCAPE docker container includes ROOT, python, fastjet, and several other tools that may be useful;
+the js-contrib website has analysis guides and notebooks for the production files.
 
 An example reading an ascii output file is provided:
 
@@ -92,7 +190,7 @@ Several example hydro profiles can be downloaded using `examples/get_hydroSample
 
 ## Running JETSCAPE/X-SCAPE with LHAPDF
 
-[LHAPDF](https://www.lhapdf.org/) is now included in the JETSCAPE/X-SCAPE Docker image. Instructions to run JETSCAPE/X-SCAPE in Docker are [here](https://github.com/JETSCAPE/X-SCAPE/wiki/Doc.Installation.Docker.Linux). While inside the container, use [external_packages/get_lhapdf.sh](external_packages/get_lhapdf.sh) to download the desired set. For example, to download the JAM20-SIDIS_PDF_proton_nlo set, run:
+[LHAPDF](https://www.lhapdf.org/) is included in the JETSCAPE/X-SCAPE Docker image ([INSTALL.md](INSTALL.md), section 2). While inside the container, use [external_packages/get_lhapdf.sh](external_packages/get_lhapdf.sh) to download the desired set. For example, to download the JAM20-SIDIS_PDF_proton_nlo set, run:
 
 ```bash
 cd ${JETSCAPE_DIR}/external_packages
@@ -116,7 +214,8 @@ cd ${JETSCAPE_DIR}/build
 ./runJetscape ../config/jetscape_user_nPDF_test.xml
 ```
 
-## X-SCAPE modules (New)
+## X-SCAPE modules
+
 ### 3DGlauber support
 
 3DGlauber is a 3D initial state model. 3DGlauber generates the initial state for MUSIC and can be integrated into the JETSCAPE framework. To download the latest version of 3DGlauber, one can run the shell script under the external_packages folder,
@@ -138,11 +237,11 @@ For more details see [3DGlauber](https://github.com/JETSCAPE/X-SCAPE/wiki/3DGlau
 
 ### Initial State Shower using iMatter
 
-To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix`. If you use the JETSCAPE docker container (v1.8), all environment variables, including the `$PYTHIA8` for iMatter are set properly.
+To use the ISR shower of iMatter, please make sure that the environment variable `$PYTHIA8` is set and points to the directory where pythia8 is installed which can be found using `pythia8-config --prefix` (with conda, iMATTER finds the PDFs through `PYTHIA8DATA`). In the JETSCAPE docker container all environment variables, including the `$PYTHIA8` for iMatter, are set properly.
 
 After using 3DGlauber support to compile JETSCAPE, one can use `./PythiaIsrTest` (in the build directory) to run iMatter and 3DGlauber which uses the xml user file `config/jetscape_user_iMATTERMCGlauber.xml`. For running 3DGlauber with Hydro (Music) please see [3DGlauber](https://github.com/JETSCAPE/X-SCAPE/wiki/3DGlauber,-MUSIC,-iSS-and-Initial-State-Radiation).
 
-The ISR chain with jet energy loss in the medium (Matter + LBT) and the jets hadronized through their colour flow (`iColoredHadronization`) runs from the XML alone (`<Hard><ISR>`): `config/jetscape_user_OO_ISR_MatterLBT_iColored.xml`. How the colour tags of Matter and LBT and the closure of the colour lines that end in the medium (`<JetHadronization><colour_closure>`) work is in [README_ColourFlow.md](README_ColourFlow.md). Matter's new colour tags come from one counter per event (`HardProcess::NextColorTag`, since 2026-10-27). Before, the showers of one event shared tags, which Pythia strings silently: the jet hadrons of colour-aware hadronization (iColored, Colored) made before and after differ and are not to be combined. ColorlessHadronization does not read the tags and is unchanged. With Matter alone (`recoil_on` 0, no LBT) only this fix acts; see README_ColourFlow.md, "Matter alone: only the tag fix".
+The ISR chain with jet energy loss in the medium (Matter + LBT) and the jets hadronized through their colour flow (`iColoredHadronization`) runs from the XML alone (`<Hard><ISR>`): `config/jetscape_user_OO_ISR_MatterLBT_iColored.xml`. How the colour tags of Matter and LBT and the closure of the colour lines that end in the medium (`<JetHadronization><colour_closure>`) work is in [docs/README_ColourFlow.md](docs/README_ColourFlow.md).
 
 ### Electron-Proton Gun
 
@@ -156,7 +255,7 @@ For running with the SMASH initial condition, please use the example `./SMASHIni
 
 ## JETSCAPE modules
 
-Since X-SCAPE is fully backwards compatible, all JETSCAPE modules can be used in X-SCAPE utilizing the JETSCAPE like per-event execution. Additional functions have to be implemented to extend towards per-time-step execution (normally achieved by refactoring the per-event code) using the new clock feature, allowing full concurrent running of all physics modules. More details will be provided in [CONTRIBUTING](CONTRIBUTING.md).
+Since X-SCAPE is fully backwards compatible, all JETSCAPE modules can be used in X-SCAPE utilizing the JETSCAPE like per-event execution. Additional functions have to be implemented to extend towards per-time-step execution (normally achieved by refactoring the per-event code) using the new clock feature, allowing full concurrent running of all physics modules. More details are in [CONTRIBUTING](CONTRIBUTING.md).
 
 ### MUSIC support
 
@@ -183,70 +282,10 @@ when generating the cmake configuration file,
     make
 ```
 
-A GPU-capable drop-in replacement, `music4gpu`, can be used instead of the CPU MUSIC
-package (one or the other, never both). Download it with `./get_music4gpu.sh`, then
-select it via the GPU backend flag (which both picks the package and enables that GPU
-backend):
-
-```bash
-    cmake -DUSE_MUSIC=ON -DUSE_CUDA=ON ..   # NVIDIA / CUDA
-    cmake -DUSE_MUSIC=ON -DUSE_METAL=ON ..  # macOS / Apple Silicon (Metal)
-```
-
-Plain `-DUSE_MUSIC=ON` (no GPU flag) keeps the original CPU `music` package.
-
-**OpenMP defaults for GPU builds.** The `music4gpu` backends run much of the
-hydro on the GPU while the host does short OpenMP repack/output loops between
-GPU waits. To stop idle OpenMP threads from busy-spinning between those loops —
-which on a many-core host (e.g. a 20-core GB10 Grace) can pin every core and
-inflate CPU time ~10–20× with no wall-clock benefit — GPU builds set
-`OMP_WAIT_POLICY=passive` as a **default** at startup, so idle threads sleep
-instead of spin. This is process-wide (it also affects 3DGlauber, iSS, …) and
-only changes idle-thread behavior, so it is safe in practice. It is only a
-default — anything you export yourself wins — and is fully revertible:
-
-```bash
-export OMP_WAIT_POLICY=active   # restore the OpenMP default (spinning)
-export MUSIC_OMP_DEFAULTS=0     # disable the music4gpu OpenMP defaults entirely
-export OMP_NUM_THREADS=8        # also worth capping on many-core hosts
-```
-
-(See MUSIC4GPU's [`docs/PORT_GPU.md`](https://github.com/jhputschke/MUSIC4GPU/blob/XSCAPE/docs/PORT_GPU.md)
-§9.10 for the full rationale; locally it is
-`external_packages/music4gpu/docs/PORT_GPU.md`.)
-
-**music4gpu settings in X-SCAPE.** Beyond the usual MUSIC parameters, `MusicWrapper` reads
-or sets these. CPU MUSIC ignores all of them.
-
-| setting | default | effect |
-|---|---|---|
-| `<Hydro><MUSIC><freeze_out_surface>` | 1 | 0: no freeze-out surface, MUSIC stops on max(e) < e_fo at the same step; per instance in its own `<Hydro><MUSIC>` block, or `MpiMusic::set_freeze_out_surface` |
-| `<Hydro><MUSIC><late_delta_tau>`, `<late_tau_switch>` | 0, 0 (also when missing) | a larger MUSIC time step from `late_tau_switch` on (music4gpu `late_delta_tau`), with the freeze-out checks and the stored frames kept at their spacing; the jet source follows the step (`HydroSourceJETSCAPE::hydro_dtau_changed`, `CausalLiquefier`'s deposition windows tile the axis across the switch). The production XMLs in js-contrib set 0.05 fm/c from 3 fm/c |
-| `<Hydro><MUSIC><output_momentum_anisotropy_vs_etas>` | 1 (also when missing) | 0: no `momentum_anisotropy_*` / `eccentricities_*` `.dat` files, which skips a serial pass over the grid at four steps of every run |
-| `<Hydro><MUSIC><store_evolution>` | 1 (also when missing) | 0: the instance keeps its grid metadata and frame count (`bulk_info`) but stores no evolution frames (for a leg nobody reads); per instance in its own `<Hydro><MUSIC>` block, or `MpiMusic::set_store_evolution` |
-| `<Hydro><MUSIC><restart_from>` | none | only in an instance's own block: the id (`<name>`) of another MUSIC instance; every evolution starts from that instance's latest checkpoint when it fits, and from tau0 otherwise, with the same output either way (the jet leg of the two-stage chain from the background's state; the log says `restart: started from the checkpoint at step …` or why not, `MUSIC_RESTART_VERIFY=1` checks it). Or `MpiMusic::set_restart_from(other)`, `get_restart_status()` |
-| `<Hydro><MUSIC><checkpoint_tau>` | 0 | only in an instance's own block: keep a checkpoint of the state at the last freeze-out step by this tau [fm/c] in every evolution. 0: off, unless another instance names this one in `<restart_from>`; then just before `<Liquefier><CausalLiquefier><tau_delay>`, before which no droplet deposits: half the largest hydro step (`Delta_Tau`, `late_delta_tau`, the liquefier's `dtau`) and 1e-3 fm/c before it, so that a droplet made at the hard vertex (tau = 0) is not yet in reach of the jet source and the jet leg takes the checkpoint. A time between there and `tau_delay` is moved there (the log says so); other times are taken as given. Or `MpiMusic::set_checkpoint_tau(tau)` |
-
-Two more MUSIC settings, which CPU MUSIC honours as well, can now also be set per instance: `<dump_hydro_only>` (1: keep MUSIC's native store, hand no copy to the framework's `bulk_info`) and `<skip_surface>` (1: do not export the freeze-out surface). As `freeze_out_surface` and `store_evolution`, the first `<Hydro><MUSIC>` block sets them for every instance and the same tag in an instance's own block overrides it (setters `set_dump_hydro_only`, `set_skip_surface`).
-
-**Two-stage hydro with `runJetscape`.** The jet leg (MUSIC_2, with the liquefier's droplets) starts from the background's (MUSIC_1) state and keeps no evolution of its own:
-
-```xml
-<Hydro>
-  <AddLiquefier> true </AddLiquefier>
-  <MUSIC>
-    <name>MUSIC_2</name>
-    <restart_from>MUSIC_1</restart_from>   <!-- MUSIC_1 keeps the checkpoint at tau_delay -->
-    <dump_hydro_only>1</dump_hydro_only>   <!-- no framework copy of the jet leg -->
-    <store_evolution>0</store_evolution>   <!-- and no evolution frames -->
-    <skip_surface>0</skip_surface>         <!-- export its surface (iSS with hydro_id MUSIC_2) -->
-  </MUSIC>
-</Hydro>
-```
-
-Build the freeze-out surface on both legs or on neither: a checkpoint without the surface cannot serve a jet leg that builds one, and then every event runs from tau0 (with a warning). On the GB10 (0–10 % Au+Au, iSS + Colorless on MUSIC_2) this gives the same final-state hadrons as without the settings, at 6.3 instead of 15.9 GB peak memory and ~2 s less per event.
-
-The js-contrib production drivers set these through the setters after `Init()`, which override the XML; see js-contrib's `docs/README_2stage.md`, `prod_AuAu_0_10_jet/README.md` and `docs/Plans/PLAN_music2_restart.md`.
+The GPU port MUSIC4GPU replaces CPU MUSIC (one or the other, never both): fetch it with
+`./get_music4gpu.sh` and add `-DUSE_CUDA=ON` (NVIDIA) or `-DUSE_METAL=ON` (Apple Silicon).
+Its settings, the OpenMP defaults of GPU builds and the two-stage hydro with `runJetscape` are
+in [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md).
 
 To run JETSCAPE with MUSIC, one needs to use MPI commands,
 
@@ -256,8 +295,9 @@ To run JETSCAPE with MUSIC, one needs to use MPI commands,
 ### iSS support
 
 iSS is a Monte Carlo sampler code after the hydrodynamics and can be integrated
-into the JETSCAPE framework. To download the latest
-version of iSS, one can run the shell script under the external_packages folder,
+into the JETSCAPE framework. X-SCAPE fetches it from the fork
+[jhputschke/iSS](https://github.com/jhputschke/iSS) (see [RELEASE_NOTES.md](RELEASE_NOTES.md#particlization-iss)).
+To download it, one can run the shell script under the external_packages folder,
 
 ```bash
     ./get_iSS.sh
@@ -344,151 +384,44 @@ To run JetScape test with SMASH:
     ./SMASHTest
 ```
 
-Currently the iSS sampler doesn't performs resonance decays after sampling.
-For reasonable physics with SMASH these decays should be switched off.
-
-## More information
-
-More material on the physics behind JETSCAPE and how to use it can be found in the material of the JETSCAPE Summer Schools. The schools are a yearly event explaining the details of the approach. You can either sign-up for the next one or go through the material of the last school yourself. The material is found in the SummerSchool repositories under [the JETSCAPE organization](https://github.com/JETSCAPE).
+With SMASH as afterburner, the iSS resonance decays must stay off
+(`<Perform_resonance_decays>0`, the default), so that SMASH decays the resonances itself.
 
 ## js-contrib community extensions
 
 [js-contrib](https://github.com/jhputschke/js-contrib) provides community-maintained physics modules
-(analogous to [fastjet-contrib](https://fastjet.hepforge.org/contrib/)) that can be compiled
-directly into X-SCAPE.  Current contribs:
+(analogous to [fastjet-contrib](https://fastjet.hepforge.org/contrib/)) that are built
+together with X-SCAPE, and the production drivers and analysis tools behind the js-contrib
+website. Current contribs:
 
 | Contrib | Description | Extra deps |
 |---------|-------------|------------|
+| PyJetscape | pybind11 Python bindings, the Pythonic `jetscape` package, production drivers and analysis tools | pybind11 (PyTorch for the FNO hydro) |
 | FnoHydro | Neural-network (FNO) hydrodynamics via LibTorch | ROOT, libtorch (~2 GB) |
-| PyJetscape | pybind11 Python bindings + PyFNOHydro trampoline | pybind11, PyTorch |
+| FastHydro | MC-Glauber and a fast pure-Python 3+1D hydro with X-SCAPE's energy-loss chain: paired background and jet evolutions | Python (PyJetscape) |
+| Visualization | 3D visualization of the hydro medium evolution (PyVista) | Python (PyJetscape) |
 
-### Quick start (current X-SCAPE)
-
-Up-to-date X-SCAPE already contains the required `get_js_contrib.sh` script and CMake hooks.
-Run:
+Build them from source with:
 
 ```bash
 cd external_packages
 ./get_js_contrib.sh        # clones js-contrib into external_packages/js-contrib
 
 cd ../build
-cmake .. -DUSE_JS_CONTRIB=ON -DUSE_JS_FNO_HYDRO=ON   # add -DUSE_JS_PYJETSCAPE=ON if needed
+cmake .. -DUSE_JS_CONTRIB=ON -DUSE_JS_PYJETSCAPE=ON   # add -DUSE_JS_FNO_HYDRO=ON for the LibTorch FNO
 make -j$(nproc)
 ```
 
-### Manual integration into older X-SCAPE checkouts
+The production container and the Mac wheel come with PyJetscape compiled
+([Install](https://jhputschke.github.io/js-contrib/install/)).
 
-If your X-SCAPE checkout predates the js-contrib integration, apply the two
-steps below by hand.
+## More information
 
-#### Step 1 — add the fetch script
-
-Copy (or create) `external_packages/get_js_contrib.sh` with the following content:
-
-```bash
-#!/usr/bin/env bash
-###############################################################################
-# Copyright (c) The JETSCAPE Collaboration, 2018
-#
-# Distributed under the GNU General Public License 3.0 (GPLv3 or later).
-# See COPYING for details.
-###############################################################################
-# Clone js-contrib into external_packages/js-contrib
-# Use with: cmake -DUSE_JS_CONTRIB=ON [-DUSE_JS_FNO_HYDRO=ON] [-DUSE_JS_PYJETSCAPE=ON]
-
-folderName="js-contrib"
-
-if [ -d "$folderName" ]; then
-  echo "$folderName already exists — skipping clone."
-  exit 0
-fi
-
-git clone https://github.com/jhputschke/js-contrib.git "$folderName"
-```
-
-Make the script executable:
-
-```bash
-chmod +x external_packages/get_js_contrib.sh
-```
-
-#### Step 2 — patch `CMakeLists.txt`
-
-Two blocks must be added to the top-level `CMakeLists.txt`, and one block must be patched in `src/CMakeLists.txt`.
-
-**Block A — option declarations** (add after the `USE_SMASH` option block,
-around the line that reads `# Compile with OpenMP support`):
-
-```cmake
-# js-contrib extensions. Turn on with 'cmake -DUSE_JS_CONTRIB=ON'.
-# Individual contribs are gated by their own sub-options (all OFF by default).
-option(USE_JS_CONTRIB "Enable js-contrib extensions" OFF)
-if(USE_JS_CONTRIB)
-  option(USE_JS_FNO_HYDRO
-    "Build FnoHydro contrib (requires libtorch ~2 GB and ROOT)" OFF)
-  option(USE_JS_PYJETSCAPE
-    "Build PyJetscape pybind11 Python bindings (compile from source)" OFF)
-  if(USE_JS_FNO_HYDRO OR USE_JS_PYJETSCAPE)
-    message("Enabling js-contrib extensions ...")
-  endif()
-endif(USE_JS_CONTRIB)
-```
-
-**Block B — subdirectory hook** (add after the `if(USE_ISS)` / `if(OPENCL_FOUND AND USE_CLVISC)` block
-and before the `if(OPENMP_FOUND)` definition block):
-
-```cmake
-if(USE_JS_CONTRIB)
-  if(NOT EXISTS "${CMAKE_SOURCE_DIR}/external_packages/js-contrib")
-    message(
-      FATAL_ERROR
-        "Error: js-contrib has not been downloaded in external_packages by ./external_packages/get_js_contrib.sh"
-    )
-  endif()
-  # Pass the per-contrib flags through to the js-contrib CMakeLists
-  set(BUILD_FNO_HYDRO ${USE_JS_FNO_HYDRO})
-  set(BUILD_PYJETSCAPE ${USE_JS_PYJETSCAPE})
-  add_subdirectory(${CMAKE_SOURCE_DIR}/external_packages/js-contrib)
-endif(USE_JS_CONTRIB)
-```
-
-**Block C — build-tree export in the top-level `CMakeLists.txt`** — js-contrib discovers JetScape
-via a build-tree `export()`. CMake requires every in-tree target reachable through `JetScape`'s
-`target_link_libraries` to be in the same export set, and `export()` must be called **after**
-all the optional `add_subdirectory()` calls that define those targets. Remove any existing
-`export(TARGETS JetScape …)` from `src/CMakeLists.txt` and **append** this block at the very
-end of the top-level `CMakeLists.txt`:
-
-```cmake
-set(_js_export_targets JetScape JetScapeThird GTL libtrento Cornelius)
-if(${HDF5_FOUND})
-  list(APPEND _js_export_targets hydroFromFile)
-endif()
-if(USE_IPGLASMA)
-  list(APPEND _js_export_targets ipglasma_lib)
-endif()
-if(USE_3DGlauber)
-  list(APPEND _js_export_targets 3dMCGlb)
-endif()
-if(USE_MUSIC)
-  list(APPEND _js_export_targets music)
-endif()
-if(USE_ISS)
-  list(APPEND _js_export_targets iSS)
-endif()
-if(OPENCL_FOUND AND USE_CLVISC)
-  list(APPEND _js_export_targets clviscwrapper)
-endif()
-export(TARGETS ${_js_export_targets} FILE "${CMAKE_BINARY_DIR}/JetScapeTargets.cmake")
-configure_file(${CMAKE_SOURCE_DIR}/cmake/JetScapeConfig.cmake.in
-               "${CMAKE_BINARY_DIR}/JetScapeConfig.cmake" @ONLY)
-```
-
-After applying all three blocks, fetch and build as in the quick-start above.
+More material on the physics behind JETSCAPE and how to use it can be found in the material of the JETSCAPE Summer Schools. The schools are a yearly event explaining the details of the approach. You can either sign-up for the next one or go through the material of the last school yourself. The material is found in the SummerSchool repositories under [the JETSCAPE organization](https://github.com/JETSCAPE).
 
 ## Troubleshooting
 
-If you encounter a problem, please report the issue [here](https://github.com/JETSCAPE/JETSCAPE/issues).
+If you encounter a problem, please report the issue [here](https://github.com/JETSCAPE/X-SCAPE/issues).
 
 # Contributing
 

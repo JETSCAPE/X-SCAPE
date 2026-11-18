@@ -31,7 +31,7 @@
   order of the blocks matters: <IS> before <Hard>.  No hydro reuse: with ISR the medium is
   made from what each event's hard scattering left.
 
-  Colour (README_ColourFlow.md): LBT and Matter's recoils carry the large-Nc colour flow of
+  Colour (docs/README_ColourFlow.md): LBT and Matter's recoils carry the large-Nc colour flow of
   every scattering; each scattering off the medium leaves one colour line that ends in the
   medium (the hole took the thermal parton's colour with it), and iColoredHadronization
   closes those lines as <JetHadronization><colour_closure> says (default reconnect).  The
@@ -289,7 +289,7 @@
   <!-- Jet hadronization: the final partons and the beam remnants through the ISR colour
        flow (the remnants come from 3dMCGlauber in the event).  <colour_closure>: how the
        colour lines that end in the medium are closed (reconnect, reconnect_global,
-       thermal, fake, none; README_ColourFlow.md). -->
+       thermal, fake, none; docs/README_ColourFlow.md). -->
   <JetHadronization>
     <name>iColored</name>
     <eCMforHadronization>200</eCMforHadronization>

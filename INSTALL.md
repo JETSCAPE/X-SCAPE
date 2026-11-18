@@ -63,14 +63,16 @@ The summary below covers the most common cases.
 
 ### GPU backends and container support
 
-> **GPU hydro backends (`-DUSE_METAL=ON` / `-DUSE_CUDA=ON`) are not yet supported inside containers.**
->
-> | Platform | Status |
-> |----------|--------|
-> | macOS — Metal | **Not supported.** Apple's Metal framework requires bare-metal access to the GPU; it is not available inside Docker Desktop for Mac or any container runtime on macOS. |
-> | Linux — CUDA | **In preparation.** NVIDIA GPU pass-through support is being added to the container images. Linux x86\_64 is the primary target; Linux ARM (e.g. Graviton, Jetson, Apple Silicon Linux VM) will follow but may take considerably longer. |
->
-> For GPU-accelerated runs, build from source on bare metal (sections [3](#3-obtaining-the-source)–[7](#7-installing-to-a-prefix)).
+The JETSCAPE images (`jetscape/base`) are **CPU only** and suit development: you build X-SCAPE from source inside them, as below.
+
+For GPU runs there are ready-made setups with X-SCAPE compiled, maintained with js-contrib:
+
+| Platform | Setup |
+|----------|-------|
+| Linux — NVIDIA GPU (CUDA) | The production container `jhputschke/xscape-prod` (Docker with the NVIDIA Container Toolkit, or Apptainer): [install guide](https://jhputschke.github.io/js-contrib/install/container/). It also runs on CPU-only nodes for hadronization and analysis. |
+| macOS — Apple Silicon (Metal) | The xscape wheel, installed natively with uv: [install guide](https://jhputschke.github.io/js-contrib/install/mac/). Metal is not available inside any container runtime on macOS. |
+
+GPU development containers (CUDA with a compiler toolchain) are in progress. Until then, GPU development means a source build on the machine itself (sections [3](#3-obtaining-the-source)–[7](#7-installing-to-a-prefix)).
 
 ### Docker (macOS and Linux — CPU builds)
 

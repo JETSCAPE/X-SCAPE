@@ -6,7 +6,7 @@ bypassing the JETSCAPE framework history (`bulk_info.data`) that the regular
 `RootBulkWriter` reads back through per-cell interpolation. It is meant for
 **hydro-only training-data generation** (e.g. the FNO pipeline).
 
-See [BulkWriterImprovements.md](BulkWriterImprovements.md) for the design rationale.
+The design notes (`BulkWriterImprovements.md`) were a working document; they are in the git history (commit `efa572ba`).
 
 ---
 
@@ -100,7 +100,7 @@ value.
 
 ### 2d. Run
 
-Ready-made example configs live in [config/BulkFastTest/](config/BulkFastTest/). Run from
+Ready-made example configs live in [config/BulkFastTest/](../config/BulkFastTest/). Run from
 `build_gpu/` (so MUSIC's input/EOS paths resolve):
 
 ```bash
@@ -238,7 +238,7 @@ values (`get_hydro_tau0()`, `get_hydro_dtau()`, `get_ntau()`).
 
 ## 6. Verification (O+O, 1 event, build_gpu)
 
-Reproduce with the script [config/BulkFastTest/validate.py](config/BulkFastTest/validate.py)
+Reproduce with the script [config/BulkFastTest/validate.py](../config/BulkFastTest/validate.py)
 **under a numpy+uproot Python** (conda `fno_env` — the system `python3` here has no numpy):
 
 ```bash

@@ -9,8 +9,8 @@ directory collided.
 
 Phase 1 of the install refactor makes the read-only data assets locatable from a
 shared prefix and provides a launcher that gives each run an isolated working
-directory. See `PlanInstall.md` for the full roadmap (Phase 2 adds a proper
-`make install` with a `bin/ lib/ share/` layout).
+directory. The install itself (Phase 2: `make install` with a `bin/ lib/ share/`
+layout) is described in [INSTALL.md](../INSTALL.md), sections 7 and 9.
 
 ## The model
 
