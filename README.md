@@ -65,6 +65,9 @@ the machine itself ([INSTALL.md](INSTALL.md), sections 3 to 7, or the
   liquefier's droplets) restarts from the background's checkpoint:
   [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md#two-stage-hydro-with-runjetscape),
   [Au+Au jets in two stages](https://jhputschke.github.io/js-contrib/run/auau-jet/).
+  A worked example that runs from the XML alone is
+  `config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml` (see
+  [Two-stage hydro and MUSIC4GPU from XML](#two-stage-hydro-and-music4gpu-from-xml) below).
 - **O+O with initial-state radiation**: 3dMCGlauber, PythiaIsrGun and iMATTER, MUSIC, Matter and
   LBT, and iColored hadronization through the jets' colour flow, all from the XML
   (`<Hard><ISR>`): [O+O with ISR](https://jhputschke.github.io/js-contrib/run/oo-isr/),
@@ -126,6 +129,32 @@ for some X-SCAPE examples:
 ./PythiaIsrTest           # 3dMCGlauber + iMATTER initial-state shower
 ./SMASHInitialCondition   # SMASH initial condition
 ```
+
+### Two-stage hydro and MUSIC4GPU from XML
+
+[`config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml`](config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml)
+runs one 0–10 % Au+Au event with a jet from `runJetscape` alone: 3dMCGlauber and PythiaGun, the
+background hydro (MUSIC_1), Matter + LBT with the liquefier, the jet-leg hydro with the wake
+(MUSIC_2), iSS on the jet leg's surface and Colorless hadronization, written as ASCII. It shows
+the new per-instance MUSIC settings, MUSIC4GPU's late time step and iSS choosing the hydro it
+samples (`<hydro_id>`); with a CUDA build it takes about 20 s on a GB10.
+
+```bash
+cd build
+./runJetscape ../config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml
+```
+
+**Current limits of the XML compared with Python.** One job gives the hadrons of one leg only
+(no paired jet leg minus background), cannot reuse a background for several jets, keeps no
+boundary between oversamples, takes no explicit seeds per event and leg, and cannot hadronize
+stored surfaces and partons later. The js-contrib productions do all of this from Python with
+the same XML files ([Au+Au jets in two stages](https://jhputschke.github.io/js-contrib/run/auau-jet/)).
+**XML support for these is in the works for future releases**: iSS following the hydro it
+samples with background reuse, a second soft-particlization pass for the other leg, seed tags,
+and oversampling per leg. The details, with a table of what runs from XML and what needs Python,
+are in [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md#example-one-two-stage-auau-event-from-xml).
+
+### More examples
 
 More test examples showcasing the new X-SCAPE framework functionalities, such as the main clock
 and the Bulk Dynamics Manager, can be found in `./examples/custom_examples/` (for example

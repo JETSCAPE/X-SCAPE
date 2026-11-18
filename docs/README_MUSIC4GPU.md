@@ -79,3 +79,99 @@ The jet leg (MUSIC_2, with the liquefier's droplets) starts from the background'
 Build the freeze-out surface on both legs or on neither: a checkpoint without the surface cannot serve a jet leg that builds one, and then every event runs from tau0 (with a warning). On the GB10 (0–10 % Au+Au, iSS + Colorless on MUSIC_2) this gives the same final-state hadrons as without the settings, at 6.3 instead of 15.9 GB peak memory and ~2 s less per event.
 
 The js-contrib production drivers set these through the setters after `Init()`, which override the XML; see js-contrib's `docs/README_2stage.md`, `prod_AuAu_0_10_jet/README.md` and `docs/Plans/PLAN_music2_restart.md`.
+
+## Example: one two-stage Au+Au event from XML
+
+[`config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml`](../config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml)
+runs one 0–10 % Au+Au event at 200 GeV with a jet, from `runJetscape` alone, without Python.
+Its physics settings are those of js-contrib's production file
+`AuAu_MCGlauber_MUSIC_0_10_jet.xml`. Each setting is explained next to it in the file.
+
+```
+IS (3dMCGlauber) -> Hard (PythiaGun) -> NullPreDynamics -> MUSIC_1 (background)
+   -> Liquefier + Eloss (Matter + LBT)       droplets from the jet's energy loss
+   -> MUSIC_2 (same strings + the droplets)  the jet leg: medium + wake
+   -> iSS on MUSIC_2's freeze-out surface    bulk hadrons, status 11
+   -> Colorless hadronization                jet fragments, status 0
+```
+
+Build with MUSIC4GPU, iSS and 3dMCGlauber, then run it from the build directory or in a
+working directory of its own ([README_Launcher.md](README_Launcher.md)):
+
+```bash
+cmake .. -DUSE_MUSIC=ON -DUSE_CUDA=ON -DUSE_ISS=ON -DUSE_3DGlauber=ON   # -DUSE_METAL=ON on a Mac
+make -j$(nproc)
+./runJetscape ../config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml
+# or, from the source directory:
+examples/run_in_workdir.sh -d build -w RUN_DIR -u config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml
+```
+
+The output, `AuAu_0_10_2stage_MUSIC2_hadrons.dat` (ASCII writer), holds the jet fragments
+(status 0) and then iSS's hadrons of the jet leg (status 11).
+On the GB10 (CUDA, `OMP_NUM_THREADS=10`, seed 1) the event takes 22 s and 9.5 GB peak memory, and
+the file holds 32 jet hadrons and 7065 bulk hadrons (one iSS sample).
+
+### What the file shows
+
+| New in 3.0 | Where in the XML |
+|---|---|
+| Two MUSIC instances in one task list: the first `<Hydro><MUSIC>` block sets every instance, a block with `<name>` overrides it for that instance | `MUSIC_1`, `MUSIC_2` |
+| Per instance: no freeze-out surface on the background, the surface only on the jet leg, no framework copy and no stored evolution of the jet leg | `<freeze_out_surface>`, `<skip_surface>`, `<dump_hydro_only>`, `<store_evolution>` |
+| MUSIC4GPU's larger time step after 3 fm/c (0.02 to 0.05 fm/c), with the freeze-out checks and stored frames kept at their spacing | `<late_delta_tau>`, `<late_tau_switch>` |
+| MUSIC4GPU's conservation fixes, on by default | `<symmetric_flux_fallback>`, `<quest_revert_as_cpu>` (main XML) |
+| The liquefier's droplets deposited exactly on MUSIC's grid, diffused in the Bjorken frame | `<CausalLiquefier>` defaults (`normalize_on_hydro_grid`, `frame`) |
+| Matter + LBT with recoils; energy loss starts at MUSIC's tau0 | `<Eloss>`, `<Matter><tStart_at_point>` |
+| iSS samples a chosen hydro instance | `<SoftParticlization><hydro_id>MUSIC_2` |
+| iSS decays the SMASH hadron list itself, for output that is not for SMASH | `<Perform_resonance_decays>1`, `<decay_smash_list>1` |
+| 0–10 % centrality from the impact parameter (3dMCGlauber ignores `cenMin`/`cenMax` inside X-SCAPE) | `<b_max>4.7</b_max>` |
+
+Settings to try on top of it:
+
+- **Restart the jet leg from the background**: add `<restart_from>MUSIC_1</restart_from>`
+  to the `MUSIC_2` block and set `<freeze_out_surface>1</freeze_out_surface>` in the first block
+  (the part of the surface before the checkpoint comes from MUSIC_1; keep `<skip_surface>1`).
+  The jet leg then skips the steps before the liquefier's `tau_delay`. In the event above it
+  restarted at tau = 0.86 fm/c and wrote a bit-identical file, in 21 instead of 22 s; the
+  saving grows with the number of jet legs per background, which needs Python today (below).
+  See [Two-stage hydro with `runJetscape`](#two-stage-hydro-with-runjetscape) above.
+- **Active region** (GPU only, opt-in): `<active_region_eps>1e-5</active_region_eps>` in the first
+  block evolves only the blocks of cells near matter. Not bit-identical at the vacuum level.
+- **Parallel showers**: `<Eloss><nThreads>-1</nThreads>`. Changes the events (one random
+  stream per shower), so keep one setting per campaign.
+
+Note that the two parts of the event are at different decay levels: Pythia decays π⁰, η and
+Σ⁰ in the jet fragments, while iSS leaves them undecayed in the bulk (what SMASH calls stable).
+Treat both alike before comparing with data.
+
+### What needs Python today
+
+The XML file gives one leg of one event. The js-contrib productions
+([Au+Au jets in two stages](https://jhputschke.github.io/js-contrib/run/auau-jet/)) run the same
+chain from the same two XML files, but step through the events from Python
+(`JetScapePerEvent`) so that they can act between them:
+
+| To get | XML today | Python drivers (js-contrib PyJetscape) |
+|---|---|---|
+| Hadrons of both legs of one event, for jet leg minus background | One `<SoftParticlization>` with one `<hydro_id>`: one leg per run | `hadronize.py` samples each leg's surface (`SampleCells`) |
+| Several jets per background (`nReuseHydro` > 1) | The event loop switches iSS off on reused events together with MUSIC_1, although MUSIC_2 runs again: keep reuse off | `run_prod_jet.py --reuse N`, pT̂ windows sharing one background |
+| Oversampling | `number_of_repeated_sampling` is fixed for the run, and the ASCII and HepMC writers keep no boundary between samples or legs | Samples per leg and per event (`--oversample-bg`); HDF5 hadron files keep every sample apart |
+| Explicit seeds per event and leg (common seeds for both legs, redoing one event) | `<Random><seed>` and `<reseed_per_event>` only | `SetNextRandomSeed` / `GetLastRandomSeed` |
+| Hadrons later, from stored surfaces and partons (stage 2 on CPUs) | No C++ reader: the hadrons are made in the job that ran the hydro | `hadronize.py`, `rehadronize_jets.py` |
+| Python modules, the FNO hydro, hydro cells from numpy | `runJetscape` cannot load them | `@js.module`, PyJetscape |
+| Work between events (diagnostics, restart status) | `runJetscape` calls `Exec()` once | per-event loop |
+
+### XML improvements planned for future releases
+
+Work is under way to close the gaps in the first four rows from the XML, so that a plain
+`runJetscape` job gives paired hadrons of both legs. These are not part of 3.0:
+
+1. **iSS follows the hydro it samples** when backgrounds are reused: with `<hydro_id>MUSIC_2`
+   the jet leg is sampled on every event, also with `nReuseHydro` > 1.
+2. **A second soft-particlization pass** for the other leg, so one job samples the background
+   and the jet leg.
+3. **Seed tags** for explicit seeds per event and leg.
+4. **Oversampling per leg**, with the leg and the sample recorded in the output.
+5. **A C++ reader for stored surfaces and partons**, for stage 2 without Python (if wanted).
+
+Until then, use the Python drivers for productions, and this XML file to run and inspect one
+event of the chain.

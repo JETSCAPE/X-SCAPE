@@ -41,6 +41,9 @@
        to give two legs the same seed) can only be set from code (SetNextRandomSeed).
   What the event is: like a data event, the medium with the wake plus the jet fragments.  It
   has no background of its own to subtract.
+  XML support for reasons 1, 2, 3 and 5 is planned for future releases; until then the
+  js-contrib Python drivers do it.  Overview: docs/README_MUSIC4GPU.md, "Example: one two-stage
+  Au+Au event from XML".
 -->
 
  <jetscape>
