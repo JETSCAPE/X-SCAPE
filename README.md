@@ -57,6 +57,25 @@ the machine itself ([INSTALL.md](INSTALL.md), sections 3 to 7, or the
 
 ## What is new in 3.0
 
+> [!IMPORTANT]
+> **Some of the new functionality needs PyJetscape, the Python interface from
+> [js-contrib](https://github.com/jhputschke/js-contrib).** The new physics modules and settings
+> run from the XML with `runJetscape`, and the two-stage hydro works there in part: see the
+> example [`config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml`](config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml)
+> ([below](#two-stage-hydro-and-music4gpu-from-xml)). For now the Python interface is required for:
+>
+> - the hadrons of both legs of an event (jet leg and background, to subtract one from the other),
+> - several jets per background, with iSS on every jet leg,
+> - oversampling per leg, and correlated oversampling of the two legs with common seeds,
+> - explicit seeds per event and leg, to redo one event exactly,
+> - the HDF5 production writers (hydro pair, particlize and hadron files) and the hadronization
+>   of stored surfaces and partons later on CPUs (stage 2),
+> - modules written in Python and the live PyTorch FNO hydro.
+>
+> Running the first five from the XML in C++ is **work in progress and will be provided in future
+> releases**. PyJetscape comes compiled in the production container and the Mac wheel
+> ([Install](https://jhputschke.github.io/js-contrib/install/)).
+
 - **GPU hydro with MUSIC4GPU** (CUDA on NVIDIA, Metal on Apple Silicon), a drop-in replacement
   for CPU MUSIC, with its conservation fixes on by default and an opt-in active region:
   [docs/README_MUSIC4GPU.md](docs/README_MUSIC4GPU.md),
