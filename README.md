@@ -137,7 +137,9 @@ runs one 0–10 % Au+Au event with a jet from `runJetscape` alone: 3dMCGlauber a
 background hydro (MUSIC_1), Matter + LBT with the liquefier, the jet-leg hydro with the wake
 (MUSIC_2), iSS on the jet leg's surface and Colorless hadronization, written as ASCII. It shows
 the new per-instance MUSIC settings, MUSIC4GPU's late time step and iSS choosing the hydro it
-samples (`<hydro_id>`); with a CUDA build it takes about 20 s on a GB10.
+samples (`<hydro_id>`). With a CUDA build on a GB10 the single event takes 22 s, of which about
+7 s is LBT reading its tables at startup; `export LBT_TABLE_CACHE=/path/to/lbt_tables.cache`
+removes that penalty after the first job (15 s; about 13 s per further event).
 
 ```bash
 cd build

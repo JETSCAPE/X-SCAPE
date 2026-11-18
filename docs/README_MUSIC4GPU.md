@@ -108,8 +108,25 @@ examples/run_in_workdir.sh -d build -w RUN_DIR -u config/jetscape_user_AuAu_2sta
 
 The output, `AuAu_0_10_2stage_MUSIC2_hadrons.dat` (ASCII writer), holds the jet fragments
 (status 0) and then iSS's hadrons of the jet leg (status 11).
-On the GB10 (CUDA, `OMP_NUM_THREADS=10`, seed 1) the event takes 22 s and 9.5 GB peak memory, and
-the file holds 32 jet hadrons and 7065 bulk hadrons (one iSS sample).
+With seed 1 the file holds 32 jet hadrons and 7065 bulk hadrons (one iSS sample).
+
+**Timing.** The numbers below are for this **single event** and include the start of the job.
+On the GB10 (CUDA, `OMP_NUM_THREADS=10`) a one-event job takes 22 s, about 7 s of which is
+LBT reading its tables (~0.66 GB of text) at startup. The LBT table cache removes that penalty:
+`export LBT_TABLE_CACHE=/path/to/lbt_tables.cache` makes the first job write the parsed tables
+to that file and every later job map it read-only (shared between concurrent jobs on the same
+machine, same output). Use one cache file per version of the LBT tables.
+
+| Job (GB10, CUDA) | Wall time | Peak memory |
+|---|---|---|
+| 1 event, LBT tables parsed (no cache) | 22 s | 9.5 GB |
+| 1 event, first job with `LBT_TABLE_CACHE` (parses and writes the cache) | 22 s | 8.9 GB |
+| 1 event, `LBT_TABLE_CACHE` mapped | 15 s | 8.9 GB |
+| 3 events, `LBT_TABLE_CACHE` mapped | 41 s (about 13 s per further event) | 11.6 GB |
+
+So a job pays about 2 s at startup with the cache and about 9 s without it; the rest is per
+event (both hydro legs, energy loss, iSS) and varies with the event. All runs gave the same
+hadrons for the same event.
 
 ### What the file shows
 
@@ -131,8 +148,8 @@ Settings to try on top of it:
   to the `MUSIC_2` block and set `<freeze_out_surface>1</freeze_out_surface>` in the first block
   (the part of the surface before the checkpoint comes from MUSIC_1; keep `<skip_surface>1`).
   The jet leg then skips the steps before the liquefier's `tau_delay`. In the event above it
-  restarted at tau = 0.86 fm/c and wrote a bit-identical file, in 21 instead of 22 s; the
-  saving grows with the number of jet legs per background, which needs Python today (below).
+  restarted at tau = 0.86 fm/c and wrote a bit-identical file, in 21 instead of 22 s (single
+  event, tables parsed); the saving grows with the number of jet legs per background, which needs Python today (below).
   See [Two-stage hydro with `runJetscape`](#two-stage-hydro-with-runjetscape) above.
 - **Active region** (GPU only, opt-in): `<active_region_eps>1e-5</active_region_eps>` in the first
   block evolves only the blocks of cells near matter. Not bit-identical at the vacuum level.
