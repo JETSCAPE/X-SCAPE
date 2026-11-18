@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -34,54 +35,57 @@
 namespace Jetscape {
 
 class RootBulkWriter : public JetScapeModuleBase {
-
-public:
+ public:
   RootBulkWriter();
   ~RootBulkWriter();
 
-  virtual void Init(); // Get values from xml file
+  virtual void Init();  // Get values from xml file
   virtual void Show();
   virtual void Exec();
-  virtual void Clear() {};
+  virtual void Clear(){};
 
-  void init_tree(const EvolutionHistory& bInfo);
+  void init_tree(const EvolutionHistory &bInfo);
   /* void FIXME_checkdata(std::string msg, const EvolutionHistory& bInfo); */
 
-  TFile *f {nullptr};
-  TTree *t {nullptr};
+  TFile *f{nullptr};
+  TTree *t{nullptr};
 
-  std::unique_ptr<float[]> data; // array of floats for the data, using fixed number of tau-steps -- using fixed size array for reading efficiency
-  vector<float> v_data; // using a variable sized vector for variable number of tau-steps
+  std::unique_ptr<float[]>
+      data;  // array of floats for the data, using fixed number of tau-steps --
+             // using fixed size array for reading efficiency
+  vector<float>
+      v_data;  // using a variable sized vector for variable number of tau-steps
 
   string in_music_name;
 
-private:
+ private:
   // state variables
-  bool use_vec {false}; // use when maxTau <= 0
-  bool isinit {false};
+  bool use_vec{false};  // use when maxTau <= 0
+  bool isinit{false};
 
   // internal use
   // xml input:
-  float x_min{0}, dx{0}, y_min{0}, dy{0}, tau_min{0}, dtau{0}, eta_min{0}, deta{0};
+  float x_min{0}, dx{0}, y_min{0}, dy{0}, tau_min{0}, dtau{0}, eta_min{0},
+      deta{0};
 
-  string out_file_name {"_.root"};
+  string out_file_name{"_.root"};
 
   // derived:
   int nx{0}, ny{0}, neta{0}, ntau{0};
   int ntotal;
 
   // branch
-  float tau_freezeout {0};
-  int ntau_freezeout {0};
+  float tau_freezeout{0};
+  int ntau_freezeout{0};
 
-  float dtau_MUSIC {0};
+  float dtau_MUSIC{0};
 
-  const int nFeatures {4}; // rho, vx, vy, vz
+  const int nFeatures{4};  // rho, vx, vy, vz
 
   static RegisterJetScapeModule<RootBulkWriter> reg;
 };
 
-} // end namespace Jetscape
+}  // end namespace Jetscape
 
-#endif // ROOTBULKWRITER_H_
+#endif  // ROOTBULKWRITER_H_
 // #endif // USE_ROOT FIXME

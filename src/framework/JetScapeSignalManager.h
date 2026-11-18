@@ -229,8 +229,8 @@ class
   /// hydro pointer (which the jet signals keep using).
   void ConnectGetHydroHyperSurfaceSignal(shared_ptr<SoftParticlization> hSoft,
                                          shared_ptr<FluidDynamics> hydro);
-  void ConnectClearHydroHyperSurfaceSignal(
-      shared_ptr<SoftParticlization> hSoft, shared_ptr<FluidDynamics> hydro);
+  void ConnectClearHydroHyperSurfaceSignal(shared_ptr<SoftParticlization> hSoft,
+                                           shared_ptr<FluidDynamics> hydro);
 
   /// Disconnect signals (not fully implemented).
   void DisconnectSignal(){};

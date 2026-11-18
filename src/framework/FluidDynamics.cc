@@ -263,8 +263,7 @@ void FluidDynamics::FindSurfaceFromEvolution(
   }
   std::unique_ptr<SurfaceFinder> surface_finder_ptr(
       new SurfaceFinder(params.T_sw, bulk_info));
-  surface_finder_ptr->set_lattice_spacing(params.dtau, params.dx,
-                                          params.deta);
+  surface_finder_ptr->set_lattice_spacing(params.dtau, params.dx, params.deta);
   surface_finder_ptr->Find_full_hypersurface();
   surface_cells = surface_finder_ptr->get_surface_cells_vector();
   JSINFO << "number of surface cells: " << surface_cells.size();

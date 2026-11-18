@@ -125,14 +125,14 @@ void LiquefierBase::check_energy_momentum_conservation(
       std::abs(p_missing.z()) > hydro_source_abs_err) {
     // Energy-loss kinematics (on-shell E recomputed from p, soft partons cut)
     // miss by far more than 1e-10 GeV, so warn only above e_mom_rel_tol.
-    const double dmax = std::max(
-        {std::abs(p_missing.t()), std::abs(p_missing.x()),
-         std::abs(p_missing.y()), std::abs(p_missing.z())});
+    const double dmax =
+        std::max({std::abs(p_missing.t()), std::abs(p_missing.x()),
+                  std::abs(p_missing.y()), std::abs(p_missing.z())});
     if (dmax > e_mom_rel_tol * std::abs(p_init.t())) {
       JSWARN << "A vertex does not conserve energy momentum!";
       JSWARN << "E = " << p_missing.t() << " GeV, px = " << p_missing.x()
-             << " GeV, py = " << p_missing.y() << " GeV, pz = "
-             << p_missing.z() << " GeV (E_in = " << p_init.t() << " GeV).";
+             << " GeV, py = " << p_missing.y() << " GeV, pz = " << p_missing.z()
+             << " GeV (E_in = " << p_init.t() << " GeV).";
     }
     Parton parton_miss(0, 21, miss_stat, p_missing, x_final);
     pOut.push_back(parton_miss);
@@ -369,16 +369,16 @@ void LiquefierBase::get_source_on_grid(Jetscape::real tau,
     return;
 
   // Padding of the boxes: the cell coordinates reach the tests as floats.
-  const double span =
-      std::max({std::abs(x.front()), std::abs(x.back()), std::abs(y.front()),
-                std::abs(y.back()), 1.0});
+  const double span = std::max({std::abs(x.front()), std::abs(x.back()),
+                                std::abs(y.front()), std::abs(y.back()), 1.0});
   const double pad = 1e-5 * span;
   // [first, last] index of the coordinates within [lo, hi]
   auto index_range = [](const std::vector<double> &v, double lo, double hi,
                         int &i0, int &i1) {
     i0 = static_cast<int>(std::lower_bound(v.begin(), v.end(), lo) - v.begin());
-    i1 = static_cast<int>(std::upper_bound(v.begin(), v.end(), hi) - v.begin()) -
-         1;
+    i1 =
+        static_cast<int>(std::upper_bound(v.begin(), v.end(), hi) - v.begin()) -
+        1;
   };
 
   const auto &g = hydro_grid_;
@@ -414,8 +414,9 @@ void LiquefierBase::get_source_on_grid(Jetscape::real tau,
         const auto &drop_i = dropletlist[idx];
         const auto xd = drop_i.get_xmu();
         const double t0 = xd[0];
-        const double R2 = tau_d * tau_d + t0 * t0 -
-                          2.0 * tau_d * t0 * cosh(static_cast<double>(eta_r) - xd[3]);
+        const double R2 =
+            tau_d * tau_d + t0 * t0 -
+            2.0 * tau_d * t0 * cosh(static_cast<double>(eta_r) - xd[3]);
         // in_light_cone() evaluates this in float: allow for its rounding
         const double tol = 1e-4 * (tau_d * tau_d + t0 * t0 + 1.0);
         if (!(R2 >= -tol))
@@ -436,7 +437,8 @@ void LiquefierBase::get_source_on_grid(Jetscape::real tau,
             if (jmu_i[0] == 0.0 && jmu_i[1] == 0.0 && jmu_i[2] == 0.0 &&
                 jmu_i[3] == 0.0)
               continue;
-            Jetscape::real *a = &acc[4 * static_cast<std::size_t>(touch(ix, iy))];
+            Jetscape::real *a =
+                &acc[4 * static_cast<std::size_t>(touch(ix, iy))];
             if (norm == 1.0) {  // not normalized: as get_source()
               for (int i = 0; i < 4; i++)
                 a[i] += jmu_i[i];
@@ -467,7 +469,8 @@ void LiquefierBase::get_source_on_grid(Jetscape::real tau,
             const Jetscape::real y_r = static_cast<Jetscape::real>(y[iy]);
             if (!(std::abs(y_r - pd->y) < 0.5 * g.dy))
               continue;
-            Jetscape::real *a = &acc[4 * static_cast<std::size_t>(touch(ix, iy))];
+            Jetscape::real *a =
+                &acc[4 * static_cast<std::size_t>(touch(ix, iy))];
             a[0] += static_cast<Jetscape::real>(w * (p[0] * ch - p[3] * sh));
             a[1] += static_cast<Jetscape::real>(w * p[1]);
             a[2] += static_cast<Jetscape::real>(w * p[2]);
@@ -546,15 +549,21 @@ double LiquefierBase::sampled_flux(const Droplet &drop_i, double tau,
       if (!(R2 >= 0.0))
         continue;
       const double R = std::sqrt(R2);
-      const int ix0 = std::max(0, (int)std::floor((xd[1] - R - g.x_min) / g.dx) - 1);
-      const int ix1 = std::min(g.nx - 1, (int)std::ceil((xd[1] + R - g.x_min) / g.dx) + 1);
-      const int iy0 = std::max(0, (int)std::floor((xd[2] - R - g.y_min) / g.dy) - 1);
-      const int iy1 = std::min(g.ny - 1, (int)std::ceil((xd[2] + R - g.y_min) / g.dy) + 1);
+      const int ix0 =
+          std::max(0, (int)std::floor((xd[1] - R - g.x_min) / g.dx) - 1);
+      const int ix1 =
+          std::min(g.nx - 1, (int)std::ceil((xd[1] + R - g.x_min) / g.dx) + 1);
+      const int iy0 =
+          std::max(0, (int)std::floor((xd[2] - R - g.y_min) / g.dy) - 1);
+      const int iy1 =
+          std::min(g.ny - 1, (int)std::ceil((xd[2] + R - g.y_min) / g.dy) + 1);
       const double ch = cosh(eta_r), sh = sinh(eta_r);
       for (int ix = ix0; ix <= ix1; ix++) {
-        const Jetscape::real x = static_cast<Jetscape::real>(g.x_min + ix * g.dx);
+        const Jetscape::real x =
+            static_cast<Jetscape::real>(g.x_min + ix * g.dx);
         for (int iy = iy0; iy <= iy1; iy++) {
-          const Jetscape::real y = static_cast<Jetscape::real>(g.y_min + iy * g.dy);
+          const Jetscape::real y =
+              static_cast<Jetscape::real>(g.y_min + iy * g.dy);
           if (!in_light_cone(tq_r, x, y, eta_r, drop_i))
             continue;
           std::array<Jetscape::real, 4> j = {0.0, 0.0, 0.0, 0.0};
@@ -602,7 +611,8 @@ void LiquefierBase::normalize_active_droplets(double tau, double dtau) {
     const long ix = std::lround((xd[1] - g.x_min) / g.dx);
     const long iy = std::lround((xd[2] - g.y_min) / g.dy);
     const long ie = std::lround((eta_d - g.eta_min) / g.deta);
-    if (ix < 0 || ix >= g.nx || iy < 0 || iy >= g.ny || ie < 0 || ie >= g.neta) {
+    if (ix < 0 || ix >= g.nx || iy < 0 || iy >= g.ny || ie < 0 ||
+        ie >= g.neta) {
       n_lost_++;
       return;
     }

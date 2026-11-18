@@ -96,9 +96,9 @@ void InitialState::SampleABinaryCollisionPoint(double &t, double &x, double &y,
   }
 }
 
-void InitialState::SampleABinaryCollisionPointWith(std::mt19937 &rng,
-                                                   double &t, double &x,
-                                                   double &y, double &z) {
+void InitialState::SampleABinaryCollisionPointWith(std::mt19937 &rng, double &t,
+                                                   double &x, double &y,
+                                                   double &z) {
   if (num_of_binary_collisions_.size() == 0) {
     JSWARN << "num_of_binary_collisions is empty, setting the starting "
               "location to 0. Make sure to add e.g. trento before PythiaGun.";

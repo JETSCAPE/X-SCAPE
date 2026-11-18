@@ -121,8 +121,8 @@ file(GLOB readersources reader/*.cc)
 set(SOURCES ${SOURCES} ${readersources})
 
 if(USE_ROOT AND ROOT_FOUND)
-    set(SOURCES ${SOURCES} root/RootBulkWriter.cc)
-    set(SOURCES ${SOURCES} root/FastRootBulkWriter.cc)
+  set(SOURCES ${SOURCES} root/RootBulkWriter.cc)
+  set(SOURCES ${SOURCES} root/FastRootBulkWriter.cc)
 endif()
 
 if("${HEPMC_FOUND}")
@@ -135,12 +135,12 @@ endif()
 
 add_library(JetScape SHARED ${SOURCES})
 
-# music4gpu's Advance/Evolve classes gain extra members under MUSIC_USE_GPU
-# (see external_packages/music4gpu/src/advance.h), which USE_METAL / USE_CUDA
-# enable.  MusicWrapper.cc includes those headers, so it MUST see the same macro
-# as the music library — otherwise the class layouts diverge across translation
-# units (ODR violation) and e.g. Evolve::surfaceCellVec_ is read at the wrong
-# offset, yielding a garbage surface-cell count that crashes
+# music4gpu's Advance/Evolve classes gain extra members under MUSIC_USE_GPU (see
+# external_packages/music4gpu/src/advance.h), which USE_METAL / USE_CUDA enable.
+# MusicWrapper.cc includes those headers, so it MUST see the same macro as the
+# music library — otherwise the class layouts diverge across translation units
+# (ODR violation) and e.g. Evolve::surfaceCellVec_ is read at the wrong offset,
+# yielding a garbage surface-cell count that crashes
 # PassHydroSurfaceToFramework().
 if(USE_METAL)
   target_compile_definitions(JetScape PRIVATE USE_METAL)
@@ -199,9 +199,9 @@ if(USE_SMASH)
 endif()
 
 # -------------------------------------------------------------------------
-# Build-tree export — moved to the top-level CMakeLists.txt so it runs
-# after all optional add_subdirectory() calls have defined their targets.
-# The configure_file() for JetScapeConfig.cmake is also there.
+# Build-tree export — moved to the top-level CMakeLists.txt so it runs after all
+# optional add_subdirectory() calls have defined their targets. The
+# configure_file() for JetScapeConfig.cmake is also there.
 # -------------------------------------------------------------------------
 
 # -------------------------------------------------------------------------

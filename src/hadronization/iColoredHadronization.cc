@@ -117,7 +117,8 @@ void iColoredHadronization::InitTask() {
   else if (!dup.empty() && dup != "fail")
     throw std::runtime_error(
         "iColoredHadronization: <colour_duplicates> takes fail or relabel, "
-        "not '" + dup + "'");
+        "not '" +
+        dup + "'");
   if (relabel_duplicates_)
     JSINFO << "iColoredHadronization: duplicate colour tags are relabelled";
   // <colour_closure>: how the colour lines that end in the medium are closed
@@ -145,21 +146,22 @@ void iColoredHadronization::SetColourClosure(const std::string &mode) {
   else
     throw std::runtime_error(
         "iColoredHadronization: <colour_closure> takes reconnect, "
-        "reconnect_global, thermal, fake or none, not '" + mode + "'");
+        "reconnect_global, thermal, fake or none, not '" +
+        mode + "'");
 }
 
 std::string iColoredHadronization::GetColourClosure() const {
   switch (closure_) {
-  case Closure::Reconnect:
-    return "reconnect";
-  case Closure::ReconnectGlobal:
-    return "reconnect_global";
-  case Closure::Thermal:
-    return "thermal";
-  case Closure::Fake:
-    return "fake";
-  case Closure::None:
-    return "none";
+    case Closure::Reconnect:
+      return "reconnect";
+    case Closure::ReconnectGlobal:
+      return "reconnect_global";
+    case Closure::Thermal:
+      return "thermal";
+    case Closure::Fake:
+      return "fake";
+    case Closure::None:
+      return "none";
   }
   return "?";
 }
@@ -310,8 +312,8 @@ void iColoredHadronization::FinishTask() {
          << t.failed << " failed (thrown); " << t.events_open
          << " with open colour lines";
   JSINFO << "iColoredHadronization:   holes " << t.holes << " ("
-         << t.hole_energy << " GeV, not hadronized), open ends "
-         << t.open_ends << ", joined pairs " << t.reconnected
+         << t.hole_energy << " GeV, not hadronized), open ends " << t.open_ends
+         << ", joined pairs " << t.reconnected
          << " (across showers as a fallback " << t.reconnected_cross
          << "), medium partners " << t.partners << " (" << t.partner_energy
          << " GeV), soft end partons " << t.fakes << " (" << t.fake_energy
@@ -558,19 +560,19 @@ void iColoredHadronization::CloseColourLines(
     Event &event, std::vector<int> &shower_of,
     const std::vector<ShowerParton> &holes, Closure mode) {
   switch (mode) {
-  case Closure::None:
-    return;
-  case Closure::Fake:
-    InsertFakes(event, shower_of);
-    return;
-  case Closure::Reconnect:
-    audit_.reconnected += Reconnect(event, shower_of, true);
-    break;
-  case Closure::ReconnectGlobal:
-    audit_.reconnected += Reconnect(event, shower_of, false);
-    break;
-  case Closure::Thermal:
-    break;
+    case Closure::None:
+      return;
+    case Closure::Fake:
+      InsertFakes(event, shower_of);
+      return;
+    case Closure::Reconnect:
+      audit_.reconnected += Reconnect(event, shower_of, true);
+      break;
+    case Closure::ReconnectGlobal:
+      audit_.reconnected += Reconnect(event, shower_of, false);
+      break;
+    case Closure::Thermal:
+      break;
   }
   InsertPartners(event, shower_of, holes);
   // what is still open (lines broken without a hole of their own): across
@@ -629,7 +631,7 @@ int iColoredHadronization::RelabelDuplicateTags(Event &event) {
   int max_tag = 0;
   for (int i = 1; i < event.size(); ++i)
     max_tag = std::max(max_tag, std::max(event[i].col(), event[i].acol()));
-  std::map<int, int> seen_col, seen_acol;  // occurrences so far, per tag
+  std::map<int, int> seen_col, seen_acol;      // occurrences so far, per tag
   std::map<std::pair<int, int>, int> new_tag;  // (tag, k) -> new tag
   int relabelled = 0;
   for (int i = 1; i < event.size(); ++i) {

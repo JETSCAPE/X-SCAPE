@@ -96,28 +96,50 @@ void ShowXscapeBanner2() {
   // ── box: ║ + 62 chars + ║ = 64 wide ──────────────────────────────────────
   // XSCAPE block layout per row (total 50 cols, centred with 6-col padding):
   //   X(9) + S(9) + C(8) + A(8) + P(8) + E(8) = 50
-  INFO_NICE << "╔══════════════════════════════════════════════════════════════╗";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║      ██╗  ██╗  ██████╗  ██████╗ █████╗ ██████╗ ███████╗      ║";
-  INFO_NICE << "║      ╚██╗██╔╝ ██╔════╝ ██╔════╝██╔══██╗██╔══██╗██╔════╝      ║";
-  INFO_NICE << "║       ╚████╔╝ ╚█████╗  ██║     ███████║██████╔╝█████╗        ║";
-  INFO_NICE << "║       ██╔═██╗  ╚════██╗██║     ██╔══██║██╔═══╝ ██╔══╝        ║";
-  INFO_NICE << "║      ██╔╝  ██╗ ██████╔╝╚██████╗██║  ██║██║     ███████╗      ║";
-  INFO_NICE << "║      ╚═╝   ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝     ╚══════╝      ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║                    X-SCAPE  by  JETSCAPE                     ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║         X-Ion Collisions with a Statistically and            ║";
-  INFO_NICE << "║       Computationally Advanced Program Envelope              ║";
-  INFO_NICE << "║                     http://jetscape.org                      ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║  Please cite arXiv:1903.07706 if you use this package for    ║";
-  INFO_NICE << "║  scientific work.                                            ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║  JETSCAPE is provided without warranty under the terms of    ║";
-  INFO_NICE << "║  the GNU GPLv3. See COPYING file for details.                ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "╚══════════════════════════════════════════════════════════════╝";
+  INFO_NICE
+      << "╔══════════════════════════════════════════════════════════════╗";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║      ██╗  ██╗  ██████╗  ██████╗ █████╗ ██████╗ ███████╗      ║";
+  INFO_NICE
+      << "║      ╚██╗██╔╝ ██╔════╝ ██╔════╝██╔══██╗██╔══██╗██╔════╝      ║";
+  INFO_NICE
+      << "║       ╚████╔╝ ╚█████╗  ██║     ███████║██████╔╝█████╗        ║";
+  INFO_NICE
+      << "║       ██╔═██╗  ╚════██╗██║     ██╔══██║██╔═══╝ ██╔══╝        ║";
+  INFO_NICE
+      << "║      ██╔╝  ██╗ ██████╔╝╚██████╗██║  ██║██║     ███████╗      ║";
+  INFO_NICE
+      << "║      ╚═╝   ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝     ╚══════╝      ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║                    X-SCAPE  by  JETSCAPE                     ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║         X-Ion Collisions with a Statistically and            ║";
+  INFO_NICE
+      << "║       Computationally Advanced Program Envelope              ║";
+  INFO_NICE
+      << "║                     http://jetscape.org                      ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║  Please cite arXiv:1903.07706 if you use this package for    ║";
+  INFO_NICE
+      << "║  scientific work.                                            ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║  JETSCAPE is provided without warranty under the terms of    ║";
+  INFO_NICE
+      << "║  the GNU GPLv3. See COPYING file for details.                ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "╚══════════════════════════════════════════════════════════════╝";
   INFO_NICE << " XSCAPE version = " << XscapeVersion
             << " (includes JETSCAPE version = " << JetScapeVersion << ")";
   INFO_NICE;
@@ -132,11 +154,16 @@ void ShowXscapeBanner2() {
  */
 void ShowXscapeBannerModern() {
   // ── landscape art: \ / X with right-side jet mountain ────────────────────
-  INFO_NICE << "╔══════════════════════════════════════════════════════════════╗";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║                 \\     /                                      ║";
-  INFO_NICE << "║                  \\   /                                       ║";
-  INFO_NICE << "║                   \\ /             /" << (char)92 << "                         ║";
+  INFO_NICE
+      << "╔══════════════════════════════════════════════════════════════╗";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║                 \\     /                                      ║";
+  INFO_NICE
+      << "║                  \\   /                                       ║";
+  INFO_NICE << "║                   \\ /             /" << (char)92
+            << "                         ║";
   INFO_NICE << "║                    X           /" << (char)92 << "/ "
             << " " << (char)92 << "                        ║";
   INFO_NICE << "║                   / \\       /" << (char)92 << "/"
@@ -147,29 +174,51 @@ void ShowXscapeBannerModern() {
   INFO_NICE << "║               __/     \\___/"
             << "      %|%     " << (char)92 << "/" << (char)92
             << "__               ║";
-  INFO_NICE << "║                                                              ║";
+  INFO_NICE
+      << "║                                                              ║";
   // ── XSCAPE doom-font block logo (X=9, S=9, C=8, A=8, P=8, E=8 → 50 cols) ─
-  INFO_NICE << "║      ██╗  ██╗  ██████╗  ██████╗ █████╗ ██████╗ ███████╗      ║";
-  INFO_NICE << "║      ╚██╗██╔╝ ██╔════╝ ██╔════╝██╔══██╗██╔══██╗██╔════╝      ║";
-  INFO_NICE << "║       ╚████╔╝ ╚█████╗  ██║     ███████║██████╔╝█████╗        ║";
-  INFO_NICE << "║       ██╔═██╗  ╚════██╗██║     ██╔══██║██╔═══╝ ██╔══╝        ║";
-  INFO_NICE << "║      ██╔╝  ██╗ ██████╔╝╚██████╗██║  ██║██║     ███████╗      ║";
-  INFO_NICE << "║      ╚═╝   ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝     ╚══════╝      ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║                         by  JETSCAPE                         ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║           X-Ion Collisions with a Statistically              ║";
-  INFO_NICE << "║       and Computationally Advanced Program Envelope          ║";
-  INFO_NICE << "║                     http://jetscape.org                      ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║         Please cite arXiv:1903.07706 if you use this         ║";
-  INFO_NICE << "║                package for scientific work.                  ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "║        JETSCAPE is provided without warranty under the       ║";
-  INFO_NICE << "║          terms of the GNU GPLv3. It uses xxx code(s).        ║";
-  INFO_NICE << "║                 See COPYING file for details.                ║";
-  INFO_NICE << "║                                                              ║";
-  INFO_NICE << "╚══════════════════════════════════════════════════════════════╝";
+  INFO_NICE
+      << "║      ██╗  ██╗  ██████╗  ██████╗ █████╗ ██████╗ ███████╗      ║";
+  INFO_NICE
+      << "║      ╚██╗██╔╝ ██╔════╝ ██╔════╝██╔══██╗██╔══██╗██╔════╝      ║";
+  INFO_NICE
+      << "║       ╚████╔╝ ╚█████╗  ██║     ███████║██████╔╝█████╗        ║";
+  INFO_NICE
+      << "║       ██╔═██╗  ╚════██╗██║     ██╔══██║██╔═══╝ ██╔══╝        ║";
+  INFO_NICE
+      << "║      ██╔╝  ██╗ ██████╔╝╚██████╗██║  ██║██║     ███████╗      ║";
+  INFO_NICE
+      << "║      ╚═╝   ╚═╝ ╚═════╝  ╚═════╝╚═╝  ╚═╝╚═╝     ╚══════╝      ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║                         by  JETSCAPE                         ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║           X-Ion Collisions with a Statistically              ║";
+  INFO_NICE
+      << "║       and Computationally Advanced Program Envelope          ║";
+  INFO_NICE
+      << "║                     http://jetscape.org                      ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║         Please cite arXiv:1903.07706 if you use this         ║";
+  INFO_NICE
+      << "║                package for scientific work.                  ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "║        JETSCAPE is provided without warranty under the       ║";
+  INFO_NICE
+      << "║          terms of the GNU GPLv3. It uses xxx code(s).        ║";
+  INFO_NICE
+      << "║                 See COPYING file for details.                ║";
+  INFO_NICE
+      << "║                                                              ║";
+  INFO_NICE
+      << "╚══════════════════════════════════════════════════════════════╝";
   INFO_NICE << " XSCAPE version = " << XscapeVersion
             << " (includes JETSCAPE version = " << JetScapeVersion << ")";
   INFO_NICE;

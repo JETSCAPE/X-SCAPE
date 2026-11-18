@@ -149,7 +149,7 @@ class LiquefierBase {
   // several times it).  Each droplet is therefore scaled by 1/flux, flux =
   // the sampled sum of its kernel (sampled_flux()), before it deposits.
   HydroGrid hydro_grid_;
-  bool normalize_on_grid_ = true;  ///< <Liquefier><normalize_on_hydro_grid>
+  bool normalize_on_grid_ = true;     ///< <Liquefier><normalize_on_hydro_grid>
   std::vector<double> droplet_norm_;  ///< per droplet: 1/flux (1: not yet)
   std::vector<double> droplet_flux_;  ///< per droplet: flux (-1: not yet)
   /// A droplet whose kernel misses every cell centre (flux 0) is deposited
@@ -160,7 +160,7 @@ class LiquefierBase {
   };
   std::vector<PointDeposit> point_deposits_;
   int n_normalized_ = 0, n_point_ = 0, n_lost_ = 0;
-  double E_droplets_ = 0., E_sampled_ = 0.;   // normalized droplets only
+  double E_droplets_ = 0., E_sampled_ = 0.;  // normalized droplets only
   double flux_min_ = 1e300, flux_max_ = 0.;
   bool in_light_cone(Jetscape::real tau, Jetscape::real x, Jetscape::real y,
                      Jetscape::real eta, const Droplet &drop_i) const;

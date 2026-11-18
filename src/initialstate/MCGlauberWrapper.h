@@ -100,7 +100,9 @@ class MCGlauberWrapper : public Jetscape::InitialState {
   }
   //! <Subtract_hard_momentum>: 0 = 3dMCGlauber zeroes the momentum above
   //! before subtracting, so nothing is subtracted
-  int GetSubtractHardMomentum() const override { return subtract_hard_momentum_; }
+  int GetSubtractHardMomentum() const override {
+    return subtract_hard_momentum_;
+  }
 
  private:
   std::shared_ptr<MCGlb::EventGenerator> mc_gen_;

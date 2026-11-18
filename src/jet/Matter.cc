@@ -4407,9 +4407,8 @@ double Matter::fncAvrQhat(double zeta, double tau) {
     tabQhat = qhatTab2D[0][last] * (last + 1) / (indexTau + 1);
   }
 
-  double avrQhat =
-      tabQhat *
-      VirtualityQhatFunction(QhatParametrizationType, initEner, tscale);
+  double avrQhat = tabQhat * VirtualityQhatFunction(QhatParametrizationType,
+                                                    initEner, tscale);
   return (avrQhat);
 }
 
@@ -5413,7 +5412,8 @@ float Matter::ran0(long *idum)
   long &idum2 = ran2_->idum2;
   long &iy = ran2_->iy;
   long *iv = ran2_->iv;
-  static_assert(NTAB == sizeof(Ran2State::iv) / sizeof(long), "ran0 table size");
+  static_assert(NTAB == sizeof(Ran2State::iv) / sizeof(long),
+                "ran0 table size");
   float temp;
 
   if (*idum <= 0) {

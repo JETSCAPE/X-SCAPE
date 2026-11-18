@@ -266,8 +266,9 @@ void JetEnergyLossManager::SeparateExtraEngines(bool all_showers) {
       for (auto sub : it->GetTaskList()) {
         auto m = dynamic_pointer_cast<JetScapeModuleBase>(sub);
         if (m)
-          m->UseOwnStreams(scatter, static_cast<unsigned int>(
-                                        mix(mix(base ^ static_cast<uint64_t>(n)) ^ k)));
+          m->UseOwnStreams(scatter,
+                           static_cast<unsigned int>(
+                               mix(mix(base ^ static_cast<uint64_t>(n)) ^ k)));
         ++k;
       }
     }

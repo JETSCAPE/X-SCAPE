@@ -113,7 +113,7 @@ void CausalLiquefier::InitializeParameters() {
     const std::string v = JetScapeXML::Instance()->GetElementText(
         {"Liquefier", "CausalLiquefier", tag}, false);
     return v.find_first_not_of(" \t\n\r") == std::string::npos ? fallback
-                                                                : std::stod(v);
+                                                               : std::stod(v);
   };
   fluid_e_min_ = optional_double("fluid_e_min", fluid_e_min_);
   fluid_v_max_ = optional_double("fluid_v_max", fluid_v_max_);
@@ -179,8 +179,8 @@ void CausalLiquefier::smearing_kernel(
   deposit_window(tau, win_lo, win_hi);
   if (win_lo <= tau_drop + tau_delay && win_hi > tau_drop + tau_delay) {
     const double eta_k = eta - eta_kernel_shift;  // eta in the Bjorken frame
-    double t =
-        get_t(tau, eta_k);  // position in the fluid in the Cartesian coordinates
+    double t = get_t(
+        tau, eta_k);  // position in the fluid in the Cartesian coordinates
     double z = get_z(tau, eta_k);
     const double dt = t - x_drop[0];
     // x - x_drop[1] and y - x_drop[2] are Jetscape::real (float), and so are
@@ -201,9 +201,9 @@ void CausalLiquefier::smearing_kernel(
       for (int k = 0; k < 3; k++)
         dr[k] = d3[k] + (gg * vd - g * dt) * v[k];
     }
-    double delta_r =
-        v2 > 0.0 ? sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2])
-                 : sqrt(dxr * dxr + dyr * dyr + d3[2] * d3[2]);
+    double delta_r = v2 > 0.0
+                         ? sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2])
+                         : sqrt(dxr * dxr + dyr * dyr + d3[2] * d3[2]);
 
     // get solutions of the diffusion equation in the kernel's frame
     double jt = kernel_rho(delta_t, delta_r) / dtau;
@@ -234,12 +234,12 @@ void CausalLiquefier::smearing_kernel(
 
 std::string CausalLiquefier::get_frame() const {
   switch (frame_) {
-  case Frame::LAB:
-    return "lab";
-  case Frame::FLUID:
-    return "fluid";
-  default:
-    return "bjorken";
+    case Frame::LAB:
+      return "lab";
+    case Frame::FLUID:
+      return "fluid";
+    default:
+      return "bjorken";
   }
 }
 
@@ -267,8 +267,8 @@ bool CausalLiquefier::uses_fluid_velocity(const Droplet &drop_i) const {
 // four-velocity boosted longitudinally by -eta_drop, the speed capped at
 // fluid_v_max_.  Zero for lab and bjorken, and for fluid without a usable
 // cell (the Bjorken frame).
-std::array<double, 3>
-CausalLiquefier::kernel_frame_velocity(const Droplet &drop_i) const {
+std::array<double, 3> CausalLiquefier::kernel_frame_velocity(
+    const Droplet &drop_i) const {
   std::array<double, 3> v = {0.0, 0.0, 0.0};
   if (!uses_fluid_velocity(drop_i))
     return v;

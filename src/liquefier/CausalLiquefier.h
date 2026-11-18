@@ -29,7 +29,8 @@
 #include <algorithm>
 #include <string>
 
-// <CausalLiquefier><frame>: get_bjorken_frame()/set_bjorken_frame() (bindings test this)
+// <CausalLiquefier><frame>: get_bjorken_frame()/set_bjorken_frame() (bindings
+// test this)
 #define XSCAPE_CAUSAL_LIQUEFIER_FRAME 1
 // <frame>fluid</frame>: get_frame()/set_frame(), fluid_e_min, fluid_v_max
 #define XSCAPE_CAUSAL_LIQUEFIER_FLUID_FRAME 1
@@ -49,7 +50,8 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   double c_diff;
   double gamma_relax;
   //! The frame the causal diffusion is solved in (<CausalLiquefier><frame>):
-  //!  - BJORKEN (bjorken, the default): the Bjorken flow's at the droplet's eta_s;
+  //!  - BJORKEN (bjorken, the default): the Bjorken flow's at the droplet's
+  //!  eta_s;
   //!  - LAB (lab): the lab frame, as in the paper and X-SCAPE before 2026-11;
   //!  - FLUID (fluid): the rest frame of the background fluid where the droplet
   //!    was made (Droplet::get_vfluid()); a droplet without a usable fluid
@@ -58,8 +60,8 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   Frame frame_ = Frame::BJORKEN;
   double fluid_e_min_ = 0.1;   //!< [GeV/fm^3] below it: the Bjorken frame
   double fluid_v_max_ = 0.99;  //!< the fluid speed is capped at it
-  double dtau0_ = -1.;     // the initial hydro step (the XML's dtau)
-  double dtau_late_ = 0.;  // the step from tau_switch_ on (0: constant)
+  double dtau0_ = -1.;         // the initial hydro step (the XML's dtau)
+  double dtau_late_ = 0.;      // the step from tau_switch_ on (0: constant)
   double tau_switch_ = -1.;
 
   CausalLiquefier();
@@ -95,10 +97,10 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   // The hydro's step schedule (MUSIC late_delta_tau): dtau is the step in
   // effect (the 1/dtau of the source), dtau0_ the initial one, dtau_late_
   // the one from tau_switch_ on (0: constant).  A query at tau deposits the
-  // droplets with tau_d + tau_delay in [tau - step_before/2, tau + step_from/2),
-  // so the windows of consecutive queries tile the axis also across the
-  // switch, and both Runge-Kutta stages at the switch time see the same
-  // droplets.
+  // droplets with tau_d + tau_delay in [tau - step_before/2, tau +
+  // step_from/2), so the windows of consecutive queries tile the axis also
+  // across the switch, and both Runge-Kutta stages at the switch time see the
+  // same droplets.
   void set_hydro_step(double dtau_in) override { dtau = dtau_in; }
   void set_late_hydro_step(double dtau_late, double tau_switch) override {
     dtau_late_ = dtau_late;
@@ -137,7 +139,8 @@ class CausalLiquefier : public Jetscape::LiquefierBase {
   //! droplet: the background fluid's (fluid, its speed capped at
   //! fluid_v_max_), else 0 (lab, bjorken, fluid's fallback).
   std::array<double, 3> kernel_frame_velocity(const Droplet &drop_i) const;
-  //! whether drop_i's kernel uses the fluid's velocity (fluid frame, usable cell)
+  //! whether drop_i's kernel uses the fluid's velocity (fluid frame, usable
+  //! cell)
   bool uses_fluid_velocity(const Droplet &drop_i) const;
 
   // For debug

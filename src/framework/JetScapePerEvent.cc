@@ -41,8 +41,8 @@ void JetScapePerEvent::ExecInit() {
   JSINFO << BOLDRED << "Run JetScape (per event) ...";
   JSINFO << BOLDRED << "Number of Events = " << GetNumberOfEvents();
 
-  // Collect active writers and snapshot the original active flags, mirroring the
-  // pre-loop setup of JetScape::Exec().
+  // Collect active writers and snapshot the original active flags, mirroring
+  // the pre-loop setup of JetScape::Exec().
   for (auto it : GetTaskList()) {
     if (dynamic_pointer_cast<JetScapeWriter>(it)) {
       if (it->GetActive()) {
@@ -57,10 +57,12 @@ void JetScapePerEvent::ExecInit() {
   }
 
   // Shift the framework-global event counter to the configured starting event.
-  // Default is 0, leaving behavior unchanged. Only the public IncrementCurrentEvent()
-  // mutator is available, so advance up to the requested start.
+  // Default is 0, leaving behavior unchanged. Only the public
+  // IncrementCurrentEvent() mutator is available, so advance up to the
+  // requested start.
   if (start_event_ < 0) {
-    JSWARN << "Negative start event (" << start_event_ << ") requested; using 0.";
+    JSWARN << "Negative start event (" << start_event_
+           << ") requested; using 0.";
     start_event_ = 0;
   }
   if (GetCurrentEvent() > start_event_) {
@@ -104,8 +106,7 @@ void JetScapePerEvent::ExecPerEvent() {
     QueryHistory::Instance()->UpdateTaskMap();
 
     do {
-      VERBOSE(3) << BOLDRED
-                 << "Current Main Clock Time = "
+      VERBOSE(3) << BOLDRED << "Current Main Clock Time = "
                  << GetMainClock()->GetCurrentTime()
                  << " dT = " << GetMainClock()->GetDeltaT();
 
@@ -279,8 +280,8 @@ void JetScapePerEvent::ExecPerEvent() {
   }
 
   // NOTE: ClearTasks() and IncrementCurrentEvent() are intentionally NOT called
-  // here. The module results stay in memory so an external program can read them.
-  // Call ClearPerEvent() once that is done.
+  // here. The module results stay in memory so an external program can read
+  // them. Call ClearPerEvent() once that is done.
   VERBOSE(3) << "End of Event " << i;
 }
 
@@ -295,9 +296,10 @@ void JetScapePerEvent::ClearPerEvent() {
 
 //________________________________________________________________
 void JetScapePerEvent::Exec() {
-  JSWARN << "JetScapePerEvent::Exec() is disabled. Drive this class from an "
-            "external loop using ExecInit() / ExecPerEvent(i) / ClearPerEvent() "
-            "instead. EXIT!";
+  JSWARN
+      << "JetScapePerEvent::Exec() is disabled. Drive this class from an "
+         "external loop using ExecInit() / ExecPerEvent(i) / ClearPerEvent() "
+         "instead. EXIT!";
   exit(-1);
 }
 

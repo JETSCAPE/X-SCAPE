@@ -60,17 +60,23 @@ int main(int argc, char** argv) {
   // Default XML paths: honour a build-dir layout (../config/…) first, then
   // fall back to the installed data directory so a plain `runJetscape` works
   // from any CWD after `cmake --install`.
-  auto resolveXML = [](const char *rel_candidate, const char *filename) -> std::string {
+  auto resolveXML = [](const char* rel_candidate,
+                       const char* filename) -> std::string {
     // 1. build-dir relative path
-    if (std::ifstream(rel_candidate).good()) return rel_candidate;
+    if (std::ifstream(rel_candidate).good())
+      return rel_candidate;
     // 2. installed data dir
-    std::string installed = Jetscape::XSCAPEDataPath(std::string("config/") + filename);
-    if (std::ifstream(installed).good()) return installed;
+    std::string installed =
+        Jetscape::XSCAPEDataPath(std::string("config/") + filename);
+    if (std::ifstream(installed).good())
+      return installed;
     // 3. fall back to the relative path and let JetScape emit the error
     return rel_candidate;
   };
-  std::string mainXMLStr = resolveXML("../config/jetscape_main.xml", "jetscape_main.xml");
-  std::string userXMLStr = resolveXML("../config/jetscape_user.xml", "jetscape_user.xml");
+  std::string mainXMLStr =
+      resolveXML("../config/jetscape_main.xml", "jetscape_main.xml");
+  std::string userXMLStr =
+      resolveXML("../config/jetscape_user.xml", "jetscape_user.xml");
   const char* mainXMLName = mainXMLStr.c_str();
   const char* userXMLName = userXMLStr.c_str();
   if (argc == 2) {

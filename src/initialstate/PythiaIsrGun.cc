@@ -116,8 +116,8 @@ void PythiaIsrGun::ReadPtHatBins() {
       if (used != token.size())
         throw std::invalid_argument(token);
     } catch (const std::exception &) {
-      throw std::runtime_error("PythiaIsrGun: <pTHatBins> takes numbers, got '" +
-                               token + "'");
+      throw std::runtime_error(
+          "PythiaIsrGun: <pTHatBins> takes numbers, got '" + token + "'");
     }
   }
   if (edges.empty()) {
@@ -125,8 +125,9 @@ void PythiaIsrGun::ReadPtHatBins() {
     return;
   }
   if (edges.size() % 2)
-    throw std::runtime_error("PythiaIsrGun: <pTHatBins> needs pairs 'min "
-                             "max', got an odd number of values");
+    throw std::runtime_error(
+        "PythiaIsrGun: <pTHatBins> needs pairs 'min "
+        "max', got an odd number of values");
   for (size_t j = 0; j < edges.size(); j += 2) {
     if (!(edges[j] > 0 && edges[j + 1] > edges[j]))
       throw std::runtime_error(

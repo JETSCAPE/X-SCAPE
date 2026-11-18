@@ -1,8 +1,9 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
- * 
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
+ *
  * For the list of contributors see AUTHORS.
  *
  * Report issues at https://github.com/JETSCAPE/JETSCAPE/issues
@@ -33,7 +34,6 @@
 #include "JetScapeWriterHepMC.h"
 //#include "JetScapeWriterRootHepMC.h"
 #endif
-
 
 // User modules derived from jetscape framework clasess
 #include "TrentoInitial.h"
@@ -85,62 +85,65 @@ void Show();
 
 // -------------------------------------
 void RootBulkWriter::Init() {
+  JSINFO << "Initialzing RootBulkWriter ...";
+  out_file_name = GetXMLElementText({"RootBulkWriter", "out_file_name"});
 
-    JSINFO << "Initialzing RootBulkWriter ...";
-    out_file_name = GetXMLElementText({"RootBulkWriter","out_file_name"});
+  x_min = GetXMLElementDouble({"RootBulkWriter", "x_min"});
+  dx = GetXMLElementDouble({"RootBulkWriter", "dx"});
+  y_min = GetXMLElementDouble({"RootBulkWriter", "y_min"});
+  dy = GetXMLElementDouble({"RootBulkWriter", "dy"});
+  tau_min = GetXMLElementDouble({"RootBulkWriter", "tau_min"});
+  dtau = GetXMLElementDouble({"RootBulkWriter", "dtau"});
+  eta_min = GetXMLElementDouble({"RootBulkWriter", "eta_min"});
+  deta = GetXMLElementDouble({"RootBulkWriter", "deta"});
+  ntau = GetXMLElementInt({"RootBulkWriter", "ntau"});
 
-    x_min = GetXMLElementDouble({"RootBulkWriter","x_min"});
-    dx = GetXMLElementDouble  ({"RootBulkWriter","dx"});
-    y_min = GetXMLElementDouble({"RootBulkWriter","y_min"});
-    dy = GetXMLElementDouble  ({"RootBulkWriter","dy"});
-    tau_min = GetXMLElementDouble({"RootBulkWriter","tau_min"});
-    dtau = GetXMLElementDouble  ({"RootBulkWriter","dtau"});
-    eta_min = GetXMLElementDouble({"RootBulkWriter","eta_min"});
-    deta = GetXMLElementDouble  ({"RootBulkWriter","deta"});
-    ntau = GetXMLElementInt  ({"RootBulkWriter","ntau"});
+  bool ensure_MUSIC = (int)(GetXMLElementInt(
+      {"RootBulkWriter", "ensure_MusicWrapper_output"}, false));
+  if (!ensure_MUSIC) {
+    JSWARN << " WARNING: RootBulkWriter: ensure_MusicWrapper_output not set "
+              "to true. This will likely lead to erroneous output. Please "
+              "fix your XML file.";
+    JSINFO << " WARNING: RootBulkWriter: ensure_MusicWrapper_output not set "
+              "to true. This will likely lead to erroneous output. Please "
+              "fix your XML file.";
+  }
 
-    bool ensure_MUSIC = (int)(GetXMLElementInt(
-        {"RootBulkWriter", "ensure_MusicWrapper_output"}, false));
-    if (!ensure_MUSIC) {
-      JSWARN << " WARNING: RootBulkWriter: ensure_MusicWrapper_output not set "
-                "to true. This will likely lead to erroneous output. Please "
-                "fix your XML file.";
-      JSINFO << " WARNING: RootBulkWriter: ensure_MusicWrapper_output not set "
-                "to true. This will likely lead to erroneous output. Please "
-                "fix your XML file.";
-    }
-
-    JSINFO << " RootBulkWriter initialized with output file name: " << out_file_name;
-    JSINFO << " RootBulkWriter initialized with grid parameters: x_min = " << x_min << ", dx = " << dx << ", y_min = " << y_min << ", dy = " << dy << 
-              ", tau_min = " << tau_min << ", dtau = " << dtau << ", eta_min = " << eta_min << ", deta = " << deta << ", ntau = " << ntau;
+  JSINFO << " RootBulkWriter initialized with output file name: "
+         << out_file_name;
+  JSINFO << " RootBulkWriter initialized with grid parameters: x_min = "
+         << x_min << ", dx = " << dx << ", y_min = " << y_min << ", dy = " << dy
+         << ", tau_min = " << tau_min << ", dtau = " << dtau
+         << ", eta_min = " << eta_min << ", deta = " << deta
+         << ", ntau = " << ntau;
 }
 
-RootBulkWriter::RootBulkWriter() 
-  // The information to init (the size of music, etc...) isn't present until
-  // after the first Exec() call to MUSIC, so init is done in first Exec() instead.
+RootBulkWriter::RootBulkWriter()
+// The information to init (the size of music, etc...) isn't present until
+// after the first Exec() call to MUSIC, so init is done in first Exec()
+// instead.
 {
-    //JSINFO << " Adding RootBulkWriter ";
-    SetId("RootBulkWriter");
-} 
+  // JSINFO << " Adding RootBulkWriter ";
+  SetId("RootBulkWriter");
+}
 
-void RootBulkWriter::Show()
-{
-  INFO_NICE<<"------------------------------------------";
-  INFO_NICE<<"| Bulk ROOT Writer JetScape Framework ... |";
-  INFO_NICE<<"------------------------------------------";
+void RootBulkWriter::Show() {
+  INFO_NICE << "------------------------------------------";
+  INFO_NICE << "| Bulk ROOT Writer JetScape Framework ... |";
+  INFO_NICE << "------------------------------------------";
   INFO_NICE;
 }
 
 void RootBulkWriter::init_tree(const EvolutionHistory& bInfo) {
+  isinit = true;
 
-  isinit=true;
-
-  f=new TFile(out_file_name.c_str(),"RECREATE");
-  t=new TTree("t","Tree");
-  // Flush branch buffers to disk after every Fill() so each event is its own basket.
-  // Without this ROOT accumulates all events in one basket and uproot must load the
-  // entire basket (= all events) even when only a slice is requested. 
-  // Explore 1-10 for the auto flush parameter to find optimal performance for different use cases.
+  f = new TFile(out_file_name.c_str(), "RECREATE");
+  t = new TTree("t", "Tree");
+  // Flush branch buffers to disk after every Fill() so each event is its own
+  // basket. Without this ROOT accumulates all events in one basket and uproot
+  // must load the entire basket (= all events) even when only a slice is
+  // requested. Explore 1-10 for the auto flush parameter to find optimal
+  // performance for different use cases.
   t->SetAutoFlush(1);
 
   // save MUSIC parameters to the ROOT output file
@@ -154,87 +157,104 @@ void RootBulkWriter::init_tree(const EvolutionHistory& bInfo) {
 
   int neta_MUSIC = bInfo.neta;
   float deta_MUSIC = bInfo.deta;
-  float eta_min_MUSIC = bInfo.eta_min;;
+  float eta_min_MUSIC = bInfo.eta_min;
+  ;
 
   /* int ntau_MUSIC = bInfo.ntau; */
   dtau_MUSIC = bInfo.dtau;
-  float tau_min_MUSIC = bInfo.tau_min;;
+  float tau_min_MUSIC = bInfo.tau_min;
+  ;
 
   // use parameters from xml
-  if (!x_min) x_min = X_min_MUSIC;
-  if (!dx) dx = dX_MUSIC;
-  if (!y_min) y_min = Y_min_MUSIC;
-  if (!dy) dy = dY_MUSIC;
-  if (!tau_min) tau_min = tau_min_MUSIC;
-  if (!dtau) dtau = dtau_MUSIC;
+  if (!x_min)
+    x_min = X_min_MUSIC;
+  if (!dx)
+    dx = dX_MUSIC;
+  if (!y_min)
+    y_min = Y_min_MUSIC;
+  if (!dy)
+    dy = dY_MUSIC;
+  if (!tau_min)
+    tau_min = tau_min_MUSIC;
+  if (!dtau)
+    dtau = dtau_MUSIC;
   /* if (!ntau) ntau = ntau_MUSIC; */
-  if (!eta_min) eta_min = eta_min_MUSIC;
-  if (!deta) deta = deta_MUSIC;\
+  if (!eta_min)
+    eta_min = eta_min_MUSIC;
+  if (!deta)
+    deta = deta_MUSIC;
 
   // assign to member variables
-  nx = 2*int(fabs(x_min)/dx)+1;
-  ny = 2*int(fabs(y_min)/dy)+1;
-  neta = 2*int(fabs(eta_min)/deta)+1;
+  nx = 2 * int(fabs(x_min) / dx) + 1;
+  ny = 2 * int(fabs(y_min) / dy) + 1;
+  neta = 2 * int(fabs(eta_min) / deta) + 1;
 
-  //JP: Do not understand the need for the the +1 !??? And also the ntau !???? Follow up!!!
-  //nx = 2*int(fabs(x_min)/dx);
-  //ny = 2*int(fabs(y_min)/dy);
-  //neta = 2*int(fabs(eta_min)/deta);
+  // JP: Do not understand the need for the the +1 !??? And also the ntau !????
+  // Follow up!!! nx = 2*int(fabs(x_min)/dx); ny = 2*int(fabs(y_min)/dy); neta =
+  // 2*int(fabs(eta_min)/deta);
 
   use_vec = (ntau <= 0);
   if (use_vec) {
     JSINFO << " RootBulkWriter writing variable sized vector for tau steps ";
     t->Branch("user_res", &v_data);
   } else {
-    JSINFO << " RootBulkWriter writing fixed sized array for " << ntau << " tau steps out to " << (tau_min+ntau*dtau) << " fm/c";
-    ntotal = nx*ny*neta*ntau*nFeatures;
-    data = std::make_unique<float[]>(ntotal); //new float[ntotal];
+    JSINFO << " RootBulkWriter writing fixed sized array for " << ntau
+           << " tau steps out to " << (tau_min + ntau * dtau) << " fm/c";
+    ntotal = nx * ny * neta * ntau * nFeatures;
+    data = std::make_unique<float[]>(ntotal);  // new float[ntotal];
     t->Branch("user_res", data.get(), Form("user_res[%d]/F", ntotal));
   }
 
-  JSINFO << " RootBulkWriter initialized with grid parameters: x_min = " << x_min << ", dx = " << dx << ", y_min = " << y_min << ", dy = " << dy << 
-    ", tau_min = " << tau_min << ", dtau = " << dtau << ", eta_min = " << eta_min << ", deta = " << deta << ", ntau = " << ntau;
-  JSINFO<<" neta = " << neta << " eta_min = " << eta_min << " deta = " << deta;
-  JSINFO << " MUSIC grid parameters: x_min = " << X_min_MUSIC << ", dx = " << dX_MUSIC << ", y_min = " << Y_min_MUSIC << ", dy = " << dY_MUSIC << 
-    ", tau_min = " << tau_min_MUSIC << ", dtau = " << dtau_MUSIC << ", eta_min = " << eta_min_MUSIC << ", deta = " << deta_MUSIC << ", ntau = " << bInfo.ntau;
+  JSINFO << " RootBulkWriter initialized with grid parameters: x_min = "
+         << x_min << ", dx = " << dx << ", y_min = " << y_min << ", dy = " << dy
+         << ", tau_min = " << tau_min << ", dtau = " << dtau
+         << ", eta_min = " << eta_min << ", deta = " << deta
+         << ", ntau = " << ntau;
+  JSINFO << " neta = " << neta << " eta_min = " << eta_min
+         << " deta = " << deta;
+  JSINFO << " MUSIC grid parameters: x_min = " << X_min_MUSIC
+         << ", dx = " << dX_MUSIC << ", y_min = " << Y_min_MUSIC
+         << ", dy = " << dY_MUSIC << ", tau_min = " << tau_min_MUSIC
+         << ", dtau = " << dtau_MUSIC << ", eta_min = " << eta_min_MUSIC
+         << ", deta = " << deta_MUSIC << ", ntau = " << bInfo.ntau;
 
   t->Branch("tau_freezeout", &tau_freezeout, "tau_freezeout/F");
   t->Branch("ntau_freezeout", &ntau_freezeout, "ntau_freezeout/I");
 
-  TParameter<int> p_use_vec ("use_vec", (bool)(use_vec));
+  TParameter<int> p_use_vec("use_vec", (bool)(use_vec));
   p_use_vec.Write();
 
   // write the results as parameters to the output tree
-  for (auto param : vector<std::tuple<bool,string,float>>{
-    // the bool is for if it is an integer or not
-    {true, "nFeatures", nFeatures},
-    {true, "nx", nx},
-    {false, "x_min", x_min},
-    {false, "dx", dx},
-    {true, "ny", ny},
-    {false, "y_min", y_min},
-    {false, "dy", dy},
-    {true, "neta", neta},
-    {false, "eta_min", eta_min},
-    {false, "deta", deta},
-    {true, "ntau", ntau},
-    {false, "tau_min", tau_min},
-    {false, "dtau", dtau},
-    {true, "nX_MUSIC", nX_MUSIC},
-    {false, "dX_MUSIC", dX_MUSIC},
-    {false, "X_min_MUSIC", X_min_MUSIC},
-    {true, "nY_MUSIC", nY_MUSIC},
-    {false, "dY_MUSIC", dY_MUSIC},
-    {false, "Y_min_MUSIC", Y_min_MUSIC},
-    {true, "neta_MUSIC", neta_MUSIC},
-    {false, "deta_MUSIC", deta_MUSIC},
-    {false, "eta_min_MUSIC", eta_min_MUSIC},
-    /* {true, "ntau_MUSIC", ntau_MUSIC}, */
-    {false, "dtau_MUSIC", dtau_MUSIC},
-    {false, "tau_min_MUSIC", tau_min_MUSIC}}) 
-  {
+  for (auto param : vector<std::tuple<bool, string, float>>{
+           // the bool is for if it is an integer or not
+           {true, "nFeatures", nFeatures},
+           {true, "nx", nx},
+           {false, "x_min", x_min},
+           {false, "dx", dx},
+           {true, "ny", ny},
+           {false, "y_min", y_min},
+           {false, "dy", dy},
+           {true, "neta", neta},
+           {false, "eta_min", eta_min},
+           {false, "deta", deta},
+           {true, "ntau", ntau},
+           {false, "tau_min", tau_min},
+           {false, "dtau", dtau},
+           {true, "nX_MUSIC", nX_MUSIC},
+           {false, "dX_MUSIC", dX_MUSIC},
+           {false, "X_min_MUSIC", X_min_MUSIC},
+           {true, "nY_MUSIC", nY_MUSIC},
+           {false, "dY_MUSIC", dY_MUSIC},
+           {false, "Y_min_MUSIC", Y_min_MUSIC},
+           {true, "neta_MUSIC", neta_MUSIC},
+           {false, "deta_MUSIC", deta_MUSIC},
+           {false, "eta_min_MUSIC", eta_min_MUSIC},
+           /* {true, "ntau_MUSIC", ntau_MUSIC}, */
+           {false, "dtau_MUSIC", dtau_MUSIC},
+           {false, "tau_min_MUSIC", tau_min_MUSIC}}) {
     if (std::get<0>(param)) {
-      TParameter<int> p_temp(std::get<1>(param).c_str(), (int)(std::get<2>(param)));
+      TParameter<int> p_temp(std::get<1>(param).c_str(),
+                             (int)(std::get<2>(param)));
       p_temp.Write();
     } else {
       TParameter<float> p_temp(std::get<1>(param).c_str(), std::get<2>(param));
@@ -253,8 +273,9 @@ void RootBulkWriter::Exec() {
   }
 
   // Bind to const reference: get_bulk_info() returns `const EvolutionHistory&`,
-  // so `auto` (without &) would deep-copy the entire history (all cells) each event.
-  const auto &bInfo = hydro.lock()->get_bulk_info();
+  // so `auto` (without &) would deep-copy the entire history (all cells) each
+  // event.
+  const auto& bInfo = hydro.lock()->get_bulk_info();
   if (!isinit) {
     init_tree(bInfo);
   }
@@ -264,22 +285,28 @@ void RootBulkWriter::Exec() {
   float _tau_min = bInfo.tau_min;
   float _tau_max = bInfo.TauMax();
 
-  //REMARK JP: Why are the actually different form the prequilibrium values !??? Follow up!
-  //Because with strings tau0 = tau_min - string dtau (0.02) but first bin is nonsensical !!!
-  //More puzzling when saving 2 or more events, first lower edensity for taubin=0 ... see dave tau0 = 0.58, so + 1 dtau!???
+  // REMARK JP: Why are the actually different form the prequilibrium values
+  // !??? Follow up! Because with strings tau0 = tau_min - string dtau (0.02)
+  // but first bin is nonsensical !!! More puzzling when saving 2 or more
+  // events, first lower edensity for taubin=0 ... see dave tau0 = 0.58, so + 1
+  // dtau!???
 
-  JSINFO << " tau_min user( " << tau_min << " ) vs MUSIC ( " << _tau_min 
-          << " )  tau_max MUSIC ( " << _tau_max << " ) "; 
+  JSINFO << " tau_min user( " << tau_min << " ) vs MUSIC ( " << _tau_min
+         << " )  tau_max MUSIC ( " << _tau_max << " ) ";
 
-  //REMAARK JP: Same issues as with init tree, #bins are not conistent ... not too big of a deal here since one 
-  // can clean data for training, but still should be fixed for consistency and to avoid confusion ... Follow up!
+  // REMAARK JP: Same issues as with init tree, #bins are not conistent ... not
+  // too big of a deal here since one
+  //  can clean data for training, but still should be fixed for consistency and
+  //  to avoid confusion ... Follow up!
 
-  // NOTE: FIXME, below should use _tau_min instead of tau_min, this is why I am getting the empty steps past freezeout
+  // NOTE: FIXME, below should use _tau_min instead of tau_min, this is why I am
+  // getting the empty steps past freezeout
   tau_freezeout = _tau_min + bInfo.ntau * dtau_MUSIC;
-  ntau_freezeout = int((tau_freezeout - tau_min) / dtau) + 1; // this ends up being about 2 units too large (why?!?)
-  
-  // in practice, I am getting events with no energy distribution 
-  if (use_vec) { // fill in vector of tau times
+  ntau_freezeout = int((tau_freezeout - tau_min) / dtau) +
+                   1;  // this ends up being about 2 units too large (why?!?)
+
+  // in practice, I am getting events with no energy distribution
+  if (use_vec) {  // fill in vector of tau times
     v_data.clear();
     v_data.reserve(nx * ny * neta * nFeatures * ntau_freezeout);
     for (int itau = 0; itau < ntau_freezeout; itau++) {
@@ -295,26 +322,29 @@ void RootBulkWriter::Exec() {
             double eta_In = eta_min + ieta * deta;
             auto mCell = bInfo.get(tau_In, x_In, y_In, eta_In);
             /* if (x_In==0.0 && y_In==0.0 && eta_In==0.0) { */
-              /* std::cout << " FIXME at center: e= " << mCell.energy_density << " -> "; */
-                        /* << "  vx= " << mCell.vx */
-                        /* << "  vy= " << mCell.vy */
-                        /* << "  vz= " << mCell.vz << std::endl; */
+            /* std::cout << " FIXME at center: e= " << mCell.energy_density << "
+             * -> "; */
+            /* << "  vx= " << mCell.vx */
+            /* << "  vy= " << mCell.vy */
+            /* << "  vz= " << mCell.vz << std::endl; */
             /* } */
             v_data.push_back((float)(mCell.energy_density));
             /* if (eta_In==0) FIXME_energy_sum_eta0 += mCell.energy_density; */
             /* FIXME_energy_sum += mCell.energy_density; */
             v_data.push_back((float)(mCell.vx));
             v_data.push_back((float)(mCell.vy));
-            v_data.push_back((float)(mCell.vz));//(mCell.vz));
-          } // loop ieta
-        } // loop iy
-      } // loop ix
-      /* std::cout << " FIXME energy sum at tau " << tau_In << " = " << FIXME_energy_sum << "  and only at eta==0: " << FIXME_energy_sum_eta0 << std::endl; */
-    } // loop itau
+            v_data.push_back((float)(mCell.vz));  //(mCell.vz));
+          }                                       // loop ieta
+        }                                         // loop iy
+      }                                           // loop ix
+      /* std::cout << " FIXME energy sum at tau " << tau_In << " = " <<
+       * FIXME_energy_sum << "  and only at eta==0: " << FIXME_energy_sum_eta0
+       * << std::endl; */
+    }  // loop itau
     // done with vector fill
     /* std::cout << " FIXME check: " << v_data.size() << " vs expected " */
-              /* << nx * ny * neta * nFeatures * ntau_freezeout << std::endl; */
-  } else { // use fixed-size for number of tau times
+    /* << nx * ny * neta * nFeatures * ntau_freezeout << std::endl; */
+  } else {  // use fixed-size for number of tau times
     int _ntau = std::min(ntau_freezeout, ntau);
     size_t index = 0;
 
@@ -331,17 +361,18 @@ void RootBulkWriter::Exec() {
             data[index++] = (float)(mCell.vx);
             data[index++] = (float)(mCell.vy);
             data[index++] = (float)(mCell.vz);
-          } // loop ieta
-        } // loop iy
-      } // loop ix
-        VERBOSE(3) << " RootBulkWriter writing step " << k << " of " << ntau
-                 << " rho_sum: " << " tau: " << tau_In;
-    } // loop itau
+          }  // loop ieta
+        }    // loop iy
+      }      // loop ix
+      VERBOSE(3) << " RootBulkWriter writing step " << k << " of " << ntau
+                 << " rho_sum: "
+                 << " tau: " << tau_In;
+    }  // loop itau
     // pad with zeros for time past freezeout, if needed
     for (int i = index; i < ntotal; i++) {
       data[index++] = 0.;
     }
-  } // end fixed arrays
+  }  // end fixed arrays
   t->Fill();
 }
 

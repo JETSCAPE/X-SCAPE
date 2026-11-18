@@ -33,8 +33,8 @@
 //! Set when PythiaGun understands <Hard><PythiaGun><pTHatBins> (several pTHat
 //! windows, one Pythia instance each), so code built against it can check.
 #define PYTHIAGUN_HAS_PTHAT_BINS 1
-//! Set when PythiaGun understands <partonYMax> / <partonYMode> (a rapidity cut on
-//! the partons it hands to the framework).
+//! Set when PythiaGun understands <partonYMax> / <partonYMode> (a rapidity cut
+//! on the partons it hands to the framework).
 #define PYTHIAGUN_HAS_PARTON_Y_CUT 1
 //! Set when PythiaGun hands over final-state leptons next to the partons and
 //! understands <minPartons> and <trigger>Z (with <triggerYMax>, <leptonPtMin>,
@@ -133,7 +133,7 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   //! per window: events tested / passing <partonYMax> and the trigger
   std::vector<long> yTried_, yKept_;
 
-  int minPartons_ = 2;  //!< quarks, gluons, photons an event needs
+  int minPartons_ = 2;            //!< quarks, gluons, photons an event needs
   std::string trigger_ = "none";  //!< none | Z
   //! the Z acceptance (0: no cut)
   double triggerYMax_ = 0., leptonPtMin_ = 0., leptonEtaMax_ = 0.;
@@ -143,12 +143,12 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
  public:
   //! one hard scattering of the current event (0: the trigger)
   struct ScatterRecord {
-    int scatter;     //!< 0 the trigger, 1, 2, ... the extras
-    double pthat;    //!< Pythia's pTHat
-    int code;        //!< Pythia's process code
-    double x, y;     //!< the vertex [fm]
-    int n_partons;   //!< partons (and leptons) handed over
-    double e, pt;    //!< their summed energy and scalar pT [GeV]
+    int scatter;    //!< 0 the trigger, 1, 2, ... the extras
+    double pthat;   //!< Pythia's pTHat
+    int code;       //!< Pythia's process code
+    double x, y;    //!< the vertex [fm]
+    int n_partons;  //!< partons (and leptons) handed over
+    double e, pt;   //!< their summed energy and scalar pT [GeV]
   };
 
  private:
@@ -158,7 +158,7 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   double extraPtHatMin_ = 15.;
   double extraSigmaNN_ = 0.;  //!< [mb]
   long extraWarmup_ = 20000;
-  int extraFixedN_ = -1;      //!< < 0: Poisson
+  int extraFixedN_ = -1;  //!< < 0: Poisson
   unsigned int extraPythiaSeed_ = 0, extraRngSeed_ = 0;
   double extraSigma_ = 0., extraSigmaErr_ = 0.;  //!< from the warm-up [mb]
   std::unique_ptr<Pythia8::Pythia> extraHardPythia_;
@@ -166,7 +166,7 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   // the current event
   int nExtra_ = 0;
   double extraMu_ = 0.;
-  std::vector<int> partonScatter_;      //!< per hard parton
+  std::vector<int> partonScatter_;  //!< per hard parton
   std::vector<ScatterRecord> scatters_;
 
   void ReadExtraHard(unsigned int seed);
@@ -175,9 +175,8 @@ class PythiaGun : public HardProcess, public Pythia8::Pythia {
   //! softMomentumCutoff, leptons, or the final partons with FSR_on)
   void SelectPartons(Pythia8::Pythia &py, std::vector<Pythia8::Particle> &out);
   //! hands ``sorted`` over at (x, y) as scattering ``scatter`` and records it
-  void AddScatterPartons(const std::vector<Pythia8::Particle> &sorted,
-                         double x, double y, int scatter, double pthat,
-                         int code);
+  void AddScatterPartons(const std::vector<Pythia8::Particle> &sorted, double x,
+                         double y, int scatter, double pthat, int code);
   void AddExtraScatterings();
 
   void ReadPtHatBins();

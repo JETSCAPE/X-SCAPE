@@ -291,11 +291,14 @@ struct Case {
 // tau_d, x, y, eta_d and E, px, py, pz of three production droplets
 const Case kCases[] = {
     {{1.05349f, 1.06941f, -3.74047f, -2.23919f},
-     {12.7132f, 2.63322f, -0.447677f, -12.3924f}, 6.1897},  // large |eta_s|
+     {12.7132f, 2.63322f, -0.447677f, -12.3924f},
+     6.1897},  // large |eta_s|
     {{0.133141f, 0.0040877f, -3.68418f, -0.498067f},
-     {1.68015f, 0.582329f, -1.41034f, -0.473678f}, 0.9775},  // resolved
+     {1.68015f, 0.582329f, -1.41034f, -0.473678f},
+     0.9775},  // resolved
     {{8.4334f, 4.29754f, 4.26602f, 0.530885f},
-     {3.41514f, 2.47391f, 1.43562f, 1.81253f}, 0.012520},  // late tau
+     {3.41514f, 2.47391f, 1.43562f, 1.81253f},
+     0.012520},  // late tau
 };
 
 }  // namespace
@@ -313,8 +316,10 @@ TEST(CausalLiquifierTest, TEST_NORMALIZED_ON_HYDRO_GRID) {
       const auto P = deposited(lqf, drop, g);
       const double f = on ? 1.0 : c.raw_flux;
       for (int i = 0; i < 4; i++) {
-        EXPECT_NEAR(f * c.p[i], P[i], 2e-3 * std::abs(c.p[0]) * std::max(f, 1.0))
-            << "component " << i << ", normalize " << on << ", eta_d " << c.x[3];
+        EXPECT_NEAR(f * c.p[i], P[i],
+                    2e-3 * std::abs(c.p[0]) * std::max(f, 1.0))
+            << "component " << i << ", normalize " << on << ", eta_d "
+            << c.x[3];
       }
       if (on) {
         EXPECT_NEAR(c.raw_flux, lqf.get_droplet_flux(0), 1e-3 * c.raw_flux);
@@ -372,13 +377,15 @@ TEST(CausalLiquifierTest, TEST_NORMALIZED_POINT_AND_LOST) {
 // there, 0/0 before) deposits normally and, normalized, exactly.
 TEST(CausalLiquifierTest, TEST_NORMALIZED_AT_THE_VERTEX) {
   const HydroGrid g = music_grid();
-  const Case c = {{0.0f, 0.0268f, 1.2035f, 0.0f}, {3.2287f, -2.3416f, 0.4344f, 1.7589f}, 0.};
+  const Case c = {{0.0f, 0.0268f, 1.2035f, 0.0f},
+                  {3.2287f, -2.3416f, 0.4344f, 1.7589f},
+                  0.};
   CausalLiquefier lqf(0.02, 0.3, 0.3, 0.2);
   set_production_parameters(lqf);
   const Droplet drop(c.x, c.p);
   lqf.add_a_droplet(drop);
   const auto P = deposited(lqf, drop, g);
-  EXPECT_GT(lqf.get_droplet_flux(0), 0.5);   // the kernel itself deposits it
+  EXPECT_GT(lqf.get_droplet_flux(0), 0.5);  // the kernel itself deposits it
   for (int i = 0; i < 4; i++)
     EXPECT_NEAR(c.p[i], P[i], 2e-3 * c.p[0]) << "component " << i;
 }

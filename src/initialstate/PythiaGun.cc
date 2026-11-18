@@ -60,9 +60,10 @@ void PythiaGun::InitTask() {
   const int nBins = GetNPtHatBins();
 
   // Window 0 keeps the seed as it is (a single window is unchanged).  The other
-  // windows need their own streams: Pythia seeds from Random:seed only, so equal
-  // seeds would repeat window 0's random numbers.  Pythia's seeds run from 1 to
-  // 900,000,000; seed 0 (Pythia: from the clock) gives the others fresh ones.
+  // windows need their own streams: Pythia seeds from Random:seed only, so
+  // equal seeds would repeat window 0's random numbers.  Pythia's seeds run
+  // from 1 to 900,000,000; seed 0 (Pythia: from the clock) gives the others
+  // fresh ones.
   seedBin_.assign(nBins, seed);
   std::random_device entropy;
   for (int k = 1; k < nBins; ++k) {
@@ -133,8 +134,9 @@ void PythiaGun::ReadPtHatBins() {
     return;
   }
   if (edges.size() % 2)
-    throw std::runtime_error("PythiaGun: <pTHatBins> needs pairs 'min max', "
-                             "got an odd number of values");
+    throw std::runtime_error(
+        "PythiaGun: <pTHatBins> needs pairs 'min max', "
+        "got an odd number of values");
   for (size_t j = 0; j < edges.size(); j += 2) {
     if (!(edges[j] >= 0 && edges[j + 1] > edges[j]))
       throw std::runtime_error(
@@ -144,7 +146,8 @@ void PythiaGun::ReadPtHatBins() {
       if (std::fabs(edges[e] * 10 - std::round(edges[e] * 10)) > 1e-6)
         throw std::runtime_error(
             "PythiaGun: <pTHatBins> edges take at most one decimal (Pythia "
-            "gets them rounded to one), got " + std::to_string(edges[e]));
+            "gets them rounded to one), got " +
+            std::to_string(edges[e]));
     pTHatBins_.emplace_back(edges[j], edges[j + 1]);
   }
   const int nBins = GetNPtHatBins();
@@ -194,7 +197,8 @@ void PythiaGun::ReadPartonYCut() {
     }
     if (used != token.size() || !(partonYMax_ > 0))
       throw std::runtime_error(
-          "PythiaGun: <partonYMax> takes a rapidity > 0 (empty: no cut), got '" +
+          "PythiaGun: <partonYMax> takes a rapidity > 0 (empty: no cut), got "
+          "'" +
           token + "'");
   }
   std::stringstream mode(
@@ -272,8 +276,9 @@ void PythiaGun::ReadTrigger() {
       "leptonEtaMax");
   if (trigger_ != "Z" &&
       (triggerYMax_ > 0 || leptonPtMin_ > 0 || leptonEtaMax_ > 0))
-    throw std::runtime_error("PythiaGun: <triggerYMax>, <leptonPtMin> and "
-                             "<leptonEtaMax> need <trigger>Z</trigger>");
+    throw std::runtime_error(
+        "PythiaGun: <triggerYMax>, <leptonPtMin> and "
+        "<leptonEtaMax> need <trigger>Z</trigger>");
   if (minPartons_ != 2)
     JSINFO << MAGENTA << "Pythia Gun: events need " << minPartons_
            << " parton(s) (leptons do not count)";
@@ -340,7 +345,8 @@ void PythiaGun::ReadExtraHard(unsigned int seed) {
   extraOn_ = ReadNumber(text("on"), "on", 0.) != 0.;
   extraNoTrigger_ = ReadNumber(text("noTrigger"), "noTrigger", 0.) != 0.;
   extraPtHatMin_ = ReadNumber(text("pTHatMin"), "pTHatMin", 15.);
-  extraWarmup_ = static_cast<long>(ReadNumber(text("warmup"), "warmup", 20000.));
+  extraWarmup_ =
+      static_cast<long>(ReadNumber(text("warmup"), "warmup", 20000.));
   extraFixedN_ = static_cast<int>(ReadNumber(text("fixedN"), "fixedN", -1.));
   const double ecm = GetXMLElementDouble({"Hard", "PythiaGun", "eCM"});
   extraSigmaNN_ = ReadNumber(text("sigmaNN"), "sigmaNN", 0.);
@@ -355,8 +361,9 @@ void PythiaGun::ReadExtraHard(unsigned int seed) {
     return;
   }
   if (!(extraPtHatMin_ > 0) || extraWarmup_ < 1)
-    throw std::runtime_error("PythiaGun: <extraHard> needs <pTHatMin> > 0 and "
-                             "<warmup> >= 1");
+    throw std::runtime_error(
+        "PythiaGun: <extraHard> needs <pTHatMin> > 0 and "
+        "<warmup> >= 1");
   if (extraNoTrigger_ &&
       (GetNPtHatBins() > 1 || partonYMax_ > 0 || trigger_ != "none"))
     throw std::runtime_error(
@@ -689,10 +696,9 @@ void PythiaGun::ExecuteTask() {
     SelectPartons(py, p62);
 
     // at least <minPartons> (default 2); leptons do not count
-    const long nPartons =
-        std::count_if(p62.begin(), p62.end(), [](const Pythia8::Particle &p) {
-          return !Parton::isLepton(p.id());
-        });
+    const long nPartons = std::count_if(
+        p62.begin(), p62.end(),
+        [](const Pythia8::Particle &p) { return !Parton::isLepton(p.id()); });
     if (nPartons < minPartons_)
       continue;
 
@@ -763,8 +769,7 @@ void PythiaGun::SelectPartons(Pythia8::Pythia &py,
     // the id is set to the heaviest quark in the diquark (except down quark)
     // this technically violates baryon number conservation over the entire
     // event also can violate electric charge conservation
-    if ((std::abs(particle.id()) > 1100) &&
-        (std::abs(particle.id()) < 6000) &&
+    if ((std::abs(particle.id()) > 1100) && (std::abs(particle.id()) < 6000) &&
         ((std::abs(particle.id()) / 10) % 10 == 0)) {
       if (particle.id() > 0) {
         particle.id(-1 * particle.id() / 1000);
@@ -821,12 +826,12 @@ void PythiaGun::SelectPartons(Pythia8::Pythia &py,
 //! ``scatter``: label ``scatter``, colour tags offset by 100000 x scatter (none
 //! for the trigger), and records it.
 void PythiaGun::AddScatterPartons(const std::vector<Pythia8::Particle> &sorted,
-                                  double x, double y, int scatter,
-                                  double pthat, int code) {
+                                  double x, double y, int scatter, double pthat,
+                                  int code) {
   double xLoc[4] = {0.0, x, y, 0.0};
   const int offset = 100000 * scatter;
-  ScatterRecord rec{scatter, pthat, code, x, y,
-                    static_cast<int>(sorted.size()), 0., 0.};
+  ScatterRecord rec{scatter, pthat, code, x, y, static_cast<int>(sorted.size()),
+                    0.,      0.};
   for (int np = 0; np < static_cast<int>(sorted.size()); ++np) {
     const Pythia8::Particle &particle = sorted.at(np);
 
@@ -836,10 +841,11 @@ void PythiaGun::AddScatterPartons(const std::vector<Pythia8::Particle> &sorted,
                << " at x=" << xLoc[1] << ", y=" << xLoc[2] << ", z=" << xLoc[3]
                << " (scattering " << scatter << ")";
 
-    auto ptn = make_shared<Parton>(scatter, particle.id(), 0, particle.pT(),
-                                   particle.eta(), particle.phi(), particle.e(),
-                                   xLoc);
-    ptn->set_color(particle.col() > 0 ? particle.col() + offset : particle.col());
+    auto ptn =
+        make_shared<Parton>(scatter, particle.id(), 0, particle.pT(),
+                            particle.eta(), particle.phi(), particle.e(), xLoc);
+    ptn->set_color(particle.col() > 0 ? particle.col() + offset
+                                      : particle.col());
     ptn->set_anti_color(particle.acol() > 0 ? particle.acol() + offset
                                             : particle.acol());
     ptn->set_max_color(offset + 1000 * (np + 1));
@@ -862,7 +868,8 @@ void PythiaGun::AddExtraScatterings() {
   if (!(ncoll >= 0))
     throw std::runtime_error(
         "PythiaGun: <extraHard> needs an initial state that knows N_coll "
-        "(3dMCGlauber), got " + std::to_string(ncoll));
+        "(3dMCGlauber), got " +
+        std::to_string(ncoll));
   extraMu_ = ncoll * extraSigma_ / extraSigmaNN_;
   if (extraFixedN_ >= 0)
     nExtra_ = extraFixedN_;
@@ -883,8 +890,9 @@ void PythiaGun::AddExtraScatterings() {
     int tries = 0;
     while (!py.next())
       if (++tries > 1000)
-        throw std::runtime_error("PythiaGun: the <extraHard> Pythia failed "
-                                 "1000 times in a row");
+        throw std::runtime_error(
+            "PythiaGun: the <extraHard> Pythia failed "
+            "1000 times in a row");
     sel.clear();
     SelectPartons(py, sel);
     std::sort(sel.begin(), sel.end(), greater_than_pt());
@@ -892,6 +900,7 @@ void PythiaGun::AddExtraScatterings() {
     ini->SampleABinaryCollisionPointWith(extraRng_, t, x, y, z);
     AddScatterPartons(sel, x, y, s, py.info.pTHat(), py.info.code());
   }
-  VERBOSE(3) << "Pythia Gun: " << nExtra_ << " extra scattering(s), mu = "
-             << extraMu_ << " (N_coll " << ncoll << ")";
+  VERBOSE(3) << "Pythia Gun: " << nExtra_
+             << " extra scattering(s), mu = " << extraMu_ << " (N_coll "
+             << ncoll << ")";
 }

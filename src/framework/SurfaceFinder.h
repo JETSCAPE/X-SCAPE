@@ -128,9 +128,12 @@ class SurfaceFinder {
    */
   void set_lattice_spacing(Jetscape::real dtau, Jetscape::real dx,
                            Jetscape::real deta) {
-    if (dtau > 0.) grid_dt_ = dtau;
-    if (dx > 0.) grid_dx_ = dx;
-    if (deta > 0.) grid_deta_ = deta;
+    if (dtau > 0.)
+      grid_dt_ = dtau;
+    if (dx > 0.)
+      grid_dx_ = dx;
+    if (deta > 0.)
+      grid_deta_ = deta;
   }
 
   /**

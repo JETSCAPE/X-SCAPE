@@ -35,10 +35,11 @@ class JetScapeWriter;
  * gets to read the per-event results. JetScapePerEvent splits that loop so the
  * execution can be steered from an external loop:
  *
- *   - ExecInit()          : one-time pre-loop setup (collect writers, CheckExec,
- *                           snapshot active flags). Idempotent; also called
- *                           lazily by ExecPerEvent().
- *   - ExecPerEvent()      : run a single event, leaving all module data in memory.
+ *   - ExecInit()          : one-time pre-loop setup (collect writers,
+ * CheckExec, snapshot active flags). Idempotent; also called lazily by
+ * ExecPerEvent().
+ *   - ExecPerEvent()      : run a single event, leaving all module data in
+ * memory.
  *   - ClearPerEvent()     : release that memory and advance the event counter.
  *
  * The current event number is taken from the (framework-global) event counter
@@ -84,7 +85,8 @@ class JetScapePerEvent : public JetScape {
    * and can be read by an external program before ClearPerEvent() is called.
    *
    * The event number used for progress printout and hydro-reuse bookkeeping is
-   * read from JetScapeModuleBase::GetCurrentEvent() (advanced by ClearPerEvent()).
+   * read from JetScapeModuleBase::GetCurrentEvent() (advanced by
+   * ClearPerEvent()).
    */
   void ExecPerEvent();
 
@@ -100,8 +102,8 @@ class JetScapePerEvent : public JetScape {
    * @brief Disabled on this class.
    *
    * The inherited all-in-one Exec() loop and the per-event API both fill
-   * taskOrgActiveMap independently, so mixing them is unsupported. This override
-   * warns and exits to make that misuse impossible.
+   * taskOrgActiveMap independently, so mixing them is unsupported. This
+   * override warns and exits to make that misuse impossible.
    */
   void Exec() override;
 
@@ -130,7 +132,8 @@ class JetScapePerEvent : public JetScape {
   /** @brief Guard so ExecInit() runs exactly once. */
   bool exec_initialized_ = false;
 
-  /** @brief Starting event number applied to the global counter in ExecInit(). */
+  /** @brief Starting event number applied to the global counter in ExecInit().
+   */
   int start_event_ = 0;
 };
 

@@ -88,15 +88,18 @@ double (*LBT::distFncFM)[N_p1] = nullptr;
 
 double *LBT::table_block_ = nullptr;
 
-// ---- the 12 big tables in one block --------------------------------------------------
-// Layout (doubles): a 10-double header, then dNg_over_dt_c/q/g and max_dNgfnc_c/q/g
-// ([t_gn+2][temp_gn+1][HQener_gn+1] each), distFncB/F and distMaxB/F ([N_T][N_p1][N_e2]),
-// distFncBM/FM ([N_T][N_p1]).  With $LBT_TABLE_CACHE the block is a file mapped read-only
-// and shared by every process; read_tables() fills it only when it parses the text files.
+// ---- the 12 big tables in one block
+// -------------------------------------------------- Layout (doubles): a
+// 10-double header, then dNg_over_dt_c/q/g and max_dNgfnc_c/q/g
+// ([t_gn+2][temp_gn+1][HQener_gn+1] each), distFncB/F and distMaxB/F
+// ([N_T][N_p1][N_e2]), distFncBM/FM ([N_T][N_p1]).  With $LBT_TABLE_CACHE the
+// block is a file mapped read-only and shared by every process; read_tables()
+// fills it only when it parses the text files.
 static const std::size_t kLbtHeader = 10;
 
 std::size_t LBT::TableBlockDoubles() {
-  const std::size_t dng = std::size_t(t_gn + 2) * (temp_gn + 1) * (HQener_gn + 1);
+  const std::size_t dng =
+      std::size_t(t_gn + 2) * (temp_gn + 1) * (HQener_gn + 1);
   const std::size_t d3 = std::size_t(N_T) * N_p1 * N_e2;
   const std::size_t d2 = std::size_t(N_T) * N_p1;
   return kLbtHeader + 6 * dng + 4 * d3 + 2 * d2;
@@ -106,43 +109,65 @@ void LBT::SetTablePointers(double *b) {
   typedef double Dng[temp_gn + 1][HQener_gn + 1];
   typedef double D3[N_p1][N_e2];
   typedef double D2[N_p1];
-  const std::size_t dng = std::size_t(t_gn + 2) * (temp_gn + 1) * (HQener_gn + 1);
+  const std::size_t dng =
+      std::size_t(t_gn + 2) * (temp_gn + 1) * (HQener_gn + 1);
   const std::size_t d3 = std::size_t(N_T) * N_p1 * N_e2;
   const std::size_t d2 = std::size_t(N_T) * N_p1;
   double *q = b + kLbtHeader;
-  dNg_over_dt_c = reinterpret_cast<Dng *>(q); q += dng;
-  dNg_over_dt_q = reinterpret_cast<Dng *>(q); q += dng;
-  dNg_over_dt_g = reinterpret_cast<Dng *>(q); q += dng;
-  max_dNgfnc_c = reinterpret_cast<Dng *>(q); q += dng;
-  max_dNgfnc_q = reinterpret_cast<Dng *>(q); q += dng;
-  max_dNgfnc_g = reinterpret_cast<Dng *>(q); q += dng;
-  distFncB = reinterpret_cast<D3 *>(q); q += d3;
-  distFncF = reinterpret_cast<D3 *>(q); q += d3;
-  distMaxB = reinterpret_cast<D3 *>(q); q += d3;
-  distMaxF = reinterpret_cast<D3 *>(q); q += d3;
-  distFncBM = reinterpret_cast<D2 *>(q); q += d2;
+  dNg_over_dt_c = reinterpret_cast<Dng *>(q);
+  q += dng;
+  dNg_over_dt_q = reinterpret_cast<Dng *>(q);
+  q += dng;
+  dNg_over_dt_g = reinterpret_cast<Dng *>(q);
+  q += dng;
+  max_dNgfnc_c = reinterpret_cast<Dng *>(q);
+  q += dng;
+  max_dNgfnc_q = reinterpret_cast<Dng *>(q);
+  q += dng;
+  max_dNgfnc_g = reinterpret_cast<Dng *>(q);
+  q += dng;
+  distFncB = reinterpret_cast<D3 *>(q);
+  q += d3;
+  distFncF = reinterpret_cast<D3 *>(q);
+  q += d3;
+  distMaxB = reinterpret_cast<D3 *>(q);
+  q += d3;
+  distMaxF = reinterpret_cast<D3 *>(q);
+  q += d3;
+  distFncBM = reinterpret_cast<D2 *>(q);
+  q += d2;
   distFncFM = reinterpret_cast<D2 *>(q);
   table_block_ = b;
 }
 
-// The header identifies the layout, whether the radiation tables were read (KINT0), and
-// the table files by their total size in bytes: a cache made with other dimensions, KINT0
-// or table files of another size is not used.  Files of the same size but other content
-// are not detected, so still use one cache file per LBT-tables version (in its name).
+// The header identifies the layout, whether the radiation tables were read
+// (KINT0), and the table files by their total size in bytes: a cache made with
+// other dimensions, KINT0 or table files of another size is not used.  Files of
+// the same size but other content are not detected, so still use one cache file
+// per LBT-tables version (in its name).
 void LBT::WriteTableHeader(double *b) const {
-  static const char *const kFiles[] = {"distB.dat", "distF.dat", "dNg_over_dt_cD6.dat",
-                                       "dNg_over_dt_qD6.dat", "dNg_over_dt_gD6.dat",
-                                       "dNg_over_dt_qD7.dat", "dNg_over_dt_gD7.dat"};
-  const int n_files = (KINT0 != 0) ? 7 : 2;  // the radiation tables only when read
+  static const char *const kFiles[] = {
+      "distB.dat",           "distF.dat",           "dNg_over_dt_cD6.dat",
+      "dNg_over_dt_qD6.dat", "dNg_over_dt_gD6.dat", "dNg_over_dt_qD7.dat",
+      "dNg_over_dt_gD7.dat"};
+  const int n_files =
+      (KINT0 != 0) ? 7 : 2;  // the radiation tables only when read
   double bytes = 0.0;
   for (int i = 0; i < n_files; i++) {
     struct stat st;
     if (stat((lbt_table_path_ + "/" + kFiles[i]).c_str(), &st) == 0)
       bytes += double(st.st_size);
   }
-  const double h[kLbtHeader] = {7742.0, 2.0, double(t_gn), double(temp_gn),
-                                double(HQener_gn), double(N_T), double(N_p1), double(N_e2),
-                                double(KINT0 != 0), bytes};
+  const double h[kLbtHeader] = {7742.0,
+                                2.0,
+                                double(t_gn),
+                                double(temp_gn),
+                                double(HQener_gn),
+                                double(N_T),
+                                double(N_p1),
+                                double(N_e2),
+                                double(KINT0 != 0),
+                                bytes};
   std::memcpy(b, h, sizeof h);
 }
 
@@ -152,8 +177,9 @@ bool LBT::TableHeaderOK(const double *b) const {
   return std::memcmp(b, h, sizeof h) == 0;
 }
 
-// true: the tables are mapped read-only from $LBT_TABLE_CACHE (read_tables must not parse
-// or write them).  false: a private zeroed block, for read_tables to fill.
+// true: the tables are mapped read-only from $LBT_TABLE_CACHE (read_tables must
+// not parse or write them).  false: a private zeroed block, for read_tables to
+// fill.
 bool LBT::AttachTableBlock() {
   const std::size_t bytes = TableBlockDoubles() * sizeof(double);
   const char *path = std::getenv("LBT_TABLE_CACHE");
@@ -172,11 +198,13 @@ bool LBT::AttachTableBlock() {
           return true;
         }
         munmap(m, bytes);
-        JSWARN << "LBT: " << path << " does not match these tables; reading the text files";
+        JSWARN << "LBT: " << path
+               << " does not match these tables; reading the text files";
       }
     }
   }
-  double *b = static_cast<double *>(std::calloc(TableBlockDoubles(), sizeof(double)));
+  double *b =
+      static_cast<double *>(std::calloc(TableBlockDoubles(), sizeof(double)));
   if (!b) {
     JSWARN << "LBT: cannot allocate the tables";
     exit(EXIT_FAILURE);
@@ -186,27 +214,31 @@ bool LBT::AttachTableBlock() {
   return false;
 }
 
-// After parsing: write the block to $LBT_TABLE_CACHE (atomically: temporary file +
-// rename, so jobs starting together cannot read a half-written file) and switch this
-// process to the shared mapping as well.
+// After parsing: write the block to $LBT_TABLE_CACHE (atomically: temporary
+// file + rename, so jobs starting together cannot read a half-written file) and
+// switch this process to the shared mapping as well.
 void LBT::PublishTableBlock() {
   const char *path = std::getenv("LBT_TABLE_CACHE");
-  if (!path || !*path) return;
+  if (!path || !*path)
+    return;
   const std::size_t bytes = TableBlockDoubles() * sizeof(double);
-  const std::string tmp = std::string(path) + ".tmp." + std::to_string(getpid());
+  const std::string tmp =
+      std::string(path) + ".tmp." + std::to_string(getpid());
   FILE *f = std::fopen(tmp.c_str(), "wb");
   bool ok = f && std::fwrite(table_block_, 1, bytes, f) == bytes;
-  if (f && std::fclose(f) != 0) ok = false;
+  if (f && std::fclose(f) != 0)
+    ok = false;
   if (!ok || std::rename(tmp.c_str(), path) != 0) {
     std::remove(tmp.c_str());
-    JSWARN << "LBT: could not write the table cache " << path << "; keeping a private copy";
+    JSWARN << "LBT: could not write the table cache " << path
+           << "; keeping a private copy";
     return;
   }
   JSINFO << "LBT: wrote the table cache " << path;
   double *priv = table_block_;
   if (AttachTableBlock()) {
     std::free(priv);
-  } else {                 // could not map it back: drop the new empty block, keep ours
+  } else {  // could not map it back: drop the new empty block, keep ours
     std::free(table_block_);
     SetTablePointers(priv);
   }
@@ -233,7 +265,8 @@ void LBT::InitTask() {
   // Resolve the directory holding the LBT data tables. Priority:
   //   1. XML element {Eloss, Lbt, LBT_table_path} if set
   //   2. LBT_TABLES_PATH environment variable
-  //   3. XSCAPE_DATA_DIR/LBT-tables (./LBT-tables when XSCAPE_DATA_DIR is unset)
+  //   3. XSCAPE_DATA_DIR/LBT-tables (./LBT-tables when XSCAPE_DATA_DIR is
+  //   unset)
   // (JetScapeDataPath.h: LBTTablesPath; Matter's recoil uses the same.)
   lbt_table_path_ = LBTTablesPath(
       GetXMLElementText({"Eloss", "Lbt", "LBT_table_path"}, false));
@@ -341,10 +374,9 @@ void LBT::DoEnergyLoss(double deltaT, double time, double Q2,
 
     if (pIn[i].isNonParton(pIn[i].pid())) {
       if (pIn[i].pstat() != 22) {
-        pIn[i].set_stat(
-            22);  // Add status code 22 for photons and leptons that pass
-                  // through LBT if it is already not assigned by one of the
-                  // other JEL modules.
+        pIn[i].set_stat(22);  // Add status code 22 for photons and leptons that
+                              // pass through LBT if it is already not assigned
+                              // by one of the other JEL modules.
         pOut.push_back(pIn[i]);
       }
       return;
@@ -1820,51 +1852,51 @@ void LBT::read_tables() {  // intialize various tables for LBT
 
   // preparation for HQ 2->2 (not when mapped from the cache)
   if (!tables_mapped) {
-  ifstream fileB(lbt_table_path_ + "/distB.dat");
-  if (!fileB.is_open()) {
-    cout << "Erro openning data file distB.dat!" << endl;
-  } else {
-    for (int i = 0; i < N_T; i++) {
-      for (int j = 0; j < N_p1; j++) {
-        double dummy_T, dummy_p1;
-        fileB >> dummy_T >> dummy_p1;
-        if (fabs(min_T + (0.5 + i) * bin_T - dummy_T) > 1.0e-5 ||
-            fabs(min_p1 + (0.5 + j) * bin_p1 - dummy_p1) > 1.0e-5) {
-          cout << "Erro in reading data file distB.dat!" << endl;
-          exit(EXIT_FAILURE);
+    ifstream fileB(lbt_table_path_ + "/distB.dat");
+    if (!fileB.is_open()) {
+      cout << "Erro openning data file distB.dat!" << endl;
+    } else {
+      for (int i = 0; i < N_T; i++) {
+        for (int j = 0; j < N_p1; j++) {
+          double dummy_T, dummy_p1;
+          fileB >> dummy_T >> dummy_p1;
+          if (fabs(min_T + (0.5 + i) * bin_T - dummy_T) > 1.0e-5 ||
+              fabs(min_p1 + (0.5 + j) * bin_p1 - dummy_p1) > 1.0e-5) {
+            cout << "Erro in reading data file distB.dat!" << endl;
+            exit(EXIT_FAILURE);
+          }
+          fileB >> distFncBM[i][j];
+          for (int k = 0; k < N_e2; k++)
+            fileB >> distFncB[i][j][k];
+          for (int k = 0; k < N_e2; k++)
+            fileB >> distMaxB[i][j][k];
         }
-        fileB >> distFncBM[i][j];
-        for (int k = 0; k < N_e2; k++)
-          fileB >> distFncB[i][j][k];
-        for (int k = 0; k < N_e2; k++)
-          fileB >> distMaxB[i][j][k];
       }
     }
-  }
-  fileB.close();
+    fileB.close();
 
-  ifstream fileF(lbt_table_path_ + "/distF.dat");
-  if (!fileF.is_open()) {
-    cout << "Erro openning data file distF.dat!" << endl;
-  } else {
-    for (int i = 0; i < N_T; i++) {
-      for (int j = 0; j < N_p1; j++) {
-        double dummy_T, dummy_p1;
-        fileF >> dummy_T >> dummy_p1;
-        if (fabs(min_T + (0.5 + i) * bin_T - dummy_T) > 1.0e-5 ||
-            fabs(min_p1 + (0.5 + j) * bin_p1 - dummy_p1) > 1.0e-5) {
-          cout << "Erro in reading data file distF.dat!" << endl;
-          exit(EXIT_FAILURE);
+    ifstream fileF(lbt_table_path_ + "/distF.dat");
+    if (!fileF.is_open()) {
+      cout << "Erro openning data file distF.dat!" << endl;
+    } else {
+      for (int i = 0; i < N_T; i++) {
+        for (int j = 0; j < N_p1; j++) {
+          double dummy_T, dummy_p1;
+          fileF >> dummy_T >> dummy_p1;
+          if (fabs(min_T + (0.5 + i) * bin_T - dummy_T) > 1.0e-5 ||
+              fabs(min_p1 + (0.5 + j) * bin_p1 - dummy_p1) > 1.0e-5) {
+            cout << "Erro in reading data file distF.dat!" << endl;
+            exit(EXIT_FAILURE);
+          }
+          fileF >> distFncFM[i][j];
+          for (int k = 0; k < N_e2; k++)
+            fileF >> distFncF[i][j][k];
+          for (int k = 0; k < N_e2; k++)
+            fileF >> distMaxF[i][j][k];
         }
-        fileF >> distFncFM[i][j];
-        for (int k = 0; k < N_e2; k++)
-          fileF >> distFncF[i][j][k];
-        for (int k = 0; k < N_e2; k++)
-          fileF >> distMaxF[i][j][k];
       }
     }
-  }
-  fileF.close();
+    fileF.close();
   }
   if (!tables_mapped)
     PublishTableBlock();
@@ -4477,7 +4509,7 @@ void LBT::scatterColors(int CT, int kin, int i, int j) {
       c0 = n, a0 = a, a2 = n, a3 = c;
     }
   } else if (kin > 0) {  // a quark (c, 0)
-    if (kth == 21) {  // CT 13, 12: q g -> q g
+    if (kth == 21) {     // CT 13, 12: q g -> q g
       const unsigned int n = NewColorTag(), m = NewColorTag();
       c0 = n, c2 = m, a2 = n, c3 = m, a3 = c;
     } else if (kout == 21) {  // CT 8: q qbar -> g g
@@ -4493,7 +4525,7 @@ void LBT::scatterColors(int CT, int kin, int i, int j) {
       const unsigned int n = NewColorTag();
       c0 = n, a2 = n, a3 = c;
     }
-  } else {  // an antiquark (0, a)
+  } else {            // an antiquark (0, a)
     if (kth == 21) {  // CT 13, 12: qbar g -> qbar g
       const unsigned int n = NewColorTag(), m = NewColorTag();
       a0 = n, c2 = n, a2 = m, c3 = a, a3 = m;

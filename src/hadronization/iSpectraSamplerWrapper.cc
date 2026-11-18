@@ -66,12 +66,12 @@ void iSpectraSamplerWrapper::InitTask() {
       (GetXMLElementInt({"SoftParticlization", "iSS", "include_deltaf_bulk"}));
   int deltaf_type =
       (GetXMLElementInt({"SoftParticlization", "iSS", "deltaf_type"}));
-  int correlated_sampling = GetXMLElementInt(
-      {"SoftParticlization", "iSS", "correlated_sampling"});
+  int correlated_sampling =
+      GetXMLElementInt({"SoftParticlization", "iSS", "correlated_sampling"});
   double correlated_block_dtau = GetXMLElementDouble(
       {"SoftParticlization", "iSS", "correlated_block_dtau"});
-  double correlated_block_dx = GetXMLElementDouble(
-      {"SoftParticlization", "iSS", "correlated_block_dx"});
+  double correlated_block_dx =
+      GetXMLElementDouble({"SoftParticlization", "iSS", "correlated_block_dx"});
   double correlated_block_deta = GetXMLElementDouble(
       {"SoftParticlization", "iSS", "correlated_block_deta"});
   // optional, default 0: 1 = iSS decays the SMASH hadron list (EOS 91) too,
@@ -80,8 +80,8 @@ void iSpectraSamplerWrapper::InitTask() {
       {"SoftParticlization", "iSS", "decay_smash_list"}, false);
   // optional, default 0: N > 0 also hands over the undecayed hadrons of the
   // first N samples (compact output: GetCompactPrimaries)
-  int keep_primaries = GetXMLElementInt(
-      {"SoftParticlization", "iSS", "keep_primaries"}, false);
+  int keep_primaries =
+      GetXMLElementInt({"SoftParticlization", "iSS", "keep_primaries"}, false);
 
   if (!boost_invariance) {
     hydro_mode = 2;

@@ -207,8 +207,8 @@ class SoftParticlization : public JetScapeModuleBase {
    * event in the production process, where the framework has room for one
    * soft particlization only. Returns false if this module cannot do it.
    */
-  virtual bool SampleCells(const std::vector<SurfaceCellInfo> &cells,
-                           long seed, int n_samples) {
+  virtual bool SampleCells(const std::vector<SurfaceCellInfo> &cells, long seed,
+                           int n_samples) {
     return false;
   }
 

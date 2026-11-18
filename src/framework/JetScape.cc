@@ -330,8 +330,8 @@ void JetScape::DetermineTaskListFromXML() {
       // The task list follows the XML order, and PythiaIsrGun samples its
       // vertex from 3dMCGlauber's collisions of this event.
       bool is_seen = false;
-      for (auto *e = JetScapeXML::Instance()->GetXMLRootUser()
-                         ->FirstChildElement();
+      for (auto *e =
+               JetScapeXML::Instance()->GetXMLRootUser()->FirstChildElement();
            e && e != hardXML; e = e->NextSiblingElement())
         if (std::string(e->Name()) == "IS")
           is_seen = true;
@@ -340,8 +340,7 @@ void JetScape::DetermineTaskListFromXML() {
                   "task list follows the XML order)";
         exit(-1);
       }
-      if (GetXMLElementInt({"IS", "MCGlauber", "generateOnlyPositions"}) !=
-          1) {
+      if (GetXMLElementInt({"IS", "MCGlauber", "generateOnlyPositions"}) != 1) {
         JSWARN << "<Hard><ISR> needs <IS><MCGlauber><generateOnlyPositions>1 "
                   "(the strings are made after the ISR, by MCGlauberGenString)";
         exit(-1);
@@ -1014,20 +1013,20 @@ void JetScape::DetermineTaskListFromXML() {
     }
 #ifdef USE_ROOT
     else if (elementName == "RootBulkWriter") {
-        auto rbwriter = JetScapeModuleFactory::createInstance("RootBulkWriter");
-        auto _this = new RootBulkWriter();
+      auto rbwriter = JetScapeModuleFactory::createInstance("RootBulkWriter");
+      auto _this = new RootBulkWriter();
 
-        if (rbwriter) {
-            Add(rbwriter);
-            JSINFO << " JetScape::DetermineTaskList() -- RootBulkWriter";
-        }
-    }
-    else if (elementName == "FastRootBulkWriter") {
-        auto fbwriter = JetScapeModuleFactory::createInstance("FastRootBulkWriter");
-        if (fbwriter) {
-            Add(fbwriter);
-            JSINFO << " JetScape::DetermineTaskList() -- FastRootBulkWriter";
-        }
+      if (rbwriter) {
+        Add(rbwriter);
+        JSINFO << " JetScape::DetermineTaskList() -- RootBulkWriter";
+      }
+    } else if (elementName == "FastRootBulkWriter") {
+      auto fbwriter =
+          JetScapeModuleFactory::createInstance("FastRootBulkWriter");
+      if (fbwriter) {
+        Add(fbwriter);
+        JSINFO << " JetScape::DetermineTaskList() -- FastRootBulkWriter";
+      }
     }
 #else
     else if (elementName == "RootBulkWriter" ||
@@ -1036,7 +1035,6 @@ void JetScape::DetermineTaskListFromXML() {
              << " requested, but X-SCAPE was built without ROOT: not added.";
     }
 #endif
-
 
     else {
       VERBOSE(2) << "Nothing to do.";

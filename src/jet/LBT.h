@@ -405,8 +405,9 @@ class LBT
   void jetInitialize(int numXY);
   void setJetX(int numXY);
   void read_tables();
-  // The 12 big tables (~0.66 GB) live in one block: private, or mapped read-only from
-  // the cache file $LBT_TABLE_CACHE and then shared by every process on the machine.
+  // The 12 big tables (~0.66 GB) live in one block: private, or mapped
+  // read-only from the cache file $LBT_TABLE_CACHE and then shared by every
+  // process on the machine.
   static double *table_block_;
   static std::size_t TableBlockDoubles();
   void SetTablePointers(double *block);

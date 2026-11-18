@@ -71,8 +71,8 @@ void PGun::InitTask() {
       if (used != tok.size())
         throw std::invalid_argument(tok);
     } catch (const std::exception &) {
-      throw std::runtime_error("PGun: <points> takes numbers 'pT y pT y ...', got '" +
-                               tok + "'");
+      throw std::runtime_error(
+          "PGun: <points> takes numbers 'pT y pT y ...', got '" + tok + "'");
     }
   }
   if (v.size() % 2)
@@ -98,8 +98,9 @@ void PGun::InitTask() {
     std::ostringstream msg;
     for (const auto &p : points_)
       msg << " (" << p.first << ", " << p.second << ")";
-    JSINFO << "Parton Gun with " << K << " (pT, y) points (event i uses point i mod "
-           << K << "):" << msg.str();
+    JSINFO << "Parton Gun with " << K
+           << " (pT, y) points (event i uses point i mod " << K
+           << "):" << msg.str();
   }
   JSINFO << "Parton Gun: rapidity = " << points_[0].second << ", phi = " << phi_
          << ", from the origin";

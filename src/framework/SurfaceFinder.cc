@@ -521,7 +521,8 @@ SurfaceCellInfo SurfaceFinder::PrepareASurfaceCell(
   double v2 = fluid_cell.vx * fluid_cell.vx + fluid_cell.vy * fluid_cell.vy +
               fluid_cell.vz * fluid_cell.vz;
   const double v2_max = 1. - 1e-10;
-  if (v2 > v2_max) v2 = v2_max;
+  if (v2 > v2_max)
+    v2 = v2_max;
   double u0 = 1. / sqrt(1. - v2);
   double uz = u0 * fluid_cell.vz;
   // boost (u^t, u^z) to Milne: umu = (u^tau, u^x, u^y, tau u^eta)

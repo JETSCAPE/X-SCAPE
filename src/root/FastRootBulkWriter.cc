@@ -1,7 +1,8 @@
 /*******************************************************************************
  * Copyright (c) The JETSCAPE Collaboration, 2018
  *
- * Modular, task-based framework for simulating all aspects of heavy-ion collisions
+ * Modular, task-based framework for simulating all aspects of heavy-ion
+ *collisions
  *
  * For the list of contributors see AUTHORS.
  *
@@ -34,7 +35,8 @@
 using namespace std;
 using namespace Jetscape;
 
-RegisterJetScapeModule<FastRootBulkWriter> FastRootBulkWriter::reg("FastRootBulkWriter");
+RegisterJetScapeModule<FastRootBulkWriter> FastRootBulkWriter::reg(
+    "FastRootBulkWriter");
 
 FastRootBulkWriter::FastRootBulkWriter() { SetId("FastRootBulkWriter"); }
 
@@ -42,16 +44,19 @@ void FastRootBulkWriter::Init() {
   JSINFO << "Initializing FastRootBulkWriter ...";
   out_file_name = GetXMLElementText({"FastRootBulkWriter", "out_file_name"});
 
-  std::string mode = GetXMLElementText({"FastRootBulkWriter", "grid_mode"}, false);
+  std::string mode =
+      GetXMLElementText({"FastRootBulkWriter", "grid_mode"}, false);
   if (mode == "native" || mode == "grid")
     grid_mode = mode;
   tau_stride = GetXMLElementInt({"FastRootBulkWriter", "tau_stride"}, false);
   if (tau_stride < 1)
     tau_stride = 1;
-  include_preeq = GetXMLElementInt({"FastRootBulkWriter", "include_preequilibrium"}, false);
+  include_preeq =
+      GetXMLElementInt({"FastRootBulkWriter", "include_preequilibrium"}, false);
   if (include_preeq)
-    JSWARN << "FastRootBulkWriter: include_preequilibrium is not yet implemented; "
-              "dumping the hydro stage only.";
+    JSWARN
+        << "FastRootBulkWriter: include_preequilibrium is not yet implemented; "
+           "dumping the hydro stage only.";
 
   // user grid (grid mode only)
   x_min = GetXMLElementDouble({"FastRootBulkWriter", "x_min"}, false);
@@ -72,7 +77,8 @@ void FastRootBulkWriter::init_tree() {
   isinit = true;
   f = new TFile(out_file_name.c_str(), "RECREATE");
   t = new TTree("t", "Tree");
-  // One basket per event so a reader can load a single event without reading all.
+  // One basket per event so a reader can load a single event without reading
+  // all.
   t->SetAutoFlush(1);
 
   t->Branch("user_res", &v_data);
@@ -82,21 +88,34 @@ void FastRootBulkWriter::init_tree() {
   // Self-describing metadata (mirrors RootBulkWriter param names so existing
   // uproot/FNO readers can reshape: [ntau_freezeout, nx, ny, neta, nFeatures]).
   f->cd();
-  TParameter<int> p_use_vec("use_vec", 1);  // FastRootBulkWriter always uses vector branch
+  TParameter<int> p_use_vec("use_vec",
+                            1);  // FastRootBulkWriter always uses vector branch
   p_use_vec.Write();
   for (auto p : vector<std::tuple<bool, string, float>>{
-           {true, "nFeatures", nFeatures}, {true, "nx", nx},
-           {false, "x_min", x_min},        {false, "dx", dx},
-           {true, "ny", ny},               {false, "y_min", y_min},
-           {false, "dy", dy},              {true, "neta", neta},
-           {false, "eta_min", eta_min},    {false, "deta", deta},
-           {true, "ntau", ntau},           {false, "tau_min", eff_tau_min},
-           {false, "dtau", eff_dtau},      {true, "tau_stride", tau_stride},
-           {true, "nX_MUSIC", (float)nX_MUSIC},    {false, "dX_MUSIC", dX_MUSIC},
-           {false, "X_min_MUSIC", X_min_MUSIC},    {true, "nY_MUSIC", (float)nY_MUSIC},
-           {false, "dY_MUSIC", dY_MUSIC},           {false, "Y_min_MUSIC", Y_min_MUSIC},
-           {true, "neta_MUSIC", (float)neta_MUSIC}, {false, "deta_MUSIC", deta_MUSIC},
-           {false, "eta_min_MUSIC", eta_min_MUSIC}, {false, "dtau_MUSIC", dtau_MUSIC},
+           {true, "nFeatures", nFeatures},
+           {true, "nx", nx},
+           {false, "x_min", x_min},
+           {false, "dx", dx},
+           {true, "ny", ny},
+           {false, "y_min", y_min},
+           {false, "dy", dy},
+           {true, "neta", neta},
+           {false, "eta_min", eta_min},
+           {false, "deta", deta},
+           {true, "ntau", ntau},
+           {false, "tau_min", eff_tau_min},
+           {false, "dtau", eff_dtau},
+           {true, "tau_stride", tau_stride},
+           {true, "nX_MUSIC", (float)nX_MUSIC},
+           {false, "dX_MUSIC", dX_MUSIC},
+           {false, "X_min_MUSIC", X_min_MUSIC},
+           {true, "nY_MUSIC", (float)nY_MUSIC},
+           {false, "dY_MUSIC", dY_MUSIC},
+           {false, "Y_min_MUSIC", Y_min_MUSIC},
+           {true, "neta_MUSIC", (float)neta_MUSIC},
+           {false, "deta_MUSIC", deta_MUSIC},
+           {false, "eta_min_MUSIC", eta_min_MUSIC},
+           {false, "dtau_MUSIC", dtau_MUSIC},
            {false, "tau_min_MUSIC", tau_min_MUSIC}}) {
     if (std::get<0>(p)) {
       TParameter<int> pi(std::get<1>(p).c_str(), (int)std::get<2>(p));
@@ -114,7 +133,8 @@ void FastRootBulkWriter::init_tree() {
          << ", tau_min = " << eff_tau_min << ", dtau = " << eff_dtau;
 }
 
-void FastRootBulkWriter::fill_native(::MpiMusic *music, const EvolutionHistory &g) {
+void FastRootBulkWriter::fill_native(::MpiMusic *music,
+                                     const EvolutionHistory &g) {
   const int nxn = g.nx, nyn = g.ny, netan = g.neta;
   const long n_per_step = (long)nxn * nyn * netan;
   const int num_cells = music->get_number_of_fluid_cells();
@@ -126,15 +146,22 @@ void FastRootBulkWriter::fill_native(::MpiMusic *music, const EvolutionHistory &
   eff_tau_min = g.tau_min;
   eff_dtau = g.dtau * tau_stride;
 
-  nX_MUSIC = g.nx; dX_MUSIC = g.dx; X_min_MUSIC = g.x_min;
-  nY_MUSIC = g.ny; dY_MUSIC = g.dy; Y_min_MUSIC = g.y_min;
-  neta_MUSIC = g.neta; deta_MUSIC = g.deta; eta_min_MUSIC = g.eta_min;
-  tau_min_MUSIC = g.tau_min; dtau_MUSIC = g.dtau;
+  nX_MUSIC = g.nx;
+  dX_MUSIC = g.dx;
+  X_min_MUSIC = g.x_min;
+  nY_MUSIC = g.ny;
+  dY_MUSIC = g.dy;
+  Y_min_MUSIC = g.y_min;
+  neta_MUSIC = g.neta;
+  deta_MUSIC = g.deta;
+  eta_min_MUSIC = g.eta_min;
+  tau_min_MUSIC = g.tau_min;
+  dtau_MUSIC = g.dtau;
   tau_freezeout = g.tau_min + ntau_native * g.dtau;
 
   v_data.clear();
-  v_data.reserve((size_t)((ntau_native + tau_stride - 1) / tau_stride) * n_per_step *
-                 nFeatures);
+  v_data.reserve((size_t)((ntau_native + tau_stride - 1) / tau_stride) *
+                 n_per_step * nFeatures);
 
   FluidCellInfo cell;
   int written = 0;
@@ -152,10 +179,12 @@ void FastRootBulkWriter::fill_native(::MpiMusic *music, const EvolutionHistory &
   ntau_written = written;
 }
 
-void FastRootBulkWriter::fill_grid(::MpiMusic *music, const EvolutionHistory &g) {
-  // Build a transient working history from the native store (one pass, freed with
-  // the module). This avoids the *persistent* framework copy and reuses the exact
-  // EvolutionHistory::get() interpolation, so output matches RootBulkWriter.
+void FastRootBulkWriter::fill_grid(::MpiMusic *music,
+                                   const EvolutionHistory &g) {
+  // Build a transient working history from the native store (one pass, freed
+  // with the module). This avoids the *persistent* framework copy and reuses
+  // the exact EvolutionHistory::get() interpolation, so output matches
+  // RootBulkWriter.
   const long n_per_step = (long)g.nx * g.ny * g.neta;
   const int num_cells = music->get_number_of_fluid_cells();
   const int ntau_native = (n_per_step > 0) ? (int)(num_cells / n_per_step) : 0;
@@ -179,19 +208,34 @@ void FastRootBulkWriter::fill_grid(::MpiMusic *music, const EvolutionHistory &g)
     music->get_native_fluid_cell(i, work_hist_.data[i]);
 
   // Output grid: user value, or MUSIC's where the user left it at 0.
-  if (!dx) dx = g.dx;
-  if (!dy) dy = g.dy;
-  if (!deta) deta = g.deta;
-  if (!dtau) dtau = g.dtau;
-  if (!x_min) x_min = g.x_min;
-  if (!y_min) y_min = g.y_min;
-  if (!eta_min) eta_min = g.eta_min;
-  if (!tau_min) tau_min = g.tau_min;
+  if (!dx)
+    dx = g.dx;
+  if (!dy)
+    dy = g.dy;
+  if (!deta)
+    deta = g.deta;
+  if (!dtau)
+    dtau = g.dtau;
+  if (!x_min)
+    x_min = g.x_min;
+  if (!y_min)
+    y_min = g.y_min;
+  if (!eta_min)
+    eta_min = g.eta_min;
+  if (!tau_min)
+    tau_min = g.tau_min;
 
-  nX_MUSIC = g.nx; dX_MUSIC = g.dx; X_min_MUSIC = g.x_min;
-  nY_MUSIC = g.ny; dY_MUSIC = g.dy; Y_min_MUSIC = g.y_min;
-  neta_MUSIC = g.neta; deta_MUSIC = g.deta; eta_min_MUSIC = g.eta_min;
-  tau_min_MUSIC = g.tau_min; dtau_MUSIC = g.dtau;
+  nX_MUSIC = g.nx;
+  dX_MUSIC = g.dx;
+  X_min_MUSIC = g.x_min;
+  nY_MUSIC = g.ny;
+  dY_MUSIC = g.dy;
+  Y_min_MUSIC = g.y_min;
+  neta_MUSIC = g.neta;
+  deta_MUSIC = g.deta;
+  eta_min_MUSIC = g.eta_min;
+  tau_min_MUSIC = g.tau_min;
+  dtau_MUSIC = g.dtau;
   tau_freezeout = g.tau_min + ntau_native * g.dtau;
 
   nx = 2 * int(fabs(x_min) / dx) + 1;

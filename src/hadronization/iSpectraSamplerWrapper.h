@@ -34,7 +34,8 @@ class iSpectraSamplerWrapper : public SoftParticlization {
   int statusCode_;
   std::unique_ptr<iSS> iSpectraSampler_ptr_;
 
-  // SetCompactHadronOutput: ExecuteTask fills compact_hadrons_, not Hadron_list_
+  // SetCompactHadronOutput: ExecuteTask fills compact_hadrons_, not
+  // Hadron_list_
   bool compact_output_ = false;
 
   // Allows the registration of the module so that it is available to be used by

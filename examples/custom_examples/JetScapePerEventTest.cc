@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
   jetscape->Init();
 
   // Optionally start the event counter at a non-zero value (default 0).
-  //jetscape->SetStartEvent(100);
+  // jetscape->SetStartEvent(100);
 
   // One-time pre-loop setup (writers, CheckExec, active-flag snapshot).
   // Optional: ExecPerEvent() also calls this lazily on the first event.

@@ -68,7 +68,8 @@ class iColoredHadronization
   /// The seed the last hadronization used; 0 if it was not reseeded.
   unsigned int GetLastRandomSeed() const { return last_seed_; }
 
-  /// With <store_input> 1: the last DoHadronization's Pythia input (else empty).
+  /// With <store_input> 1: the last DoHadronization's Pythia input (else
+  /// empty).
   const std::vector<InputParton> &GetLastInput() const { return last_input_; }
 
   /**
@@ -100,16 +101,16 @@ class iColoredHadronization
   /// What the last hadronization found in the colour tags of its input and
   /// how it closed the open lines (PLAN_lbt_colour_tags.md, C3).
   struct ColourAudit {
-    int partons = 0;          ///< final shower partons handed to Pythia
-    int remnants = 0;         ///< beam remnants handed to Pythia
-    int holes = 0;            ///< pstat -1, not handed to Pythia
-    double hole_energy = 0.;  ///< their energy [GeV], dropped
-    int skipped = 0;          ///< other pstat < 0 (the liquefier's), skipped
-    int unpaired_col = 0;     ///< open colour tags, before the closure
-    int unpaired_acol = 0;    ///< open anticolour tags, before the closure
-    int duplicate_tags = 0;   ///< extra uses of a tag as colour or anticolour
-    int relabelled_tags = 0;  ///< duplicates relabelled (<colour_duplicates>)
-    int reconnected = 0;      ///< open ends joined (B2), pairs
+    int partons = 0;            ///< final shower partons handed to Pythia
+    int remnants = 0;           ///< beam remnants handed to Pythia
+    int holes = 0;              ///< pstat -1, not handed to Pythia
+    double hole_energy = 0.;    ///< their energy [GeV], dropped
+    int skipped = 0;            ///< other pstat < 0 (the liquefier's), skipped
+    int unpaired_col = 0;       ///< open colour tags, before the closure
+    int unpaired_acol = 0;      ///< open anticolour tags, before the closure
+    int duplicate_tags = 0;     ///< extra uses of a tag as colour or anticolour
+    int relabelled_tags = 0;    ///< duplicates relabelled (<colour_duplicates>)
+    int reconnected = 0;        ///< open ends joined (B2), pairs
     int reconnected_cross = 0;  ///< joined across showers as a fallback
     int partners = 0;           ///< medium partners inserted for holes (B1)
     double partner_energy = 0.;  ///< their energy [GeV]

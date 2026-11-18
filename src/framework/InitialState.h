@@ -194,8 +194,7 @@ class InitialState : public JetScapeModuleBase {
    * must not change the module's random stream).
    */
   virtual void SampleABinaryCollisionPointWith(std::mt19937 &rng, double &t,
-                                               double &x, double &y,
-                                               double &z);
+                                               double &x, double &y, double &z);
 
   virtual double Get_total_nucleon_density_lab(double t, double x, double y,
                                                double z) {

@@ -176,7 +176,8 @@ void EvolutionHistory::FromVector(const std::vector<float> &data_,
 void EvolutionHistory::SetDataInfo(const std::vector<std::string> &names) {
   data_info = names;
   data_ids.clear();
-  for (const auto &name : names) data_ids.push_back(ResolveEntryName(name));
+  for (const auto &name : names)
+    data_ids.push_back(ResolveEntryName(name));
 }
 
 /**

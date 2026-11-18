@@ -50,7 +50,6 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   HydroSourceJETSCAPE() = default;
   ~HydroSourceJETSCAPE() {}
 
-
   // set the dtau of the hydro and if the hadronic source terms are present
   // add the value to the hadronic liquefier
   void set_hydro_dtau(double val) {
@@ -97,12 +96,14 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   }
 
   void prepare_list_for_current_tau_frame(const double tau_local) {
-    if (weak_ptr_is_uninitialized(liquefier_ptr)) return;
+    if (weak_ptr_is_uninitialized(liquefier_ptr))
+      return;
     liquefier_step_ = liquefier_ptr.lock();
     if (liquefier_step_) {
       // MUSIC can change dtau during a run (beastMode 2): follow the steps
       if (last_tau_ > 0. && tau_local > last_tau_ &&
-          std::abs((tau_local - last_tau_) - pruning_step_) > 1e-6 * pruning_step_) {
+          std::abs((tau_local - last_tau_) - pruning_step_) >
+              1e-6 * pruning_step_) {
         pruning_step_ = tau_local - last_tau_;
       }
       last_tau_ = tau_local;
@@ -124,7 +125,8 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
 
   //! The liquefier's summary of this event's normalization ("" without one).
   std::string liquefier_normalization_summary() const {
-    if (weak_ptr_is_uninitialized(liquefier_ptr)) return "";
+    if (weak_ptr_is_uninitialized(liquefier_ptr))
+      return "";
     auto lq = liquefier_ptr.lock();
     return lq ? lq->normalization_summary() : "";
   }
@@ -138,8 +140,10 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   //! with none kept, get_source() adds exactly zero there.  Anything else --
   //! a hadronic liquefier (not pruned), no prepared window -- stays true.
   bool has_active_sources_current_tau() const {
-    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) return true;
-    if (weak_ptr_is_uninitialized(liquefier_ptr)) return false;
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr))
+      return true;
+    if (weak_ptr_is_uninitialized(liquefier_ptr))
+      return false;
     if (!liquefier_step_ || !liquefier_step_->active_droplets_prepared()) {
       return true;
     }
@@ -265,8 +269,10 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
                                        std::vector<double> &j_mu) const {
     cells.clear();
     j_mu.clear();
-    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) return false;
-    if (weak_ptr_is_uninitialized(liquefier_ptr)) return true;  // no source
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr))
+      return false;
+    if (weak_ptr_is_uninitialized(liquefier_ptr))
+      return true;  // no source
     std::vector<Jetscape::real> jmu_tmp;
     if (liquefier_step_) {
       liquefier_step_->get_source_on_grid(tau, x, y, eta_s, cells, jmu_tmp);
@@ -394,9 +400,10 @@ class MpiMusic : public FluidDynamics {
   void set_preserve_bulk_info(bool v) { preserve_bulk_info_ = v; }
   bool get_preserve_bulk_info() const { return preserve_bulk_info_; }
 
-  // ── Fast hydro-only ROOT dump support (used by FastRootBulkWriter) ──────────
-  // When dump_hydro_only is set, EvolveHydro keeps MUSIC's native in-memory
-  // evolution store and skips building the framework AoS (bulk_info.data).
+  // ── Fast hydro-only ROOT dump support (used by FastRootBulkWriter)
+  // ────────── When dump_hydro_only is set, EvolveHydro keeps MUSIC's native
+  // in-memory evolution store and skips building the framework AoS
+  // (bulk_info.data).
   bool get_dump_hydro_only() const { return dump_hydro_only_; }
   void set_dump_hydro_only(bool v) { dump_hydro_only_ = v; }
 
@@ -476,10 +483,10 @@ class MpiMusic : public FluidDynamics {
       music_hydro_ptr->clear_hydro_info_from_memory();
   }
 
-  // Fill a caller-owned FluidCellInfo straight from MUSIC's native store at flat
-  // index idx (tau-major x,y,eta order, same as EvolutionHistory::CellIndex).
-  // Reuses MUSIC's u^mu->v conversion + hbarc scaling so values match the
-  // ordinary framework path exactly.
+  // Fill a caller-owned FluidCellInfo straight from MUSIC's native store at
+  // flat index idx (tau-major x,y,eta order, same as
+  // EvolutionHistory::CellIndex). Reuses MUSIC's u^mu->v conversion + hbarc
+  // scaling so values match the ordinary framework path exactly.
   void get_native_fluid_cell(int idx, Jetscape::FluidCellInfo &out) {
     fluidCell fc;
     music_hydro_ptr->get_fluid_cell_with_index(idx, &fc);
