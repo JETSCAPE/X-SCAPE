@@ -58,8 +58,11 @@ folderName="music4gpu"
 # (MUSIC4GPU PR #26) active_region_eps > 0: the GPU evolves only the blocks
 # near matter (opt-in; 0, the default, evolves the whole grid as before);
 # (MUSIC4GPU PR #27) symmetric_flux_fallback and quest_revert_as_cpu on by
-# default (X-SCAPE sets both explicitly in jetscape_main.xml as well)
-commitHash="a84e8a521e0910e1e5c340a109431b7634566294"
+# default (X-SCAPE sets both explicitly in jetscape_main.xml as well);
+# (a31f166) Metal: a missing or stale music_kernels.metallib stops the run
+# (exit 1) instead of running the hydro on the CPU unnoticed; MUSIC_FORCE_CPU=1
+# runs on the CPU on purpose. Also docs: Metal validated (README_CUDA Phase 9)
+commitHash="a31f16662b6c5934d191009400d84190f3facd7a"
 
 git clone https://github.com/jhputschke/MUSIC4GPU.git -b XSCAPE $folderName
 cd $folderName

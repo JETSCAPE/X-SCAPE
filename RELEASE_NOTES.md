@@ -47,6 +47,7 @@ Fixes to code that was added after 2.1 are folded into the feature that added it
 | trento | `hdf5_utils.cxx` fixed. | Did not compile with newer compilers (Linux arm). | [`9980458c`](https://github.com/JETSCAPE/X-SCAPE/commit/9980458c) |
 | LBT tables | `get_lbtTab.sh` runs with bash 3.2 and joins the parts in numerical order. | Failed under macOS's `/bin/bash` (`declare -A`). | [#186](https://github.com/JETSCAPE/X-SCAPE/pull/186) |
 | JetScapeWriter | The destructor is defined out of line, so its type information is emitted once. | `dynamic_cast` to a writer failed across the Python module boundary. | [`9b3641b5`](https://github.com/JETSCAPE/X-SCAPE/commit/9b3641b5) |
+| MUSIC4GPU (Metal) | A missing or stale `music_kernels.metallib` (no metallib found, or one without a kernel this libmusic needs) stops the run with exit code 1 and says to rebuild, set `MUSIC_METALLIB`, or set `MUSIC_FORCE_CPU=1`. `MUSIC_FORCE_CPU=1` still runs on the CPU on purpose; no Metal device keeps the CPU fallback. Pin MUSIC4GPU `a84e8a5` to `a31f166`. | A metallib older than libmusic (a stale build, or a Mac wheel whose metallib and library do not match) made MUSIC run the hydro on the CPU with one warning: the job exited 0 and ran 10-15x slower (O+O event 25 s instead of 1.7 s on an M3 Max), and the job output did not say so. | [MUSIC4GPU `a31f166`](https://github.com/jhputschke/MUSIC4GPU/commit/a31f166) |
 
 ## Enhancements and new features
 
