@@ -82,6 +82,9 @@ The main guide to installing and using X-SCAPE is the js-contrib website,
 
 - [Install](https://jhputschke.github.io/js-contrib/install/): the production container, the
   xscape wheel for Apple Silicon Macs, an analysis-only environment, and the source build.
+  The production container (NVIDIA GPU, CUDA) and the Mac wheel (Apple GPU, Metal) come
+  ready-made with **X-SCAPE compiled with the GPU hydro (MUSIC4GPU) and the Python interface
+  (PyJetscape)**, together with iSS, 3dMCGlauber and the analysis tools: nothing to build.
 - [Run](https://jhputschke.github.io/js-contrib/run/): a first event, Au+Au jets in two stages,
   O+O with initial-state radiation, Z+jet, extra hard scatterings, clusters and GPUs.
 - [Analyse](https://jhputschke.github.io/js-contrib/analysis/): what a production writes, and how
