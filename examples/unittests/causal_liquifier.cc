@@ -304,25 +304,33 @@ const Case kCases[] = {
 }  // namespace
 
 // Without normalization MUSIC receives raw_flux x p (the bug); with it, p.
+// raw_flux above is the lab frame's (the deposit before <frame>bjorken became
+// the default), so the unnormalized case runs in the lab frame. The
+// normalized deposit must be p in the lab and in the Bjorken frame.
 TEST(CausalLiquifierTest, TEST_NORMALIZED_ON_HYDRO_GRID) {
   const HydroGrid g = music_grid();
   for (const auto &c : kCases) {
     const Droplet drop(c.x, c.p);
     for (bool on : {false, true}) {
-      CausalLiquefier lqf(0.02, 0.3, 0.3, 0.2);
-      set_production_parameters(lqf);
-      lqf.set_normalize_on_hydro_grid(on);
-      lqf.add_a_droplet(drop);
-      const auto P = deposited(lqf, drop, g);
-      const double f = on ? 1.0 : c.raw_flux;
-      for (int i = 0; i < 4; i++) {
-        EXPECT_NEAR(f * c.p[i], P[i],
-                    2e-3 * std::abs(c.p[0]) * std::max(f, 1.0))
-            << "component " << i << ", normalize " << on << ", eta_d "
-            << c.x[3];
-      }
-      if (on) {
-        EXPECT_NEAR(c.raw_flux, lqf.get_droplet_flux(0), 1e-3 * c.raw_flux);
+      for (bool bjorken : {false, true}) {
+        if (!on && bjorken)
+          continue;
+        CausalLiquefier lqf(0.02, 0.3, 0.3, 0.2);
+        set_production_parameters(lqf);
+        lqf.set_bjorken_frame(bjorken);
+        lqf.set_normalize_on_hydro_grid(on);
+        lqf.add_a_droplet(drop);
+        const auto P = deposited(lqf, drop, g);
+        const double f = on ? 1.0 : c.raw_flux;
+        for (int i = 0; i < 4; i++) {
+          EXPECT_NEAR(f * c.p[i], P[i],
+                      2e-3 * std::abs(c.p[0]) * std::max(f, 1.0))
+              << "component " << i << ", normalize " << on << ", bjorken "
+              << bjorken << ", eta_d " << c.x[3];
+        }
+        if (on && !bjorken) {
+          EXPECT_NEAR(c.raw_flux, lqf.get_droplet_flux(0), 1e-3 * c.raw_flux);
+        }
       }
     }
   }
