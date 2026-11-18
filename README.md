@@ -18,7 +18,7 @@ Please cite [The JETSCAPE framework](https://arxiv.org/abs/1903.07706) if you us
 The highlights below refer to X-SCAPE together with its Python interface, PyJetscape
 (`import jetscape`, from [js-contrib](https://github.com/jhputschke/js-contrib)): some of them
 are used through the Python interface, as the box below explains. The full list of changes
-since X-SCAPE 2.1, including the physics bug fixes that change the output of existing setups,
+since X-SCAPE 2.1, including the fixes that change the output of existing setups,
 is in [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
 > **ℹ️ Important: some of the new functionality needs PyJetscape, the Python interface from
@@ -70,7 +70,7 @@ is in [RELEASE_NOTES.md](RELEASE_NOTES.md).
 - **Python interface**: `import jetscape` drives X-SCAPE from Python and runs Python modules
   in the event loop (js-contrib's PyJetscape):
   [Python](https://jhputschke.github.io/js-contrib/python/).
-- **Physics bug fixes** that change the output of existing setups (liquefier, CausalLiquefier,
+- **Fixes** that change the output of existing setups (liquefier, CausalLiquefier,
   energy-loss start time, colour tags, MUSIC wrapper, SurfaceFinder, MUSIC4GPU fluxes):
   [release notes](RELEASE_NOTES.md#physics-bug-fixes). Do not combine files made before and
   after them.
