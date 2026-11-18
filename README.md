@@ -102,7 +102,7 @@ In this repository:
 | [docs/README_ColourFlow.md](docs/README_ColourFlow.md) | Colour flow through Matter and LBT, and iColored hadronization |
 | [docs/README_Launcher.md](docs/README_Launcher.md) | Many jobs in parallel from one build or install |
 | [docs/README_BulkFast.md](docs/README_BulkFast.md) | `FastRootBulkWriter`: hydro evolution to ROOT |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute, and the optional git hook that formats staged files before each commit (`bin/setup-hooks.sh`) |
 
 ### Which container is for what
 
