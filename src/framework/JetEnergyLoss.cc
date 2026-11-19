@@ -23,6 +23,8 @@
 #include "JetEnergyLoss.h"
 #include "JetScapeLogger.h"
 #include "JetScapeXML.h"
+#include <cmath>
+#include <limits>
 #include <string>
 #include "tinyxml2.h"
 #include "JetScapeSignalManager.h"
@@ -125,6 +127,7 @@ void JetEnergyLoss::ClearTask() {
 
   pIn.clear();
   vStartVec.clear();
+  pending_droplets_.clear();
 }
 
 void JetEnergyLoss::InitTask() {
@@ -326,6 +329,8 @@ void JetEnergyLoss::DoFinishPerEvent() {
   // github
   //  --> replace with a writer ... will be deprecated in upcoming releases ...
 
+  if (parallel_shower_)
+    return;  // FlushParallelOutput hands the partons to the printer
   shared_ptr<PartonPrinter> pPrinter =
       JetScapeSignalManager::Instance()->GetPartonPrinterPointer().lock();
   if (pPrinter) {
@@ -333,9 +338,48 @@ void JetEnergyLoss::DoFinishPerEvent() {
   }
 }
 
+void JetEnergyLoss::FlushParallelOutput() {
+  if (!parallel_shower_)
+    return;
+  if (!pending_droplets_.empty()) {
+    auto liquefier = liquefier_ptr.lock();
+    if (liquefier)
+      for (const auto &drop : pending_droplets_)
+        liquefier->add_a_droplet(drop);
+    pending_droplets_.clear();
+  }
+  shared_ptr<PartonPrinter> pPrinter =
+      JetScapeSignalManager::Instance()->GetPartonPrinterPointer().lock();
+  if (pPrinter && pShower)
+    pPrinter->GetFinalPartons(pShower);
+}
+
 void JetEnergyLoss::CalculateTime() {
   // VERBOSE(3) << "Calculate JLoss per time step ... Current (Module) Time = "
   // << GetModuleCurrentTime() << " dT = " << GetModuleDeltaT(); ClockInfo();
+}
+
+void JetEnergyLoss::MarkLiquefiedEdge(node v, const Parton &p) {
+  // Normally one candidate; with extra roots (several input partons) take
+  // the one closest in energy to p.
+  shared_ptr<Parton> own;
+  double dE_min = std::numeric_limits<double>::max();
+  for (auto eIt = v.in_edges_begin(); eIt != v.in_edges_end(); ++eIt) {
+    auto edge_parton = pShower->GetParton(*eIt);
+    if (!edge_parton || edge_parton->pstat() == neg_stat)
+      continue;
+    double dE = std::abs(edge_parton->e() - p.e());
+    if (dE < dE_min) {
+      dE_min = dE;
+      own = edge_parton;
+    }
+  }
+  if (own) {
+    own->set_stat(droplet_stat);
+  } else {
+    JSWARN << "Liquefied parton without a shower edge; it stays in the "
+              "final state and its energy is counted twice.";
+  }
 }
 
 void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
@@ -374,7 +418,9 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
 
     // apply liquefier
     if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
-      liquefier_ptr.lock()->add_hydro_sources(pInTempModule, pOutTemp);
+      liquefier_ptr.lock()->add_hydro_sources(
+          pInTempModule, pOutTemp,
+          parallel_shower_ ? &pending_droplets_ : nullptr);
     }
 
     // stuffs related to vertex
@@ -390,21 +436,28 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
 
     vStart = vStartVec[i];
     if (pOutTemp.size() == 0) {
-      // no need to generate a vStart for photons and liquefied
+      // no need to generate a vStart for photons, leptons and liquefied
       // partons
       if (pInTempModule[0].pstat() != droplet_stat &&
           pInTempModule[0].pstat() != miss_stat &&
           pInTempModule[0].pstat() != neg_stat &&
-          !pInTempModule[0].isPhoton(pInTempModule[0].pid())) {
+          !pInTempModule[0].isNonParton(pInTempModule[0].pid())) {
         vStartVecTemp.push_back(vStart);
       }
     } else if (pOutTemp.size() == 1) {
-      // no need to generate a vStart for photons and liquefied
+      // no need to generate a vStart for photons, leptons and liquefied
       // partons
       if (pOutTemp[0].pstat() != droplet_stat &&
           pOutTemp[0].pstat() != miss_stat && pOutTemp[0].pstat() != neg_stat &&
-          !pOutTemp[0].isPhoton(pOutTemp[0].pid())) {
+          !pOutTemp[0].isNonParton(pOutTemp[0].pid())) {
         vStartVecTemp.push_back(vStart);
+      } else if (!weak_ptr_is_uninitialized(liquefier_ptr) &&
+                 pOutTemp[0].pstat() == droplet_stat) {
+        // The liquefier absorbed a free-streaming parton and deposited all
+        // of it as a droplet. No edge is written for a single outgoing
+        // parton, so mark the parton's own edge (the one ending at vStart);
+        // otherwise it stays a final-state parton and is hadronized too.
+        MarkLiquefiedEdge(vStart, pInTempModule[0]);
       }
     } else {
       for (int k = 0; k < pOutTemp.size(); k++) {
@@ -423,12 +476,12 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
         pOutTemp[k].set_shower(pShower);
         pOutTemp[k].set_edgeid(edgeid);
 
-        // no need to generate a vStart for photons and liquefied
+        // no need to generate a vStart for photons, leptons and liquefied
         // partons
         if (pOutTemp[k].pstat() != droplet_stat &&
             pOutTemp[k].pstat() != miss_stat &&
             pOutTemp[k].pstat() != neg_stat &&
-            !pOutTemp[k].isPhoton(pOutTemp[k].pid())) {
+            !pOutTemp[k].isNonParton(pOutTemp[k].pid())) {
           vStartVecOut.push_back(vEnd);
         }
 
@@ -468,8 +521,8 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
         if (pInTempModule[0].pstat() == neg_stat)
           continue;
       }
-      // do not push back photons
-      if (pInTempModule[0].isPhoton(pInTempModule[0].pid()))
+      // do not push back photons and leptons
+      if (pInTempModule[0].isNonParton(pInTempModule[0].pid()))
         continue;
       pInTemp.push_back(pInTempModule[0]);
     } else if (pOutTemp.size() == 1) {
@@ -483,8 +536,8 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
         if (pOutTemp[0].pstat() == neg_stat)
           continue;
       }
-      // do not push back photons
-      if (pOutTemp[0].isPhoton(pOutTemp[0].pid()))
+      // do not push back photons and leptons
+      if (pOutTemp[0].isNonParton(pOutTemp[0].pid()))
         continue;
       pInTemp.push_back(pOutTemp[0]);
     } else {
@@ -501,8 +554,8 @@ void JetEnergyLoss::DoExecTime(double currentTime, double deltaT) {
         // do not push back missing (from AdSCFT)
         if (pOutTemp[k].pstat() == miss_stat)
           continue;
-        // do not push back photons
-        if (pOutTemp[k].isPhoton(pOutTemp[k].pid()))
+        // do not push back photons and leptons
+        if (pOutTemp[k].isNonParton(pOutTemp[k].pid()))
           continue;
 
         pOut.push_back(pOutTemp[k]);

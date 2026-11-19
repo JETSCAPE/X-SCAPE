@@ -20,6 +20,7 @@
 #include "InitialState.h"
 #include "JetScapeModuleBase.h"
 #include "JetClass.h"
+#include <map>
 #include <vector>
 
 namespace Jetscape {
@@ -146,6 +147,14 @@ class HardProcess : public JetScapeModuleBase {
    * @param plist A output vector of Parton class.
    */
   void GetHardPartonList(vector<shared_ptr<Parton>> &plist) { plist = hp_list; }
+
+  /**
+   * @brief The hard scattering hard parton i comes from: 0 the event's
+   * (triggering) one, 1, 2, ... additional ones (PythiaGun's <extraHard>).
+   * JetEnergyLossManager gives the showers of partons with an index > 0 random
+   * engines of their own, so they do not change the trigger's showers.
+   */
+  virtual int GetHardPartonScatter(int i) const { return 0; }
 
   /**
    * @brief Get the number of parton showers.
@@ -295,6 +304,35 @@ class HardProcess : public JetScapeModuleBase {
   void SetNISRShower(double NISR) { NISRShower = NISR; }
 
   /**
+   * @brief A new colour tag, unique in the current event.
+   *
+   * One counter per event for the modules that open new colour lines (Matter,
+   * LBT). It starts above max_colorPerShower x (hard partons + 1), i.e. above
+   * Pythia's own tags, every per-parton block of the guns (1000 x (np + 1))
+   * and every block of iMATTER's ISR showers (label x 1000), so a tag it hands
+   * out meets no other tag of the event. Reset in ClearTask.  Hard partons of
+   * additional scatterings (GetHardPartonScatter > 0) do not count, and their
+   * showers (``scatter`` > 0) draw from a counter of their own, starting at
+   * 100000 x scatter + 50000 (PythiaGun offsets their tags by 100000 x
+   * scatter), so the triggering scattering's tags are those without them.
+   * With ``block`` >= 0 (parallel showers, see ReserveColorTagBlocks) the tag
+   * comes from that block's counter instead, whatever ``scatter`` is.
+   * @return The new tag.
+   */
+  unsigned int NextColorTag(int scatter = 0, int block = -1);
+
+  /**
+   * @brief Opens ``n`` blocks of colour tags for this event, one per shower
+   * when JetEnergyLossManager runs the showers in parallel: a shower then
+   * draws its tags from its own block, so they do not depend on the order in
+   * which the showers run.  Block b holds the color_block_size tags after
+   * base + b x color_block_size, with the base above every tag the counters
+   * of NextColorTag may hand out to the event's hard partons and additional
+   * scatterings.  Call before the showers start; reset in ClearTask.
+   */
+  void ReserveColorTagBlocks(int n);
+
+  /**
    * @brief Get the total momentum fraction for the positive side.
    * @return Total momentum fraction for the positive side.
    */
@@ -380,6 +418,13 @@ class HardProcess : public JetScapeModuleBase {
 
   const int max_colorPerShower = 1000;
   int max_color, NISRShower = 0;
+  unsigned int color_tag_ = 0;  ///< last tag of NextColorTag in this event
+  /// last tag per additional scattering in this event
+  std::map<int, unsigned int> extra_color_tag_;
+  /// last tag per block of ReserveColorTagBlocks in this event
+  std::vector<unsigned int> block_color_tag_;
+  unsigned int block_color_base_ = 0;
+  static constexpr unsigned int color_block_size = 100000u;
   double TotalMomentumFractionPositive, TotalMomentumFractionNegative;
   double TotalMomentumPositive, TotalMomentumNegative;
 };

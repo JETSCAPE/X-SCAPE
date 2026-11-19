@@ -26,6 +26,8 @@
 #include "data_struct.h"
 #include "JetScapeConstants.h"
 #include "MakeUniqueHelper.h"
+#include <string>
+#include <vector>
 
 using namespace Jetscape;
 
@@ -36,6 +38,14 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
 
   double dtau;
 
+  // Per-step droplet pruning, see prepare_list_for_current_tau_frame().
+  double pruning_step_ = 0.1;  // [fm]; the hydro dtau once set_hydro_dtau() ran
+  std::shared_ptr<LiquefierBase> liquefier_step_;  // locked once per step
+  // MUSIC's computational grid, for the liquefier to normalize each droplet
+  // on the cells MUSIC samples it at (LiquefierBase::normalize_active_droplets)
+  HydroGrid hydro_grid_;
+  double last_tau_ = -1.0;  // the previous step's tau, to notice a new dtau
+
  public:
   HydroSourceJETSCAPE() = default;
   ~HydroSourceJETSCAPE() {}
@@ -44,6 +54,7 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
   // add the value to the hadronic liquefier
   void set_hydro_dtau(double val) {
     dtau = val;
+    pruning_step_ = val;
     if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr)) {
       hadronic_liquefier_ptr.lock()->set_hydro_dtau(dtau);
     }
@@ -51,6 +62,92 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
 
   void add_a_liquefier(std::shared_ptr<LiquefierBase> new_liquefier) {
     liquefier_ptr = new_liquefier;
+    liquefier_step_.reset();
+  }
+
+  //! Called by MUSIC once per time step, before its Runge-Kutta substeps
+  //! (query times tau and tau + dtau). A CausalLiquefier droplet deposits only
+  //! in the step containing tau_drop + tau_delay, so the liquefier keeps just
+  //! the droplets that can deposit at a query time in
+  //! [tau - step, tau + 2 step]; the result is unchanged, because the others
+  //! add exactly zero, and queries outside the window still see every droplet.
+  //! Also locks the liquefier once per step instead of once per cell.
+  //! Then normalizes the droplets that deposit within reach of this step on
+  //! MUSIC's grid (set_hydro_grid()), so that each deposits exactly its
+  //! four-momentum; the step's query times are tau and tau + dtau.
+  //! MUSIC's step changed to dtau_new at tau (late_delta_tau): the pruning
+  //! window, the hadronic liquefier's 1/dtau and the causal liquefier's
+  //! 1/dtau follow it.  No `override`, so this also compiles against a
+  //! MUSIC without the hook.
+  void hydro_dtau_changed(const double dtau_new, const double /*tau*/) {
+    set_hydro_dtau(dtau_new);
+    last_tau_ = -1.0;  // the next step's tau is one new step away
+    if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
+      liquefier_ptr.lock()->set_hydro_step(dtau_new);
+    }
+  }
+
+  //! The step schedule, for the liquefier's deposition windows (set once,
+  //! from the MUSIC settings; 0: constant step).
+  void set_late_hydro_step(double dtau_late, double tau_switch) {
+    if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
+      liquefier_ptr.lock()->set_late_hydro_step(dtau_late, tau_switch);
+    }
+  }
+
+  void prepare_list_for_current_tau_frame(const double tau_local) {
+    if (weak_ptr_is_uninitialized(liquefier_ptr))
+      return;
+    liquefier_step_ = liquefier_ptr.lock();
+    if (liquefier_step_) {
+      // MUSIC can change dtau during a run (beastMode 2): follow the steps
+      if (last_tau_ > 0. && tau_local > last_tau_ &&
+          std::abs((tau_local - last_tau_) - pruning_step_) >
+              1e-6 * pruning_step_) {
+        pruning_step_ = tau_local - last_tau_;
+      }
+      last_tau_ = tau_local;
+      liquefier_step_->prepare_active_droplets(tau_local - pruning_step_,
+                                               tau_local + 2. * pruning_step_);
+      if (hydro_grid_.valid()) {
+        liquefier_step_->set_hydro_grid(hydro_grid_);
+        liquefier_step_->normalize_active_droplets(tau_local, pruning_step_);
+      }
+    }
+  }
+
+  //! MUSIC's computational grid (cell centres -size/2 + i d); an invalid
+  //! grid (e.g. boost-invariant, one eta cell) leaves the droplets as sampled.
+  void set_hydro_grid(const HydroGrid &grid) {
+    hydro_grid_ = grid;
+    last_tau_ = -1.0;
+  }
+
+  //! The liquefier's summary of this event's normalization ("" without one).
+  std::string liquefier_normalization_summary() const {
+    if (weak_ptr_is_uninitialized(liquefier_ptr))
+      return "";
+    auto lq = liquefier_ptr.lock();
+    return lq ? lq->normalization_summary() : "";
+  }
+
+  //! Whether this source can be non-zero at the current step's query times
+  //! (tau and tau + dtau), for MUSIC to skip evaluating it at steps where it
+  //! cannot (MUSIC4GPU HydroSourceBase::has_active_sources_current_tau; no
+  //! `override`, so this also compiles against a MUSIC without it).
+  //! prepare_list_for_current_tau_frame(tau) keeps the droplets that can
+  //! deposit at a query time in [tau - step, tau + 2 step], which holds both;
+  //! with none kept, get_source() adds exactly zero there.  Anything else --
+  //! a hadronic liquefier (not pruned), no prepared window -- stays true.
+  bool has_active_sources_current_tau() const {
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr))
+      return true;
+    if (weak_ptr_is_uninitialized(liquefier_ptr))
+      return false;
+    if (!liquefier_step_ || !liquefier_step_->active_droplets_prepared()) {
+      return true;
+    }
+    return liquefier_step_->get_number_of_active_droplets() > 0;
   }
 
   void add_a_hadronic_liquefier(
@@ -132,7 +229,11 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
     j_mu = {0.0};
     if (!weak_ptr_is_uninitialized(liquefier_ptr)) {
       std::array<Jetscape::real, 4> jmu_tmp = {0.0};
-      liquefier_ptr.lock()->get_source(tau, x, y, eta_s, jmu_tmp);
+      if (liquefier_step_) {
+        liquefier_step_->get_source(tau, x, y, eta_s, jmu_tmp);
+      } else {
+        liquefier_ptr.lock()->get_source(tau, x, y, eta_s, jmu_tmp);
+      }
       for (int i = 0; i < 4; i++) {
         j_mu[i] =
             jmu_tmp[i] / hbarC;  // convert the unit from GeV/fm^4 to 1/fm^5
@@ -148,6 +249,42 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
         j_mu[i] += jmu_tmp[i] / hbarC / dtau;
       }
     }
+  }
+
+  //! The energy source of every cell of MUSIC's grid at one query time
+  //! (MUSIC4GPU HydroSourceBase::get_hydro_energy_source_on_grid; no
+  //! `override`, so this also compiles against a MUSIC without it).  Each
+  //! droplet is evaluated on the cells inside its light cone only
+  //! (LiquefierBase::get_source_on_grid), not at every cell of the grid; the
+  //! values are those of get_hydro_energy_source(), bit for bit.  cells:
+  //! (ix, iy, ieta) per cell with a non-zero source, j_mu: its four
+  //! components; all other cells are exactly zero.  Returns false -- MUSIC
+  //! then asks cell by cell -- with a hadronic liquefier, which has charge
+  //! sources and no grid version.
+  bool get_hydro_energy_source_on_grid(const double tau,
+                                       const std::vector<double> &x,
+                                       const std::vector<double> &y,
+                                       const std::vector<double> &eta_s,
+                                       std::vector<int> &cells,
+                                       std::vector<double> &j_mu) const {
+    cells.clear();
+    j_mu.clear();
+    if (!weak_ptr_is_uninitialized(hadronic_liquefier_ptr))
+      return false;
+    if (weak_ptr_is_uninitialized(liquefier_ptr))
+      return true;  // no source
+    std::vector<Jetscape::real> jmu_tmp;
+    if (liquefier_step_) {
+      liquefier_step_->get_source_on_grid(tau, x, y, eta_s, cells, jmu_tmp);
+    } else {
+      liquefier_ptr.lock()->get_source_on_grid(tau, x, y, eta_s, cells,
+                                               jmu_tmp);
+    }
+    j_mu.resize(jmu_tmp.size());
+    for (std::size_t i = 0; i < jmu_tmp.size(); i++) {
+      j_mu[i] = jmu_tmp[i] / hbarC;  // from GeV/fm^4 to 1/fm^5
+    }
+    return true;
   }
 
   //! these functions return the B, Q, S density source terms at a given point
@@ -184,6 +321,9 @@ class HydroSourceJETSCAPE : public HydroSourceBase {
 //! library for the JETSCAPE integrated framework
 class MpiMusic : public FluidDynamics {
  private:
+  // music4gpu late_delta_tau / late_tau_switch (0: constant step)
+  double late_delta_tau_ = 0.;
+  double late_tau_switch_ = 0.;
   // int mode;            //!< records running mode
   std::unique_ptr<MUSIC> music_hydro_ptr;
 
@@ -195,6 +335,7 @@ class MpiMusic : public FluidDynamics {
   int flag_output_evo_to_file;
   int flag_output_evo_to_memory;
   int flag_surface_in_memory;
+  bool flag_ensure_MusicWrapper_output;
   bool has_source_terms;
   std::shared_ptr<HydroSourceJETSCAPE> hydro_source_terms_ptr;
 
@@ -250,6 +391,124 @@ class MpiMusic : public FluidDynamics {
   void GetHyperSurface(Jetscape::real T_cut,
                        SurfaceCellInfo *surface_list_ptr){};
   void collect_freeze_out_surface();
+  void PassSlimEvolutionHistoryToFramework(int number_of_cells);
+
+  // ── Python-interop: preserve bulk_info across ClearTasks() ─────────────────
+  // When set to true, Clear() skips clear_up_evolution_data() so that
+  // bulk_info.data survives the end-of-event cleanup and can be inspected from
+  // Python after Exec() returns.
+  void set_preserve_bulk_info(bool v) { preserve_bulk_info_ = v; }
+  bool get_preserve_bulk_info() const { return preserve_bulk_info_; }
+
+  // ── Fast hydro-only ROOT dump support (used by FastRootBulkWriter)
+  // ────────── When dump_hydro_only is set, EvolveHydro keeps MUSIC's native
+  // in-memory evolution store and skips building the framework AoS
+  // (bulk_info.data).
+  bool get_dump_hydro_only() const { return dump_hydro_only_; }
+  void set_dump_hydro_only(bool v) { dump_hydro_only_ = v; }
+
+  // Skip exporting MUSIC's freeze-out surface to the framework (and the
+  // surface*.dat file collection). MUSIC still finds the surface internally —
+  // it is the hydro stop condition — but in a hydro-only dump nothing consumes
+  // the exported surface, so the hand-off is wasted work. See <skip_surface>.
+  bool get_skip_surface() const { return skip_surface_; }
+  void set_skip_surface(bool v) { skip_surface_ = v; }
+
+  // Hand the evolution to the framework as a slim copy: only the fields jet
+  // energy loss and the liquefier read (EvolutionHistory::SlimDataInfo(): e, s,
+  // T, vx, vy, vz; 24 instead of 112 bytes per cell). P, pi^{mu nu}, Pi, the
+  // mu's and qgp_fraction then read back as zero. See <slim_bulk_info>.
+  bool get_slim_bulk_info() const { return slim_bulk_info_; }
+  void set_slim_bulk_info(bool v) { slim_bulk_info_ = v; }
+
+  // Build MUSIC's freeze-out surface (1) or not (0). Without a surface MUSIC
+  // stops on the equivalent max(e) < e_fo test (same stop step; music4gpu
+  // only, CPU MUSIC ignores the setting and always builds it). Read from the
+  // first <Hydro><MUSIC> block for every instance and overridden by the same
+  // tag in the instance's own block; the setter overrides both and applies
+  // from the next evolution on. See <freeze_out_surface>.
+  bool get_freeze_out_surface() const { return freeze_out_surface_ != 0; }
+  void set_freeze_out_surface(bool v) { freeze_out_surface_ = v ? 1 : 0; }
+
+  // Store the evolution frames in MUSIC's in-memory store (default) or not.
+  // false: music4gpu keeps the store's grid and tau bookkeeping (get_ntau,
+  // bulk_info's grid) but packs and stores no cells, for an instance whose
+  // evolution nobody reads (the jet leg of a particlize-only two-stage run).
+  // Applies from the next evolution on; only with output_evolution_to_memory,
+  // and CPU MUSIC ignores it. Read from <store_evolution> like
+  // <dump_hydro_only> and <skip_surface>: the first <Hydro><MUSIC> block for
+  // every instance, overridden by the same tag in the instance's own block.
+  bool get_store_evolution() const { return store_evolution_; }
+  void set_store_evolution(bool v) { store_evolution_ = v; }
+
+  // The jet leg starting from the background's state (music4gpu; js-contrib
+  // docs/Plans/PLAN_music2_restart.md).  set_checkpoint_tau: every evolution
+  // of this instance keeps a checkpoint of its state at the last freeze-out
+  // step whose RK step ends by tau [fm/c] (0: off).  set_restart_from: every
+  // evolution of this instance starts from that instance's latest checkpoint
+  // when it fits -- same parameters, initial arena and initial-state source,
+  // and no droplet before its step -- and from tau0 otherwise; the output is
+  // the same either way.  MUSIC_RESTART_VERIFY=1 runs from tau0 and compares
+  // the state with the checkpoint at its step.  CPU MUSIC: no effect.
+  // From XML: <restart_from> (an instance id) in the jet leg's own block; the
+  // instance named there keeps a checkpoint at <checkpoint_tau> of its own
+  // block, by default at <Liquefier><CausalLiquefier><tau_delay>.  The
+  // setters override the XML.  A time at tau_delay, or less than the jet
+  // source's deposit half width before it, is moved that half width before
+  // tau_delay (CheckpointTauForMusic), where a droplet made at the hard
+  // vertex does not refuse the checkpoint.
+  void set_checkpoint_tau(double tau) { checkpoint_tau_ = tau; }
+  double get_checkpoint_tau() const { return checkpoint_tau_; }
+  void set_restart_from(MpiMusic *bg) {
+    restart_from_ = bg;
+    restart_from_id_.clear();
+  }
+  MpiMusic *get_restart_from() const { return restart_from_; }
+  // what the last evolution did with set_restart_from ("" if not set)
+  const std::string &get_restart_status() const { return restart_status_; }
+
+  // True if the last evolution stopped because the freeze-out surface
+  // reached the transverse grid boundary (MUSIC's reRunHydro): the stored
+  // evolution is then truncated. Reset at the start of every evolution.
+  bool get_hit_grid_boundary() const { return hit_grid_boundary_; }
+
+  // Thin pass-throughs to MUSIC's native in-memory store (music_hydro_ptr is
+  // private, so the writer reaches it through these). music_hydro_ptr is only
+  // created in InitializeHydro(), so guard against calls before that (Python).
+  int get_number_of_fluid_cells() {
+    return music_hydro_ptr ? music_hydro_ptr->get_number_of_fluid_cells() : 0;
+  }
+  void clear_hydro_info_from_memory() {
+    if (music_hydro_ptr)
+      music_hydro_ptr->clear_hydro_info_from_memory();
+  }
+
+  // Fill a caller-owned FluidCellInfo straight from MUSIC's native store at
+  // flat index idx (tau-major x,y,eta order, same as
+  // EvolutionHistory::CellIndex). Reuses MUSIC's u^mu->v conversion + hbarc
+  // scaling so values match the ordinary framework path exactly.
+  void get_native_fluid_cell(int idx, Jetscape::FluidCellInfo &out) {
+    fluidCell fc;
+    music_hydro_ptr->get_fluid_cell_with_index(idx, &fc);
+    out.energy_density = fc.ed;
+    out.entropy_density = fc.sd;
+    out.temperature = fc.temperature;
+    out.pressure = fc.pressure;
+    out.vx = fc.vx;
+    out.vy = fc.vy;
+    out.vz = fc.vz;
+    out.mu_B = 0.0;
+    out.mu_C = 0.0;
+    out.mu_S = 0.0;
+    out.qgp_fraction = 0.0;
+    for (int i = 0; i < 4; i++)
+      for (int j = 0; j < 4; j++)
+        out.pi[i][j] = fc.pi[i][j];
+    out.bulk_Pi = fc.bulkPi;
+  }
+
+  //! Overrides FluidDynamics::Clear() to honour preserve_bulk_info_.
+  void Clear();
 
   bool update_music_input_parameter(const std::string &filename,
                                     const std::string &key, int new_value);
@@ -263,6 +522,37 @@ class MpiMusic : public FluidDynamics {
       music_hydro_ptr->set_parameter("Initial_time_tau_0", tau0);
     }
   }
+
+ private:
+  bool preserve_bulk_info_ = false;
+  // Fast hydro-only ROOT dump (see set_dump_hydro_only); read from
+  // <Hydro><MUSIC><dump_hydro_only> in MpiMusic::InitializeHydro.
+  bool dump_hydro_only_ = false;
+  // Skip the freeze-out surface hand-off / file collection (see
+  // set_skip_surface); read from <Hydro><MUSIC><skip_surface>.
+  bool skip_surface_ = false;
+  bool slim_bulk_info_ = false;
+  bool hit_grid_boundary_ = false;
+  int freeze_out_surface_ = 1;
+  int reported_freeze_out_surface_ = -1;
+  bool store_evolution_ = true;
+  double checkpoint_tau_ = 0.;
+  // <Liquefier><CausalLiquefier>'s <tau_delay> and <dtau> (0 without one),
+  // and the checkpoint time last handed to MUSIC (reported when it changes)
+  double liquefier_tau_delay_ = 0.;
+  double liquefier_dtau_ = 0.;
+  double reported_checkpoint_tau_ = -1.;
+  MpiMusic *restart_from_ = nullptr;
+  // <restart_from> until it is resolved at the first evolution
+  std::string restart_from_id_;
+  std::string restart_status_;
+  tinyxml2::XMLElement *OwnMusicBlockElement(const char *tag) const;
+  int ReadOwnMusicBlockInt(const char *tag) const;
+  void ReadRestartSettings();
+  double CheckpointTauForMusic();
+  void ResolveRestartFrom();
+  void ApplyFreezeOutSurface();
+  void WarnIfGridBoundaryHit();
 };
 
 #endif  // MUSICWRAPPER_H

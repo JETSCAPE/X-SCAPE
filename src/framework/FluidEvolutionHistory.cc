@@ -157,7 +157,7 @@ void EvolutionHistory::FromVector(const std::vector<float> &data_,
                                   int ny_, float eta_min_, float deta_,
                                   int neta_, bool tau_eta_is_tz_) {
   data_vector = data_;
-  data_info = data_info_;
+  SetDataInfo(data_info_);
   tau_min = tau_min_;
   x_min = x_min_;
   y_min = y_min_;
@@ -171,6 +171,13 @@ void EvolutionHistory::FromVector(const std::vector<float> &data_,
   neta = neta_;
   tau_eta_is_tz = tau_eta_is_tz_;
   ntau = data_.size() / (data_info_.size() * nx * ny * neta);
+}
+
+void EvolutionHistory::SetDataInfo(const std::vector<std::string> &names) {
+  data_info = names;
+  data_ids.clear();
+  for (const auto &name : names)
+    data_ids.push_back(ResolveEntryName(name));
 }
 
 /**
@@ -204,13 +211,18 @@ FluidCellInfo EvolutionHistory::GetFluidCell(int id_tau, int id_x, int id_y,
   if (entries_per_record == 0) {
     return data.at(record_starting_id);
   }
-  // otherwise construct the fluid cell info from data_vector and data_info
-  auto fluid_cell_ptr = make_unique<FluidCellInfo>();
+  // otherwise construct the fluid cell info from data_vector and data_info,
+  // with the names resolved once by SetDataInfo where they are current
+  FluidCellInfo cell;
+  FluidCellInfo *const fluid_cell_ptr = &cell;
+  const bool resolved = data_ids.size() == data_info.size();
 
-  record_starting_id *= entries_per_record;
+  const std::size_t first =
+      static_cast<std::size_t>(record_starting_id) * entries_per_record;
   for (int i = 0; i < entries_per_record; i++) {
-    auto entry_name = ResolveEntryName(data_info.at(i));
-    auto entry_data = data_vector.at(record_starting_id + i);
+    auto entry_name =
+        resolved ? data_ids[i] : ResolveEntryName(data_info.at(i));
+    auto entry_data = data_vector.at(first + i);
     switch (entry_name) {
       case ENTRY_ENERGY_DENSITY:
         fluid_cell_ptr->energy_density = entry_data;
@@ -293,7 +305,7 @@ FluidCellInfo EvolutionHistory::GetFluidCell(int id_tau, int id_x, int id_y,
     }
   }
 
-  return *fluid_cell_ptr;
+  return cell;
 }
 
 /**
@@ -346,7 +358,8 @@ FluidCellInfo EvolutionHistory::GetAtTimeStep(int id_tau, Jetscape::real x,
  * This function performs interpolation to retrieve the FluidCellInfo at a
  * specified space-time point. It interpolates along the time direction (tau)
  * between the two closest time steps. If the requested point is outside the
- * valid range, a default "zero" fluid cell is returned.
+ * valid range, or the history holds no cells (an event without a medium, e.g.
+ * no string from 3dMCGlauber), a default "zero" fluid cell is returned.
  *
  * @param tau The light-cone time coordinate to retrieve the fluid information
  * at.
@@ -359,6 +372,13 @@ FluidCellInfo EvolutionHistory::GetAtTimeStep(int id_tau, Jetscape::real x,
 FluidCellInfo EvolutionHistory::get(Jetscape::real tau, Jetscape::real x,
                                     Jetscape::real y,
                                     Jetscape::real eta) const {
+  // An empty history keeps the grid of the last event that had one (only the
+  // cells are cleared), so the range check alone would let the lookup run
+  // into the empty storage.
+  if (get_data_size() == 0) {
+    FluidCellInfo zero_cell;
+    return (zero_cell);
+  }
   int status = CheckInRange(tau, x, y, eta);
   if (status == 0) {
     FluidCellInfo zero_cell;

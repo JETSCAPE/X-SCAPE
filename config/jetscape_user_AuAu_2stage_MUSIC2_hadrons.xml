@@ -1,0 +1,431 @@
+<?xml version="1.0"?>
+
+<!-- Copyright (c) The JETSCAPE Collaboration, 2018 -->
+<!-- Modular, task-based framework for simulating all aspects of heavy-ion collisions -->
+<!-- For the list of contributors see AUTHORS. -->
+<!-- Report issues at https://github.com/JETSCAPE/JETSCAPE/issues -->
+<!-- or via email to bugs.jetscape@gmail.com -->
+<!-- Distributed under the GNU General Public License 3.0 (GPLv3 or later). -->
+<!-- See COPYING for details. -->
+
+<!--
+  ONE 0-10% Au+Au 200 GeV event WITH A JET from plain C++ X-SCAPE (runJetscape, no Python):
+  two-stage hydro, hadrons of the JET LEG (MUSIC_2) and the jet fragments in the ASCII file.
+
+    IS (3D MC-Glauber) -> Hard (PythiaGun) -> NullPreDynamics -> MUSIC_1 (background)
+       -> Liquefier + Eloss (Matter + LBT)       droplets from the jet's energy loss
+       -> MUSIC_2 (same strings + the droplets)  the jet leg: medium + wake
+       -> iSS on MUSIC_2's freeze-out surface    bulk hadrons, status 11
+       -> Colorless hadronization                jet fragments
+
+  Run it from the build directory, or in a directory of its own:
+    cd build && ./runJetscape ../config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml
+    examples/run_in_workdir.sh -d build -w RUN_DIR -u config/jetscape_user_AuAu_2stage_MUSIC2_hadrons.xml
+  Output: AuAu_0_10_2stage_MUSIC2_hadrons.dat
+
+  The physics settings are those of js-contrib's production file
+  AuAu_MCGlauber_MUSIC_0_10_jet.xml (b_max = 4.7 fm for 0-10%, EOS 91, T_fo = 0.15 GeV).
+
+  WHY THIS IS CURRENTLY THE ONLY WAY TO GET SUCH AN EVENT FROM C++ X-SCAPE ALONE
+  (state of X-SCAPE contrib, 2026-11; the details are next to each setting below):
+    1. ONE leg only.  There is one <SoftParticlization>, and it samples one hydro instance
+       (<hydro_id>).  The hadrons of the background leg of the same event, and so the paired
+       "jet leg minus background", need the Python Hadronizer (hadronize.py, run_prod_jet.py).
+    2. NO background reuse.  With <nReuseHydro> above 1 the event loop switches the iSS off on
+       the reused events, together with MUSIC_1, although MUSIC_2 runs again.
+    3. NO oversampling.  The stock writers keep neither the leg nor the sample of a hadron, so
+       several samples would be one long list.
+    4. iSS must decay the SMASH hadron list itself.  The main XML's defaults leave it
+       undecayed, as input for the SMASH afterburner.
+    5. The seeds follow <Random><seed> only.  A seed per event and leg (to redo one event, or
+       to give two legs the same seed) can only be set from code (SetNextRandomSeed).
+  What the event is: like a data event, the medium with the wake plus the jet fragments.  It
+  has no background of its own to subtract.
+  XML support for reasons 1, 2, 3 and 5 is planned for future releases; until then the
+  js-contrib Python drivers do it.  Overview: docs/README_MUSIC4GPU.md, "Example: one two-stage
+  Au+Au event from XML".
+-->
+
+ <jetscape>
+
+  <!-- General settings -->
+  <nEvents> 1 </nEvents>
+  <!-- Keep reuse off (reason 2).  On a reused event JetScape::Exec deactivates the initial
+       state, the pre-equilibrium, the FIRST hydro and the FIRST soft particlization
+       (JetScape.cc, "Do the soft hadronization only at once"), whichever hydro <hydro_id>
+       names: MUSIC_2 would run with the new droplets and its surface would not be sampled. -->
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 1 </nReuseHydro>
+
+  <!-- Technical settings -->
+  <debug> off </debug>
+  <remark> off </remark>
+  <vlevel> 0 </vlevel>
+  <nEvents_printout> 10 </nEvents_printout>
+  <enableAutomaticTaskListDetermination> true </enableAutomaticTaskListDetermination>
+
+  <!--  JetScape Writer Settings -->
+  <outputFilename>AuAu_0_10_2stage_MUSIC2_hadrons</outputFilename>
+  <!-- The ASCII writer calls every active module's WriteTask.  iSS writes the comment lines
+       "JetScape module: iSS" and "Final State Bulk Hadrons" and then its hadrons (status 11,
+       lines "[i] H [n] H 0 pid 11 pt eta phi E ...": iSS and the writer each put an index in
+       front); the jet fragments come before it, from the hadronization module (status 0,
+       lines "[n] H 0 pid 0 ...").  A hadron line carries no leg and no sample number
+       (reasons 1 and 3). -->
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <JetScapeWriterAsciiGZ> off </JetScapeWriterAsciiGZ>
+  <JetScapeWriterHepMC> off </JetScapeWriterHepMC>
+  <JetScapeWriterRootHepMC> off </JetScapeWriterRootHepMC>
+  <JetScapeWriterFinalStatePartonsAscii> off </JetScapeWriterFinalStatePartonsAscii>
+  <JetScapeWriterFinalStateHadronsAscii> off </JetScapeWriterFinalStateHadronsAscii>
+  <JetScapeWriterQnVectorAscii>off</JetScapeWriterQnVectorAscii>
+  <!-- Printing the centrality to the event header is only possible for the Trento initial condition -->
+  <write_centrality> 0 </write_centrality>
+  <write_pthat> 0 </write_pthat>
+  <Writer>
+    <!-- Comma separated list of statuses to skip: e.g. "2, 3, 4" -->
+    <!-- -9999 corresponds to skipping no status code. It needs to have some entry to be avoid a segfault w/ empty values in tinyxml -->
+    <FinalStateHadrons>
+       <statusToSkip>-9999</statusToSkip>
+       <headerVersion>2</headerVersion>
+    </FinalStateHadrons>
+    <FinalStatePartons>
+       <statusToSkip>-9999</statusToSkip>
+       <headerVersion>2</headerVersion>
+    </FinalStatePartons>
+    <!--JetScapeWriterFinalStateHadronsAscii/JetScapeWriterFinalStatePartonsAscii output in binary mode, only ascii or only binary switch (not both possible at the same time)-->
+    <JetscapeWriterFinalStateBinaryOutput> 0 </JetscapeWriterFinalStateBinaryOutput>
+  </Writer>
+
+  <!--  Random Settings. For now, just a global  seed. -->
+  <!--  Note: It's each modules responsibility to adopt it -->
+  <!--  Note: Most if not all modules should understand 0 to mean a random value -->
+  <!--  Note: Both 0 and non-zero values require careful treatment in case of multi-threading -->
+  <!--  An example implementation is in JetEnergyLossManager.cc -->
+  <Random>
+    <seed>1</seed>
+  </Random>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <MCGlauber>
+      <!--0: generates full event with binary collisions and strings-->
+      <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
+      <generateOnlyPositions>0</generateOnlyPositions>
+      <!--Collision system definitions-->
+      <projectile>Au</projectile> <!--Projectile name-->
+      <target>Au</target> <!--Target name-->
+      <sqrts>200</sqrts> <!--Center of mass energy in GeV-->
+      <!--0-10% IS SELECTED HERE, ON b.  Inside X-SCAPE the centrality cut below does nothing:
+          MCGlauberWrapper::ExecuteTask calls EventGenerator::generate_pre_events(), which samples
+          b on [b_min, b_max] (P(b) ~ b) and requires only Npart > 1.  The cut on cenMin/cenMax
+          (generateMinBiasEventList, a cut on the string count) runs only in the standalone
+          3dMCGlauber main.cpp.  With b_max = 20 this file gave MINIMUM-BIAS events.
+          4.7 fm is the geometric 0-10% (pi b^2 = 0.1 sigma_AuAu, ~690 fm^2), the same range
+          make_bulk_comparison_data.py gives FastHydro.-->
+      <b_min>0.0</b_min> <!--Minimum impact parameter in fm-->
+      <b_max>4.7</b_max> <!--Maximum impact parameter in fm-->
+      <cenMin>0.0</cenMin> <!--Minimum centrality in %  (ignored inside X-SCAPE, see above)-->
+      <cenMax>10.0</cenMax> <!--Maximum centrality in % (ignored inside X-SCAPE, see above)-->
+      <nucleon_configuration_from_file>0</nucleon_configuration_from_file> <!--0: generate nucleon configuration, 1: read from file-->
+      <useQuarks>1</useQuarks> <!--Switch to use valence quarks-->
+      <Q2>1.0</Q2> <!--Scale when evaluating the PDF-->
+      <shadowing_factor>0.0</shadowing_factor> <!--Shadowing factor for producing strings from multiple scatterings-->
+      <baryon_junctions>0</baryon_junctions> <!--0: baryon number assumed to be at string end, 1: baryon number transported assuming baryon junctions (at smaller x) see arXiv:nucl-th/9602027-->
+      <N_sea_partons>1</N_sea_partons> <!--Number of allowed soft partons-->
+      <d_min>0.9</d_min> <!--Minimum distance between two nucleons in fm-->
+      <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
+      <BG>3.960</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
+      <Subtract_hard_momentum>0</Subtract_hard_momentum>
+      <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
+      <baryonInStringProb>0.0</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
+      <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> <!--Fluctuate number of strings produced per NN collision-->
+      <QCD_string_production_mode>1</QCD_string_production_mode> <!--1: strings are produced randomly in the binary collision list, 2: strings are produced at the last binary collision-->
+      <!--Rapidity loss parameters (only mode 4 supported in XML, other modes have to be set in mcglauber.input)-->
+      <rapidity_loss_method>4</rapidity_loss_method>
+      <ylossParam4At2>1.610</ylossParam4At2>
+      <ylossParam4At4>1.685</ylossParam4At4>
+      <ylossParam4At6>1.685</ylossParam4At6>
+      <ylossParam4At10>2.95</ylossParam4At10>
+      <ylossParam4var>0.682</ylossParam4var>
+      <remnant_energy_loss_fraction>0.536</remnant_energy_loss_fraction> <!--Nucleon remnant's energy loss fraction (fraction of string's y_loss) [0, 1]-->
+      <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
+      <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
+      <!--string evolution mode, tau_form = tau_form_mean [fm]-->
+      <!--1: deceleration with fixed (90%) rapidity loss (m/sigma = 1 fm, dtau = tau_form)-->
+      <!--2: deceleration with LEXUS/parameterized rapidity loss (both dtau and sigma fluctuate)-->
+      <!--3: deceleration with LEXUS/parameterized rapidity loss (m/sigma = 1 fm, dtau fluctuates)-->
+      <!--4: deceleration with LEXUS/parameterized rapidity loss (dtau = tau_form, m/sigma fluctuates)-->
+      <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
+      <tau_form_mean>0.424</tau_form_mean> <!--Mean value for tau_form [fm]-->
+      <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> <!--Fluctuation parameter for the gamma distribution-->
+    </MCGlauber>
+
+    <grid_max_x> 15 </grid_max_x>
+    <grid_max_y> 15 </grid_max_y>
+    <grid_max_z> 6  </grid_max_z>
+    <grid_step_x> 0.3 </grid_step_x>
+    <grid_step_y> 0.3 </grid_step_y>
+    <grid_step_z> 0.2 </grid_step_z>
+  </IS>
+
+  <!-- Hard process.  PythiaGun uses the hard-scattering vertex sampled from 3dMCGlauber's
+       binary collisions (x, y; z = t = 0).  PGun would zero it (PGun.cc:117-120), so every
+       shower would start at the origin. -->
+  <Hard>
+    <PythiaGun>
+      <name>PythiaGun</name>
+      <FSR_on>0</FSR_on>
+      <pTHatMin>20</pTHatMin>
+      <pTHatMax>30</pTHatMax>
+      <eCM>200</eCM>
+      <softMomentumCutoff>2.0</softMomentumCutoff>
+      <LinesToRead>
+        HardQCD:all = on
+      </LinesToRead>
+      <!-- The event's other hard scatterings (<on> 1 switches them on; js-contrib docs/Plans/PLAN_multi_hard.md, decision D2'): pTHatMin is this
+           system's threshold (at 200 GeV ~0.13 per 0-10 % event above 10 GeV). -->
+      <extraHard>
+        <on>0</on>
+        <pTHatMin>10</pTHatMin>
+      </extraHard>
+    </PythiaGun>
+  </Hard>
+
+  <!--Preequilibrium Dynamics Module -->
+  <Preequilibrium>
+
+    <!-- starting long. proper time for Preequilibrium dynamics -->
+    <tau0>0.0</tau0>
+    <!-- starting long. proper time for Preequilibrium dynamics output for hard probes -->
+    <tauj>0.1</tauj>
+    <!-- switching long. proper time from Preequilibrium dynamics to Hydrodynamics (Landau Matching) -->
+    <taus>0.5</taus>
+    <evolutionInMemory>0</evolutionInMemory>
+
+    <NullPreDynamics> </NullPreDynamics>
+
+  </Preequilibrium>
+
+  <!-- Hydro Module 1: the background leg -->
+  <!-- In the user XML file the Hydro section should be placed before Eloss -->
+  <Hydro>
+
+    <AddLiquefier> false </AddLiquefier>
+    <CartesianHydro> false </CartesianHydro>
+
+    <!-- MUSIC  -->
+    <MUSIC>
+      <name>MUSIC_1</name>
+      <MUSIC_input_file>music_input</MUSIC_input_file>
+      <!--EOS used for the hydro evolution: 91 hotQCD EOS (SMASH list), 9 hotQCD EOS (UrQMD list), 20 NEOS-4D-->
+      <!--91, the EOS of the tunes (hotQCD + the SMASH hadron list); iSS decays that list itself
+          (hadronize.xml decay_smash_list 1, iSS smash_ready).  9: the UrQMD list.-->
+      <EOS>91</EOS>
+      <!--InitialProfile = 42 for Trento + Pre-equilibrium or IPGlasma, 13 for the 3D Glauber initial condition-->
+      <InitialProfile>131</InitialProfile>
+      <!--beastMode = 0: double precision, constant time step-->
+      <!--beastMode = 1: float precision, constant time step-->
+      <!--beastMode = 2: float precision, increased time step after 4 fm/ (can be used for soft sector only runs, otherwise the change in stepsize will lead to errors)-->
+      <beastMode>1</beastMode>
+      <!--A larger time step from late_tau_switch on (D1, docs/Plans/Final_Optims.md): 0.02 -> 0.05
+          fm/c from 3 fm/c, with the freeze-out checks and the stored frames kept at 0.1 fm/c. About
+          half the MUSIC steps; the fields change at the level of the time discretization.
+          0: a constant step.-->
+      <late_delta_tau>0.05</late_delta_tau>
+      <late_tau_switch>3.0</late_tau_switch>
+      <!--starting time of the hydrodynamic evolution after the pre-equilibrium phase-->
+      <Initial_time_tau_0>0.424</Initial_time_tau_0>
+
+      <!--evolution output/storage parameters-->
+      <output_evolution_to_file>0</output_evolution_to_file>
+      <output_evolution_to_memory>1</output_evolution_to_memory>
+      <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
+      <!--5 x Delta_Tau (0.02, music_input) = 0.1 fm/c between stored frames-->
+      <output_evolution_every_N_timesteps>5</output_evolution_every_N_timesteps>
+      <!-- MUSIC's momentum anisotropy / eccentricity .dat files (four serial passes over
+           every cell per run); nothing reads them in production. -->
+      <output_momentum_anisotropy_vs_etas>0</output_momentum_anisotropy_vs_etas>
+      <surface_in_memory>1</surface_in_memory>
+      <!--0: MUSIC_1 fills the framework medium that Matter, LBT and the liquefier query (they
+          use the FIRST hydro).  MUSIC_2's own block below sets 1.-->
+      <dump_hydro_only>0</dump_hydro_only>
+      <!--1: MUSIC_1 exports no freeze-out surface: nothing samples the background here
+          (reason 1).  MUSIC_2's own block below sets 0.-->
+      <skip_surface>1</skip_surface>
+      <!--0: MUSIC_1 builds no freeze-out surface and stops on max e < e_fo instead (same stop
+          step).  Every MUSIC instance reads this FIRST block; a tag in an instance's own
+          block (matched by <name>) overrides it, as MUSIC_2 does below.-->
+      <freeze_out_surface>0</freeze_out_surface>
+
+      <!--shear viscosity settings-->
+      <shear_viscosity_eta_over_s>0.108</shear_viscosity_eta_over_s>
+      <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
+      <!-- Parameters for parametrization 3, the names for these parameters are different compared to JETSCAPE-->
+      <shear_viscosity_3_T_kink_in_GeV>0.206</shear_viscosity_3_T_kink_in_GeV>
+      <shear_viscosity_3_at_kink>0.108</shear_viscosity_3_at_kink>
+      <shear_viscosity_3_low_T_slope_in_GeV>-1.999</shear_viscosity_3_low_T_slope_in_GeV>
+      <shear_viscosity_3_high_T_slope_in_GeV>1.999</shear_viscosity_3_high_T_slope_in_GeV>
+      <!--mu_B dependent shear viscosity settings-->
+      <muB_dependent_Shear_to_S_ratio>0</muB_dependent_Shear_to_S_ratio>
+      <!--bulk viscosity settings-->
+      <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
+      <!-- Parameters for parametrization 3, the names for these parameters are different compared to JETSCAPE-->
+      <bulk_viscosity_3_max>0.092</bulk_viscosity_3_max>
+      <bulk_viscosity_3_T_peak_in_GeV>0.180</bulk_viscosity_3_T_peak_in_GeV>
+      <bulk_viscosity_3_width_in_GeV>0.067</bulk_viscosity_3_width_in_GeV>
+      <bulk_viscosity_3_lambda_asymm>-0.8</bulk_viscosity_3_lambda_asymm>
+      <!--higher order transport coefficients-->
+      <Include_second_order_terms>1</Include_second_order_terms>
+      <!--Conserved charge settings-->
+      <Include_Rhob>0</Include_Rhob>
+      <Include_QS>0</Include_QS>
+      <!--freeze-out parameters-->
+      <!--0: freeze out at freezeout_temperature; eps_switch is then ignored-->
+      <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
+      <freezeout_temperature>0.15</freezeout_temperature>
+      <eps_switch>0.12</eps_switch>
+      <Do_FreezeOut_lowtemp>1</Do_FreezeOut_lowtemp>
+      <average_surface_over_this_many_time_steps>5</average_surface_over_this_many_time_steps>
+      <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
+      <!--source term parameters for InitialProfile 13-->
+      <string_source_sigma_x>0.207</string_source_sigma_x>
+      <string_source_sigma_eta>0.458</string_source_sigma_eta>
+      <stringPreEqFlowFactor>0.0</stringPreEqFlowFactor>
+    </MUSIC>
+
+  </Hydro>
+
+  <!-- The liquefier: turns the energy the jet loses into droplets for MUSIC_2. -->
+  <Liquefier>
+    <threshold_energy_switch> 1 </threshold_energy_switch>
+    <e_threshold> 2.0 </e_threshold>
+    <!-- X-SCAPE with the kernel normalization (LiquefierBase::normalize_active_droplets)
+         deposits each droplet exactly on MUSIC's grid by default.  To reproduce older runs add
+         <normalize_on_hydro_grid> 0 </normalize_on_hydro_grid> here, but only with such an
+         X-SCAPE: an older one stops on the unknown tag (no default in its main XML). -->
+    <CausalLiquefier>
+      <name>CausalLiquefier</name>
+      <dtau> 0.02 </dtau>
+      <dx> 0.3 </dx>
+      <dy> 0.3 </dy>
+      <deta> 0.2 </deta>
+      <tau_delay> 1.0 </tau_delay>
+      <time_relax> 0.1 </time_relax>
+      <d_diff> 0.08 </d_diff>
+      <width_delta> 0.1 </width_delta>
+    </CausalLiquefier>
+  </Liquefier>
+
+  <!-- Energy loss on MUSIC_1's medium.  Matter before Lbt (Matter sets the virtuality Lbt
+       takes over at Q0); <mutex>ON</mutex> arbitrates the handover.  recoil_on = 1 gives the
+       negative (hole) partons the liquefier also turns into droplets. -->
+  <Eloss>
+    <!-- <nThreads> -1 </nThreads>: the showers of an event in parallel (OpenMP), as many
+         threads as OMP_NUM_THREADS; X-SCAPE's main XML documents it.  Default 0 (serial).
+         Changes the events (own random streams per shower): one setting per campaign. -->
+    <deltaT> 0.1 </deltaT>
+    <maxT> 20 </maxT>
+    <!-- With a hydro (MUSIC) Matter and LBT replace tStart by the hydro's start time,
+         MUSIC's tau0 of the run (X-SCAPE tstart_hydro_tau0; recorded per event as
+         eloss_tstart): the medium interaction begins with the stored evolution, before it
+         the lookup is vacuum.  This value applies only without a hydro. -->
+    <tStart> 0.5 </tStart>
+    <mutex> ON </mutex>
+    <AddLiquefier> true </AddLiquefier>
+
+    <Matter>
+      <name> Matter </name>
+      <matter_on> 1 </matter_on>
+      <Q0> 2.0 </Q0>
+      <in_vac> 0 </in_vac>
+      <!-- the start time (MUSIC's tau0) at each point's own proper time, i.e. the events
+           of tStart 0 with MUSIC's lookup deciding (X-SCAPE 2026-10-28; default 0) -->
+      <tStart_at_point> 1 </tStart_at_point>
+      <recoil_on> 1 </recoil_on>
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <qhat0> -2.0 </qhat0>
+      <alphas> 0.25 </alphas>
+      <QhatParametrizationType> 1 </QhatParametrizationType>
+    </Matter>
+
+    <Lbt>
+      <name> Lbt </name>
+      <Q0> 2.0 </Q0>
+      <in_vac> 0 </in_vac>
+      <only_leading> 0 </only_leading>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <alphas> 0.25 </alphas>
+      <run_alphas> 1 </run_alphas>
+    </Lbt>
+  </Eloss>
+
+  <!-- Hydro Module 2: the jet leg.  Same strings as MUSIC_1 plus the droplets.  Its MUSIC
+       settings come from the first <Hydro><MUSIC> block; the tags here override them for
+       this instance only. -->
+  <Hydro>
+    <AddLiquefier> true </AddLiquefier>
+    <MUSIC>
+      <name>MUSIC_2</name>
+      <!-- The jet leg must build its freeze-out surface and hand it to the framework: it is
+           the surface iSS samples (<SoftParticlization><hydro_id> below). -->
+      <freeze_out_surface>1</freeze_out_surface>
+      <skip_surface>0</skip_surface>
+      <!-- Nothing reads the jet leg's evolution (the jets see MUSIC_1's medium, and there is
+           no evolution writer in C++): do not pass it to the framework, do not store it. -->
+      <dump_hydro_only>1</dump_hydro_only>
+      <store_evolution>0</store_evolution>
+      <!-- Not set here: <restart_from>MUSIC_1</restart_from> would start this leg from
+           MUSIC_1's state before the liquefier's tau_delay instead of from tau0 (faster).
+           It needs MUSIC_1's freeze-out surface as well (freeze_out_surface 1 in the first
+           block), since the surface before the checkpoint comes from MUSIC_1. -->
+    </MUSIC>
+  </Hydro>
+
+  <!-- Jet hadronization: Colorless, Pythia decays everything with tau0 < 10 mm/c (pi0, eta,
+       Sigma0, heavy flavour).  K0_S, Lambda and the hyperons stay.  Note that the bulk below
+       is at another decay level: iSS leaves pi0, eta, Sigma0 and K0 undecayed. -->
+  <JetHadronization>
+    <name>colorless</name>
+    <take_recoil>1</take_recoil>
+    <eCMforHadronization>200</eCMforHadronization>
+    <pythia_decays>on</pythia_decays>
+    <tau0Max>10.0</tau0Max>
+  </JetHadronization>
+
+  <!-- Soft particlization: iSS on the jet leg. -->
+  <SoftParticlization>
+    <!-- Reason 1: one hydro instance per run.  "first" (the default) is MUSIC_1, the
+         background without the wake; MUSIC_2 is the medium with the wake.  There is no
+         second pass for the other leg (JetScape.cc reads one <hydro_id>). -->
+    <hydro_id>MUSIC_2</hydro_id>
+    <iSS>
+      <hydro_mode>2</hydro_mode>
+      <!-- relative paths are those of a run from the build directory; run_in_workdir.sh
+           makes them absolute -->
+      <iSS_input_file>../external_packages/iSS/iSS_parameters.dat</iSS_input_file>
+      <iSS_working_path>.</iSS_working_path>
+      <iSS_table_path>../external_packages/iSS/iSS_tables</iSS_table_path>
+      <iSS_particle_table_path>../external_packages/iSS/iSS_tables</iSS_particle_table_path>
+      <afterburner_type>1</afterburner_type>
+      <include_deltaf_shear>1</include_deltaf_shear>
+      <include_deltaf_bulk>1</include_deltaf_bulk>
+      <deltaf_type>20</deltaf_type>
+      <!-- Reason 3: one sample.  iSS writes all samples one after the other, and the
+           final-state and HepMC writers keep no boundary between them. -->
+      <number_of_repeated_sampling>1</number_of_repeated_sampling>
+      <!-- Reason 4: both 1.  With EOS 91 iSS samples the SMASH hadron list and decays it only
+           if both are set (iSS FSSW.h); the main XML has 0 and 0, which hands the undecayed
+           resonances to the SMASH afterburner.  The decays are SMASH's channels, done by
+           iSS; what SMASH calls stable (width below 10 keV: pi0, eta, Sigma0, K0 and the
+           weakly decaying hadrons) stays. -->
+      <Perform_resonance_decays>1</Perform_resonance_decays>
+      <decay_smash_list>1</decay_smash_list>
+      <keep_primaries>0</keep_primaries>
+    </iSS>
+  </SoftParticlization>
+
+</jetscape>

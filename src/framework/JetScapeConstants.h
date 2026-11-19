@@ -100,6 +100,12 @@ static int bid = 5;
 /// Constant: Photon PDG code
 static int photonid = 22;
 
+/// Constant: Electron PDG code
+static int electronid = 11;
+
+/// Constant: Muon PDG code
+static int muonid = 13;
+
 /// Constant: Z boson PDG code
 static int Zid = 23;
 

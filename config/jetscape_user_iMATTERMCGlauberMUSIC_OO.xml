@@ -1,0 +1,233 @@
+<?xml version="1.0"?>
+
+<!-- Copyright (c) The JETSCAPE Collaboration, 2018 -->
+<!-- Modular, task-based framework for simulating all aspects of heavy-ion collisions -->
+<!-- For the list of contributors see AUTHORS. -->
+<!-- Report issues at https://github.com/JETSCAPE/JETSCAPE/issues -->
+<!-- or via email to bugs.jetscape@gmail.com -->
+<!-- Distributed under the GNU General Public License 3.0 (GPLv3 or later). -->
+<!-- See COPYING for details. -->
+
+<!--
+  O+O 200 GeV with initial-state radiation, for examples/custom_examples/PythiaIsrMUSIC.cc
+  (the default user XML there):
+
+    3dMCGlauber positions -> PythiaIsrGun -> iMATTER (ISR, backward to -maxT)
+       -> 3dMCGlauber strings (hard momentum subtracted) -> NullPreDynamics -> MUSIC
+       -> iSS;  Matter (in medium) from -maxT -> iColoredHadronization
+
+  The 3dMCGlauber and MUSIC settings are the tuned O+O set of
+  config/BulkFastTest/OO_one_event.xml (tuned at 200 GeV; tau_form_mean 0.5), except EOS 9
+  (as the Au+Au production: iSS decays the resonances itself), Subtract_hard_momentum 1
+  (ISR: the hard partons' momentum is taken from the colliding nucleons),
+  generateOnlyPositions 1 for the ISR and b <= 3 fm.  PythiaIsrMUSIC builds its task list
+  in C++, so enableAutomaticTaskListDetermination must stay false here.  The same chain from
+  the XML alone: <Hard><ISR/> (see JetScape::DetermineTaskListFromXML).
+
+  iMATTER reads Pythia's PDF tables from $PYTHIA8DIR/share/Pythia8/pdfdata, or next to
+  $PYTHIA8DATA.
+-->
+
+<jetscape>
+
+  <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
+
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 1 </nReuseHydro>
+
+  <vlevel> 0 </vlevel>
+
+  <nEvents> 10 </nEvents>
+
+  <Random>
+    <seed>1</seed>
+  </Random>
+
+  <outputFilename>Test_Out_OO</outputFilename>
+  <JetScapeWriterFinalStateHadronsAscii> on </JetScapeWriterFinalStateHadronsAscii>
+  <JetScapeWriterAscii> on </JetScapeWriterAscii>
+  <write_pthat> 1 </write_pthat>
+
+  <!-- Inital State Module  -->
+  <IS>
+    <MCGlauber>
+      <!--0: generates full event with binary collisions and strings-->
+      <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
+      <generateOnlyPositions>1</generateOnlyPositions>
+      <!--Collision system definitions-->
+      <projectile>O</projectile> <!--Projectile name-->
+      <target>O</target> <!--Target name-->
+      <sqrts>200</sqrts> <!--Center of mass energy in GeV-->
+      <!--b selects the centrality inside X-SCAPE (cenMin/cenMax act only in the standalone
+          3dMCGlauber). b <= 3 fm is about 0-20% of the O+O cross section (~1.4 b). With ISR
+          the nucleon pair of the hard scattering makes no string, so an event whose only
+          collision is the hard one may have no medium: keep b small enough.-->
+      <b_min>0.0</b_min> <!--Minimum impact parameter in fm-->
+      <b_max>3.0</b_max> <!--Maximum impact parameter in fm-->
+      <cenMin>0.0</cenMin> <!--Minimum centrality in %  (ignored inside X-SCAPE, see above)-->
+      <cenMax>80</cenMax> <!--Maximum centrality in % (ignored inside X-SCAPE, see above)-->
+      <nucleon_configuration_from_file>1</nucleon_configuration_from_file> <!--1: O16 configurations from nucleusConfigs (PGCM, with alpha clustering)-->
+      <useQuarks>1</useQuarks> <!--Switch to use valence quarks-->
+      <Q2>1.0</Q2> <!--Scale when evaluating the PDF-->
+      <shadowing_factor>0.0</shadowing_factor> <!--Shadowing factor for producing strings from multiple scatterings-->
+      <baryon_junctions>0</baryon_junctions> <!--0: baryon number assumed to be at string end, 1: baryon number transported assuming baryon junctions (at smaller x) see arXiv:nucl-th/9602027-->
+      <N_sea_partons>1</N_sea_partons> <!--Number of allowed soft partons-->
+      <d_min>0.9</d_min> <!--Minimum distance between two nucleons in fm-->
+      <lambdaB>0.2</lambdaB> <!--Strength of the baryon junction stopping-->
+      <BG>3.960</BG> <!--Gaussian width square for sampling the valence quark positions (GeV^2)-->
+      <!--1 with ISR: the hard partons' momentum is taken from the colliding nucleons
+          (valence quark; their remnants go to the jet hadronization, not to strings).
+          0 (config/BulkFastTest, no ISR) would count that energy twice.-->
+      <Subtract_hard_momentum>1</Subtract_hard_momentum>
+      <lambdaBs>0.0</lambdaBs> <!--Fraction of single-to-double junction stopping-->
+      <baryonInStringProb>0.0</baryonInStringProb> <!--Relative probility to put a baryon charge in the string rather than at the wounded nucleon remnant-->
+      <fluct_Nstrings_per_NN_collision>1</fluct_Nstrings_per_NN_collision> <!--Fluctuate number of strings produced per NN collision-->
+      <QCD_string_production_mode>1</QCD_string_production_mode> <!--1: strings are produced randomly in the binary collision list, 2: strings are produced at the last binary collision-->
+      <!--Rapidity loss parameters (only mode 4 supported in XML, other modes have to be set in mcglauber.input)-->
+      <rapidity_loss_method>4</rapidity_loss_method>
+      <ylossParam4At2>1.610</ylossParam4At2>
+      <ylossParam4At4>1.685</ylossParam4At4>
+      <ylossParam4At6>1.685</ylossParam4At6>
+      <ylossParam4At10>2.95</ylossParam4At10>
+      <ylossParam4var>0.682</ylossParam4var>
+      <remnant_energy_loss_fraction>0.536</remnant_energy_loss_fraction> <!--Nucleon remnant's energy loss fraction (fraction of string's y_loss) [0, 1]-->
+      <fluctuation_remnant_energy_loss_fraction>0</fluctuation_remnant_energy_loss_fraction>
+      <remnant_energy_loss_fraction_var>0.4</remnant_energy_loss_fraction_var>
+      <!--string evolution mode, tau_form = tau_form_mean [fm]-->
+      <!--1: deceleration with fixed (90%) rapidity loss (m/sigma = 1 fm, dtau = tau_form)-->
+      <!--2: deceleration with LEXUS/parameterized rapidity loss (both dtau and sigma fluctuate)-->
+      <!--3: deceleration with LEXUS/parameterized rapidity loss (m/sigma = 1 fm, dtau fluctuates)-->
+      <!--4: deceleration with LEXUS/parameterized rapidity loss (dtau = tau_form, m/sigma fluctuates)-->
+      <evolve_QCD_string_mode>4</evolve_QCD_string_mode>
+      <tau_form_mean>0.5</tau_form_mean> <!--Mean value for tau_form [fm]-->
+      <tau_form_fluct_gamma_beta>1.0</tau_form_fluct_gamma_beta> <!--Fluctuation parameter for the gamma distribution-->
+    </MCGlauber>
+
+    <grid_max_x> 15 </grid_max_x>
+    <grid_max_y> 15 </grid_max_y>
+    <grid_max_z> 6  </grid_max_z>
+    <grid_step_x> 0.3 </grid_step_x>
+    <grid_step_y> 0.3 </grid_step_y>
+    <grid_step_z> 0.2 </grid_step_z>
+  </IS>
+
+  <!-- Hard Process: PythiaIsrGun reads the PythiaGun block -->
+  <Hard>
+    <PythiaGun>
+      <name>PythiaGun</name>
+      <FSR_on>0</FSR_on>
+      <pTHatMin>20</pTHatMin>
+      <pTHatMax>40</pTHatMax>
+      <eCM>200</eCM>
+      <LinesToRead>
+        HardQCD:all = on
+      </LinesToRead>
+    </PythiaGun>
+  </Hard>
+
+  <!--Preequilibrium Dynamics Module: needed for MUSIC's string source (InitialProfile 131) -->
+  <Preequilibrium>
+    <tau0>0.0</tau0>
+    <taus>0.5</taus>
+    <evolutionInMemory>0</evolutionInMemory>
+    <NullPreDynamics> </NullPreDynamics>
+  </Preequilibrium>
+
+  <!-- Hydro  Module  -->
+  <Hydro>
+    <MUSIC>
+      <name>MUSIC</name>
+      <MUSIC_input_file>music_input</MUSIC_input_file>
+      <!--EOS used for the hydro evolution: 91 hotQCD EOS (SMASH list), 9 hotQCD EOS (UrQMD list), 20 NEOS-4D-->
+      <!--9, as the Au+Au production (config/BulkFastTest/OO_one_event.xml has 91): with 91
+          iSS samples the SMASH hadron list and leaves the resonance decays to SMASH (iSS
+          readindata.cpp), which is not run here; with 9 (UrQMD list) iSS decays them itself.-->
+      <EOS>9</EOS>
+      <!--InitialProfile = 42 for Trento + Pre-equilibrium or IPGlasma, 13 for the 3D Glauber initial condition-->
+      <InitialProfile>131</InitialProfile>
+      <!--beastMode = 0: double precision, constant time step-->
+      <!--beastMode = 1: float precision, constant time step-->
+      <!--beastMode = 2: float precision, increased time step after 4 fm/ (can be used for soft sector only runs, otherwise the change in stepsize will lead to errors)-->
+      <beastMode>1</beastMode>
+      <!--starting time of the hydrodynamic evolution after the pre-equilibrium phase-->
+      <Initial_time_tau_0>0.424</Initial_time_tau_0>
+
+      <!--evolution output/storage parameters-->
+      <output_evolution_to_file>0</output_evolution_to_file>
+      <output_evolution_to_memory>1</output_evolution_to_memory>
+      <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
+      <!--5 x Delta_Tau (0.02, music_input) = 0.1 fm/c between stored frames = the FNO4d dtau-->
+      <output_evolution_every_N_timesteps>5</output_evolution_every_N_timesteps>
+      <surface_in_memory>1</surface_in_memory>
+      <!--0: MUSIC fills the framework medium Matter reads-->
+      <dump_hydro_only>0</dump_hydro_only>
+      <!--hand the freeze-out surface to the framework (iSS)-->
+      <skip_surface>0</skip_surface>
+      <freeze_out_surface>1</freeze_out_surface>
+
+      <!--shear viscosity settings-->
+      <shear_viscosity_eta_over_s>0.108</shear_viscosity_eta_over_s>
+      <T_dependent_Shear_to_S_ratio>3</T_dependent_Shear_to_S_ratio>
+      <!-- Parameters for parametrization 3, the names for these parameters are different compared to JETSCAPE-->
+      <shear_viscosity_3_T_kink_in_GeV>0.206</shear_viscosity_3_T_kink_in_GeV>
+      <shear_viscosity_3_at_kink>0.108</shear_viscosity_3_at_kink>
+      <shear_viscosity_3_low_T_slope_in_GeV>-1.999</shear_viscosity_3_low_T_slope_in_GeV>
+      <shear_viscosity_3_high_T_slope_in_GeV>1.999</shear_viscosity_3_high_T_slope_in_GeV>
+      <!--mu_B dependent shear viscosity settings-->
+      <muB_dependent_Shear_to_S_ratio>0</muB_dependent_Shear_to_S_ratio>
+      <!--bulk viscosity settings-->
+      <temperature_dependent_bulk_viscosity>3</temperature_dependent_bulk_viscosity>
+      <!-- Parameters for parametrization 3, the names for these parameters are different compared to JETSCAPE-->
+      <bulk_viscosity_3_max>0.092</bulk_viscosity_3_max>
+      <bulk_viscosity_3_T_peak_in_GeV>0.180</bulk_viscosity_3_T_peak_in_GeV>
+      <bulk_viscosity_3_width_in_GeV>0.067</bulk_viscosity_3_width_in_GeV>
+      <bulk_viscosity_3_lambda_asymm>-0.8</bulk_viscosity_3_lambda_asymm>
+      <!--higher order transport coefficients-->
+      <Include_second_order_terms>1</Include_second_order_terms>
+      <!--Conserved charge settings-->
+      <Include_Rhob>0</Include_Rhob>
+      <Include_QS>0</Include_QS>
+      <!--freeze-out parameters-->
+      <!--0: freeze out at freezeout_temperature; eps_switch is then ignored-->
+      <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
+      <freezeout_temperature>0.15</freezeout_temperature>
+      <eps_switch>0.12</eps_switch>
+      <Do_FreezeOut_lowtemp>1</Do_FreezeOut_lowtemp>
+      <average_surface_over_this_many_time_steps>5</average_surface_over_this_many_time_steps>
+      <!--perform CooperFrye Freezout in MUSIC, not needed when iSS module is used-->
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
+      <!--source term parameters for InitialProfile 13-->
+      <string_source_sigma_x>0.207</string_source_sigma_x>
+      <string_source_sigma_eta>0.458</string_source_sigma_eta>
+      <stringPreEqFlowFactor>0.0</stringPreEqFlowFactor>
+    </MUSIC>
+  </Hydro>
+
+  <!--Eloss Modules: maxT is also the ISR range (iMATTER from 0 to -maxT) -->
+  <Eloss>
+    <deltaT> 0.1 </deltaT>
+    <maxT> 50 </maxT>
+    <tStart> 0.5 </tStart>
+    <Matter>
+      <Q0> 2.0 </Q0>
+      <in_vac> 0 </in_vac>
+      <vir_factor> 0.25 </vir_factor>
+      <recoil_on> 0 </recoil_on>
+      <broadening_on> 0 </broadening_on>
+      <brick_med> 0 </brick_med>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <qhat0> -2.0 </qhat0>
+      <alphas> 0.25 </alphas>
+      <QhatParametrizationType> 1 </QhatParametrizationType>
+    </Matter>
+  </Eloss>
+
+  <!-- Particlization Module  -->
+  <SoftParticlization>
+    <iSS>
+      <number_of_repeated_sampling>10</number_of_repeated_sampling>
+      <Perform_resonance_decays>1</Perform_resonance_decays>
+    </iSS>
+  </SoftParticlization>
+
+</jetscape>

@@ -42,39 +42,39 @@ for file in "$repo_dir/LBT-tables-split-archive"/*.tar.gz; do
     fi
 done
 
-# an associative array (map) for base names. eg. myFile.part0 and
-# myFile.part1 will share the base name myFile
-declare -A base_names
+# the unique base names: myFile.part0 and myFile.part1 share the base name myFile.
+# A sorted list instead of an associative array, which the bash 3.2 of macOS lacks.
+base_names=$(
+    for file in "$split_extract_dir"/*; do
+        filename=$(basename "$file")
+        if [[ "$filename" =~ \.part([0-9]+)$ ]]; then
+            echo "${filename%.part*}"
+        else
+            echo "Error: '$filename' - all files must end with .partN, where N is a positive integer." >&2
+        fi
+    done | sort -u
+)
 
-# populate the base_names map with the unique base names
-for file in "$split_extract_dir"/*; do
-    filename=$(basename "$file")
-    if [[ "$filename" =~ \.part([0-9]+)$ ]]; then
-        base_name="${filename%.part*}"
-        base_names["$base_name"]=1
-    else
-        echo "Error: '$filename' - all files must end with .partN, where N is a positive integer."
-    fi
-done
-
-for base_name in "${!base_names[@]}"; do
-    # sort parts numerically (not lexicographically) so a .part10 will not be appended before .part2
-    part_files=($(ls "$split_extract_dir"/"$base_name".part* 2>/dev/null | sort -V))
+while IFS= read -r base_name; do
+    [ -n "$base_name" ] || continue
+    output_file="$unsplit_dir/$base_name"
 
     # if a file is small enough that it has only one part (.part0), copy it to the unsplit directory
-    if [ ${#part_files[@]} -eq 1 ] && [[ "${part_files[0]}" == "$split_extract_dir/$base_name.part0" ]]; then
-        cp "${part_files[0]}" "$unsplit_dir/$base_name"
-        echo "Copied '${part_files[0]}' to '$unsplit_dir/$base_name'"
+    if [ -f "$split_extract_dir/$base_name.part0" ] && [ ! -f "$split_extract_dir/$base_name.part1" ]; then
+        cp "$split_extract_dir/$base_name.part0" "$output_file"
+        echo "Copied '$split_extract_dir/$base_name.part0' to '$output_file'"
     else
-        # concatenate the multiple parts, writing the file to the unsplit directory
-        output_file="$unsplit_dir/$base_name"
+        # concatenate the parts in numerical order (.part2 before .part10), counting up from
+        # .part0; not with sort -V, which orders them as text on macOS
         > "$output_file"
-        for part in "${part_files[@]}"; do
-            cat "$part" >> "$output_file"
-            echo "Added '$part' to '$output_file'"
+        i=0
+        while [ -f "$split_extract_dir/$base_name.part$i" ]; do
+            cat "$split_extract_dir/$base_name.part$i" >> "$output_file"
+            echo "Added '$split_extract_dir/$base_name.part$i' to '$output_file'"
+            i=$((i + 1))
         done
     fi
-done
+done <<< "$base_names"
 
 # remove the temporary extracted split files
 rm -rf tmp

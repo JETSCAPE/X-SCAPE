@@ -120,8 +120,13 @@ endif()
 file(GLOB readersources reader/*.cc)
 set(SOURCES ${SOURCES} ${readersources})
 
+if(USE_ROOT AND ROOT_FOUND)
+  set(SOURCES ${SOURCES} root/RootBulkWriter.cc)
+  set(SOURCES ${SOURCES} root/FastRootBulkWriter.cc)
+endif()
+
 if("${HEPMC_FOUND}")
-  if(USE_ROOT)
+  if(USE_ROOT AND ROOT_FOUND)
     set(SOURCES ${SOURCES} root/JetScapeWriterRootHepMC.cc)
   endif()
 endif()
@@ -129,6 +134,21 @@ endif()
 # ##############################################################################
 
 add_library(JetScape SHARED ${SOURCES})
+
+# music4gpu's Advance/Evolve classes gain extra members under MUSIC_USE_GPU (see
+# external_packages/music4gpu/src/advance.h), which USE_METAL / USE_CUDA enable.
+# MusicWrapper.cc includes those headers, so it MUST see the same macro as the
+# music library — otherwise the class layouts diverge across translation units
+# (ODR violation) and e.g. Evolve::surfaceCellVec_ is read at the wrong offset,
+# yielding a garbage surface-cell count that crashes
+# PassHydroSurfaceToFramework().
+if(USE_METAL)
+  target_compile_definitions(JetScape PRIVATE USE_METAL)
+endif()
+if(USE_CUDA)
+  target_compile_definitions(JetScape PRIVATE USE_CUDA)
+endif()
+
 target_link_libraries(
   JetScape
   JetScapeThird
@@ -138,7 +158,7 @@ target_link_libraries(
   ${Boost_LIBRARIES}
   ${GSL_LIBRARIES})
 
-if(USE_ROOT)
+if(USE_ROOT AND ROOT_FOUND)
   target_link_libraries(JetScape ${ROOT_LIBRARIES})
 endif()
 
@@ -148,7 +168,7 @@ endif()
 
 if(${HEPMC_FOUND})
   target_link_libraries(JetScape -L${HEPMC_LIB_DIR} -lHepMC3)
-  if(USE_ROOT)
+  if(USE_ROOT AND ROOT_FOUND)
     target_link_libraries(JetScape ${ROOT_LIBRARIES} -L${HEPMC_LIB_DIR}
                           -lHepMC3 -lHepMC3rootIO)
   endif()
@@ -177,5 +197,11 @@ endif()
 if(USE_SMASH)
   target_link_libraries(JetScape ${SMASH_LIBRARIES})
 endif()
+
+# -------------------------------------------------------------------------
+# Build-tree export — moved to the top-level CMakeLists.txt so it runs after all
+# optional add_subdirectory() calls have defined their targets. The
+# configure_file() for JetScapeConfig.cmake is also there.
+# -------------------------------------------------------------------------
 
 # -------------------------------------------------------------------------

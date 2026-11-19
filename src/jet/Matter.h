@@ -37,6 +37,10 @@ class Matter : public JetEnergyLossModule<
   void DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton> &pIn,
                     vector<Parton> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
+  //! Its random streams (GetMt19937Generator, ran0's Ran2State) and colour tags
+  //! (the instance's block) are its own once JetEnergyLossManager isolates the
+  //! showers; the static tables are only read after InitTask.
+  bool SupportsParallelShowers() const override { return true; }
   static void Dump_pIn_info(int i, vector<Parton> &pIn);
 
   double generate_L(double form_time);
@@ -101,6 +105,9 @@ class Matter : public JetEnergyLossModule<
   double length = 0.0;
 
   unsigned int MaxColor = 0;
+  // A new colour tag: from the event's HardProcess::NextColorTag (unique in
+  // the event), or ++MaxColor without a hard process.
+  unsigned int NewColorTag();
 
   // SC: for interface with hydro
   double fillQhatTab(double y);
@@ -120,6 +127,11 @@ class Matter : public JetEnergyLossModule<
   double qhatTab2D[dimQhatTab][dimQhatTab] = {{0.0}};
 
   double tStart;  // = 0.6;
+  // <tStart_at_point>: 0 (default) cuts the recoil steps and the qhat table at
+  // tStart cosh(y), y the spatial rapidity of the parton's current position;
+  // 1 cuts each point at its own proper time, tau < tStart (BeforeTStart).
+  bool tStart_at_point = false;
+  bool BeforeTStart(double t, double z) const;
   int iEvent;
   bool debug_flag = 0;
   long NUM1;
@@ -175,6 +187,20 @@ class Matter : public JetEnergyLossModule<
   void transback(double v[4], double p[4]);
   void rotate(double px, double py, double pz, double pr[4], int icc);
   float ran0(long *idum);
+
+  //! ran0's state (Numerical Recipes' ran2): one for every Matter instance of
+  //! the process, as the function statics it replaces, unless UseOwnStreams
+  //! gave this instance (an additional scattering's clone) its own
+  struct Ran2State {
+    long idum2 = 123456789;
+    long iy = 0;
+    long iv[32] = {};
+  };
+  static std::shared_ptr<Ran2State> SharedRan2State();
+  std::shared_ptr<Ran2State> ran2_ = SharedRan2State();
+
+  void UseOwnStreams(int scatter, unsigned int seed) override;
+
   double solve_alphas(double var_qhat, double var_ener, double var_temp);
   double fnc0_alphas(double var_alphas, double var_qhat, double var_ener,
                      double var_temp);

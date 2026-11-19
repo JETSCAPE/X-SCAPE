@@ -230,6 +230,18 @@ class SurfaceCellInfo {
   ~SurfaceCellInfo(){};
 };
 
+/**
+ * @brief Parameters for building a constant-temperature surface from a
+ * stored evolution (FluidDynamics::FindSurfaceFromEvolution). Non-positive
+ * lattice spacings keep SurfaceFinder's defaults (0.1, 0.2, 0.2).
+ */
+struct SurfaceFinderParams {
+  Jetscape::real T_sw = 0.15;  ///< switching temperature [GeV]
+  Jetscape::real dtau = 0.;    ///< Cornelius lattice dtau [fm]
+  Jetscape::real dx = 0.;      ///< Cornelius lattice dx = dy [fm]
+  Jetscape::real deta = 0.;    ///< Cornelius lattice deta
+};
+
 }  // namespace Jetscape
 
 #endif  // SURFACECELLINFO_H

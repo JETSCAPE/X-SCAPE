@@ -18,7 +18,19 @@
 #include "JetScapeLogger.h"
 #include "JetScapeSignalManager.h"
 #include "MakeUniqueHelper.h"
+#include "HardProcess.h"
+#include "JetScapeTaskSupport.h"
+#include "BulkDynamicsManager.h"
+#include <algorithm>
+#include <cstdint>
+#include <exception>
+#include <numeric>
+#include <random>
 #include <string>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include <iostream>
 #include <vector>
@@ -53,6 +65,10 @@ void JetEnergyLossManager::ClearTask() {
   for (int i = 1; i < n; i++)
     EraseTaskLast();
 
+  if (noPartons_ && GetNumberOfTasks() > 0)
+    GetTaskAt(0)->SetActive(true);
+  noPartons_ = false;
+
   // Clean Up not really working with iterators (see also above!!!) Some logic
   // not clear for me.
   JetScapeSignalManager::Instance()->CleanUp();
@@ -73,6 +89,20 @@ void JetEnergyLossManager::Init() {
   JSINFO << "Found " << GetNumberOfTasks()
          << " Eloss Manager Tasks/Modules Initialize them ... ";
   JetScapeTask::InitTasks();
+
+  nThreads_ = GetXMLElementInt({"Eloss", "nThreads"}, false);
+  if (nThreads_ != 0) {
+#ifdef _OPENMP
+    JSINFO << "Showers of an event run in parallel (<Eloss><nThreads> = "
+           << nThreads_
+           << "): " << (nThreads_ > 0 ? nThreads_ : omp_get_max_threads())
+           << " OpenMP threads";
+#else
+    JSWARN << "<Eloss><nThreads> = " << nThreads_
+           << ", but X-SCAPE was built without OpenMP: the showers are "
+              "isolated as for parallel running, but run one after another";
+#endif
+  }
 
   JSINFO << "Connect JetEnergyLossManager Signal to Hard Process ...";
   JetScapeSignalManager::Instance()->ConnectGetHardPartonListSignal(
@@ -109,7 +139,20 @@ void JetEnergyLossManager::MakeCopies() {
 
       if (!useShower) {
         VERBOSE(3) << " Number of Hard Partons = " << hp.size();
+        // Every copy (and its modules' clones) registers a task number, and a
+        // module seeds its engine from it.  The copies of additional
+        // scatterings' partons (after the trigger's) take numbers from a range
+        // of their own, and the counter is put back, so the later tasks get
+        // the numbers, and the seeds, they would get without them.
+        auto hard =
+            JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+        auto *support = JetScapeTaskSupport::Instance();
+        int resume = -1;
         for (int i = 1; i < hp.size(); i++) {
+          if (resume < 0 && hard && hard->GetHardPartonScatter(i) > 0) {
+            resume = support->GetNextTaskNumber();
+            support->SetNextTaskNumber(extra_task_number_);
+          }
           JSDEBUG << "Create the " << i
                   << " th copy because number of intital hard partons = "
                   << hp.size();
@@ -124,6 +167,10 @@ void JetEnergyLossManager::MakeCopies() {
             jloss_copy->add_a_liquefier(jloss_org->get_liquefier().lock());
           }
           Add(jloss_copy);
+        }
+        if (resume >= 0) {
+          extra_task_number_ = support->GetNextTaskNumber();
+          support->SetNextTaskNumber(resume);
         }
       } else {
         VERBOSE(3) << " Number of of Parton Showers = " << ps.size();
@@ -165,8 +212,20 @@ void JetEnergyLossManager::MakeCopies() {
               hp.at(n));
           n++;
         }
+        parallel_ = UseParallelShowers();
+        SeparateExtraEngines(parallel_);
+        SetupParallelShowers(parallel_);
+      } else if (GetGetHardPartonListConnected()) {
+        // nothing to shower: the task would stop the run for want of a parton
+        noPartons_ = true;
+        parallel_ = false;
+        if (GetNumberOfTasks() > 0)
+          GetTaskAt(0)->SetActive(false);
+        VERBOSE(3) << " No hard partons in this event: no energy loss";
       }
     } else {
+      parallel_ = false;
+      SetupParallelShowers(false);
       if (GetGetHardPartonListConnected() && ps.size() > 0) {
         int n = 0;
         for (auto it : GetTaskList()) {
@@ -184,8 +243,164 @@ void JetEnergyLossManager::MakeCopies() {
   }
 }
 
+int JetEnergyLossManager::extra_task_number_ = 1 << 28;
+
+void JetEnergyLossManager::SeparateExtraEngines(bool all_showers) {
+  auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+  if (!hard && !all_showers)
+    return;
+  auto mix = [](uint64_t z) {  // splitmix64
+    z += 0x9e3779b97f4a7c15ULL;
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+    return z ^ (z >> 31);
+  };
+  const uint64_t base =
+      mix(mix(0x65787472615f7368ULL ^ JetScapeTaskSupport::GetRandomSeed()) ^
+          static_cast<uint64_t>(GetCurrentEvent()));
+  int n = 0;
+  for (auto it : GetTaskList()) {
+    const int scatter = hard ? hard->GetHardPartonScatter(n) : 0;
+    if (scatter > 0 || all_showers) {
+      uint64_t k = 0;
+      for (auto sub : it->GetTaskList()) {
+        auto m = dynamic_pointer_cast<JetScapeModuleBase>(sub);
+        if (m)
+          m->UseOwnStreams(scatter,
+                           static_cast<unsigned int>(
+                               mix(mix(base ^ static_cast<uint64_t>(n)) ^ k)));
+        ++k;
+      }
+    }
+    ++n;
+  }
+}
+
+bool JetEnergyLossManager::UseParallelShowers() {
+  if (nThreads_ == 0)
+    return false;
+  std::string why;
+  for (auto it : GetTaskList()) {
+    auto jloss = dynamic_pointer_cast<JetEnergyLoss>(it);
+    if (!jloss) {
+      why = "a task of the manager is not a JetEnergyLoss";
+    } else if (jloss->IsTimeStepped()) {
+      why = "the showers are time stepped (main clock)";
+    } else if (jloss->GetPartonShowerGenerator()) {
+      why = "a PartonShowerGenerator is attached";
+    } else {
+      for (auto sub : jloss->GetTaskList()) {
+        auto m = dynamic_pointer_cast<JetScapeModuleBase>(sub);
+        if (!m || !m->SupportsParallelShowers()) {
+          why = "energy-loss module " + sub->GetId() +
+                " does not support parallel showers";
+          break;
+        }
+      }
+    }
+    if (!why.empty())
+      break;
+  }
+  // The bulk manager's query of its hydros only reads them; below Tc it asks
+  // the hadronic medium (SMASH initial state or afterburner), which is not
+  // checked for concurrent queries.
+  auto bulk = JetScapeSignalManager::Instance()->GetBulkPointer().lock();
+  if (why.empty() && bulk)
+    for (auto it : bulk->GetTaskList())
+      if (!dynamic_pointer_cast<FluidDynamics>(it)) {
+        why = "the bulk manager holds a module other than hydro (" +
+              it->GetId() + ")";
+        break;
+      }
+  if (why.empty())
+    return true;
+  if (!parallelWarned_) {
+    JSWARN << "<Eloss><nThreads> = " << nThreads_
+           << " ignored, the showers run serially: " << why;
+    parallelWarned_ = true;
+  }
+  return false;
+}
+
+void JetEnergyLossManager::SetupParallelShowers(bool on) {
+  if (on) {
+    auto hard =
+        JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+    if (hard)
+      hard->ReserveColorTagBlocks(GetNumberOfTasks());
+  }
+  int n = 0;
+  for (auto it : GetTaskList()) {
+    auto jloss = dynamic_pointer_cast<JetEnergyLoss>(it);
+    if (!jloss)
+      continue;
+    jloss->SetParallelShower(on);
+    for (auto sub : jloss->GetTaskList()) {
+      auto m = dynamic_pointer_cast<JetScapeModuleBase>(sub);
+      if (m)
+        m->SetColorTagBlock(on ? n : -1);
+    }
+    ++n;
+  }
+}
+
+void JetEnergyLossManager::ExecuteTasks() {
+  if (!parallel_) {
+    JetScapeModuleBase::ExecuteTasks();
+    return;
+  }
+  // the showers JetScapeModuleBase::ExecuteTasks would run, in its order
+  std::vector<shared_ptr<JetEnergyLoss>> showers;
+  for (auto it : GetTaskList()) {
+    auto jloss = dynamic_pointer_cast<JetEnergyLoss>(it);
+    if (jloss && jloss->GetActive() && !jloss->IsTimeStepped())
+      showers.push_back(jloss);
+  }
+  const int nShowers = static_cast<int>(showers.size());
+  // Start the most energetic showers first: they take longest, and the soft
+  // ones fill in around them.  Only the order the threads pick them up in;
+  // the results do not depend on it.
+  std::vector<double> energy(nShowers, 0.);
+  for (int i = 0; i < nShowers; ++i) {
+    auto p = showers[i]->GetShowerInitiatingParton();
+    if (p)
+      energy[i] = p->e();
+  }
+  std::vector<int> order(nShowers);
+  std::iota(order.begin(), order.end(), 0);
+  std::stable_sort(order.begin(), order.end(),
+                   [&](int a, int b) { return energy[a] > energy[b]; });
+
+  std::exception_ptr error;
+#ifdef _OPENMP
+  const int nThreads = nThreads_ > 0 ? nThreads_ : omp_get_max_threads();
+#pragma omp parallel for schedule(dynamic, 1) num_threads(nThreads)
+#endif
+  for (int i = 0; i < nShowers; ++i) {
+    try {
+      showers[order[i]]->Exec();
+    } catch (...) {
+#ifdef _OPENMP
+#pragma omp critical(JetEnergyLossManager_error)
+#endif
+      {
+        if (!error)
+          error = std::current_exception();
+      }
+    }
+  }
+  if (error)
+    std::rethrow_exception(error);
+
+  // what the showers would have handed on while running, in the serial order
+  for (auto &jloss : showers)
+    jloss->FlushParallelOutput();
+}
+
 void JetEnergyLossManager::GetFinalStatePartons(
     vector<vector<shared_ptr<Parton>>> &fPartons) {
+  if (noPartons_)
+    return;
   for (auto it : GetTaskList()) {
     fPartons.push_back(dynamic_pointer_cast<JetEnergyLoss>(it)
                            ->GetShower()
@@ -276,7 +491,8 @@ void JetEnergyLossManager::CalculateTime() {
       << GetModuleCurrentTime();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
 
-  JetScapeModuleBase::CalculateTimeTasks();
+  if (!noPartons_)
+    JetScapeModuleBase::CalculateTimeTasks();
 }
 
 void JetEnergyLossManager::ExecTime() {
@@ -285,7 +501,8 @@ void JetEnergyLossManager::ExecTime() {
              << " Thread Id = " << this_thread::get_id();
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
 
-  JetScapeModuleBase::ExecTimeTasks();
+  if (!noPartons_)
+    JetScapeModuleBase::ExecTimeTasks();
 }
 
 void JetEnergyLossManager::InitPerEvent() {
@@ -294,7 +511,8 @@ void JetEnergyLossManager::InitPerEvent() {
 
   MakeCopies();
 
-  JetScapeModuleBase::InitPerEventTasks();
+  if (!noPartons_)
+    JetScapeModuleBase::InitPerEventTasks();
 }
 
 void JetEnergyLossManager::FinishPerEvent() {
@@ -302,7 +520,8 @@ void JetEnergyLossManager::FinishPerEvent() {
       << "FinishPerEvent JetEnergyLoss Manager when used per timestep ...";
   VERBOSE(3) << "Task Id = " << this_thread::get_id();
 
-  JetScapeModuleBase::FinishPerEventTasks();
+  if (!noPartons_)
+    JetScapeModuleBase::FinishPerEventTasks();
 
   // JP: Quick fix, to be discussed, similar to writer, clear is only called for
   // active tasks, so call here directly ...

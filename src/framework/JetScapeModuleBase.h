@@ -218,6 +218,51 @@ class JetScapeModuleBase
    */
   shared_ptr<std::mt19937> GetMt19937Generator();
 
+  /**
+   * @brief Replaces the module's random engine (e.g. a per-event clone that
+   * must not draw from the engine it shares with its original).
+   */
+  void SetMt19937Generator(shared_ptr<std::mt19937> g) {
+    mt19937_generator_ = std::move(g);
+  }
+
+  /**
+   * @brief Makes this module instance draw from random streams of its own,
+   * seeded with ``seed``, and work for hard scattering ``scatter`` (> 0: an
+   * additional one, see HardProcess::GetHardPartonScatter).  The default gives
+   * it a new engine; modules with more random state (Matter's ran0) override
+   * it.  Used by JetEnergyLossManager for the showers of additional
+   * scatterings, so they do not change the triggering scattering's.
+   */
+  virtual void UseOwnStreams(int scatter, unsigned int seed) {
+    hard_scatter_ = scatter;
+    SetMt19937Generator(std::make_shared<std::mt19937>(seed));
+  }
+
+  /**
+   * @brief The hard scattering whose partons this instance handles (0: the
+   * triggering one, the default); colour tags are counted per scattering.
+   */
+  int GetHardScatter() const { return hard_scatter_; }
+
+  /**
+   * @brief The block of colour tags this instance draws from (-1: none, the
+   * default, i.e. its scattering's counter; see HardProcess::NextColorTag).
+   * Set by JetEnergyLossManager when the showers run in parallel
+   * (<Eloss><nThreads>), so every shower has a counter of its own.
+   */
+  int GetColorTagBlock() const { return color_tag_block_; }
+  void SetColorTagBlock(int block) { color_tag_block_ = block; }
+
+  /**
+   * @brief Whether this energy-loss module may shower in parallel with other
+   * instances of itself (JetEnergyLossManager, <Eloss><nThreads>): no state
+   * written during the event is shared between instances, except through
+   * GetMt19937Generator, UseOwnStreams and GetColorTagBlock.  Modules that do
+   * not declare it keep the showers serial.
+   */
+  virtual bool SupportsParallelShowers() const { return false; }
+
   /** Helper functions for XML parsing, wrapping functionality in JetScapeXML:
    */
 
@@ -304,6 +349,8 @@ class JetScapeModuleBase
   std::string xml_user_file_name;
   static int current_event;
   shared_ptr<std::mt19937> mt19937_generator_;
+  int hard_scatter_ = 0;
+  int color_tag_block_ = -1;
   // bool multiThread = false;
 
   /// Decides whether the module evolves in time steps

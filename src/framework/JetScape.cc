@@ -26,8 +26,16 @@
 #include "CausalLiquefier.h"
 #include "HadronicLiquefier.h"
 #include "HadronicEMT.h"
+#ifdef USE_ROOT
+#include "RootBulkWriter.h"
+#include "FastRootBulkWriter.h"
+#endif
 
 #include "QueryHistory.h"
+#include "IsrManager.h"
+#include "IsrJet.h"
+#include "IsrShowerPSG.h"
+#include "iMATTER.h"
 
 #ifdef USE_HEPMC
 #include "JetScapeWriterHepMC.h"
@@ -69,7 +77,7 @@ JetScape::~JetScape() {
   // not needed, use weak_ptr in JetScapeSignalManager class (=not owning)
 }
 
-void JetScape::Show() { ShowXscapeBanner(); }
+void JetScape::Show() { ShowXscapeBannerModern(); }
 
 //________________________________________________________________
 void JetScape::Init() {
@@ -99,6 +107,25 @@ void JetScape::Init() {
   }
 
   QueryHistory::Instance()->AddMainTask(shared_from_this());
+
+  // With ISR the hard process shapes the medium: the strings are made from
+  // what the hard scattering left (MCGlauberGenString subtracts its partons'
+  // momentum), so a hydro event belongs to one hard event and is never reused.
+  if (reuse_hydro_) {
+    for (auto it : GetTaskList()) {
+      if (!dynamic_pointer_cast<HardProcess>(it))
+        continue;
+      for (auto itt : it->GetTaskList()) {
+        if (dynamic_pointer_cast<IsrManager>(itt)) {
+          JSWARN << "setReuseHydro is not allowed with initial-state radiation "
+                    "(an IsrManager under the hard process): the medium "
+                    "depends on each hard event; set <setReuseHydro> false";
+          throw std::runtime_error(
+              "Hydro reuse is not allowed with initial-state radiation.");
+        }
+      }
+    }
+  }
 
   // Has to be called explicitly since not really fully recursively (if ever
   // needed) So --> JetScape is "Task Manager" of all modules ...
@@ -269,6 +296,71 @@ void JetScape::DetermineTaskListFromXML() {
     elementXML2 = elementXML2->NextSiblingElement();
   }
 
+  // Initial-state radiation: a <Hard><ISR> block switches the hard process to
+  // the ISR chain of examples/custom_examples/PythiaIsrMUSIC.cc, built here
+  // from the XML: PythiaIsrGun (settings from <Hard><PythiaGun>) with
+  //   IsrManager -> IsrJet (IsrShowerPSG) -> iMATTER   backward, 0 -> -maxT
+  //   MCGlauberGenString                                3dMCGlauber strings
+  //                                                     after the hard momentum
+  //                                                     is subtracted
+  // and the final-state shower (<Eloss>) starting at -maxT instead of 0.  It
+  // needs <IS><MCGlauber> with <generateOnlyPositions>1 and a
+  // <Preequilibrium> module for MUSIC's string initial condition.
+  bool isr = false;
+  double isr_max_t = 0.0, isr_delta_t = 0.0;
+  {
+    auto *hardXML =
+        JetScapeXML::Instance()->GetXMLRootUser()->FirstChildElement("Hard");
+    if (hardXML && hardXML->FirstChildElement("ISR")) {
+      isr = true;
+      isr_max_t = GetXMLElementDouble({"Eloss", "maxT"});
+      isr_delta_t = GetXMLElementDouble({"Eloss", "deltaT"});
+      // <ISR><maxT>/<deltaT> > 0 override the <Eloss> values
+      double v = GetXMLElementDouble({"Hard", "ISR", "maxT"});
+      if (v > 0.0)
+        isr_max_t = v;
+      v = GetXMLElementDouble({"Hard", "ISR", "deltaT"});
+      if (v > 0.0)
+        isr_delta_t = v;
+      if (!(isr_max_t > 0.0) || !(isr_delta_t > 0.0)) {
+        JSWARN << "<Hard><ISR>: maxT = " << isr_max_t
+               << " and deltaT = " << isr_delta_t << " must be positive";
+        exit(-1);
+      }
+      // The task list follows the XML order, and PythiaIsrGun samples its
+      // vertex from 3dMCGlauber's collisions of this event.
+      bool is_seen = false;
+      for (auto *e =
+               JetScapeXML::Instance()->GetXMLRootUser()->FirstChildElement();
+           e && e != hardXML; e = e->NextSiblingElement())
+        if (std::string(e->Name()) == "IS")
+          is_seen = true;
+      if (!is_seen) {
+        JSWARN << "<Hard><ISR> needs <IS> before <Hard> in the user XML (the "
+                  "task list follows the XML order)";
+        exit(-1);
+      }
+      if (GetXMLElementInt({"IS", "MCGlauber", "generateOnlyPositions"}) != 1) {
+        JSWARN << "<Hard><ISR> needs <IS><MCGlauber><generateOnlyPositions>1 "
+                  "(the strings are made after the ISR, by MCGlauberGenString)";
+        exit(-1);
+      }
+      // Without the subtraction 3dMCGlauber zeroes the hard momentum: the
+      // hard partons' valence quark keeps it in the strings, and the hard
+      // pair's remnants make strings although iColoredHadronization also
+      // hadronizes them -- the energy is counted twice.
+      if (GetXMLElementInt({"IS", "MCGlauber", "Subtract_hard_momentum"}) !=
+          1) {
+        JSWARN << "<Hard><ISR> with <IS><MCGlauber><Subtract_hard_momentum> "
+                  "!= 1: the hard partons' momentum is not subtracted from "
+                  "the strings, so energy is counted twice";
+      }
+      JSINFO << "JetScape::DetermineTaskList() -- ISR on: iMATTER from 0 to "
+             << -isr_max_t << " fm/c in steps of " << -isr_delta_t
+             << ", final-state shower from " << -isr_max_t << " fm/c";
+    }
+  }
+
   // Loop through and create all modules
   tinyxml2::XMLElement *element =
       (tinyxml2::XMLElement *)JetScapeXML::Instance()
@@ -364,8 +456,37 @@ void JetScape::DetermineTaskListFromXML() {
                       "PGun to task list.";
           }
         }
-        //   - PythiaGun
-        else if (childElementName == "PythiaGun") {
+        //   - PythiaGun, or with <ISR> PythiaIsrGun + the ISR chain
+        else if (childElementName == "PythiaGun" && isr) {
+          auto pythiaIsrGun =
+              JetScapeModuleFactory::createInstance("PythiaIsrGun");
+          auto genStrings =
+              JetScapeModuleFactory::createInstance("MCGlauberGenString");
+          if (!pythiaIsrGun || !genStrings) {
+            JSWARN << "<Hard><ISR> needs PythiaIsrGun and MCGlauberGenString "
+                      "(X-SCAPE built with -DUSE_3DGlauber=ON)";
+            exit(-1);
+          }
+          auto isrManager = make_shared<IsrManager>();
+          auto isrJloss = make_shared<IsrJet>();
+          auto isrPSG = make_shared<IsrShowerPSG>();
+          auto imatter = make_shared<iMATTER>();
+          // iMATTER showers the initial-state partons backward in time
+          isrJloss->SetDeltaT(-isr_delta_t);
+          isrJloss->SetStartT(0);
+          isrJloss->SetMaxT(-isr_max_t);
+          imatter->SetMaxT(-isr_max_t);
+          isrJloss->AddPartonShowerGenerator(isrPSG);
+          isrJloss->Add(imatter);
+          isrManager->Add(isrJloss);
+          // order matters: the ISR first, then the strings from what is left
+          pythiaIsrGun->Add(isrManager);
+          pythiaIsrGun->Add(genStrings);
+          Add(pythiaIsrGun);
+          JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
+                    "PythiaIsrGun (ISR: IsrManager/iMATTER, "
+                    "MCGlauberGenString) to task list.";
+        } else if (childElementName == "PythiaGun") {
           auto pythiaGun =
               JetScapeModuleFactory::createInstance(childElementName);
           if (pythiaGun) {
@@ -373,6 +494,12 @@ void JetScape::DetermineTaskListFromXML() {
             JSINFO << "JetScape::DetermineTaskList() -- Hard Process: Added "
                       "PythiaGun to task list.";
           }
+        } else if (childElementName == "ISR") {
+          // handled with <PythiaGun> above
+        } else if (isr) {
+          JSWARN << "<Hard><ISR> works with <PythiaGun> only, not <"
+                 << childElementName << ">";
+          exit(-1);
         }
         //   - epemGun
         else if (childElementName == "epemGun") {
@@ -649,6 +776,11 @@ void JetScape::DetermineTaskListFromXML() {
     else if (elementName == "Eloss") {
       auto jlossmanager = make_shared<JetEnergyLossManager>();
       auto jloss = make_shared<JetEnergyLoss>();
+      // With ISR the final-state shower starts where iMATTER ended: the
+      // timelike partons it emitted were made at negative times.
+      if (isr) {
+        jloss->SetStartT(-isr_max_t);
+      }
 
       // Check if liquefier should be added, and add it if so
       std::string strAddLiquefier =
@@ -748,6 +880,20 @@ void JetScape::DetermineTaskListFromXML() {
           hadro->Add(hadroModule);
           JSINFO << "JetScape::DetermineTaskList() -- JetHadronization: Added "
                     "ColorlessHadronization to task list.";
+        }
+      } else if (hadronizationName == "iColored") {
+        // the ISR hadronization: final partons + the beam remnants, colour
+        // connected from the ISR through the final-state shower
+        if (!isr) {
+          JSWARN << "<JetHadronization><name>iColored needs <Hard><ISR>";
+          exit(-1);
+        }
+        auto hadroModule =
+            JetScapeModuleFactory::createInstance("iColoredHadronization");
+        if (hadroModule) {
+          hadro->Add(hadroModule);
+          JSINFO << "JetScape::DetermineTaskList() -- JetHadronization: Added "
+                    "iColoredHadronization to task list.";
         }
       } else if (hadronizationName == "hybrid") {
         auto hadroModule =
@@ -865,6 +1011,30 @@ void JetScape::DetermineTaskListFromXML() {
                   "task list.";
       }
     }
+#ifdef USE_ROOT
+    else if (elementName == "RootBulkWriter") {
+      auto rbwriter = JetScapeModuleFactory::createInstance("RootBulkWriter");
+      auto _this = new RootBulkWriter();
+
+      if (rbwriter) {
+        Add(rbwriter);
+        JSINFO << " JetScape::DetermineTaskList() -- RootBulkWriter";
+      }
+    } else if (elementName == "FastRootBulkWriter") {
+      auto fbwriter =
+          JetScapeModuleFactory::createInstance("FastRootBulkWriter");
+      if (fbwriter) {
+        Add(fbwriter);
+        JSINFO << " JetScape::DetermineTaskList() -- FastRootBulkWriter";
+      }
+    }
+#else
+    else if (elementName == "RootBulkWriter" ||
+             elementName == "FastRootBulkWriter") {
+      JSWARN << "JetScape::DetermineTaskList() -- " << elementName
+             << " requested, but X-SCAPE was built without ROOT: not added.";
+    }
+#endif
 
     else {
       VERBOSE(2) << "Nothing to do.";
@@ -998,6 +1168,29 @@ void JetScape::SetPointers() {
   bool bulk_pointer_is_set = false;
   bool iss_pointer_is_set = false;
 
+  // Optional <SoftParticlization><hydro_id>: sample the surface of the
+  // FluidDynamics task with this Id instead of the first one (e.g. the jet
+  // leg of a two-stage hydro). Only the soft-particlization signals use it;
+  // the jet signals keep the first hydro.
+  shared_ptr<FluidDynamics> soft_hydro;
+  std::string soft_hydro_id =
+      GetXMLElementText({"SoftParticlization", "hydro_id"}, false);
+  if (!soft_hydro_id.empty() && soft_hydro_id != "first") {
+    for (auto it : GetTaskList()) {
+      auto hydro = dynamic_pointer_cast<FluidDynamics>(it);
+      if (hydro && hydro->GetId() == soft_hydro_id) {
+        soft_hydro = hydro;
+        break;
+      }
+    }
+    if (!soft_hydro) {
+      JSWARN << "SoftParticlization/hydro_id = " << soft_hydro_id
+             << " matches no FluidDynamics task";
+      exit(-1);
+    }
+    JSINFO << "Soft particlization samples the surface of " << soft_hydro_id;
+  }
+
   for (auto it : GetTaskList()) {
     if (dynamic_pointer_cast<InitialState>(it)) {
       JetScapeSignalManager::Instance()->SetInitialStatePointer(
@@ -1033,10 +1226,17 @@ void JetScape::SetPointers() {
       JetScapeSignalManager::Instance()->SetSoftParticlizationPointer(
           dynamic_pointer_cast<SoftParticlization>(it));
       iss_pointer_is_set = true;
-      JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
-          dynamic_pointer_cast<SoftParticlization>(it));
-      JetScapeSignalManager::Instance()->ConnectClearHydroHyperSurfaceSignal(
-          dynamic_pointer_cast<SoftParticlization>(it));
+      if (soft_hydro) {
+        JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
+            dynamic_pointer_cast<SoftParticlization>(it), soft_hydro);
+        JetScapeSignalManager::Instance()->ConnectClearHydroHyperSurfaceSignal(
+            dynamic_pointer_cast<SoftParticlization>(it), soft_hydro);
+      } else {
+        JetScapeSignalManager::Instance()->ConnectGetHydroHyperSurfaceSignal(
+            dynamic_pointer_cast<SoftParticlization>(it));
+        JetScapeSignalManager::Instance()->ConnectClearHydroHyperSurfaceSignal(
+            dynamic_pointer_cast<SoftParticlization>(it));
+      }
     } else if (dynamic_pointer_cast<HadronizationManager>(it)) {
       JetScapeSignalManager::Instance()->SetHadronizationManagerPointer(
           dynamic_pointer_cast<HadronizationManager>(it));

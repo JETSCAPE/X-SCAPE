@@ -43,6 +43,9 @@
 #ifndef JETSCAPETASKSUPPORT_H
 #define JETSCAPETASKSUPPORT_H
 
+// Capability: Get/SetNextTaskNumber (PyJetscape checks it)
+#define JETSCAPETASKSUPPORT_HAS_NEXT_TASK_NUMBER 1
+
 #include "InitialState.h"
 #include "JetEnergyLoss.h"
 #include "JetEnergyLossManager.h"
@@ -115,6 +118,22 @@ class JetScapeTaskSupport {
    * @return The current random seed as an unsigned integer.
    */
   static unsigned int GetRandomSeed() { return random_seed_; };
+
+  /**
+   * @brief The task ID RegisterTask() hands to the next task.
+   */
+  int GetNextTaskNumber() const { return CurrentTaskNumber; }
+
+  /**
+   * @brief Set the task ID the next task gets. With one generator per task
+   * (a nonzero seed) a task's ID fixes its random seed, so a module made
+   * outside the physics (e.g. a hadronization module of the production
+   * process, which takes its seeds explicitly) shifts every later task's
+   * seed. Setting the number back to its value before such modules were made
+   * gives every later task the ID, and the random numbers, it would have had
+   * without them.
+   */
+  void SetNextTaskNumber(int n) { CurrentTaskNumber = n; }
 
  protected:
   /**

@@ -122,6 +122,12 @@ void ColorlessHadronization::InitTask() {
 
   Lambda_QCD = GetXMLElementDouble({"Eloss", "lambdaQCD"});
 
+  reseed_per_event_ =
+      GetXMLElementInt({"JetHadronization", "reseed_per_event"}, false) == 1;
+  if (reseed_per_event_) {
+    JSINFO << "ColorlessHadronization: reseeding Pythia every event";
+  }
+
   // Initialize random number distribution
   ZeroOneDistribution = std::uniform_real_distribution<double>{0.0, 1.0};
   // And initialize
@@ -136,9 +142,22 @@ void ColorlessHadronization::WriteTask(weak_ptr<JetScapeWriter> w) {
   f->WriteComment("Hadronization Module : " + GetId());
 }
 
+void ColorlessHadronization::Reseed(unsigned int seed) {
+  // Pythia's Rndm takes 0 < seed <= 900000000 (0 would mean "from the clock")
+  pythia.rndm.init(static_cast<int>(seed % 900000000u) + 1);
+  GetMt19937Generator()->seed(seed);
+  last_seed_ = seed;
+}
+
 void ColorlessHadronization::DoHadronization(
     vector<vector<shared_ptr<Parton>>> &shower,
     vector<shared_ptr<Hadron>> &hOut, vector<shared_ptr<Parton>> &pOut) {
+  if (has_next_seed_) {
+    Reseed(next_seed_);
+    has_next_seed_ = false;
+  } else if (reseed_per_event_) {
+    Reseed((*GetMt19937Generator())());
+  }
   VERBOSE(1) << "Start Hadronizing using PYTHIA Lund string model (does NOT "
                 "use color flow, needs to be tested)...";
   Event &event = pythia.event;

@@ -33,7 +33,7 @@ namespace Jetscape {
 const std::string JetScapeVersion = "4.0.2";
 
 /// Version identifier for the X-SCAPE framework.
-const std::string XscapeVersion = "2.1";
+const std::string XscapeVersion = "3.0";
 
 }  // end namespace Jetscape
 

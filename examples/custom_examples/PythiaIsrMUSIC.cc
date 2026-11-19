@@ -46,6 +46,7 @@
 #include "iMATTER.h"
 #include "MCGlauberWrapper.h"
 #include "MCGlauberGenStringWrapper.h"
+#include "NullPreDynamics.h"
 #include "MusicWrapper.h"
 #include "iSpectraSamplerWrapper.h"
 #include "QueryHistory.h"
@@ -85,7 +86,8 @@ int main(int argc, char** argv) {
 
   // Read in XML file
   std::string mainXMLName = "../config/jetscape_main.xml";
-  std::string userXMLName = "../config/jetscape_user_iMATTERMCGlauberMUSIC.xml";
+  std::string userXMLName =
+      "../config/jetscape_user_iMATTERMCGlauberMUSIC_OO.xml";
   if (argc == 2) {
     if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
       std::cout << "Command line options:" << std::endl;
@@ -123,6 +125,10 @@ int main(int argc, char** argv) {
   // Initial conditions and hydro
   auto MCG = make_shared<MCGlauberWrapper>();
   auto pythiaIsrGun = make_shared<PythiaIsrGun>();
+  // MUSIC builds its string source (InitialProfile 13/131) only when a
+  // pre-equilibrium module is present; without one it starts from an empty
+  // source and crashes in Init::InitArena.
+  auto pre = make_shared<NullPreDynamics>();
   auto hydro = make_shared<MpiMusic>();
   auto iSS = make_shared<iSpectraSamplerWrapper>();
 
@@ -155,6 +161,7 @@ int main(int argc, char** argv) {
   pythiaIsrGun->Add(isrManager);
   pythiaIsrGun->Add(MCGsecond);
   jetscape->Add(pythiaIsrGun);
+  jetscape->Add(pre);
   jetscape->Add(hydro);
   jetscape->Add(iSS);
 

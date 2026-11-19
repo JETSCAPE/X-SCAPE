@@ -237,25 +237,31 @@ void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
 
 void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
     shared_ptr<SoftParticlization> hSoft) {
-  if (!hSoft->GetGetHydroHyperSurfaceConnected()) {
-    auto hp = GetHydroPointer().lock();
-    if (hp) {
-      hSoft->GetHydroHyperSurface.connect(hp.get(),
-                                          &FluidDynamics::getSurfaceCellVector);
-      hSoft->SetGetHydroHyperSurfaceConnected(true);
-    }
+  ConnectGetHydroHyperSurfaceSignal(hSoft, GetHydroPointer().lock());
+}
+
+void JetScapeSignalManager::ConnectGetHydroHyperSurfaceSignal(
+    shared_ptr<SoftParticlization> hSoft, shared_ptr<FluidDynamics> hp) {
+  if (!hSoft->GetGetHydroHyperSurfaceConnected() && hp) {
+    hSoft->GetHydroHyperSurface.connect(hp.get(),
+                                        &FluidDynamics::getSurfaceCellVector);
+    hSoft->FindHydroHyperSurface.connect(
+        hp.get(), &FluidDynamics::FindSurfaceFromEvolution);
+    hSoft->SetGetHydroHyperSurfaceConnected(true);
   }
 }
 
 void JetScapeSignalManager::ConnectClearHydroHyperSurfaceSignal(
     shared_ptr<SoftParticlization> hSoft) {
-  if (!hSoft->GetClearHydroHyperSurfaceConnected()) {
-    auto hp = GetHydroPointer().lock();
-    if (hp) {
-      hSoft->ClearHydroHyperSurface.connect(
-          hp.get(), &FluidDynamics::clearSurfaceCellVector);
-      hSoft->SetClearHydroHyperSurfaceConnected(true);
-    }
+  ConnectClearHydroHyperSurfaceSignal(hSoft, GetHydroPointer().lock());
+}
+
+void JetScapeSignalManager::ConnectClearHydroHyperSurfaceSignal(
+    shared_ptr<SoftParticlization> hSoft, shared_ptr<FluidDynamics> hp) {
+  if (!hSoft->GetClearHydroHyperSurfaceConnected() && hp) {
+    hSoft->ClearHydroHyperSurface.connect(
+        hp.get(), &FluidDynamics::clearSurfaceCellVector);
+    hSoft->SetClearHydroHyperSurfaceConnected(true);
   }
 }
 

@@ -59,8 +59,13 @@ class JetScapeWriter : public JetScapeModuleBase {
 
   /**
    * @brief Destructor.
+   *
+   * Defined out of line (JetScapeWriter.cc) on purpose: it is the class's key
+   * function, so its typeinfo is emitted once, in libJetScape. Inline, every
+   * binary got its own weak copy, and dynamic_pointer_cast<JetScapeWriter>
+   * failed across a hidden-visibility boundary such as the PyJetscape module.
    */
-  virtual ~JetScapeWriter(){};
+  virtual ~JetScapeWriter();
 
   /**
    * @brief Set the output file name.

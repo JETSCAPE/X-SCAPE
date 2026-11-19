@@ -14,6 +14,8 @@
  * See COPYING for details.
  ******************************************************************************/
 
+#include <random>
+#include <stdexcept>
 #include <string>
 #include <fstream>
 #include <stdio.h>
@@ -23,6 +25,7 @@
 
 #include "JetScapeLogger.h"
 #include "JetScapeSignalManager.h"
+#include "JetScapeDataPath.h"
 #include "MCGlauberWrapper.h"
 
 // Register the module with the base class
@@ -42,8 +45,18 @@ void MCGlauberWrapper::InitTask() {
 
   int argc = 0;
   char *argv[1];
+  // Resolve the 3dMCGlauber input file: an explicit XML path wins; otherwise
+  // fall back to XSCAPE_DATA_DIR/mcglauber.input (i.e. ./mcglauber.input when
+  // the env var is unset), so a shared asset tree can be used from a separate
+  // per-run working directory.
+  std::string mcglauber_input_file =
+      GetXMLElementText({"IS", "MCGlauber", "mcglauber_input_file"}, false);
+  if (mcglauber_input_file.empty()) {
+    mcglauber_input_file = XSCAPEDataPath("mcglauber.input");
+  }
+  JSINFO << "3dMCGlauber input file: " << mcglauber_input_file;
   mc_gen_ = std::shared_ptr<MCGlb::EventGenerator>(
-      new MCGlb::EventGenerator("mcglauber.input", argc, argv, ran_seed));
+      new MCGlb::EventGenerator(mcglauber_input_file, argc, argv, ran_seed));
 
   // overwrite input options
   int para_temp_int;
@@ -111,6 +124,7 @@ void MCGlauberWrapper::InitTask() {
   para_temp_int =
       (GetXMLElementInt({"IS", "MCGlauber", "Subtract_hard_momentum"}));
   mc_gen_->set_parameter("Subtract_hard_momentum", para_temp_int);
+  subtract_hard_momentum_ = para_temp_int;
 
   para_temp_double = (GetXMLElementDouble({"IS", "MCGlauber", "lambdaBs"}));
   mc_gen_->set_parameter("lambdaBs", para_temp_double);
@@ -261,6 +275,21 @@ void MCGlauberWrapper::SampleABinaryCollisionPoint(double &t, double &x,
   x = binary_collision_x_[rand_idx];
   y = binary_collision_y_[rand_idx];
   z = binary_collision_z_[rand_idx];
+}
+
+void MCGlauberWrapper::SampleABinaryCollisionPointWith(std::mt19937 &rng,
+                                                       double &t, double &x,
+                                                       double &y, double &z) {
+  if (binary_collision_t_.empty())
+    throw std::runtime_error(
+        "MCGlauberWrapper: no binary collisions to sample a point from");
+  std::uniform_int_distribution<int> pick(
+      0, static_cast<int>(binary_collision_t_.size()) - 1);
+  const int idx = pick(rng);
+  t = binary_collision_t_[idx];
+  x = binary_collision_x_[idx];
+  y = binary_collision_y_[idx];
+  z = binary_collision_z_[idx];
 }
 
 double MCGlauberWrapper::Get_total_nucleon_density_lab(double t, double x,

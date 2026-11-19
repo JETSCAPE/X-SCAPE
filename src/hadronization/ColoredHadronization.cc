@@ -308,7 +308,19 @@ void ColoredHadronization::DoHadronization(
         col_instances.end());
   }
 
-  pythia.next();
+  // A failed hadronization used to be ignored, and the unhadronized partons
+  // were then written out as hadrons. Now the event gets no hadrons from this
+  // module. PYTHIA has already retried internally (forceHadronLevel makes up
+  // to 10 attempts).
+  ++nEventsSeen;
+  if (!pythia.next()) {
+    ++nFailed;
+    JSWARN << "ColoredHadronization: PYTHIA hadronization failed (" << nFailed
+           << " of " << nEventsSeen
+           << " events so far); no hadrons are added for this event.";
+    shower.clear();
+    return;
+  }
   // event.list();
 
   unsigned int ip = hOut.size();
@@ -318,6 +330,11 @@ void ColoredHadronization::DoHadronization(
     // if ( !event[i].isHadron() )  continue;
     if (fabs(event[i].eta()) > 20)
       continue;  // To prevent "nan" from propagating, very rare though
+    if (event[i].colType() != 0) {  // never output partons as hadrons
+      JSWARN << "ColoredHadronization: coloured final-state particle "
+             << event[i].id() << " after hadronization; skipped.";
+      continue;
+    }
 
     double x[4] = {0, 0, 0, 0};
     hOut.push_back(make_shared<Hadron>(ip, event[i].id(), event[i].status(),
@@ -327,4 +344,14 @@ void ColoredHadronization::DoHadronization(
   }
 
   shower.clear();
+}
+
+void ColoredHadronization::FinishTask() {
+  if (nFailed > 0)
+    JSWARN << "ColoredHadronization: PYTHIA hadronization failed in " << nFailed
+           << " of " << nEventsSeen
+           << " events; these events have no hadrons from this module.";
+  else
+    JSINFO << "ColoredHadronization: no hadronization failures in "
+           << nEventsSeen << " events.";
 }

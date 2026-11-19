@@ -24,6 +24,9 @@
 #include <iostream>
 
 #include "FluidDynamics.h"
+#include "HardProcess.h"
+#include "JetScapeDataPath.h"
+#include "JetScapeSignalManager.h"
 #include <GTL/dfs.h>
 
 #define MAGENTA "\033[35m"
@@ -140,6 +143,8 @@ void Matter::InitTask() {
   qhatC = GetXMLElementDouble({"Eloss", "Matter", "qhatC"});
   qhatD = GetXMLElementDouble({"Eloss", "Matter", "qhatD"});
   tStart = GetXMLElementDouble({"Eloss", "tStart"});
+  tStart_at_point =
+      GetXMLElementInt({"Eloss", "Matter", "tStart_at_point"}, false);
   // run_alphas = GetXMLElementInt({"Eloss", "Matter", "run_alphas"});
   QhatParametrizationType =
       GetXMLElementInt({"Eloss", "Matter", "QhatParametrizationType"});
@@ -174,7 +179,8 @@ void Matter::InitTask() {
   JSINFO << MAGENTA << "MATTER input parameter";
   JSINFO << MAGENTA << "matter shower on: " << matter_on;
   JSINFO << MAGENTA << "in_vac: " << in_vac << "  brick_med: " << brick_med
-         << "  recoil_on: " << recoil_on << ", tStart =" << tStart;
+         << "  recoil_on: " << recoil_on << ", tStart =" << tStart
+         << " (at point: " << tStart_at_point << ")";
   JSINFO << MAGENTA << "Lambda_QCD: " << Lambda_QCD;
   JSINFO << MAGENTA << "Q0: " << Q00 << " QS: " << QS
          << " vir_factor: " << vir_factor
@@ -227,6 +233,35 @@ void Matter::Dump_pIn_info(int i, vector<Parton> &pIn) {
          << " form_time in fm = " << pIn[i].form_time()
          << " split time = " << pIn[i].form_time() + pIn[i].x_in().t()
          << " plabel = " << pIn[i].plabel();
+}
+
+bool Matter::BeforeTStart(double t, double z) const {
+  // The medium starts at the proper time tStart of the point (t, z), compared
+  // as tau^2 = t^2 - z^2 so that the light-cone tip (t = z = 0) is before it
+  // too; with tStart <= 0 only negative times are.
+  return t < tStart || (tStart > 0 && t * t - z * z < tStart * tStart);
+}
+
+std::shared_ptr<Matter::Ran2State> Matter::SharedRan2State() {
+  static auto shared = std::make_shared<Ran2State>();
+  return shared;
+}
+
+void Matter::UseOwnStreams(int scatter, unsigned int seed) {
+  JetScapeModuleBase::UseOwnStreams(scatter, seed);
+  ran2_ = std::make_shared<Ran2State>();
+  NUM1 = -static_cast<long>(1 + seed % 2147483000u);  // < 0: ran0 starts anew
+}
+
+unsigned int Matter::NewColorTag() {
+  // The tags of one event come from one counter, so that the showers (each
+  // has its own Matter clone) and iMATTER's ISR showers never share a tag.
+  auto hard = JetScapeSignalManager::Instance()->GetHardProcessPointer().lock();
+  if (hard)
+    MaxColor = hard->NextColorTag(GetHardScatter(), GetColorTagBlock());
+  else
+    ++MaxColor;
+  return MaxColor;
 }
 
 void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
@@ -293,15 +328,18 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
 
   VERBOSE(8) << " qhat0 = " << qhat0 << " qhat = " << qhat;
 
+  // With a hydro, tStart is the fluid's start time (FluidDynamics::
+  // GetHydroStartTime, MUSIC: its tau0 of the run), not <Eloss><tStart>: the
+  // medium interaction begins where the stored evolution does.
   GetHydroTau0Signal(tStart);
 
   for (int i = 0; i < pIn.size(); i++) {
-    // Reject photons
-    if (pIn[i].pid() == photonid) {
+    // Reject photons and leptons (passed through untouched)
+    if (pIn[i].isNonParton(pIn[i].pid())) {
       if (pIn[i].pstat() != 22) {
         pIn[i].set_stat(22);
-        VERBOSE(1) << BOLDYELLOW
-                   << " A photon was RECEIVED with px = " << pIn[i].px()
+        VERBOSE(1) << BOLDYELLOW << " A photon or lepton (pid " << pIn[i].pid()
+                   << ") was RECEIVED with px = " << pIn[i].px()
                    << " from framework and sent back ";
 
         pOut.push_back(pIn[i]);
@@ -719,16 +757,18 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
           if (!recoil_on)
             continue;
 
-          double boostedTStart = tStart * std::cosh(SpatialRapidity);
-          if (el_time < boostedTStart)
+          double el_rx = initRx + (el_time - initR0) * initVx;
+          double el_ry = initRy + (el_time - initR0) * initVy;
+          double el_rz = initRz + (el_time - initR0) * initVz;
+
+          // <tStart_at_point> 1: the step's own proper time; 0: tStart
+          // boosted with the rapidity of the parton's current position
+          if (tStart_at_point ? BeforeTStart(el_time, el_rz)
+                              : el_time < tStart * std::cosh(SpatialRapidity))
             continue;
 
           if (abs(pid) == 5)
             continue;  // recoil not ready for b quark yet
-
-          double el_rx = initRx + (el_time - initR0) * initVx;
-          double el_ry = initRy + (el_time - initR0) * initVy;
-          double el_rz = initRz + (el_time - initR0) * initVz;
 
           double tempLoc, sdLoc, vxLoc, vyLoc, vzLoc, qhatLoc, enerLoc;
           double betaLoc, gammaLoc, flowFactor;
@@ -884,9 +924,12 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
             unsigned int el_max_color, el_color0, el_anti_color0, el_color2,
                 el_anti_color2, el_color3, el_anti_color3;
 
-            el_max_color = pIn[i].max_color();
             el_color0 = pIn[i].color();
             el_anti_color0 = pIn[i].anti_color();
+            // flavor() makes at most two new tags, as ++el_max_color: reserve
+            // two consecutive tags of the event's counter for it.
+            el_max_color = NewColorTag() - 1;
+            NewColorTag();
 
             pid0 = pid;
 
@@ -916,6 +959,9 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
                 pc2[k] = pc0[k];
                 pc0[k] = p0temp[k];
               }
+              // the colour lines follow the momenta
+              std::swap(el_color0, el_color2);
+              std::swap(el_anti_color0, el_anti_color2);
             }
 
             // Amit: do not add recoil parton with E=0,Px=0,Py=0,Pz=0 into pOut
@@ -951,17 +997,15 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
             pOut[iout].set_mean_form_time();
             ft = 10000.0;  /// a really large formation time.
             pOut[iout].set_form_time(ft);
-            ////pOut[iout].set_color(el_color2);
-            ////pOut[iout].set_anti_color(el_anti_color2);
-            ////pOut[iout].set_max_color(max_color);
-            ////pOut[iout].set_min_color(pIn[i].min_color());
-            ////pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
-            ////// comment out realistic color above, assume colorless for
-            /// recoiled and back-reaction parton
-            ////// for the convenience of color string fragmentation in Pythia
-            pOut[iout].set_color(0);
-            pOut[iout].set_anti_color(0);
-            pOut[iout].set_max_color(pIn[i].max_color());
+            // The large-Nc colour flow of flavor(): the recoil carries its
+            // outgoing tags; the hole (back reaction) the tags of the incoming
+            // thermal parton, so its colour pairs with an outgoing colour (it
+            // flows through) and the colour line it closes ends in the medium.
+            // iColoredHadronization closes those lines (<colour_closure>);
+            // ColorlessHadronization does not read the tags.
+            pOut[iout].set_color(el_color2);
+            pOut[iout].set_anti_color(el_anti_color2);
+            pOut[iout].set_max_color(el_max_color);
             pOut[iout].set_min_color(pIn[i].min_color());
             pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
 
@@ -972,21 +1016,16 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
             pOut[iout].set_mean_form_time();
             ft = 10000.0;  /// STILL a really large formation time.
             pOut[iout].set_form_time(ft);
-            ////pOut[iout].set_color(el_color3);
-            ////pOut[iout].set_anti_color(el_anti_color3);
-            ////pOut[iout].set_max_color(max_color);
-            ////pOut[iout].set_min_color(pIn[i].min_color());
-            ////pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
-            pOut[iout].set_color(0);
-            pOut[iout].set_anti_color(0);
-            pOut[iout].set_max_color(pIn[i].max_color());
+            pOut[iout].set_color(el_color3);
+            pOut[iout].set_anti_color(el_anti_color3);
+            pOut[iout].set_max_color(el_max_color);
             pOut[iout].set_min_color(pIn[i].min_color());
             pOut[iout].set_min_anti_color(pIn[i].min_anti_color());
 
-            ////// assumption: pIn doesn't change color in elastic scattering
-            ////pIn[i].set_color(el_color0);
-            ////pIn[i].set_anti_color(el_anti_color0);
-            ////pIn[i].set_max_color(el_max_color);
+            // the jet parton continues with its outgoing tags
+            pIn[i].set_color(el_color0);
+            pIn[i].set_anti_color(el_anti_color0);
+            pIn[i].set_max_color(el_max_color);
 
           }  // end if scattering
 
@@ -1164,12 +1203,13 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2,
         // std::uniform_int_distribution<short> uni(101,103);
         // color = pIn[i].color();
 
+        // also needed for photon radiation, where the daughters inherit it
+        max_color = pIn[i].max_color();
         if (iSplit != 3)  // not photon radiation, generate new colors
         {
-          max_color = pIn[i].max_color();
           // if (pIn[i].anti_color()>maxcolor) color = pIn[i].anti_color();
           JSDEBUG << " old max color = " << max_color;
-          max_color = ++MaxColor;
+          max_color = NewColorTag();
           color = max_color;
           anti_color = max_color;
           pIn[i].set_max_color(max_color);
@@ -3856,8 +3896,9 @@ double Matter::fillQhatTab(double y) {
 
     // if(tLoc<initR0-tStep) { // potential problem of making t^2<z^2
 
-    double boostedTStart = tStart * std::cosh(y);
-    if (tLoc < initR0 || tLoc < boostedTStart) {
+    // <tStart_at_point> 0: tStart boosted with y, the rapidity of the parton's
+    // current position, for every point of the table (1: below)
+    if (tLoc < initR0 || (!tStart_at_point && tLoc < tStart * std::cosh(y))) {
       qhatTab1D[i] = 0.0;
       continue;
     }
@@ -3878,6 +3919,20 @@ double Matter::fillQhatTab(double y) {
     //            hydro_ctl = 0;
     //            tempLoc = T;
     //        }
+
+    // Outside the forward light cone there is no medium: the hydro returns a
+    // zero cell there (EvolutionHistory::get_tz), so qhat = 0 below anyway.
+    // Partons made at negative times (initial-state radiation) start out there.
+    if (std::isfinite(tLoc) && std::isfinite(zLoc) && std::abs(zLoc) > tLoc) {
+      qhatTab1D[i] = 0.0;
+      continue;
+    }
+
+    // <tStart_at_point> 1: the point's own proper time
+    if (tStart_at_point && BeforeTStart(tLoc, zLoc)) {
+      qhatTab1D[i] = 0.0;
+      continue;
+    }
 
     if (std::isinf(tLoc) || std::isnan(tLoc) || std::isinf(zLoc) ||
         std::isnan(zLoc) || std::abs(zLoc) > tLoc) {
@@ -4302,7 +4357,9 @@ double Matter::fncQhat(double zeta) {
             0.5);  // zeta was in 1/GeV and light cone coordinate
 
   // if(indexZeta >= dimQhatTab) indexZeta = dimQhatTab-1;
-  if (indexZeta >= dimQhatTab)
+  // before t = 0 (index < 0; partons from initial-state radiation) there is no
+  // medium, and qhatTab1D[indexZeta < 0] would read before the table
+  if (indexZeta >= dimQhatTab || indexZeta < 0)
     return (0);
 
   double avrQhat =
@@ -4331,10 +4388,27 @@ double Matter::fncAvrQhat(double zeta, double tau) {
     return (0);
   if (indexTau >= dimQhatTab)
     indexTau = dimQhatTab - 1;
+  if (indexTau < 0)
+    indexTau = 0;
 
-  double avrQhat =
-      qhatTab2D[indexZeta][indexTau] *
-      VirtualityQhatFunction(QhatParametrizationType, initEner, tscale);
+  // The table starts at t = 0 (index 0); before that there is no medium.  A
+  // parton made at negative times (initial-state radiation) can ask for a
+  // window that starts there: average over the window with qhat = 0 before
+  // t = 0, i.e. the mean over [0, indexZeta + indexTau] times its share of the
+  // window.  Without this, qhatTab2D[indexZeta < 0] read the memory before the
+  // table (garbage qhat, or a crash for a far negative index).
+  double tabQhat;
+  if (indexZeta >= 0) {
+    tabQhat = qhatTab2D[indexZeta][indexTau];
+  } else {
+    const int last = indexZeta + indexTau;  // last index of the window
+    if (last < 0)
+      return (0);
+    tabQhat = qhatTab2D[0][last] * (last + 1) / (indexTau + 1);
+  }
+
+  double avrQhat = tabQhat * VirtualityQhatFunction(QhatParametrizationType,
+                                                    initEner, tscale);
   return (avrQhat);
 }
 
@@ -5335,9 +5409,11 @@ float Matter::ran0(long *idum)
 
   int j;
   long k;
-  static long idum2 = 123456789;
-  static long iy = 0;
-  static long iv[NTAB];
+  long &idum2 = ran2_->idum2;
+  long &iy = ran2_->iy;
+  long *iv = ran2_->iv;
+  static_assert(NTAB == sizeof(Ran2State::iv) / sizeof(long),
+                "ran0 table size");
   float temp;
 
   if (*idum <= 0) {
@@ -5454,10 +5530,24 @@ void Matter::read_tables() {  // intialize various tables for LBT
   //   }
   // f1.close();
 
+  // The LBT tables, resolved like LBT's (JetScapeDataPath.h: LBTTablesPath):
+  // {Eloss, Matter, LBT_table_path}, else {Eloss, Lbt, LBT_table_path}, else
+  // LBT_TABLES_PATH, else XSCAPE_DATA_DIR/LBT-tables. They used to be opened
+  // relative to the working directory, so a run outside the build tree (e.g.
+  // examples/run_in_workdir.sh) silently left them all zero.
+  std::string xml_path =
+      GetXMLElementText({"Eloss", "Matter", "LBT_table_path"}, false);
+  if (xml_path.empty()) {
+    xml_path = GetXMLElementText({"Eloss", "Lbt", "LBT_table_path"}, false);
+  }
+  const std::string table_path = LBTTablesPath(xml_path);
+  JSINFO << "Matter recoil: LBT tables path: " << table_path;
+
   // duplicate for heavy quark
-  ifstream f11("LBT-tables/ratedata-HQ");
+  ifstream f11(table_path + "/ratedata-HQ");
   if (!f11.is_open()) {
-    cout << "Erro openning HQ data file!\n";
+    JSWARN << "Matter: cannot open " << table_path
+           << "/ratedata-HQ; heavy-quark recoil rates stay zero";
   } else {
     for (int i = 1; i <= n; i++) {
       f11 >> it >> ie;
@@ -5467,9 +5557,10 @@ void Matter::read_tables() {  // intialize various tables for LBT
   f11.close();
 
   // preparation for HQ 2->2
-  ifstream fileB("LBT-tables/distB.dat");
+  ifstream fileB(table_path + "/distB.dat");
   if (!fileB.is_open()) {
-    cout << "Erro openning data file distB.dat!" << endl;
+    JSWARN << "Matter: cannot open " << table_path
+           << "/distB.dat; heavy-quark recoil (collHQ22) will be wrong";
   } else {
     for (int i = 0; i < N_T; i++) {
       for (int j = 0; j < N_p1; j++) {
@@ -5490,9 +5581,10 @@ void Matter::read_tables() {  // intialize various tables for LBT
   }
   fileB.close();
 
-  ifstream fileF("LBT-tables/distF.dat");
+  ifstream fileF(table_path + "/distF.dat");
   if (!fileF.is_open()) {
-    cout << "Erro openning data file distF.dat!" << endl;
+    JSWARN << "Matter: cannot open " << table_path
+           << "/distF.dat; heavy-quark recoil (collHQ22) will be wrong";
   } else {
     for (int i = 0; i < N_T; i++) {
       for (int j = 0; j < N_p1; j++) {

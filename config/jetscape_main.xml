@@ -18,7 +18,7 @@
   <!-- Technical settings -->
   <debug> off </debug>
   <remark> off </remark>
-  <vlevel> 0 </vlevel>
+  <vlevel> 2 </vlevel>
   <nEvents_printout> 100 </nEvents_printout>
   <enableAutomaticTaskListDetermination> true </enableAutomaticTaskListDetermination>
 
@@ -116,6 +116,11 @@
             skew-type="1"
             jacobian="0.8">
     </LongiInputs>
+    <!-- Options for averaging over multiple initial state densities -->
+    <Averaging>
+      <enableAveraging>0</enableAveraging>
+      <nEvents>1000</nEvents>
+    </Averaging>
     </Trento>
 
     <!-- Options to read initial conditions from saved file -->
@@ -123,6 +128,12 @@
     <initial_Ncoll_list>../examples/test_hydro_files</initial_Ncoll_list>
 
     <MCGlauber>
+      <!--Path to the 3dMCGlauber input file. If omitted (recommended), it is
+          resolved as $XSCAPE_DATA_DIR/mcglauber.input, falling back to
+          ./mcglauber.input when XSCAPE_DATA_DIR is unset. Add an explicit
+          (absolute or relative) path here to override, e.g.
+          <mcglauber_input_file>/abs/path/mcglauber.input</mcglauber_input_file>.
+          Do NOT leave this element empty (an empty element is unsupported).-->
       <!--0: generates full event with binary collisions and strings-->
       <!--1: PythiaISR setup (needs 2 step MCGlauber initialization)-->
       <generateOnlyPositions>0</generateOnlyPositions>
@@ -224,6 +235,12 @@
       <name>PGun</name>
       <pT>100</pT>
       <parID>21</parID>
+      <!-- optional: the parton's rapidity and phi (from the origin); <points> "pT y pT y ..."
+           runs several (pT, rapidity) points, event i using point i mod K (nReuseHydro a
+           multiple of K), and overrides <pT> and <rapidity> -->
+      <rapidity>0</rapidity>
+      <phi>0</phi>
+      <points></points>
     </PGun>
 
     <!-- Pythia Gun -->
@@ -233,6 +250,37 @@
       <FSR_on>0</FSR_on>
       <pTHatMin>100</pTHatMin>
       <pTHatMax>120</pTHatMax>
+      <!-- Optional: several pTHat windows in one run, "min max min max ...", e.g.
+           "20 40 50 70" (edges with at most one decimal). Each window has its own
+           Pythia (own seed and cross section); event i uses window i mod K, so with
+           setReuseHydro and nReuseHydro a multiple of K every hydro event gets
+           nReuseHydro/K jets per window. Empty: the one window pTHatMin-pTHatMax. -->
+      <pTHatBins></pTHatBins>
+      <!-- Optional: a rapidity cut on the partons PythiaGun hands to the framework
+           (status 62 after ISR/MPI; final partons with FSR_on), on their two
+           hardest: partonYMode leading (the hardest has |y| < partonYMax), both
+           (the two hardest) or any (either). Rejected events are regenerated; the
+           cross section is sigmaGen x kept/tried per window. Empty: no cut.
+           PythiaIsrGun (<Hard><ISR>) cuts the two outgoing partons of the hard
+           scattering, before the ISR: mode both or any (leading is refused, their
+           pT is equal there). -->
+      <partonYMax></partonYMax>
+      <partonYMode>leading</partonYMode>
+      <!-- PythiaGun also hands over the final-state electrons and muons (a Z's decay
+           products, status 23), which the energy loss and the liquefier pass through
+           like photons. minPartons: the quarks, gluons and photons an event needs
+           (leptons do not count, nor do they for partonYMax); with fewer it is
+           regenerated. -->
+      <minPartons>2</minPartons>
+      <!-- Optional: trigger Z: an event needs an opposite-charge, same-flavour lepton
+           pair (the Z; the one with the largest invariant mass), which passes
+           triggerYMax (|y| of the pair), leptonPtMin and leptonEtaMax (each lepton);
+           empty: no cut. Rejected events are regenerated and counted with partonYMax
+           (sigmaGen x kept/tried of both). none: no trigger. -->
+      <trigger>none</trigger>
+      <triggerYMax></triggerYMax>
+      <leptonPtMin></leptonPtMin>
+      <leptonEtaMax></leptonEtaMax>
       <eCM>5020</eCM>
       <!-- The soft momentum cutoff in GeV removes partons from the pythia gun. The default matches the PP19 setup. -->
       <softMomentumCutoff>2.0</softMomentumCutoff>
@@ -241,6 +289,25 @@
       <LinesToRead>
       	HardQCD:all = on
       </LinesToRead>
+      <!-- Optional: the event's other hard scatterings (js-contrib
+           docs/Plans/PLAN_multi_hard.md). on 1: after the triggering scattering,
+           N ~ Poisson(N_coll sigma/sigmaNN) more, each at its own binary collision
+           (N_coll and the collisions from the initial state, 3dMCGlauber), from a
+           Pythia instance of their own: HardQCD:all above pTHatMin, ISR on, MPI off,
+           FSR as FSR_on, plus LinesToRead; sigma from warmup events at Init. sigmaNN
+           empty: 3dMCGlauber's parametrization at eCM [mb]. fixedN >= 0 fixes N
+           (tests). noTrigger 1: no triggering scattering, the extras alone (N may
+           be 0). Their random numbers and their showers' engines are their own, so
+           the trigger's partons and showers do not change. -->
+      <extraHard>
+        <on>0</on>
+        <noTrigger>0</noTrigger>
+        <pTHatMin>15</pTHatMin>
+        <sigmaNN></sigmaNN>
+        <warmup>20000</warmup>
+        <fixedN>-1</fixedN>
+        <LinesToRead></LinesToRead>
+      </extraHard>
     </PythiaGun>
 
     <epemGun>
@@ -274,6 +341,22 @@
       <photoproduction>0</photoproduction>
       <breit_vir>1</breit_vir>
     </EPGun>
+
+    <!-- Initial-state radiation (automatic task list only).  An <ISR> block in the USER
+         XML, next to <PythiaGun>, runs the hard process as PythiaIsrGun (it reads the
+         PythiaGun settings) with iMATTER showering the initial-state partons backward
+         from 0 to -maxT, then 3dMCGlauber's strings from what the hard scattering left
+         (MCGlauberGenString), and starts the <Eloss> shower at -maxT.  Needs
+         <IS><MCGlauber><generateOnlyPositions>1; <JetHadronization><name>iColored
+         hadronizes with the beam remnants.  <PythiaGun><pTHatBins> works as for PythiaGun
+         (event i in window i mod K), but the hydro is never reused: the medium is made
+         from what each hard event left, and <setReuseHydro> true is refused with ISR.
+         This entry here switches nothing on.
+         maxT, deltaT [fm/c]: 0 = the <Eloss> maxT and deltaT. -->
+    <ISR>
+      <maxT>0</maxT>
+      <deltaT>0</deltaT>
+    </ISR>
   </Hard>
 
   <!--Eloss Modules -->
@@ -284,8 +367,19 @@
     <deltaT>0.1</deltaT>
     <formTime> -0.1</formTime>
     <maxT>20</maxT>
-    <tStart> 0.6 </tStart> <!-- Start time of jet quenching, proper time, fm/c   -->
+    <tStart> 0.6 </tStart> <!-- Start time of jet quenching, proper time, fm/c; with a hydro
+                                Matter, LBT and AdSCFT use the hydro's start time instead
+                                (FluidDynamics::GetHydroStartTime; MUSIC: its tau0)   -->
     <mutex>ON</mutex>
+    <!-- Showers of one event in parallel (OpenMP), one per shower-initiating parton
+         (with ISR/MPI tens per event).  0: off, serial (the default).  N > 0: N threads;
+         -1: OpenMP's default (OMP_NUM_THREADS).  When on, every shower gets random
+         streams and a block of colour tags of its own, so the results do not depend
+         on N (1 and 8 threads give identical events) but differ from those with 0,
+         where the showers share them.  Needs energy-loss modules that support it
+         (Matter, LBT), showers per event (not on the main clock) and no hadronic medium
+         (SMASH) in the bulk manager; otherwise it warns once and runs serially. -->
+    <nThreads>0</nThreads>
     <AddLiquefier> false </AddLiquefier>
     <ModificationFactor> -1 </ModificationFactor> <!-- Modification factor for the energy loss, used in the Lbt module -->
     <lambdaQCD>0.2</lambdaQCD> <!-- 0.2 JETSCAPE standard value, 0.4 is the value chosen in JETSET -->
@@ -301,9 +395,19 @@
       <vir_factor> 0.25 </vir_factor>
       <in_vac> 1 </in_vac>
       <recoil_on> 0 </recoil_on>
+      <!--recoil_on = 1 reads the LBT tables (ratedata-HQ, distB.dat, distF.dat)
+          from the same place as Lbt: an optional <LBT_table_path> here, else
+          Lbt's <LBT_table_path>, else LBT_TABLES_PATH, else
+          $XSCAPE_DATA_DIR/LBT-tables, else ./LBT-tables.-->
       <broadening_on> 0 </broadening_on>
       <brick_med> 0 </brick_med>   <!-- Set brick_med to 1 while using Brick Hydro module-->
       <brick_length> 5.0 </brick_length>
+      <!-- Where <Eloss><tStart> (with a hydro: its start time) cuts the recoil steps and the
+           qhat table along a parton's path. 0: at tStart cosh(y), y the spatial rapidity of
+           the parton's current position, for every point (Matter's original cut).
+           1: at each point's own proper time, tau < tStart; with MUSIC this is where its
+           evolution begins, i.e. the events of tStart 0 with the hydro lookup deciding. -->
+      <tStart_at_point> 0 </tStart_at_point>
       <hydro_Tc> 0.16 </hydro_Tc>
       <!-- Pick a qhat formula -->
       <!-- Type=0 : HTL Formula with both alpha_s fixed  -->
@@ -325,6 +429,11 @@
 
     <Lbt>
       <name> Lbt </name>
+      <!--Directory holding the LBT data tables. If omitted (recommended), it is
+          resolved from the LBT_TABLES_PATH env var, else
+          $XSCAPE_DATA_DIR/LBT-tables, else ./LBT-tables. Add an explicit path
+          here to override, e.g. <LBT_table_path>/abs/path/LBT-tables</LBT_table_path>.
+          Do NOT leave this element empty (an empty element is unsupported).-->
       <Q0> 2.0 </Q0>
       <in_vac> 0 </in_vac>
       <only_leading> 0 </only_leading>
@@ -410,6 +519,13 @@
       <!--threshold_energy_switch = 1, use e_threshold; threshold_energy_switch = 0, use |e_threshold|*T-->
       <threshold_energy_switch>1</threshold_energy_switch>
       <e_threshold>2.0</e_threshold>
+      <!-- 1: scale each droplet so that its kernel, point-sampled at the hydro's
+           cell centres, sums to exactly its four-momentum (droplets whose kernel
+           misses every cell centre go whole into the nearest cell).  0: deposit
+           what the sampled kernel sums to (before 2026-09: 0 to ~6 times the
+           droplet at large |eta_s| or late tau).  Missing: 1.  Droplets at the hard
+           vertex (tau = 0) deposit in both cases (before: eta = 0/0, never). -->
+      <normalize_on_hydro_grid>1</normalize_on_hydro_grid>
 
       <!-- CausalLiquefier -->
       <CausalLiquefier>
@@ -422,6 +538,23 @@
           <time_relax>0.1</time_relax><!-- in [fm] -->
           <d_diff>0.08</d_diff><!-- in [fm] -->
           <width_delta>0.1</width_delta><!-- in [fm] -->
+          <!-- The frame the causal diffusion is solved in.  bjorken (the default):
+               the frame of the Bjorken flow at the droplet's eta_s, where the droplet
+               sits at z = 0; every droplet then deposits as one at midrapidity does,
+               and tau_delay is a delay in that frame's own time.  lab: the collision's
+               Cartesian frame, as in the liquefier's paper (Tachibana, Shen, Majumder,
+               arXiv:2001.08321, which assumes a medium with small flow) and in X-SCAPE
+               before 2026-11; at forward eta_s it deposits displaced and far narrower
+               than a cell.  The two agree at eta_s = 0.  fluid: the rest frame of the
+               background fluid (the medium Matter and LBT see) where the droplet was
+               made, transverse flow included; the deposit stays on the slice
+               tau_d + tau_delay.  A droplet where the fluid's energy density is below
+               fluid_e_min (or where there is none: before the hydro starts, off its
+               grid) takes the Bjorken frame; the fluid's speed relative to the Bjorken
+               flow is capped at fluid_v_max. -->
+          <frame>bjorken</frame>
+          <fluid_e_min>0.1</fluid_e_min><!-- in [GeV/fm^3], frame fluid only -->
+          <fluid_v_max>0.99</fluid_v_max><!-- frame fluid only -->
       </CausalLiquefier>
 
       <!-- HadronicLiquefier-->
@@ -504,6 +637,74 @@
       <!--evolution output/storage parameters-->
       <output_evolution_to_file>0</output_evolution_to_file>
       <output_evolution_to_memory>1</output_evolution_to_memory>
+      <!-- dump_hydro_only, skip_surface and store_evolution: set in the first
+           <Hydro><MUSIC> block they apply to every MUSIC instance; in an
+           instance's own <Hydro><MUSIC> block they override that for this
+           instance only (e.g. a two-stage jet leg whose evolution nobody
+           reads: dump_hydro_only 1, store_evolution 0). -->
+      <!--1: keep MUSIC's native evolution store and hand no copy to the framework (bulk_info); needs output_evolution_to_memory 1-->
+      <dump_hydro_only> 0 </dump_hydro_only>
+      <!--skip exporting the freeze-out surface (hand-off + surface*.dat); MUSIC still finds it internally for hydro termination. Only use in hydro-only dumps.-->
+      <skip_surface> 0 </skip_surface>
+      <!-- 1: store the evolution frames in MUSIC's in-memory store; 0: keep only
+           its grid and tau bookkeeping (music4gpu; CPU MUSIC ignores it). -->
+      <store_evolution> 1 </store_evolution>
+      <!-- Two-stage hydro (music4gpu): the jet leg starts from the background's
+           state instead of recomputing the identical leading steps. In the jet
+           leg's own block: <restart_from>MUSIC_1</restart_from> (the
+           background's <name>). The background then keeps a checkpoint at
+           <checkpoint_tau> [fm/c] of its own block, by default just before
+           the liquefier's <tau_delay> (checkpoint_tau 0): half the largest
+           hydro step and 1e-3 fm/c before it, where a droplet made at the
+           hard vertex is not yet in reach of the jet source; a time between
+           there and tau_delay is moved there. Same output; an event that
+           does not fit runs from tau0 and the log says why. Both are read
+           only from an instance's own block; these defaults (none, 0) are
+           off. -->
+      <restart_from> none </restart_from>
+      <checkpoint_tau> 0 </checkpoint_tau>
+      <!-- 1: hand the evolution to the framework (bulk_info, for jet energy loss)
+           as a slim copy: e, s, T, vx, vy, vz only, 24 instead of 112 bytes per
+           cell. P, pi^{mu nu}, Pi, the mu's and qgp_fraction then read as zero,
+           and a surface built from the evolution (FindSurfaceFromEvolution) is
+           refused. 0 (default): the full FluidCellInfo copy. -->
+      <slim_bulk_info> 0 </slim_bulk_info>
+      <!-- 1: MUSIC builds the freeze-out surface (it also decides when the
+           evolution stops). 0: no surface, stop on max(e) < e_fo instead (same
+           stop step; music4gpu only), for runs that need just the evolution.
+           Set in the first <Hydro><MUSIC> block it applies to every MUSIC
+           instance; in an instance's own <Hydro><MUSIC> block it overrides
+           that for this instance only. -->
+      <freeze_out_surface> 1 </freeze_out_surface>
+      <!-- 1: MUSIC writes momentum_anisotropy_tau_*.dat and
+           eccentricities_evo_*_tau_*.dat at four steps of every run (a serial
+           pass over every cell); 0: it skips them. -->
+      <output_momentum_anisotropy_vs_etas> 1 </output_momentum_anisotropy_vs_etas>
+      <!-- a larger time step from late_tau_switch on, with the freeze-out checks and the
+           stored frames kept at their spacing (music4gpu); 0: a constant step -->
+      <late_delta_tau>0</late_delta_tau>
+      <late_tau_switch>0</late_tau_switch>
+      <!-- KT fluxes (music4gpu): a half-cell state that cannot be reconstructed
+           falls back to the cell on its side of the interface, so both cells
+           of an interface use the same flux (1, the default since 2026-11-17),
+           or to the cell computing the flux (0, the old rule: the two cells
+           can then use different fluxes, so E and charges are not conserved
+           there).  Set 0 only to continue a campaign begun with 0. -->
+      <symmetric_flux_fallback>1</symmetric_flux_fallback>
+      <!-- GPU shear regulator (music4gpu): when pi^{mu nu} pi_{mu nu} comes out
+           negative in float (fast, dilute cells) the GPU sets W to 0 as the
+           CPU does (1, the default since 2026-11-17), or clamps it to 0 and
+           leaves W unregulated there (0, the old rule) -->
+      <quest_revert_as_cpu>1</quest_revert_as_cpu>
+      <!-- the GPU evolves only the region with matter (opt-in, off by
+           default; music4gpu, CUDA; Metal port not yet validated): the blocks
+           of 8 x 8 x 4 cells within active_region_halo cells of a cell with
+           e > active_region_eps [GeV/fm^3] or a source term, rebuilt every
+           active_region_dtau [fm/c]; the other cells stay frozen.  Not
+           bit-identical (vacuum level only).  0: the whole grid. -->
+      <active_region_eps>0</active_region_eps>
+      <active_region_halo>3</active_region_halo>
+      <active_region_dtau>0.1</active_region_dtau>
       <!--When there is a pre-equilibrium stage, and it is kept in memory, this has to be 1-->
       <output_evolution_every_N_timesteps>1</output_evolution_every_N_timesteps>
       <surface_in_memory>1</surface_in_memory>
@@ -592,7 +793,95 @@
       <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
     </CLVisc>
 
+    <!-- js-contrib: FnoHydro defaults (required so user XMLs with <FNO>/<FNOROOIN>
+         blocks pass the recurseToSearch check in JetScape.cc) -->
+    <FNO>
+      <model_file>../fno_hydro/models/default.pt</model_file>
+      <centrality-low>0</centrality-low>
+      <centrality-high>10</centrality-high>
+      <EOS_id_MUSIC>91</EOS_id_MUSIC>
+      <n_features>3</n_features>
+      <freezeout_temperature>0.136</freezeout_temperature>
+      <nx>60</nx>
+      <ny>60</ny>
+      <ntau>50</ntau>
+      <x_min>-15.0</x_min>
+      <y_min>-15.0</y_min>
+      <dtau>0.1</dtau>
+      <neta>1</neta>
+      <deta>0</deta>
+    </FNO>
+
+    <FNOROOIN>
+      <model_file>../fno_hydro/models/default.pt</model_file>
+      <root_file>default.root</root_file>
+      <fullHydroIn>0</fullHydroIn>
+      <bulkHadroFull>0</bulkHadroFull>
+      <QAoutput>0</QAoutput>
+      <centrality-low>0</centrality-low>
+      <centrality-high>10</centrality-high>
+      <EOS_id_MUSIC>91</EOS_id_MUSIC>
+      <n_features>3</n_features>
+      <tau0>0.5</tau0>
+      <freezeout_temperature>0.136</freezeout_temperature>
+      <nx>60</nx>
+      <ny>60</ny>
+      <neta>1</neta>
+      <ntau>50</ntau>
+      <x_min>-15.0</x_min>
+      <y_min>-15.0</y_min>
+      <dtau>0.1</dtau>
+      <deta>0</deta>
+    </FNOROOIN>
+
   </Hydro>
+
+  <!-- RootBulkWriter -->
+    <FastRootBulkWriter>
+        <name> FastRootBulkWriter </name>
+        <out_file_name> hydro_evo_fast.root </out_file_name>
+        <grid_mode> native </grid_mode>
+        <tau_stride> 1 </tau_stride>
+        <include_preequilibrium> 0 </include_preequilibrium>
+        <ntau> 0 </ntau>
+        <tau_min> 0 </tau_min>
+        <dtau> 0 </dtau>
+        <eta_min> 0 </eta_min>
+        <deta> 0 </deta>
+        <x_min> 0 </x_min>
+        <dx> 0 </dx>
+        <y_min> 0 </y_min>
+        <dy> 0 </dy>
+    </FastRootBulkWriter>
+
+    <RootBulkWriter>
+      <name> RootBulkWriter </name>
+      <out_file_name> bulk.root </out_file_name>
+      <!-- if ntau != 0: events are set to fixed size arrays for each event,
+           with data either truncated before freezeout, or padded with zeros after
+           freezeout out to maxTau 
+           If ntau == 0: use vector to include all data out to freezeout in each event
+           (i.e. the output is a "ragged array" when read into numpy.
+      -->
+      <tau_min> 0.6 </tau_min>
+      <ntau> 0 </ntau>
+      <dtau> 0.2 </dtau>
+
+      <!-- Each the following values, if 0, will default to those from FluidEvolutionHistory
+      (and the variable names, i.e. x_min vs x_max, also follow those naming conventions.)-->
+      <x_min> -15 </x_min>
+      <dx> 0.3 </dx>
+      <y_min> -15 </y_min>
+      <dy> 0.3 </dy>
+      <eta_min> -1 </eta_min>
+      <deta> 0.5 </deta>
+      
+      <!-- set the next option to true whenever adding the root bulk writer -->
+      <ensure_MusicWrapper_output> 0 </ensure_MusicWrapper_output>
+
+
+      <!-- set the option to break up the events into multiple sub-event files -->
+  </RootBulkWriter>
 
   <!-- Jet Hadronization Module -->
    <JetHadronization>
@@ -624,7 +913,15 @@
        <part_prop>0.0</part_prop>
        <pythia_decays>on</pythia_decays> <!-- lets the particles given to pythia decay-->
        <tau0Max>10.0</tau0Max> <!-- only particles with tau0 < tau0Max (given in mm/c) can decay, increase to include weak decays-->
-       <weak_decays>depracted</weak_decays> <!-- use the parameters pythia_decays and tau0Max, this parameter is only a dummy to make old xml files work-->
+       <weak_decays>deprecated</weak_decays> <!-- use the parameters pythia_decays and tau0Max, this parameter is only a dummy to make old xml files work-->
+       <!-- colorless and iColored: 1 = reseed Pythia every event from the module's generator (the seed is recorded), so each event's hadronization can be reproduced on its own; 0 = one Pythia stream for the whole run -->
+       <reseed_per_event>0</reseed_per_event>
+       <!-- iColored only: 1 = keep the parton list handed to Pythia every event (beam remnants and colour-balancing parton included), so the event can be hadronized again later -->
+       <store_input>0</store_input>
+       <!-- iColored only: duplicated colour tags in the parton list (a tag used more than once as a colour or as an anticolour): fail = the event throws (default), relabel = the extra uses get new tags (a repair, counted in the colour audit) -->
+       <colour_duplicates>fail</colour_duplicates>
+       <!-- iColored only: how the colour lines that end in the medium (holes, pstat -1, of LBT or of Matter's recoils) or are broken otherwise are closed: reconnect = join the open ends within a shower by the shortest string, the holes' medium partners for the rest (default); reconnect_global = join across showers too; thermal = every hole's medium partner; fake = soft (anti)quarks along the beam; none = throw on an open line. See js-contrib docs/Plans/PLAN_lbt_colour_tags.md -->
+       <colour_closure>reconnect</colour_closure>
        <!-- You can add any number of additional lines to initialize pythia hadronization here -->
        <!-- Note that if the tag exists it cannot be empty (tinyxml produces a segfault) -->
        <LinesToRead>
@@ -639,6 +936,17 @@
 
   <!-- Particlization Module  -->
   <SoftParticlization>
+    <!-- Id of the FluidDynamics task whose surface is sampled; "first" = the
+         first hydro in the task list (e.g. FastHydro_jet for a two-stage run) -->
+    <hydro_id>first</hydro_id>
+    <!-- Used only when the hydro provides no surface of its own (it only fills
+         bulk_info): the surface is then built from the stored evolution with
+         SurfaceFinder at T_sw [GeV] on a Cornelius lattice with these spacings
+         (0 = defaults dtau = 0.1 fm, dx = dy = 0.2 fm, deta = 0.2). -->
+    <T_sw>0.15</T_sw>
+    <surface_dtau>0</surface_dtau>
+    <surface_dx>0</surface_dx>
+    <surface_deta>0</surface_deta>
     <!-- iSpectraSampler -->
     <iSS>
       <!-- read in file type  -->
@@ -664,6 +972,21 @@
       <deltaf_type>20</deltaf_type>
       <number_of_repeated_sampling>1</number_of_repeated_sampling>
       <Perform_resonance_decays>0</Perform_resonance_decays>
+      <!-- 1: iSS decays the SMASH hadron list (EOS 91) too, for runs without
+           SMASH (Breit-Wigner masses for the unstable daughters of channels
+           the pole masses close); 0: that list is left to SMASH -->
+      <decay_smash_list>0</decay_smash_list>
+      <!-- N > 0: also hand over the undecayed hadrons of the first N samples
+           (compact output only), for an afterburner run later -->
+      <keep_primaries>0</keep_primaries>
+      <!-- 1: random numbers addressed by the cell (blocks of quantized
+           tau, x, y, eta), so two surfaces that agree in a region give the
+           same hadrons there and their difference is less noisy; 0: the
+           conventional sequence -->
+      <correlated_sampling>0</correlated_sampling>
+      <correlated_block_dtau>0.5</correlated_block_dtau>
+      <correlated_block_dx>1.0</correlated_block_dx>
+      <correlated_block_deta>0.5</correlated_block_deta>
     </iSS>
   </SoftParticlization>
 

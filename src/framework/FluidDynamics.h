@@ -94,8 +94,14 @@ class FluidDynamics : public JetScapeModuleBase {
    *
    * @var Jetscape::real hydro_tau_0
    * @var Jetscape::real hydro_tau_max
+   *
+   * Set by the hydro modules (MpiMusic: MUSIC's tau0 after each run). The jet
+   * energy-loss modules (Matter, LBT, AdSCFT) take hydro_tau_0 as the start of
+   * their medium interaction (GetHydroTau0Signal), so it must never be left
+   * uninitialised: 0 until a module sets it (no cut; outside the stored
+   * evolution the medium lookup returns a zero cell anyway).
    */
-  Jetscape::real hydro_tau_0, hydro_tau_max;
+  Jetscape::real hydro_tau_0 = 0, hydro_tau_max = 0;
 
   /**
    * @brief Record the hydro freeze out temperature.
@@ -546,7 +552,7 @@ class FluidDynamics : public JetScapeModuleBase {
   virtual void GetHydroInfo(
       Jetscape::real t, Jetscape::real x, Jetscape::real y, Jetscape::real z,
       std::unique_ptr<FluidCellInfo> &fluid_cell_info_ptr) {
-    if (hydro_status != FINISHED || bulk_info.data.size() == 0) {
+    if (hydro_status != FINISHED || bulk_info.get_data_size() == 0) {
       throw std::runtime_error(
           "Hydro evolution is not finished "
           "or EvolutionHistory is empty");
@@ -628,6 +634,17 @@ class FluidDynamics : public JetScapeModuleBase {
    */
   void FindAConstantTemperatureSurface(
       Jetscape::real T_sw, std::vector<SurfaceCellInfo> &surface_cells);
+
+  /**
+   * @brief Builds a constant-temperature surface from the stored evolution
+   * (`bulk_info`) with SurfaceFinder, using `params` for the switching
+   * temperature and the Cornelius lattice spacing.
+   *
+   * This is how a SoftParticlization module gets a surface from a hydro that
+   * only fills `bulk_info` and has no surface finder of its own.
+   */
+  void FindSurfaceFromEvolution(SurfaceFinderParams params,
+                                std::vector<SurfaceCellInfo> &surface_cells);
 
   // all the following functions will call function GetHydroInfo()
   // to get thermaldynamic and dynamical information at a space-time point

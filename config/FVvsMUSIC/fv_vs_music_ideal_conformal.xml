@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<jetscape>
+
+  <!-- ===================================================================== -->
+  <!-- FV solver vs MUSIC, shared MC-Glauber IC, NO jet energy deposition.    -->
+  <!-- See FNO4d/PLAN_fv_vs_music.md.  Driven by run_music_leg.py, which      -->
+  <!-- builds the task list in Python:                                        -->
+  <!--   FvMusicInitialState (Python) -> NullPreDynamics -> MUSIC             -->
+  <!--                                -> FastRootBulkWriter                   -->
+  <!-- so there is deliberately NO <IS> module block here, only the grid.     -->
+  <!-- ===================================================================== -->
+
+  <nEvents> 1 </nEvents>
+  <!-- setReuseHydro=true (the jetscape_main.xml default) would deactivate    -->
+  <!-- IS/preeq/hydro for events 1..9 and rerun them only at event 10.        -->
+  <setReuseHydro> false </setReuseHydro>
+  <nReuseHydro> 1 </nReuseHydro>
+
+  <debug> off </debug>
+  <remark> off </remark>
+  <vlevel> 0 </vlevel>
+  <nEvents_printout> 100 </nEvents_printout>
+  <!-- the task list comes from run_music_leg.py, not from this file -->
+  <enableAutomaticTaskListDetermination> false </enableAutomaticTaskListDetermination>
+
+  <outputFilename>fv_vs_music</outputFilename>
+  <JetScapeWriterAscii> off </JetScapeWriterAscii>
+  <JetScapeWriterAsciiGZ> off </JetScapeWriterAsciiGZ>
+  <JetScapeWriterHepMC> off </JetScapeWriterHepMC>
+  <JetScapeWriterRootHepMC> off </JetScapeWriterRootHepMC>
+  <JetScapeWriterFinalStatePartonsAscii> off </JetScapeWriterFinalStatePartonsAscii>
+  <JetScapeWriterFinalStateHadronsAscii> off </JetScapeWriterFinalStateHadronsAscii>
+  <JetScapeWriterQnVectorAscii> off </JetScapeWriterQnVectorAscii>
+
+  <Random>
+    <seed>20260920</seed>
+  </Random>
+
+  <IS>
+    <!-- 65 x 65 x 33 cells at 0.3125 fm, matching the fast_data IC exactly.  -->
+    <!-- InitialState::GetXSize() = ceil(2*grid_max_x/grid_step_x):           -->
+    <!--   ceil(2*10.15625/0.3125) = ceil(65.0) = 65                          -->
+    <!--   ceil(2*5.15625 /0.3125) = ceil(33.0) = 33                          -->
+    <!-- 0.3125 = 5/16 and 10.15625 = 325/32 are exact in binary, so the      -->
+    <!-- ceil() cannot tip the wrong way.                                     -->
+    <grid_max_x> 10.15625 </grid_max_x>
+    <grid_max_y> 10.15625 </grid_max_y>
+    <grid_max_z>  5.15625 </grid_max_z>
+    <grid_step_x> 0.3125 </grid_step_x>
+    <grid_step_y> 0.3125 </grid_step_y>
+    <grid_step_z> 0.3125 </grid_step_z>
+  </IS>
+
+  <Preequilibrium>
+    <tau0>0.0</tau0>
+    <tauj>0.1</tauj>
+    <!-- THIS, not <MUSIC><Initial_time_tau_0>, is MUSIC's tau0 on the        -->
+    <!-- Initial_profile 42 path (MusicWrapper.cc:391 ->                      -->
+    <!-- PreequilibriumDynamics.cc:58).  Must equal the IC file's tau0.       -->
+    <taus>0.58</taus>
+    <!-- 1 would make MusicWrapper.cc:505-508 override MUSIC's Delta_Tau with -->
+    <!-- the pre-eq dtau and prepend pre-eq frames to the tau axis.           -->
+    <evolutionInMemory>0</evolutionInMemory>
+
+    <!-- passes the IC through as energy density with u=(1,0,0,0), pi=0, Pi=0 -->
+    <NullPreDynamics> </NullPreDynamics>
+  </Preequilibrium>
+
+  <Hydro>
+    <!-- no liquefier attached => HydroSourceJETSCAPE::get_hydro_energy_source -->
+    <!-- returns zero, so there is no jet energy deposition.                   -->
+    <AddLiquefier> false </AddLiquefier>
+    <CartesianHydro> false </CartesianHydro>
+
+    <MUSIC>
+      <name>MUSIC</name>
+      <!-- run_music_leg.py copies config/FVvsMUSIC/music_input_fv to the cwd -->
+      <!-- under this name; MpiMusic rewrites it in place, so never point     -->
+      <!-- this at the version-controlled template.                           -->
+      <MUSIC_input_file>music_input_fv_ideal_conformal</MUSIC_input_file>
+
+      <EOS>0</EOS>
+      <!-- 42 = IC from the JETSCAPE framework (pre-equilibrium vectors) -->
+      <InitialProfile>42</InitialProfile>
+      <!-- 0 = double precision, constant time step.  1 is fp32 and 2 grows   -->
+      <!-- delta_tau mid-run (evolve.cpp:98-106), which breaks the tau axis.  -->
+      <beastMode>0</beastMode>
+      <!-- ignored on the profile-42 path; <Preequilibrium><taus> wins -->
+      <Initial_time_tau_0>0.58</Initial_time_tau_0>
+
+      <output_evolution_to_file>0</output_evolution_to_file>
+      <output_evolution_to_memory>1</output_evolution_to_memory>
+      <surface_in_memory>1</surface_in_memory>
+      <!-- Delta_Tau 0.02 * 5 = 0.1 fm/c = fast_data's record_dtau -->
+      <output_evolution_every_N_timesteps>5</output_evolution_every_N_timesteps>
+
+      <!-- ==== viscosity: set per leg ==== -->
+      <!-- eta/s <= 1e-6 sets Viscosity_Flag_Yes_1_No_0 = 0, which makes      -->
+      <!-- init.cpp:349-372 zero piBulk_ and all Wmunu_ at tau0 (the only   -->
+      <!-- thing that neutralises NullPreDynamics' hardcoded P_ = e/3).        -->
+      <shear_viscosity_eta_over_s>0.0</shear_viscosity_eta_over_s>
+      <!-- MUST stay 0: any value > 0 re-enables Viscosity_Flag at            -->
+      <!-- MusicWrapper.cc:168 regardless of eta/s above.                     -->
+      <T_dependent_Shear_to_S_ratio>0</T_dependent_Shear_to_S_ratio>
+      <muB_dependent_Shear_to_S_ratio>0</muB_dependent_Shear_to_S_ratio>
+
+      <!-- MUST stay 0: nonzero sets Include_Bulk_Visc = 1 at                 -->
+      <!-- MusicWrapper.cc:238 independently of the shear setting, and        -->
+      <!-- fast_data's bulk sector is untested (zeta/s = 0 always).           -->
+      <temperature_dependent_bulk_viscosity>0</temperature_dependent_bulk_viscosity>
+
+      <!-- fast_data omits tau_pipi, phi_7, lambda_piPi, lambda_Pipi -->
+      <Include_second_order_terms>0</Include_second_order_terms>
+      <Include_Rhob>0</Include_Rhob>
+      <Include_QS>0</Include_QS>
+
+      <use_eps_for_freeze_out>0</use_eps_for_freeze_out>
+      <freezeout_temperature>0.15</freezeout_temperature>
+      <Do_FreezeOut_lowtemp>1</Do_FreezeOut_lowtemp>
+      <average_surface_over_this_many_time_steps>5</average_surface_over_this_many_time_steps>
+      <Perform_CooperFrye_Freezeout>0</Perform_CooperFrye_Freezeout>
+
+      <!-- hydro-only dump: keep MUSIC's native store, skip the framework AoS -->
+      <!-- copy and the freeze-out surface hand-off.                          -->
+      <dump_hydro_only>1</dump_hydro_only>
+      <skip_surface>1</skip_surface>
+    </MUSIC>
+  </Hydro>
+
+  <FastRootBulkWriter>
+    <name> FastRootBulkWriter </name>
+    <out_file_name>music_fvcmp_ideal_conformal.root</out_file_name>
+    <grid_mode>native</grid_mode>
+    <tau_stride>1</tau_stride>
+  </FastRootBulkWriter>
+
+</jetscape>

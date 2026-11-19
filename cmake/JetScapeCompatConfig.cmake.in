@@ -1,0 +1,24 @@
+# JetScapeConfig.cmake — installed compatibility shim for find_package(JetScape)
+#
+# Allows js-contrib and any other consumer that calls find_package(JetScape)
+# to work against a fully installed X-SCAPE prefix without modification.
+# It loads the real XSCAPEConfig.cmake (one directory up) and then exposes
+# a plain "JetScape" imported target that mirrors XSCAPE::JetScape.
+
+# ── Load the canonical XSCAPE package ─────────────────────────────────────
+get_filename_component(_xscape_cmake_dir
+  "${CMAKE_CURRENT_LIST_DIR}/../XSCAPE" ABSOLUTE)
+include("${_xscape_cmake_dir}/XSCAPEConfig.cmake")
+
+# ── Create a plain JetScape target as a shim for XSCAPE::JetScape ─────────
+# js-contrib links against "JetScape" (unnamespaced) and reads
+# JetScape_INCLUDE_DIRS; satisfy both without requiring consumers to change.
+if(TARGET XSCAPE::JetScape AND NOT TARGET JetScape)
+  add_library(JetScape INTERFACE IMPORTED GLOBAL)
+  set_target_properties(JetScape PROPERTIES
+    INTERFACE_LINK_LIBRARIES    "XSCAPE::JetScape"
+    INTERFACE_INCLUDE_DIRECTORIES "${XSCAPE_INCLUDE_DIR}")
+endif()
+
+set(JetScape_FOUND        TRUE)
+set(JetScape_INCLUDE_DIRS "${XSCAPE_INCLUDE_DIR}")

@@ -15,18 +15,22 @@
  ******************************************************************************/
 
 #include <stdio.h>
+#include <cstdlib>
 #include <sys/stat.h>
 #include <MakeUniqueHelper.h>
 
 #include <string>
 #include <sstream>
 #include <vector>
+#include <map>
 #include <memory>
 #include <regex>
 
 #include "JetScapeLogger.h"
 #include "MusicWrapper.h"
+#include "CausalLiquefier.h"
 #include "surfaceCell.h"
+#include "music_logo.h"
 
 using namespace Jetscape;
 
@@ -47,15 +51,47 @@ MpiMusic::MpiMusic() {
   hydro_source_terms_ptr->set_source_tau_max(1000.0);
 }
 
-MpiMusic::~MpiMusic() {}
+namespace {
+// The MUSIC instances by module id, for <restart_from> (an instance names the
+// one whose checkpoint it starts from).
+std::map<std::string, MpiMusic *> &MusicInstances() {
+  static std::map<std::string, MpiMusic *> instances;
+  return instances;
+}
+}  // namespace
+
+MpiMusic::~MpiMusic() {
+  auto &instances = MusicInstances();
+  auto it = instances.find(GetId());
+  if (it != instances.end() && it->second == this)
+    instances.erase(it);
+}
 
 void MpiMusic::InitializeHydro(Parameter parameter_list) {
+  MusicInstances()[GetId()] = this;
+  int suppress_logo =
+      GetXMLElementInt({"Hydro", "MUSIC", "suppress_logo"}, false);
+  if (!suppress_logo)
+    MUSIC_LOGO::display_logo(0);
   JSINFO << "Initialize MUSIC ...";
   VERBOSE(8);
 
   string input_file = GetXMLElementText({"Hydro", "MUSIC", "MUSIC_input_file"});
   doCooperFrye =
       GetXMLElementInt({"Hydro", "MUSIC", "Perform_CooperFrye_Freezeout"});
+
+  // Write the EOS into the music input file BEFORE constructing MUSIC: MUSIC
+  // builds its EOS tables from EOS_to_use in the constructor, and
+  // set_parameter("EOS") afterwards only changes DATA.whichEOS. Updating the
+  // file later made the first instance in a process use whatever EOS the
+  // previous run (or a CMake re-configure, which restores the EOS 91 template)
+  // left there. The file is also read by iSS.
+  int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
+  try {
+    update_music_input_parameter(input_file, "EOS_to_use", EOS);
+  } catch (const std::exception &e) {
+    JSWARN << "Error updating EOS_to_use in MUSIC input file: " << e.what();
+  }
 
   music_hydro_ptr = std::unique_ptr<MUSIC>(new MUSIC(input_file));
 
@@ -93,19 +129,167 @@ void MpiMusic::InitializeHydro(Parameter parameter_list) {
     music_hydro_ptr->set_parameter("surface_in_memory", 0);
   }
 
-  int EOS = GetXMLElementInt({"Hydro", "MUSIC", "EOS"});
-  music_hydro_ptr->set_parameter("EOS", EOS);
-  // Try to reset the EOS in the music input file
-  // This is needed for iSS, which reads this parameter from the music input
-  // file
-  try {
-    update_music_input_parameter(input_file, "EOS_to_use", EOS);
-  } catch (const std::exception &e) {
-    JSWARN << "Error updating EOS_to_use in MUSIC input file: " << e.what();
+  flag_ensure_MusicWrapper_output =
+      (bool)GetXMLElementInt({"RootBulkWriter", "ensure_MusicWrapper_output"});
+
+  // dump_hydro_only, skip_surface and store_evolution: the first
+  // <Hydro><MUSIC> block sets them for every instance, the same tag in the
+  // instance's own block overrides it (as freeze_out_surface below), e.g. a
+  // two-stage jet leg that hands nothing to the framework and stores nothing.
+
+  // Fast hydro-only ROOT dump (FastRootBulkWriter): keep MUSIC's native
+  // in-memory evolution store and skip the framework AoS copy. Requires
+  // output_evolution_to_memory = 1.
+  dump_hydro_only_ =
+      (bool)GetXMLElementInt({"Hydro", "MUSIC", "dump_hydro_only"}, false);
+  const int own_dump_hydro_only = ReadOwnMusicBlockInt("dump_hydro_only");
+  if (own_dump_hydro_only >= 0)
+    dump_hydro_only_ = own_dump_hydro_only != 0;
+  if (dump_hydro_only_ && flag_output_evo_to_memory != 1) {
+    JSWARN << "MUSIC: dump_hydro_only=1 requires output_evolution_to_memory=1; "
+              "the native evolution store will otherwise be empty.";
   }
+
+  // Skip exporting MUSIC's freeze-out surface (hand-off + surface*.dat). MUSIC
+  // still finds the surface internally (it is the hydro stop condition); this
+  // only drops the unused export in a hydro-only dump. See <skip_surface>.
+  skip_surface_ =
+      (bool)GetXMLElementInt({"Hydro", "MUSIC", "skip_surface"}, false);
+  const int own_skip_surface = ReadOwnMusicBlockInt("skip_surface");
+  if (own_skip_surface >= 0)
+    skip_surface_ = own_skip_surface != 0;
+
+  // Store the evolution frames in MUSIC's in-memory store (see
+  // set_store_evolution). Missing tag: on, as before.
+  int store_evolution = 1;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "store_evolution"}, false)) {
+    el->QueryIntText(&store_evolution);
+  }
+  const int own_store_evolution = ReadOwnMusicBlockInt("store_evolution");
+  if (own_store_evolution >= 0)
+    store_evolution = own_store_evolution;
+  store_evolution_ = store_evolution != 0;
+
+  ReadRestartSettings();
+
+  // Slim framework copy of the evolution: e, s, T, vx, vy, vz only. See
+  // <slim_bulk_info> and PassHydroEvolutionHistoryToFramework.
+  slim_bulk_info_ =
+      (bool)GetXMLElementInt({"Hydro", "MUSIC", "slim_bulk_info"}, false);
+  if (slim_bulk_info_ && flag_preEq_output_evo_to_memory == 1) {
+    JSWARN << "MUSIC: slim_bulk_info is not supported with a pre-equilibrium "
+              "evolution in memory; handing over the full copy.";
+    slim_bulk_info_ = false;
+  }
+
+  // MUSIC's momentum anisotropy / eccentricities vs eta_s (.dat files at four
+  // steps per run, a serial pass over every cell). Missing tag: on, as before.
+  int output_anisotropy_vs_etas = 1;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "output_momentum_anisotropy_vs_etas"}, false)) {
+    el->QueryIntText(&output_anisotropy_vs_etas);
+  }
+  music_hydro_ptr->set_parameter("output_momentum_anisotropy_vs_etas",
+                                 output_anisotropy_vs_etas);
+
+  // Freeze-out surface: the first <Hydro><MUSIC> block sets it for every
+  // instance, as for all MUSIC settings; the same tag inside this instance's
+  // own block (matched by <name>) overrides it, e.g. no surface for a
+  // two-stage background leg but one for the jet leg that gets particlized.
+  freeze_out_surface_ =
+      GetXMLElementInt({"Hydro", "MUSIC", "freeze_out_surface"});
+  const int own_freeze_out_surface = ReadOwnMusicBlockInt("freeze_out_surface");
+  if (own_freeze_out_surface >= 0) {
+    freeze_out_surface_ = own_freeze_out_surface;
+  }
+
+  music_hydro_ptr->set_parameter("EOS", EOS);
 
   int beastMode = (GetXMLElementInt({"Hydro", "MUSIC", "beastMode"}));
   music_hydro_ptr->set_parameter("beastMode", beastMode);
+
+  // A larger time step from <late_tau_switch> on (<late_delta_tau>; absent or
+  // 0: a constant step).  MUSIC keeps the checks and the stored frames at
+  // their spacing; the jet source follows the step
+  // (HydroSourceJETSCAPE::hydro_dtau_changed, CausalLiquefier's schedule).
+  late_delta_tau_ = 0.;
+  late_tau_switch_ = 0.;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "late_delta_tau"}, false)) {
+    el->QueryDoubleText(&late_delta_tau_);
+  }
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "late_tau_switch"}, false)) {
+    el->QueryDoubleText(&late_tau_switch_);
+  }
+  music_hydro_ptr->set_parameter("late_delta_tau", late_delta_tau_);
+  music_hydro_ptr->set_parameter("late_tau_switch", late_tau_switch_);
+  if (late_delta_tau_ > 0.) {
+    JSINFO << "MUSIC late step: delta_tau " << late_delta_tau_
+           << " fm/c from tau = " << late_tau_switch_ << " fm/c on";
+  }
+
+  // <symmetric_flux_fallback> (music4gpu): a KT half-cell state that cannot be
+  // reconstructed falls back to the cell on its side of the interface, so the
+  // two cells of an interface use the same flux (1, the default since
+  // 2026-11-17). 0 keeps the old fallback to the cell computing the flux
+  // (not conserving; only to continue a campaign begun with it).
+  int symmetric_flux_fallback = 1;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "symmetric_flux_fallback"}, false)) {
+    el->QueryIntText(&symmetric_flux_fallback);
+  }
+  music_hydro_ptr->set_parameter("symmetric_flux_fallback",
+                                 symmetric_flux_fallback);
+  JSINFO << "MUSIC: KT flux fallback "
+         << (symmetric_flux_fallback == 1
+                 ? "symmetric, conserving (<symmetric_flux_fallback> 1)"
+                 : "to the computing cell, the old rule "
+                   "(<symmetric_flux_fallback> 0)");
+
+  // <quest_revert_as_cpu> (music4gpu): the GPU shear regulator sets W^{mu nu}
+  // to 0 when pi^{mu nu} pi_{mu nu} comes out negative, as the CPU does (1,
+  // the default since 2026-11-17). 0 keeps the old GPU clamp.
+  int quest_revert_as_cpu = 1;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "quest_revert_as_cpu"}, false)) {
+    el->QueryIntText(&quest_revert_as_cpu);
+  }
+  music_hydro_ptr->set_parameter("quest_revert_as_cpu", quest_revert_as_cpu);
+  JSINFO << "MUSIC: GPU shear regulator "
+         << (quest_revert_as_cpu == 1
+                 ? "as on the CPU (<quest_revert_as_cpu> 1)"
+                 : "with the old clamp (<quest_revert_as_cpu> 0)");
+
+  // The GPU evolves only the region with matter (music4gpu, CUDA; opt-in):
+  // <active_region_eps> [GeV/fm^3] > 0 turns it on (absent or 0: the whole
+  // grid), <active_region_halo> [cells, default 3] and <active_region_dtau>
+  // [fm/c, default 0.1] set the margin and how often the region is rebuilt.
+  double active_region_eps = 0.;
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Hydro", "MUSIC", "active_region_eps"}, false)) {
+    el->QueryDoubleText(&active_region_eps);
+  }
+  if (active_region_eps > 0.) {
+    int active_region_halo = 3;
+    double active_region_dtau = 0.1;
+    if (auto *el = JetScapeXML::Instance()->GetElement(
+            {"Hydro", "MUSIC", "active_region_halo"}, false)) {
+      el->QueryIntText(&active_region_halo);
+    }
+    if (auto *el = JetScapeXML::Instance()->GetElement(
+            {"Hydro", "MUSIC", "active_region_dtau"}, false)) {
+      el->QueryDoubleText(&active_region_dtau);
+    }
+    music_hydro_ptr->set_parameter("active_region_eps", active_region_eps);
+    music_hydro_ptr->set_parameter("active_region_halo", active_region_halo);
+    music_hydro_ptr->set_parameter("active_region_dtau", active_region_dtau);
+    JSINFO << "MUSIC active region: e > " << active_region_eps
+           << " GeV/fm^3, halo " << active_region_halo
+           << " cells, rebuilt every " << active_region_dtau
+           << " fm/c (GPU only)";
+  }
 
   double tau_hydro =
       (GetXMLElementDouble({"Hydro", "MUSIC", "Initial_time_tau_0"}));
@@ -349,13 +533,11 @@ int MpiMusic::InitializeHydroEnergyProfile() {
 
   // need further improvement to accept multiple source term objects
   // this is a temporary solution
-  music_hydro_ptr->add_hydro_source_terms(hydro_source_terms_ptr);
+  music_hydro_ptr->add_hydro_source_terms_from_jet(hydro_source_terms_ptr);
 
   if (pre_eq_ptr == nullptr) {
     JSINFO << "Setting up the hydro without pre-equilibrium module ...";
     music_hydro_ptr->initialize_hydro_xscape(nx, ny, nz, dx, dy, dz);
-    hydro_source_terms_ptr->set_hydro_dtau(
-        music_hydro_ptr->get_hydro_dtau_grid());
   } else if (initialProfile_ == 13 || initialProfile_ == 131) {
     auto QCDStringList = ini->GetQCDStringList();
     if (QCDStringList.size() == 0) {
@@ -375,6 +557,38 @@ int MpiMusic::InitializeHydroEnergyProfile() {
         pre_eq_ptr->pi03_, pre_eq_ptr->pi11_, pre_eq_ptr->pi12_,
         pre_eq_ptr->pi13_, pre_eq_ptr->pi22_, pre_eq_ptr->pi23_,
         pre_eq_ptr->pi33_, pre_eq_ptr->bulk_Pi_);
+  }
+  // The jet source needs the hydro time step whatever the initial condition:
+  // it sets the droplet pruning window (HydroSourceJETSCAPE::
+  // prepare_list_for_current_tau_frame, [tau - dtau, tau + 2 dtau]) and the
+  // hadronic liquefier's 1/dtau.  It used to be set only without a
+  // pre-equilibrium module, so string initial conditions (13 / 131) kept the
+  // 0.1 fm default window, five times wider than needed with Delta_Tau 0.02:
+  // correct (the window only has to hold the query times) but the droplet
+  // source was evaluated at ~2.6x as many steps.
+  hydro_source_terms_ptr->set_hydro_dtau(
+      music_hydro_ptr->get_hydro_dtau_grid());
+  hydro_source_terms_ptr->set_late_hydro_step(late_delta_tau_,
+                                              late_tau_switch_);
+
+  // MUSIC's computational grid, as initialize_hydro_xscape() and the
+  // pre-equilibrium path set it (cell centres -size/2 + i d, size = n d; the
+  // pre-equilibrium path uses dy = dx).  The liquefier normalizes each
+  // droplet on exactly these cells.  One eta cell (boost invariant): no grid.
+  {
+    HydroGrid grid;
+    const bool pre_eq_path = !(pre_eq_ptr == nullptr || initialProfile_ == 13 ||
+                               initialProfile_ == 131);
+    grid.nx = nx;
+    grid.ny = ny;
+    grid.neta = nz;
+    grid.dx = dx;
+    grid.dy = pre_eq_path ? dx : dy;
+    grid.deta = dz;
+    grid.x_min = -0.5 * grid.nx * grid.dx;
+    grid.y_min = -0.5 * grid.ny * grid.dy;
+    grid.eta_min = -0.5 * grid.neta * grid.deta;
+    hydro_source_terms_ptr->set_hydro_grid(grid);
   }
 
   if (pre_eq_ptr == nullptr &&
@@ -416,12 +630,17 @@ void MpiMusic::EvolveHydroUpto(const double tauEnd) {
     }
     music_hydro_ptr->prepare_run_hydro_one_time_step();
     hydro_source_terms_ptr->set_source_tau_max(GetSourceTermTauMax());
+    // see EvolveHydro(): MUSIC never clears this flag itself
+    music_hydro_ptr->setReRunHydro(false);
+    hit_grid_boundary_ = false;
+    ApplyFreezeOutSurface();
   }
 
   if (hydro_status != FINISHED) {
     int status = music_hydro_ptr->run_hydro_upto(tauEnd);
     if (status != 0) {
       hydro_status = FINISHED;
+      WarnIfGridBoundaryHit();
     }
   }
   // PassHydroSurfaceToFramework();
@@ -454,11 +673,18 @@ void MpiMusic::EvolveHydro() {
       if (flag_surface_in_memory == 1) {
         clearSurfaceCellVector();
       }
-      if (flag_output_evo_to_memory == 1) {
+      if (flag_output_evo_to_memory == 1 && !flag_ensure_MusicWrapper_output) {
         clear_up_evolution_data();
       }
       return;
     }
+  }
+
+  if (dump_hydro_only_) {
+    // Drop any native evolution left over from a previous event so cells from
+    // multiple events cannot accumulate in MUSIC's in-memory store. The
+    // FastRootBulkWriter also clears it after consuming each event.
+    music_hydro_ptr->clear_hydro_info_from_memory();
   }
 
   has_source_terms = false;
@@ -490,11 +716,78 @@ void MpiMusic::EvolveHydro() {
 
   if (hydro_status == INITIALIZED) {
     JSINFO << "running MUSIC ...";
+    // MUSIC stops when its freeze-out surface reaches the transverse grid
+    // edge and sets reRunHydro, expecting its driver to re-run on a larger
+    // grid (MUSIC's own main.cpp does). X-SCAPE does not re-run, and MUSIC
+    // clears the flag only in its constructor, so without this reset every
+    // later event of this instance would stop at its first freeze-out check.
+    music_hydro_ptr->setReRunHydro(false);
+    hit_grid_boundary_ = false;
+    ApplyFreezeOutSurface();
+    music_hydro_ptr->set_parameter("store_hydro_info_frames",
+                                   store_evolution_ ? 1 : 0);
+    restart_status_.clear();
+    if (restart_from_ == nullptr && !restart_from_id_.empty()) {
+      ResolveRestartFrom();
+    }
+#if defined(USE_CUDA) || defined(USE_METAL)
+    music_hydro_ptr->set_checkpoint_tau(CheckpointTauForMusic());
+    if (restart_from_ != nullptr) {
+      auto checkpoint = restart_from_->music_hydro_ptr->get_checkpoint();
+      if (checkpoint && checkpoint->valid) {
+        music_hydro_ptr->set_resume_from(checkpoint);
+      } else {
+        restart_status_ =
+            "run from tau0: " + restart_from_->GetId() + " has no checkpoint";
+      }
+    }
+#endif
     music_hydro_ptr->run_hydro();
+    // The fluid starts at MUSIC's tau0 of this run (with 3dMCGlauber strings
+    // set per event by the earliest string). Matter and LBT read it as their
+    // tStart (GetHydroTau0Signal) and start the medium interaction there, i.e.
+    // when the stored evolution begins. FluidDynamics' setter:
+    // MpiMusic::SetHydroStartTime would also reset MUSIC's Initial_time_tau_0.
+    FluidDynamics::SetHydroStartTime(music_hydro_ptr->get_hydro_tau0());
+#if defined(USE_CUDA) || defined(USE_METAL)
+    if (restart_from_ != nullptr) {
+      if (restart_status_.empty()) {
+        restart_status_ = music_hydro_ptr->get_resume_status();
+      }
+      JSINFO << "MUSIC " << GetId() << " restart: " << restart_status_;
+    }
+#endif
     hydro_status = FINISHED;
+    WarnIfGridBoundaryHit();
+    if (has_source_terms) {
+      const std::string s =
+          hydro_source_terms_ptr->liquefier_normalization_summary();
+      if (!s.empty())
+        JSINFO << "Jet source: " << s;
+    }
   }
 
-  if (flag_output_evo_to_memory == 1) {
+  if (dump_hydro_only_) {
+    // Fast path: keep MUSIC's native in-memory store for the
+    // FastRootBulkWriter. Publish the grid metadata (cheap scalars) but do NOT
+    // build bulk_info.data (the per-cell framework AoS copy). Overrides
+    // ensure_MusicWrapper_output.
+    SetHydroGridInfo();
+    // The native store holds hydro steps only. With pre-equilibrium evolution
+    // in memory SetHydroGridInfo() keeps the combined pre-eq + hydro tau axis
+    // (tau_min = pre-eq start), which would mislabel it, so always use MUSIC's.
+    bulk_info.tau_min = music_hydro_ptr->get_hydro_tau0();
+    bulk_info.dtau = music_hydro_ptr->get_hydro_dtau();
+    bulk_info.ntau = music_hydro_ptr->get_ntau();
+    if (store_evolution_) {
+      JSINFO << "MUSIC dump_hydro_only: retaining native store ("
+             << music_hydro_ptr->get_number_of_fluid_cells()
+             << " cells), skipping framework copy.";
+    } else {
+      JSINFO << "MUSIC " << GetId() << ": evolution not stored ("
+             << bulk_info.ntau << " steps, grid metadata only).";
+    }
+  } else if (flag_output_evo_to_memory == 1 && !has_source_terms) {
     if (!has_source_terms) {
       // only the first hydro without source term will be stored
       // in memory for jet energy loss calculations
@@ -503,8 +796,14 @@ void MpiMusic::EvolveHydro() {
       }
       PassHydroEvolutionHistoryToFramework();
       JSINFO << "Number of fluid cells received by JETSCAPE: "
-             << bulk_info.data.size();
+             << bulk_info.get_data_size()
+             << (bulk_info.UsesDataVector() ? " (slim copy)" : "");
     }
+  } else if (flag_ensure_MusicWrapper_output) {
+    PassHydroEvolutionHistoryToFramework();
+    JSINFO << "number of fluid cells received by the JETSCAPE: "
+           << bulk_info.get_data_size()
+           << (bulk_info.UsesDataVector() ? " (slim copy)" : "");
   }
 
   if (flag_output_evo_to_file == 1) {
@@ -515,7 +814,16 @@ void MpiMusic::EvolveHydro() {
     system(system_command.str().c_str());
   }
 
-  if (flag_surface_in_memory == 1) {
+  if (skip_surface_) {
+    // Hydro-only dump: MUSIC still finds the freeze-out surface internally
+    // (it is the hydro stop condition), but nothing downstream consumes the
+    // exported surface, so skip the hand-off / file collection entirely.
+    JSINFO << "MUSIC skip_surface: not exporting freeze-out surface "
+              "(found internally for hydro termination only).";
+    if (flag_surface_in_memory == 1) {
+      clearSurfaceCellVector();
+    }
+  } else if (flag_surface_in_memory == 1) {
     clearSurfaceCellVector();
     PassHydroSurfaceToFramework();
   } else {
@@ -525,6 +833,213 @@ void MpiMusic::EvolveHydro() {
   if (hydro_status == FINISHED && doCooperFrye == 1) {
     music_hydro_ptr->run_Cooper_Frye();
   }
+}
+
+namespace {
+// The text of `el` without surrounding white space ("" if none).
+std::string TrimmedText(const tinyxml2::XMLElement *el) {
+  if (el == nullptr || el->GetText() == nullptr)
+    return "";
+  std::string s = el->GetText();
+  s.erase(0, s.find_first_not_of(" \t\n\r"));
+  s.erase(s.find_last_not_of(" \t\n\r") + 1);
+  return s;
+}
+
+// The <Hydro><MUSIC> blocks of the user XML.
+std::vector<tinyxml2::XMLElement *> UserMusicBlocks() {
+  std::vector<tinyxml2::XMLElement *> blocks;
+  auto *root = JetScapeXML::Instance()->GetXMLRootUser();
+  if (root == nullptr)
+    return blocks;
+  for (auto *hydro = root->FirstChildElement("Hydro"); hydro != nullptr;
+       hydro = hydro->NextSiblingElement("Hydro")) {
+    if (auto *music = hydro->FirstChildElement("MUSIC"))
+      blocks.push_back(music);
+  }
+  return blocks;
+}
+}  // namespace
+
+// The element `tag` inside this instance's own <Hydro><MUSIC> block of the
+// user XML (the one whose <name> is this module's id), or nullptr.
+tinyxml2::XMLElement *MpiMusic::OwnMusicBlockElement(const char *tag) const {
+  for (auto *music : UserMusicBlocks()) {
+    if (TrimmedText(music->FirstChildElement("name")) != GetId())
+      continue;
+    return music->FirstChildElement(tag);
+  }
+  return nullptr;
+}
+
+// The value of `tag` inside this instance's own <Hydro><MUSIC> block, or -1 if
+// not set there.
+int MpiMusic::ReadOwnMusicBlockInt(const char *tag) const {
+  auto *value = OwnMusicBlockElement(tag);
+  if (value == nullptr || value->GetText() == nullptr)
+    return -1;
+  return std::atoi(value->GetText());
+}
+
+// <restart_from> and <checkpoint_tau>, both only in an instance's own block
+// (a first-block default would make every instance restart or keep a
+// checkpoint; the main XML's none / 0 are off). The jet leg names the
+// background in <restart_from>; the background then keeps a checkpoint at its
+// own <checkpoint_tau> if > 0, else at the liquefier's tau_delay, before which
+// no droplet deposits.
+// The setters (set_restart_from, set_checkpoint_tau) override both.
+void MpiMusic::ReadRestartSettings() {
+  restart_from_id_ = TrimmedText(OwnMusicBlockElement("restart_from"));
+  if (restart_from_id_ == "none")
+    restart_from_id_.clear();
+  if (restart_from_id_ == GetId()) {
+    JSWARN << "MUSIC " << GetId() << ": <restart_from> names this instance "
+           << "itself; ignored.";
+    restart_from_id_.clear();
+  }
+
+  bool restart_source = false;
+  for (auto *music : UserMusicBlocks()) {
+    if (TrimmedText(music->FirstChildElement("restart_from")) == GetId() &&
+        TrimmedText(music->FirstChildElement("name")) != GetId()) {
+      restart_source = true;
+    }
+  }
+  checkpoint_tau_ = 0.;
+  if (auto *el = OwnMusicBlockElement("checkpoint_tau")) {
+    el->QueryDoubleText(&checkpoint_tau_);
+  }
+  // the liquefier's deposit schedule, for CheckpointTauForMusic()
+  liquefier_tau_delay_ = 0.;
+  liquefier_dtau_ = 0.;
+  auto *delay_el = JetScapeXML::Instance()->GetElement(
+      {"Liquefier", "CausalLiquefier", "tau_delay"}, false);
+  if (delay_el != nullptr)
+    delay_el->QueryDoubleText(&liquefier_tau_delay_);
+  if (auto *el = JetScapeXML::Instance()->GetElement(
+          {"Liquefier", "CausalLiquefier", "dtau"}, false)) {
+    el->QueryDoubleText(&liquefier_dtau_);
+  }
+  if (checkpoint_tau_ <= 0. && restart_source) {
+    if (delay_el != nullptr) {
+      checkpoint_tau_ = liquefier_tau_delay_;
+    } else {
+      JSWARN << "MUSIC " << GetId() << ": an instance restarts from this one "
+             << "but there is neither <checkpoint_tau> in its block nor a "
+             << "<Liquefier><CausalLiquefier><tau_delay>: no checkpoint, every "
+             << "restart runs from tau0.";
+    }
+  }
+  if (checkpoint_tau_ > 0.) {
+    JSINFO << "MUSIC " << GetId()
+           << ": checkpoint at tau <= " << checkpoint_tau_ << " fm/c"
+           << (restart_source ? " (for <restart_from>)" : "");
+  }
+#if !defined(USE_CUDA) && !defined(USE_METAL)
+  if (!restart_from_id_.empty() || checkpoint_tau_ > 0.) {
+    JSWARN << "MUSIC " << GetId() << ": <restart_from> / <checkpoint_tau> "
+           << "need music4gpu (CUDA or Metal); CPU MUSIC ignores them.";
+  }
+#endif
+}
+
+// The checkpoint time handed to MUSIC.  A jet leg takes a checkpoint only if
+// its jet source reports nothing for every step before the checkpoint's: MUSIC
+// replays the per-step test of HydroSourceJETSCAPE, which keeps a droplet from
+// two steps plus CausalLiquefier::deposit_half_width() before its deposit time
+// on.  A droplet made at the hard vertex (tau = 0) deposits at tau_delay.  A
+// checkpoint whose step ends less than that half width before tau_delay is
+// therefore refused by every event with such a droplet -- two of six Pb+Pb
+// Z+jet events, which then ran from tau0 -- although it gains a few steps at
+// most.  So a checkpoint time in that last stretch up to tau_delay, which
+// includes the default and set_checkpoint_tau(tau_delay), is moved to the
+// start of the stretch.  An earlier time, or one after tau_delay (which only
+// events without early droplets can use), is taken as given.
+double MpiMusic::CheckpointTauForMusic() {
+  double tau = checkpoint_tau_;
+  if (tau > 0. && liquefier_tau_delay_ > 0.) {
+    // the largest step of the schedule, as the liquefier sees it
+    const double step = std::max({music_hydro_ptr->get_hydro_dtau_grid(),
+                                  late_delta_tau_, liquefier_dtau_});
+    const double safe =
+        liquefier_tau_delay_ - CausalLiquefier::half_width(step) - 1e-6;
+    if (tau > safe && tau <= liquefier_tau_delay_ + 1e-9)
+      tau = safe;
+  }
+  if (tau != reported_checkpoint_tau_) {
+    reported_checkpoint_tau_ = tau;
+    if (tau != checkpoint_tau_) {
+      JSINFO << "MUSIC " << GetId() << ": checkpoint at tau <= " << tau
+             << " fm/c, not " << checkpoint_tau_ << ": a droplet made at the "
+             << "hard vertex is in reach of the jet source from there on "
+             << "(tau_delay " << liquefier_tau_delay_ << " fm/c).";
+    }
+  }
+  return tau;
+}
+
+// <restart_from>: the instance of that id, once (at the first evolution, when
+// every instance is initialized).
+void MpiMusic::ResolveRestartFrom() {
+  const std::string id = restart_from_id_;
+  restart_from_id_.clear();
+  auto &instances = MusicInstances();
+  auto it = instances.find(id);
+  if (it == instances.end() || it->second == this) {
+    JSWARN << "MUSIC " << GetId() << ": <restart_from> " << id << " is no "
+           << "other MUSIC instance; every evolution runs from tau0.";
+    return;
+  }
+  restart_from_ = it->second;
+  JSINFO << "MUSIC " << GetId() << " starts from " << id << "'s state at tau "
+         << "<= " << restart_from_->checkpoint_tau_ << " fm/c (<restart_from>)";
+  if (restart_from_->checkpoint_tau_ <= 0.) {
+    JSWARN << "MUSIC " << GetId() << ": " << id << " keeps no checkpoint "
+           << "(checkpoint_tau 0), so every evolution runs from tau0.";
+  }
+  if (freeze_out_surface_ != 0 && restart_from_->freeze_out_surface_ == 0) {
+    JSWARN << "MUSIC " << GetId() << " builds the freeze-out surface and " << id
+           << " does not, so its checkpoint lacks it: every evolution "
+           << "runs from tau0. Build the surface on both legs or on neither.";
+  }
+}
+
+// Hand the freeze-out surface setting to MUSIC at the start of every
+// evolution, so a change made after Init() (set_freeze_out_surface) applies.
+void MpiMusic::ApplyFreezeOutSurface() {
+  music_hydro_ptr->set_parameter("freeze_out_surface", freeze_out_surface_);
+  if (freeze_out_surface_ == reported_freeze_out_surface_)
+    return;
+  reported_freeze_out_surface_ = freeze_out_surface_;  // report on change only
+  JSINFO << "MUSIC " << GetId() << ": freeze-out surface "
+         << (freeze_out_surface_ ? "built"
+                                 : "NOT built (stops on max e < e_fo instead)");
+  if (freeze_out_surface_ == 0 && !skip_surface_) {
+    JSWARN << "MUSIC " << GetId() << ": freeze_out_surface = 0, so there is no "
+           << "freeze-out surface to hand on (soft particlization of this "
+           << "instance would get none).";
+  }
+}
+
+void MpiMusic::WarnIfGridBoundaryHit() {
+  hit_grid_boundary_ = music_hydro_ptr->getReRunHydro();
+  if (hit_grid_boundary_) {
+    JSWARN << "MUSIC " << GetId() << ": the freeze-out surface reached the "
+           << "transverse grid boundary, so MUSIC stopped this event's "
+           << "evolution there (it expects a re-run on a larger grid, which "
+           << "X-SCAPE does not do). The stored evolution is truncated; "
+           << "enlarge <IS><grid_max_x>/<grid_max_y>.";
+  }
+}
+
+void MpiMusic::Clear() {
+  if (preserve_bulk_info_) {
+    // Keep bulk_info.data alive so Python can inspect it after Exec().
+    // Only discard the freeze-out surface (re-computed each event).
+    clearSurfaceCellVector();
+    return;
+  }
+  FluidDynamics::Clear();
 }
 
 void MpiMusic::collect_freeze_out_surface() {
@@ -584,7 +1099,7 @@ void MpiMusic::PassHydroSurfaceToFramework() {
   auto number_of_cells = music_hydro_ptr->get_number_of_surface_cells();
   JSINFO << "Total number of MUSIC surface cells: " << number_of_cells;
   SurfaceCell surfaceCell_i;
-  for (int i = 0; i < number_of_cells; i++) {
+  for (long i = 0; i < number_of_cells; i++) {
     SurfaceCellInfo surface_cell_info;
     music_hydro_ptr->get_surface_cell_with_index(i, surfaceCell_i);
     surface_cell_info.tau = surfaceCell_i.xmu[0];
@@ -636,32 +1151,88 @@ void MpiMusic::PassHydroEvolutionHistoryToFramework() {
 
   SetHydroGridInfo();
 
-  fluidCell *fluidCell_ptr = new fluidCell;
-  for (int i = 0; i < number_of_cells; i++) {
-    std::unique_ptr<FluidCellInfo> fluid_cell_info_ptr(new FluidCellInfo);
-    music_hydro_ptr->get_fluid_cell_with_index(i, fluidCell_ptr);
-
-    fluid_cell_info_ptr->energy_density = fluidCell_ptr->ed;
-    fluid_cell_info_ptr->entropy_density = fluidCell_ptr->sd;
-    fluid_cell_info_ptr->temperature = fluidCell_ptr->temperature;
-    fluid_cell_info_ptr->pressure = fluidCell_ptr->pressure;
-    fluid_cell_info_ptr->vx = fluidCell_ptr->vx;
-    fluid_cell_info_ptr->vy = fluidCell_ptr->vy;
-    fluid_cell_info_ptr->vz = fluidCell_ptr->vz;
-    fluid_cell_info_ptr->mu_B = 0.0;
-    fluid_cell_info_ptr->mu_C = 0.0;
-    fluid_cell_info_ptr->mu_S = 0.0;
-    fluid_cell_info_ptr->qgp_fraction = 0.0;
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < 4; j++) {
-        fluid_cell_info_ptr->pi[i][j] = fluidCell_ptr->pi[i][j];
-      }
-    }
-    fluid_cell_info_ptr->bulk_Pi = fluidCell_ptr->bulkPi;
-    StoreHydroEvolutionHistory(fluid_cell_info_ptr);
+  if (slim_bulk_info_) {
+    PassSlimEvolutionHistoryToFramework(number_of_cells);
+    music_hydro_ptr->clear_hydro_info_from_memory();
+    return;
   }
-  delete fluidCell_ptr;
+  // the FluidCellInfo layout (and no slim buffer left from set_slim_bulk_info)
+  bulk_info.SetDataInfo({});
+  std::vector<float>().swap(bulk_info.data_vector);
+
+  // Size the store once and fill it in parallel, instead of one heap-allocated
+  // FluidCellInfo and one push_back per cell: a 0-10% Au+Au event has ~10^8
+  // cells, and the growing vector's reallocations alone took ~3 s per event.
+  // get_fluid_cell_with_index only reads MUSIC's store, so the cells are
+  // independent, and each lands at the index the serial loop gave it.
+  const std::size_t first = bulk_info.data.size();
+  const std::size_t total = first + static_cast<std::size_t>(number_of_cells);
+  // clear_up_evolution_data() keeps the capacity, so an event larger than every
+  // earlier one would reallocate with the old buffer still resident: both at
+  // once, ~13 GB at 0-10% Au+Au.  With nothing to keep, free the old one first.
+  if (first == 0 && total > bulk_info.data.capacity())
+    std::vector<FluidCellInfo>().swap(bulk_info.data);
+  bulk_info.data.resize(total);
+  FluidCellInfo *const out = bulk_info.data.data() + first;
+#pragma omp parallel
+  {
+    fluidCell cell;
+#pragma omp for schedule(static)
+    for (int i = 0; i < number_of_cells; i++) {
+      music_hydro_ptr->get_fluid_cell_with_index(i, &cell);
+      FluidCellInfo &info = out[i];
+      info.energy_density = cell.ed;
+      info.entropy_density = cell.sd;
+      info.temperature = cell.temperature;
+      info.pressure = cell.pressure;
+      info.vx = cell.vx;
+      info.vy = cell.vy;
+      info.vz = cell.vz;
+      info.mu_B = 0.0;
+      info.mu_C = 0.0;
+      info.mu_S = 0.0;
+      info.qgp_fraction = 0.0;
+      for (int a = 0; a < 4; a++) {
+        for (int b = 0; b < 4; b++) {
+          info.pi[a][b] = cell.pi[a][b];
+        }
+      }
+      info.bulk_Pi = cell.bulkPi;
+    }
+  }
   music_hydro_ptr->clear_hydro_info_from_memory();
+}
+
+// The slim copy: per cell the floats of EvolutionHistory::SlimDataInfo(), the
+// same values the full copy's FluidCellInfo gets, so the fields jet energy loss
+// reads interpolate to the same numbers.
+void MpiMusic::PassSlimEvolutionHistoryToFramework(int number_of_cells) {
+  const auto &names = EvolutionHistory::SlimDataInfo();
+  const std::size_t width = names.size();
+  std::vector<FluidCellInfo>().swap(bulk_info.data);  // no full copy left over
+  bulk_info.SetDataInfo(names);
+  const std::size_t total = width * static_cast<std::size_t>(number_of_cells);
+  // As in the full copy: free a smaller buffer before allocating a larger one.
+  if (total > bulk_info.data_vector.capacity())
+    std::vector<float>().swap(bulk_info.data_vector);
+  bulk_info.data_vector.resize(total);
+  float *const out = bulk_info.data_vector.data();
+#pragma omp parallel
+  {
+    fluidCell cell;
+#pragma omp for schedule(static)
+    for (int i = 0; i < number_of_cells; i++) {
+      music_hydro_ptr->get_fluid_cell_with_index(i, &cell);
+      float *const rec = out + width * static_cast<std::size_t>(i);
+      // in the order of SlimDataInfo(): e, s, T, vx, vy, vz
+      rec[0] = cell.ed;
+      rec[1] = cell.sd;
+      rec[2] = cell.temperature;
+      rec[3] = cell.vx;
+      rec[4] = cell.vy;
+      rec[5] = cell.vz;
+    }
+  }
 }
 
 void MpiMusic::GetHydroInfo(

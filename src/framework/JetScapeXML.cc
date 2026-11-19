@@ -369,10 +369,10 @@ std::string JetScapeXML::GetElementText(
     std::initializer_list<const char *> path, bool isRequired /* = true */) {
   tinyxml2::XMLElement *element = GetElement(path, isRequired);
 
-  if (element) {
+  if (element && element->GetText()) {
     return element->GetText();
   } else {
-    return "";
+    return "";  // missing element, or an empty one (GetText() == nullptr)
   }
 }
 

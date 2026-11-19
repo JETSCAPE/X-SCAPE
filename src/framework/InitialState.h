@@ -17,6 +17,7 @@
 #ifndef INITIALSTATE_H
 #define INITIALSTATE_H
 
+#include <random>
 #include <tuple>
 #include <memory>
 #include "JetScapeModuleBase.h"
@@ -187,6 +188,14 @@ class InitialState : public JetScapeModuleBase {
   virtual void SampleABinaryCollisionPoint(double &t, double &x, double &y,
                                            double &z);
 
+  /**
+   * @brief As SampleABinaryCollisionPoint, with random numbers from ``rng``
+   * instead of the module's engine (PythiaGun's additional scatterings, which
+   * must not change the module's random stream).
+   */
+  virtual void SampleABinaryCollisionPointWith(std::mt19937 &rng, double &t,
+                                               double &x, double &y, double &z);
+
   virtual double Get_total_nucleon_density_lab(double t, double x, double y,
                                                double z) {
     return 0.0;
@@ -208,6 +217,15 @@ class InitialState : public JetScapeModuleBase {
   virtual void OutputHardPartonMomentum(double E, double px, double py,
                                         double pz, int direction, double P_A);
   virtual void ClearHardPartonMomentum();
+  //! ISR: this event's hard-parton four-momentum (E, px, py, pz) handed over
+  //! for subtraction from the projectile (+z) / target (-z) nucleon of the hard
+  //! collision.  Empty without such a module (only 3dMCGlauber implements it).
+  virtual std::vector<double> GetHardPartonMomentumProj() { return {}; }
+  virtual std::vector<double> GetHardPartonMomentumTarg() { return {}; }
+  //! 1 if the initial state subtracts that momentum from the colliding
+  //! nucleons (3dMCGlauber <Subtract_hard_momentum>), 0 if not, -1: no such
+  //! setting.
+  virtual int GetSubtractHardMomentum() const { return -1; }
 
   virtual std::vector<double> Get_projectile_nucleon_z_lab();
   virtual std::vector<double> Get_target_nucleon_z_lab();

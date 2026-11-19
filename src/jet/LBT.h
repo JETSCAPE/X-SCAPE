@@ -53,6 +53,10 @@ class LBT
   void DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton> &pIn,
                     vector<Parton> &pOut);
   void WriteTask(weak_ptr<JetScapeWriter> w);
+  //! Its random streams (GetMt19937Generator) and colour tags (the
+  //! instance's block) are its own once JetEnergyLossManager isolates the
+  //! showers; the static tables are only read after InitTask.
+  bool SupportsParallelShowers() const override { return true; }
 
  private:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,12 +181,12 @@ class LBT
   static const int t_gn = t_gn_1 + t_gn_2;
   static const int temp_gn = 106;
 
-  static double dNg_over_dt_c[t_gn + 2][temp_gn + 1][HQener_gn + 1];
-  static double dNg_over_dt_q[t_gn + 2][temp_gn + 1][HQener_gn + 1];
-  static double dNg_over_dt_g[t_gn + 2][temp_gn + 1][HQener_gn + 1];
-  static double max_dNgfnc_c[t_gn + 2][temp_gn + 1][HQener_gn + 1];
-  static double max_dNgfnc_q[t_gn + 2][temp_gn + 1][HQener_gn + 1];
-  static double max_dNgfnc_g[t_gn + 2][temp_gn + 1][HQener_gn + 1];
+  static double (*dNg_over_dt_c)[temp_gn + 1][HQener_gn + 1];
+  static double (*dNg_over_dt_q)[temp_gn + 1][HQener_gn + 1];
+  static double (*dNg_over_dt_g)[temp_gn + 1][HQener_gn + 1];
+  static double (*max_dNgfnc_c)[temp_gn + 1][HQener_gn + 1];
+  static double (*max_dNgfnc_q)[temp_gn + 1][HQener_gn + 1];
+  static double (*max_dNgfnc_g)[temp_gn + 1][HQener_gn + 1];
 
   const double HQener_max = 1000.0;
   const double t_max_1 = 20.0;
@@ -269,6 +273,14 @@ class LBT
   int NR[dimParList] = {0};      // scattering rank
   int KATT1[dimParList] = {0};   // parton flavor
   int KATT10[dimParList] = {0};  // negative parton flavor
+  // colour tags (large-Nc flow) of the positive and the negative partons;
+  // a hole carries the tags of the incoming thermal parton, as in Matter
+  unsigned int COL[dimParList] = {0};
+  unsigned int ACOL[dimParList] = {0};
+  unsigned int COL0[dimParList] = {0};
+  unsigned int ACOL0[dimParList] = {0};
+  // largest tag seen; the counter when there is no hard process
+  unsigned int MaxColor = 0;
 
   double PGm[4] = {0.0};
   double tjp[dimParList] = {0.0};
@@ -305,9 +317,9 @@ class LBT
   static const int N_p1 = 500;
   static const int N_T = 60;
   static const int N_e2 = 75;
-  static double distFncB[N_T][N_p1][N_e2], distFncF[N_T][N_p1][N_e2],
-      distMaxB[N_T][N_p1][N_e2], distMaxF[N_T][N_p1][N_e2];
-  static double distFncBM[N_T][N_p1], distFncFM[N_T][N_p1];
+  static double (*distFncB)[N_p1][N_e2], (*distFncF)[N_p1][N_e2],
+      (*distMaxB)[N_p1][N_e2], (*distMaxF)[N_p1][N_e2];
+  static double (*distFncBM)[N_p1], (*distFncFM)[N_p1];
   double min_p1 = 0.0;
   double max_p1 = 1000.0;
   double bin_p1 = (max_p1 - min_p1) / N_p1;
@@ -393,12 +405,32 @@ class LBT
   void jetInitialize(int numXY);
   void setJetX(int numXY);
   void read_tables();
+  // The 12 big tables (~0.66 GB) live in one block: private, or mapped
+  // read-only from the cache file $LBT_TABLE_CACHE and then shared by every
+  // process on the machine.
+  static double *table_block_;
+  static std::size_t TableBlockDoubles();
+  void SetTablePointers(double *block);
+  void WriteTableHeader(double *block) const;
+  bool TableHeaderOK(const double *block) const;
+  bool AttachTableBlock();
+  void PublishTableBlock();
   void jetClean();
+  // A new colour tag: from the event's HardProcess::NextColorTag (unique in
+  // the event), or ++MaxColor without a hard process.
+  unsigned int NewColorTag();
+  // The colour flow of the elastic scattering of slot i (jet-in flavour kin)
+  // into slot i (jet-out), slot j (recoil) and the hole j, after flavor().
+  void scatterColors(int CT, int kin, int i, int j);
+  // A gluon radiated from slot i into slot g: one new tag.
+  void radiateColors(int i, int g);
   void setParameter(string fileName);
   int checkParameter(int nArg);
 
   double ModificationCorr;
   double ModificationFactor;
+
+  std::string lbt_table_path_;  // directory holding the LBT data tables
 
   //  extern "C" {
   //      void read_ccnu_(char *dataFN_in, int len1);

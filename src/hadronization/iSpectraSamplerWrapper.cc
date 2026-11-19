@@ -23,6 +23,9 @@
 #include <memory>
 #include <string>
 #include <fstream>
+#ifdef __GLIBC__
+#include <malloc.h>
+#endif
 
 using namespace Jetscape;
 
@@ -63,6 +66,22 @@ void iSpectraSamplerWrapper::InitTask() {
       (GetXMLElementInt({"SoftParticlization", "iSS", "include_deltaf_bulk"}));
   int deltaf_type =
       (GetXMLElementInt({"SoftParticlization", "iSS", "deltaf_type"}));
+  int correlated_sampling =
+      GetXMLElementInt({"SoftParticlization", "iSS", "correlated_sampling"});
+  double correlated_block_dtau = GetXMLElementDouble(
+      {"SoftParticlization", "iSS", "correlated_block_dtau"});
+  double correlated_block_dx =
+      GetXMLElementDouble({"SoftParticlization", "iSS", "correlated_block_dx"});
+  double correlated_block_deta = GetXMLElementDouble(
+      {"SoftParticlization", "iSS", "correlated_block_deta"});
+  // optional, default 0: 1 = iSS decays the SMASH hadron list (EOS 91) too,
+  // for runs without SMASH (0 leaves it undecayed, for an afterburner)
+  int decay_smash_list = GetXMLElementInt(
+      {"SoftParticlization", "iSS", "decay_smash_list"}, false);
+  // optional, default 0: N > 0 also hands over the undecayed hadrons of the
+  // first N samples (compact output: GetCompactPrimaries)
+  int keep_primaries =
+      GetXMLElementInt({"SoftParticlization", "iSS", "keep_primaries"}, false);
 
   if (!boost_invariance) {
     hydro_mode = 2;
@@ -88,6 +107,9 @@ void iSpectraSamplerWrapper::InitTask() {
                                             number_of_repeated_sampling);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("perform_decays",
                                             flag_perform_decays);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("decay_smash_list",
+                                            decay_smash_list);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("keep_primaries", keep_primaries);
 
   // set default parameters
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("turn_on_shear", 1);
@@ -100,6 +122,14 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("include_deltaf_bulk",
                                             include_deltaf_bulk);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("bulk_deltaf_kind", deltaf_type);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("correlated_sampling",
+                                            correlated_sampling);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("correlated_block_dtau",
+                                            correlated_block_dtau);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("correlated_block_dx",
+                                            correlated_block_dx);
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("correlated_block_deta",
+                                            correlated_block_deta);
 
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("restrict_deltaf", 0);
   iSpectraSampler_ptr_->paraRdr_ptr->setVal("deltaf_max_ratio", 1.0);
@@ -115,13 +145,27 @@ void iSpectraSamplerWrapper::InitTask() {
   iSpectraSampler_ptr_->paraRdr_ptr->echo();
 }
 
-int iSpectraSamplerWrapper::getSurfCellVector() {
+int iSpectraSamplerWrapper::getSurfCellVector(bool from_evolution) {
   std::vector<SurfaceCellInfo> surfVec;
-  std::vector<FO_surf> FOsurf_array;
   GetHydroHyperSurface(surfVec);
+  if (surfVec.empty() && from_evolution) {
+    // The hydro handed over no surface of its own (it only filled bulk_info):
+    // build one from its stored evolution with SurfaceFinder.
+    const auto &params = GetSurfaceFinderParams();
+    JSINFO << "No surface from the hydro; building one from its evolution at "
+           << "T_sw = " << params.T_sw << " GeV";
+    FindHydroHyperSurface(params, surfVec);
+  }
+  return PassSurfaceToISS(surfVec);
+}
+
+int iSpectraSamplerWrapper::PassSurfaceToISS(
+    const std::vector<SurfaceCellInfo> &surfVec) {
+  std::vector<FO_surf> FOsurf_array;
   int nCells = surfVec.size();
   JSINFO << "surface cell size: " << nCells;
-  for (const auto surf_i : surfVec) {
+  FOsurf_array.reserve(nCells);
+  for (const auto &surf_i : surfVec) {
     FO_surf iSS_surf_cell;
     iSS_surf_cell.tau = surf_i.tau;
     iSS_surf_cell.xpt = surf_i.x;
@@ -181,7 +225,8 @@ void iSpectraSamplerWrapper::CalculateTime() {
 
     statusCode_ = 1;
   }
-  long random_seed = (*GetMt19937Generator())();  // get random seed
+  // a draw from the module generator, unless SetNextRandomSeed() set one
+  long random_seed = NextRandomSeed();
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
@@ -203,9 +248,7 @@ void iSpectraSamplerWrapper::ExecTime() {
              << GetMainClock()->GetCurrentTime() << " fm/c ...";
 }
 
-void iSpectraSamplerWrapper::ExecuteTask() {
-  JSINFO << "running iSS ...";
-
+void iSpectraSamplerWrapper::LinkMusicInput() {
   // generate symbolic links with music_input_file
   std::string music_input_file_path =
       GetXMLElementText({"Hydro", "MUSIC", "MUSIC_input_file"});
@@ -219,9 +262,36 @@ void iSpectraSamplerWrapper::ExecuteTask() {
     system(system_command.str().c_str());
   }
   inputfile.close();
+}
 
-  int nCells = getSurfCellVector();
-  if (nCells == 0) {
+void iSpectraSamplerWrapper::ExecuteTask() {
+  JSINFO << "running iSS ...";
+
+  LinkMusicInput();
+
+  int nCells = getSurfCellVector(true);
+  bool read_surface_file = (nCells == 0);
+  if (nCells == 0 && GetGetHydroHyperSurfaceConnected()) {
+    // No surface in memory and none from the stored evolution. The hydro may
+    // still have written one to file (MUSIC with surface_in_memory 0): read
+    // it then. With that file missing or empty the event has no medium (e.g.
+    // 3dMCGlauber made no string): no hadrons, because iSS's file reader
+    // stops the run on an empty surface.
+    const std::string surface_file =
+        GetXMLElementText({"SoftParticlization", "iSS", "iSS_working_path"}) +
+        "/surface.dat";
+    std::ifstream surface_in(surface_file.c_str());
+    const bool surface_file_empty =
+        !surface_in.good() ||
+        surface_in.peek() == std::ifstream::traits_type::eof();
+    surface_in.close();
+    if (surface_file_empty) {
+      JSWARN << "iSS: the hydro handed over no freeze-out surface and "
+             << surface_file << " is missing or empty; no hadrons this event";
+      read_surface_file = false;
+    }
+  }
+  if (read_surface_file) {
     int status = iSpectraSampler_ptr_->read_in_FO_surface();
     if (status != 0) {
       JSWARN << "hyper-surface not read in";
@@ -236,7 +306,8 @@ void iSpectraSamplerWrapper::ExecuteTask() {
   //   exit(-1);
   // }
 
-  long random_seed = (*GetMt19937Generator())();  // get random seed
+  // a draw from the module generator, unless SetNextRandomSeed() set one
+  long random_seed = NextRandomSeed();
   iSpectraSampler_ptr_->set_random_seed(random_seed);
   VERBOSE(2) << "Random seed used for the iSS module: " << random_seed;
 
@@ -246,9 +317,53 @@ void iSpectraSamplerWrapper::ExecuteTask() {
       JSWARN << "Some errors happened in generating particle samples";
       exit(-1);
     }
-    PassHadronListToJetscape();
+    if (compact_output_) {
+      PassHadronArraysToJetscape();
+    } else {
+      PassHadronListToJetscape();
+    }
   }
   JSINFO << "iSS finished.";
+}
+
+bool iSpectraSamplerWrapper::SampleCells(
+    const std::vector<SurfaceCellInfo> &cells, long seed, int n_samples) {
+  if (!iSpectraSampler_ptr_ || n_samples < 1)
+    return false;
+  // the state ClearTask leaves after a framework event
+  iSpectraSampler_ptr_->clear();
+  ClearHadronList();
+  ClearCompactHadrons();
+
+  LinkMusicInput();
+  SetNumberOfSamples(n_samples);
+  // the same order as ExecuteTask: the cells, then the seed
+  const int nCells = PassSurfaceToISS(cells);
+  SetNextRandomSeed(seed);
+  iSpectraSampler_ptr_->set_random_seed(NextRandomSeed());
+  if (nCells > 0) {
+    int status = iSpectraSampler_ptr_->generate_samples();
+    if (status != 0) {
+      JSWARN << "Some errors happened in generating particle samples";
+      exit(-1);
+    }
+    PassHadronArraysToJetscape();
+  } else {
+    has_compact_hadrons_ = true;  // no cells: no samples
+  }
+  return true;
+}
+
+bool iSpectraSamplerWrapper::SetNumberOfSamples(int n) {
+  if (!iSpectraSampler_ptr_ || n < 1)
+    return false;
+  iSpectraSampler_ptr_->paraRdr_ptr->setVal("number_of_repeated_sampling", n);
+  return true;
+}
+
+bool iSpectraSamplerWrapper::SetCompactHadronOutput(bool on) {
+  compact_output_ = on;
+  return true;
 }
 
 void iSpectraSamplerWrapper::ClearHadronList() {
@@ -262,6 +377,7 @@ void iSpectraSamplerWrapper::ClearTask() {
   VERBOSE(2) << "Finish the particle sampling";
   iSpectraSampler_ptr_->clear();
   ClearHadronList();
+  ClearCompactHadrons();
 }
 
 void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
@@ -277,12 +393,14 @@ void iSpectraSamplerWrapper::PassHadronListToJetscapeSameEvent() {
   }
   for (unsigned int iev = 0; iev < nev; iev++) {
     std::vector<shared_ptr<Hadron>> hadrons;
-    unsigned int nparticles =
-        (iSpectraSampler_ptr_->get_number_of_particles(iev));
+    // the whole sample at once: iSS::get_hadron looks up a parameter by name
+    // on every call, which cost seconds for millions of hadrons
+    const std::vector<iSS_Hadron> &sample =
+        *(iSpectraSampler_ptr_->get_hadron_list_iev(iev));
+    unsigned int nparticles = sample.size();
     VERBOSE(4) << "event " << iev << ": number of particles = " << nparticles;
     for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
-      iSS_Hadron current_hadron =
-          (iSpectraSampler_ptr_->get_hadron(iev, ipart));
+      const iSS_Hadron &current_hadron = sample[ipart];
       int hadron_label = 0;
       int hadron_status = 11;
       int hadron_id = current_hadron.pid;
@@ -330,12 +448,14 @@ void iSpectraSamplerWrapper::PassHadronListToJetscape() {
   VERBOSE(4) << "number of events to pass : " << nev;
   for (unsigned int iev = 0; iev < nev; iev++) {
     std::vector<shared_ptr<Hadron>> hadrons;
-    unsigned int nparticles =
-        (iSpectraSampler_ptr_->get_number_of_particles(iev));
+    // the whole sample at once: iSS::get_hadron looks up a parameter by name
+    // on every call, which cost seconds for millions of hadrons
+    const std::vector<iSS_Hadron> &sample =
+        *(iSpectraSampler_ptr_->get_hadron_list_iev(iev));
+    unsigned int nparticles = sample.size();
     VERBOSE(4) << "event " << iev << ": number of particles = " << nparticles;
     for (unsigned int ipart = 0; ipart < nparticles; ipart++) {
-      iSS_Hadron current_hadron =
-          (iSpectraSampler_ptr_->get_hadron(iev, ipart));
+      const iSS_Hadron &current_hadron = sample[ipart];
       int hadron_label = 0;
       int hadron_status = 11;
       int hadron_id = current_hadron.pid;
@@ -363,6 +483,83 @@ void iSpectraSamplerWrapper::PassHadronListToJetscape() {
       VERBOSE(4) << "In event " << iev << " JETSCAPE received "
                  << Hadron_list_.at(iev).size() << " particles.";
     }
+  }
+
+  // clear iSS memory, particles have passed to the framework
+  iSpectraSampler_ptr_->clear();
+}
+
+void iSpectraSamplerWrapper::PassHadronArraysToJetscape() {
+  // The same numbers PassHadronListToJetscape puts into Hadron objects (label
+  // 0, status 11), as flat arrays: no Hadron object per hadron.
+  ClearHadronList();
+  ClearCompactHadrons();
+  const unsigned int nev = iSpectraSampler_ptr_->get_number_of_sampled_events();
+  size_t n_total = 0;
+  for (unsigned int iev = 0; iev < nev; iev++) {
+    n_total += iSpectraSampler_ptr_->get_hadron_list_iev(iev)->size();
+  }
+  HadronArrays &a = compact_hadrons_;
+  a.sample_counts.reserve(nev);
+  a.pid.reserve(n_total);
+  a.pstat.reserve(n_total);
+  a.p.reserve(4 * n_total);
+  a.x.reserve(4 * n_total);
+  a.mass.reserve(n_total);
+  for (unsigned int iev = 0; iev < nev; iev++) {
+    std::vector<iSS_Hadron> *sample =
+        iSpectraSampler_ptr_->get_hadron_list_iev(iev);
+    a.sample_counts.push_back(static_cast<long long>(sample->size()));
+    for (const iSS_Hadron &h : *sample) {
+      a.pid.push_back(h.pid);
+      a.pstat.push_back(11);
+      a.p.insert(a.p.end(), {h.E, h.px, h.py, h.pz});
+      a.x.insert(a.x.end(), {h.t, h.x, h.y, h.z});
+      a.mass.push_back(h.mass);
+    }
+    // free each sample once copied, so iSS's copy and ours do not both peak
+    std::vector<iSS_Hadron>().swap(*sample);
+#ifdef __GLIBC__
+    // the samples live in the heap, and free() keeps their pages: hand them
+    // back to the OS as we go
+    if (iev % 64 == 63)
+      malloc_trim(0);
+#endif
+  }
+  has_compact_hadrons_ = true;
+  VERBOSE(4) << "JETSCAPE received " << nev << " samples, " << n_total
+             << " hadrons (compact).";
+
+  // <keep_primaries> N: the first N samples' hadrons as sampled, undecayed
+  const int n_prim = iSpectraSampler_ptr_->get_number_of_primary_samples();
+  if (n_prim > 0) {
+    HadronArrays &q = compact_primaries_;
+    size_t n_prim_total = 0;
+    for (int iev = 0; iev < n_prim; iev++) {
+      n_prim_total += iSpectraSampler_ptr_->get_primary_list_iev(iev)->size();
+    }
+    q.sample_counts.reserve(n_prim);
+    q.pid.reserve(n_prim_total);
+    q.pstat.reserve(n_prim_total);
+    q.p.reserve(4 * n_prim_total);
+    q.x.reserve(4 * n_prim_total);
+    q.mass.reserve(n_prim_total);
+    for (int iev = 0; iev < n_prim; iev++) {
+      std::vector<iSS_Hadron> *sample =
+          iSpectraSampler_ptr_->get_primary_list_iev(iev);
+      q.sample_counts.push_back(static_cast<long long>(sample->size()));
+      for (const iSS_Hadron &h : *sample) {
+        q.pid.push_back(h.pid);
+        q.pstat.push_back(11);
+        q.p.insert(q.p.end(), {h.E, h.px, h.py, h.pz});
+        q.x.insert(q.x.end(), {h.t, h.x, h.y, h.z});
+        q.mass.push_back(h.mass);
+      }
+      std::vector<iSS_Hadron>().swap(*sample);
+    }
+    has_compact_primaries_ = true;
+    VERBOSE(4) << "JETSCAPE received " << n_prim << " samples of primaries, "
+               << n_prim_total << " hadrons (compact).";
   }
 
   // clear iSS memory, particles have passed to the framework

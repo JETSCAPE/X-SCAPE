@@ -271,6 +271,23 @@ class JetEnergyLoss : public JetScapeModuleBase,
    */
   std::weak_ptr<LiquefierBase> get_liquefier() { return (liquefier_ptr); }
 
+  /**
+   * @brief Parallel showers (JetEnergyLossManager, <Eloss><nThreads>): the
+   * shower keeps what it would hand to objects shared with the other showers
+   * (the liquefier's droplets, the PartonPrinter) until
+   * FlushParallelOutput(), which the manager calls for every shower in order
+   * once all of them are done.  Off by default.
+   */
+  void SetParallelShower(bool on) {
+    parallel_shower_ = on;
+    pending_droplets_.clear();
+  }
+  bool GetParallelShower() const { return parallel_shower_; }
+
+  /// Hands the droplets and final partons kept by a parallel shower over
+  /// (see SetParallelShower); does nothing otherwise.
+  void FlushParallelOutput();
+
   virtual any GetHistory() { return any(pShower); }
 
   // REMARK JP: Quick fix to test IsrShowerPSG ... fix later!!!!
@@ -295,6 +312,9 @@ class JetEnergyLoss : public JetScapeModuleBase,
 
   shared_ptr<PartonShower> pShower = nullptr;
 
+  bool parallel_shower_ = false;  ///< see SetParallelShower
+  std::vector<Droplet> pending_droplets_;
+
   bool GetHydroCellSignalConnected;
   bool GetHydroTau0SignalConnected;
   bool SentInPartonsConnected;
@@ -308,6 +328,11 @@ class JetEnergyLoss : public JetScapeModuleBase,
   // void DoExecTime();
   void DoInitPerEvent();
   void DoFinishPerEvent();
+
+  /** Set droplet_stat on the shower edge of parton p, the edge ending at
+   * vertex v (holes also end there and are skipped).
+   */
+  void MarkLiquefiedEdge(node v, const Parton &p);
 
   shared_ptr<PartonShowerGenerator> psGen;
 

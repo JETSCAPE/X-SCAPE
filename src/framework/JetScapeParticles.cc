@@ -257,7 +257,7 @@ Parton::Parton(int label, int id, int stat, const FourVector &p,
                const FourVector &x)
     : JetScapeParticleBase::JetScapeParticleBase(label, id, stat, p, x) {
   CheckAcceptability(id);
-  assert(InternalHelperPythia.particleData.isParton(id) || isPhoton(id));
+  assert(InternalHelperPythia.particleData.isParton(id) || isNonParton(id));
   initialize_form_time();
   set_color(0);
   set_anti_color(0);
@@ -276,7 +276,7 @@ Parton::Parton(int label, int id, int stat, double pt, double eta, double phi,
     : JetScapeParticleBase::JetScapeParticleBase(label, id, stat, pt, eta, phi,
                                                  e, x) {
   CheckAcceptability(id);
-  assert(InternalHelperPythia.particleData.isParton(id) || isPhoton(id));
+  assert(InternalHelperPythia.particleData.isParton(id) || isNonParton(id));
   initialize_form_time();
   set_color(0);
   set_anti_color(0);
@@ -310,6 +310,11 @@ void Parton::CheckAcceptability(int id) {
     case 21:  // gluon
       break;
     case 22:  // photon
+      break;
+    case 11:   // electron (a Z's decay, passed through like a photon)
+    case -11:  // positron
+    case 13:   // muon
+    case -13:  // anti-muon
       break;
     default:
       JSWARN << " error in id = " << id;
@@ -457,6 +462,12 @@ bool Parton::isPhoton(int pid) {
     return true;
   return false;
 }
+
+bool Parton::isLepton(int pid) {
+  return std::abs(pid) == electronid || std::abs(pid) == muonid;
+}
+
+bool Parton::isNonParton(int pid) { return pid == photonid || isLepton(pid); }
 // ---------------
 // Hadron specific
 // ---------------
