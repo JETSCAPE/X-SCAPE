@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
 
     container:
-      image: jetscape/base:v2.0
+      image: jetscape/base:v2.1
       options: --user root
 
     steps:
@@ -75,7 +75,7 @@ jobs:
         cd build
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
         cmake .. -DUSE_3DGlauber=ON -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON -DUSE_IPGLASMA=ON
-        make -j2
+        make -j"$(nproc)"
 
     - name: Run Unit Tests
       run: |

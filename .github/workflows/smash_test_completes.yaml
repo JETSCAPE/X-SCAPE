@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v2.0
+      image: jetscape/base:v2.1
       options: --user root
     
     steps:
@@ -58,7 +58,7 @@ jobs:
         cd build
         export SMASH_DIR="${GITHUB_WORKSPACE}/${REPO_NAME}/external_packages/smash/smash_code"
         cmake .. -DUSE_MUSIC=ON -DUSE_ISS=ON -DUSE_FREESTREAM=ON -DUSE_SMASH=ON
-        make -j6
+        make -j"$(nproc)"
 
     - name: Run Application
       run: |

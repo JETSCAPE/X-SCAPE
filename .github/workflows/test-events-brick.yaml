@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v2.0
+      image: jetscape/base:v2.1
       options: --user root
 
     steps:
@@ -41,13 +41,13 @@ jobs:
         mkdir build
         cd build
         cmake ..
-        make -j2
+        make -j"$(nproc)"
 
     - name: Checkout TEST-EXAMPLES
       uses: actions/checkout@v7
       with:
         repository: JETSCAPE/TEST-EXAMPLES
-        ref: jetscape-4.0.2
+        ref: main
         path: TEST-EXAMPLES
 
     - name: Run Brick Matter Lbt tests
