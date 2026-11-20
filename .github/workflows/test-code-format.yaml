@@ -4,23 +4,23 @@ on:
   pull_request:
     branches:
       - main
-      - XSCAPE-2.1-RC
+      - XSCAPE-2.1.1-RC
   push:
     branches:
       - main
-      - XSCAPE-2.1-RC
+      - XSCAPE-2.1.1-RC
 env:
   REPO_NAME: ${{ github.event.repository.name }}
 
 jobs:
   build:
     name: external packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
 
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         path: ${{ github.event.repository.name }}
 

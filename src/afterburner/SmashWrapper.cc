@@ -18,6 +18,7 @@
 // -----------------------------------------
 
 #include "SmashWrapper.h"
+#include "SmashLibraryInit.h"
 #include "Transport.h"
 
 #include "smash/input_keys.h"
@@ -70,12 +71,10 @@ void SmashWrapper::InitTask() {
     JSINFO << "SMASH will only perform resonance decays, no propagation";
   }
 
-  // Check if the tabulations directory exists, if not initialize particles and
-  // decays
-  if (!std::filesystem::exists(tabulations_path)) {
-    smash::initialize_particles_decays_and_tabulations(config, smash_version,
-                                                       tabulations_path);
-  }
+  // Initialize particles and decays once per process (shared by all SMASH
+  // modules); stored tabulations are reused if their hash matches
+  InitializeSmashParticlesAndDecaysOnce(config, smash_version,
+                                        tabulations_path);
 
   const double delta_t_sm =
       GetXMLElementDouble({"Afterburner", "SMASH", "Delta_Time"});

@@ -19,6 +19,7 @@
 // -----------------------------------------------------------------------------
 
 #include "SMASHNucleusWrapper.h"
+#include "SmashLibraryInit.h"
 #include "smash/input_keys.h"
 #include "smash/particles.h"
 #include "smash/library.h"
@@ -63,10 +64,6 @@ void SMASHNucleusWrapper::InitTask() {
       GetXMLElementText({"IS", "SMASHNucleus", "SMASH_decaymodes_file"});
   // store tabulation to make use of it if SMASH is used multiple times
   std::string tabulations_path("./smash_tabulations");
-  // if tabulations directory exists, delete it
-  if (std::filesystem::exists(tabulations_path)) {
-    std::filesystem::remove_all(tabulations_path);
-  }
   const std::string smash_version(SMASH_VERSION);
 
   auto config1 = smash::setup_config_and_logging(
@@ -111,12 +108,10 @@ void SMASHNucleusWrapper::InitTask() {
   config2.set_value(smash::InputKeys::modi_collider_projectile_particles,
                     projectile_pdg);
 
-  // Check if the tabulations directory exists, if not initialize particles and
-  // decays
-  if (!std::filesystem::exists(tabulations_path)) {
-    smash::initialize_particles_decays_and_tabulations(config1, smash_version,
-                                                       tabulations_path);
-  }
+  // Initialize particles and decays once per process (shared by all SMASH
+  // modules); stored tabulations are reused if their hash matches
+  InitializeSmashParticlesAndDecaysOnce(config1, smash_version,
+                                        tabulations_path);
 
   // Pass only the 'Modi' section to ColliderModus (like SMASH does), so no
   // unused top-level keys (e.g., General/Output) remain in the passed config.
