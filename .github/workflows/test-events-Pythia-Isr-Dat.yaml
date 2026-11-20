@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v1.13
+      image: jetscape/base:v2.1
       options: --user root
 
     steps:
@@ -45,7 +45,7 @@ jobs:
         mkdir build
         cd build
         cmake .. -DUSE_3DGlauber=ON -DUSE_MUSIC=ON -DUSE_ISS=ON
-        make -j2
+        make -j"$(nproc)"
 
     - name: Checkout TEST-EXAMPLES
       uses: actions/checkout@v7

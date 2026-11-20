@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: jetscape/base:v2.0
+      image: jetscape/base:v2.1
       options: --user root
       
     steps:
@@ -35,7 +35,7 @@ jobs:
         mkdir build
         cd build
         cmake ..
-        make -j2
+        make -j"$(nproc)"
 
     - name: Download nPDF set
       run: |
