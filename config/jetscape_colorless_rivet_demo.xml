@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+
+<jetscape>
+
+  <vlevel> 1 </vlevel>
+  <nEvents> 4 </nEvents>
+
+  <outputFilename>colorless_rivet_demo</outputFilename>
+  <JetScapeWriterAscii> off </JetScapeWriterAscii>
+  <JetScapeWriterHepMC> on </JetScapeWriterHepMC>
+
+  <Random>
+    <seed>1</seed>
+  </Random>
+
+  <!-- Hard Process -->
+  <Hard>
+    <PythiaGun>
+      <pTHatMin>20</pTHatMin>
+      <pTHatMax>30</pTHatMax>
+      <eCM>200</eCM>
+    </PythiaGun>
+  </Hard>
+
+  <!-- Simple setup without iSS, SMASH -->
+  <Hydro>
+    <Brick bjorken_expansion_on="false" start_time="0.6">
+      <name>Brick</name>
+      <T>0.25</T>
+    </Brick>
+  </Hydro>
+
+  <Eloss>
+    <maxT>20</maxT>
+    <Matter>
+      <Q0> 2.0 </Q0>
+      <in_vac> 0 </in_vac>
+      <vir_factor> 0.25 </vir_factor>
+      <recoil_on> 0 </recoil_on>
+      <brick_med> 1 </brick_med>
+      <brick_length> 5 </brick_length>
+      <hydro_Tc> 0.16 </hydro_Tc>
+      <alphas> 0.3 </alphas>
+    </Matter>
+  </Eloss>
+
+  <!-- Jet Hadronization Module -->
+  <JetHadronization>
+    <name>colorless</name>
+    <take_recoil>0</take_recoil>
+    <eCMforHadronization>0</eCMforHadronization>
+    <pythia_decays>on</pythia_decays>
+    <tau0Max>1000.0</tau0Max>
+  </JetHadronization>
+
+</jetscape>
